@@ -1,0 +1,31 @@
+[singlenode]
+nodename
+
+[singlenode:vars]
+vm_name=nodename
+vm_local_hostname=nodename.example.com
+vm_hostname=nodename.example.com
+vm_data_dir="/home/takinosho/kvmimages/nodename_machine"
+# Environment Variables for DNS Server
+kvm_vm_pool_dir="/home/takinosho/kvmimages/"
+# Cloud Init Config
+vm_recreate=true
+cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
+cloud_init_user_data="/home/takinosho/kvmimages/nodename_machine/nodename/user-data"
+cloud_init_meta_data="/home/takinosho/kvmimages/nodename_machine/nodename/meta-data"
+cloud_init_iso_image="/home/takinosho/kvmimages/nodename_machine/nodename/cidata.iso"
+manage_dns=true
+dns_servers="'192.168.1.148'" # googles ['8.8.8.8','8.8.4.4']
+search_domain=example.com
+vm_cpu=2
+vm_memory=2048
+vm_root_disk_size=20G
+
+[all:vars]
+#RHEL Subscription Info
+rhel_username=example@example.com
+rhel_password=example
+
+#default RHEL user
+rhel_user=rhel_user
+rhel_user_password=password123
