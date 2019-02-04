@@ -1,0 +1,60 @@
+---
+- hosts: OSEv3
+  remote_user: {{ rhel_user }}
+  become: yes
+  tasks:
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
+      - wget
+      - git
+      - net-tools
+      - bind-utils
+      - yum-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      state: present
+  - name: Enable rhel-7-server-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-rpms
+      state: enabled
+  - name: Enable rhel-7-server-extras-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-extras-rpms
+      state: enabled
+  - name: Enable rhel-7-server-ose-3.9-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ose-3.9-rpms
+      state: enabled
+  - name: Enable rhel-7-fast-datapath-rpms repository
+    rhsm_repository:
+      name: rhel-7-fast-datapath-rpms
+      state: enabled
+  - name: Enable rhel-7-server-ansible-2.4-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ansible-2.4-rpms
+      state: enabled
+  - name: Enable rhel-7-server-optional-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-optional-rpms
+      state: enabled
+  - name: Install a list of packages
+    yum:
+      name:
+        - docker-1.13.1
+- hosts: master
+  remote_user: {{ rhel_user }}
+  become: yes
+  tasks:
+  - name: install java-1.8.0 packages
+    yum:
+      name:
+      - java-1.8.0-openjdk-devel.x86_64

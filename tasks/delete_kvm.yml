@@ -1,0 +1,17 @@
+---
+- hosts: {{ machine }}
+  connection: local
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: shutdown vm {{ vm_name }}
+    virt:
+        name: "{{ vm_name }}"
+        state: shutdown
+        uri: 'qemu:///system'
+  - name: destory vm {{ vm_name }}
+    command: "virsh undefine {{ vm_name }}"
+  - name: remove vm {{ vm_name }} folder
+    command: "rm -rf {{ vm_data_dir }}"
+  - name: remove {{ vm_name }}.qcow2
+    command: "rm -rf {{kvm_vm_pool_dir}}/{{ vm_name }}.qcow2"

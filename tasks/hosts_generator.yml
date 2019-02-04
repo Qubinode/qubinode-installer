@@ -1,0 +1,62 @@
+---
+- hosts: jumpbox
+  connection: local
+  gather_facts: false
+  become: yes
+  tasks:
+  - stat:
+      path: "{{inventory_dir}}/hosts"
+    register: hosts_check
+  - debug: var=hosts_check
+  - file:
+      path: "{{inventory_dir}}/hosts"
+      state: touch
+      mode: "u=rw,g=r,o=r"
+    when: hosts_check.stat.exists == false
+  - name: Get IP address for {{ vm_name }}
+    shell: "cat {{inventory_dir}}/{{ vm_name }}"
+    register: vm_ip
+  - name: "add {{ vm_name }} to file"
+    lineinfile:
+      path: "{{inventory_dir}}/hosts"
+      line:  "{{ vm_ip.stdout |replace('[\"','') |replace('\"]','')}}  {{ vm_name }} {{ vm_hostname }}"
+      insertbefore: last
+- hosts: master
+  connection: local
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: Get IP address for {{ vm_name }}
+    shell: "cat {{inventory_dir}}/{{ vm_name }}"
+    register: vm_ip
+  - name: "add {{ vm_name }} to file"
+    lineinfile:
+      path: "{{inventory_dir}}/hosts"
+      line:  "{{ vm_ip.stdout |replace('[\"','') |replace('\"]','')}}  {{ vm_name }} {{ vm_hostname }}"
+      insertbefore: last
+- hosts: nodes
+  connection: local
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: Get IP address for {{ vm_name }}
+    shell: "cat {{inventory_dir}}/{{ vm_name }}"
+    register: vm_ip
+  - name: "add {{ vm_name }} to file"
+    lineinfile:
+      path: "{{inventory_dir}}/hosts"
+      line:  "{{ vm_ip.stdout |replace('[\"','') |replace('\"]','')}}  {{ vm_name }} {{ vm_hostname }}"
+      insertbefore: last
+- hosts: lb
+  connection: local
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: Get IP address for {{ vm_name }}
+    shell: "cat {{inventory_dir}}/{{ vm_name }}"
+    register: vm_ip
+  - name: "add {{ vm_name }} to file"
+    lineinfile:
+      path: "{{inventory_dir}}/hosts"
+      line:  "{{ vm_ip.stdout |replace('[\"','') |replace('\"]','')}}  {{ vm_name }} {{ vm_hostname }}"
+      insertbefore: last
