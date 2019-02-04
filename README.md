@@ -33,14 +33,33 @@ sudo ./deploy-rhel7-kvm.sh enviornments/dns_server_env
 ```
 ansible-playbook -i inventory deploy-dns-server.yml  --become
 ```
+9. update inventory.openshift file
+10. Run deploy_openshift_vms.yml playbook
+```
+ansible-playbook -i inventory.openshift deploy_openshift_vms.yml  --become
+```
+# Generate inventory.vm.provision script
+```
+scripts/provision_openshift_nodes.sh
+```
+
+Configure jumpbox
+```
+ansible-playbook -i inventory.vm.ptrovision tasks/openshift_jumpbox.yml
+```
 
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
 
 
+sudo htpasswd -c passwordFile username
+
+
 ## To-Do
 * create [Public Bridge](https://www.linux-kvm.org/page/Networking#Public_Bridge) script
+* write entries to dns server
 * Generate key on jumpbox
+* create a /etc/hosts file for nodes
 * Pass ssh keys automatially
 * Ansible config file edits
   - host_key_checking=False
@@ -48,18 +67,11 @@ ssh-add ~/.ssh/id_rsa
   - sudo_user
 * add ansible become ansible_become=yes to minimal file
 
-# enable subscriuptions on workers
-subscription-manager repos --enable="rhel-7-server-rpms" \
-   --enable="rhel-7-server-extras-rpms" \
-   --enable="rhel-7-server-ose-3.9-rpms" \
-   --enable="rhel-7-fast-datapath-rpms" \
-   --enable="rhel-7-server-ansible-2.4-rpms"
-
 # to minimal file
 openshift_enable_unsupported_configurations=True
 openshift_deployment_type
 
-
+fix penshift_node_labes
 ## Architecture
 
 ## Links

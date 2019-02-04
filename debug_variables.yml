@@ -1,0 +1,6 @@
+- name: Test Inventory Variables
+  hosts: nodes
+  gather_facts: false
+  tasks:
+  - name: get variables
+    debug: var=hostvars[inventory_hostname]
