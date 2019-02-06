@@ -1,0 +1,59 @@
+[jumpbox]
+jumpbox vm_name=jumpbox vm_local_hostname=jumpbox.ocp.example.com.com vm_hostname=jumpbox.ocp.example.com.com vm_data_dir="/home/example/kvmimages/jumpbox_machine" cloud_init_user_data="/home/example/kvmimages/jumpbox_machine/user-data"  cloud_init_meta_data="/home/example/kvmimages/jumpbox_machine/meta-data" cloud_init_iso_image="/home/example/kvmimages/jumpbox_machine/cidata.iso"
+
+[jumpbox:vars]
+vm_cpu=2
+vm_memory=4096
+vm_root_disk_size=30G
+
+[master]
+master vm_name=master vm_local_hostname=master.ocp.example.com.com vm_hostname=master.ocp.example.com.com vm_data_dir="/home/example/kvmimages/master_machine" cloud_init_user_data="/home/example/kvmimages/master_machine/user-data"  cloud_init_meta_data="/home/example/kvmimages/master_machine/meta-data" cloud_init_iso_image="/home/example/kvmimages/master_machine/cidata.iso"
+
+[master:vars]
+vm_cpu=4
+vm_memory=16384
+vm_root_disk_size=120G
+
+[nodes]
+node1 vm_name=node1 vm_local_hostname=node1.ocp.example.com.com vm_hostname=node1.ocp.example.com.com vm_data_dir="/home/example/kvmimages/node1_machine" cloud_init_user_data="/home/example/kvmimages/node1_machine/user-data"  cloud_init_meta_data="/home/example/kvmimages/node1_machine/meta-data" cloud_init_iso_image="/home/example/kvmimages/node1_machine/cidata.iso"
+node2 vm_name=node2 vm_local_hostname=node2.ocp.example.com.com vm_hostname=node2.ocp.example.com.com vm_data_dir="/home/example/kvmimages/node2_machine" cloud_init_user_data="/home/example/kvmimages/node2_machine/user-data"  cloud_init_meta_data="/home/example/kvmimages/node2_machine/meta-data" cloud_init_iso_image="/home/example/kvmimages/node2_machine/cidata.iso"
+
+[nodes:vars]
+vm_cpu=2
+vm_memory=8192
+vm_root_disk_size=80G
+
+[lb]
+lb vm_name=lb vm_local_hostname=lb.ocp.example.com.com vm_hostname=lb.ocp.example.com.com vm_data_dir="/home/example/kvmimages/lb_machine" cloud_init_user_data="/home/example/kvmimages/lb_machine/user-data"  cloud_init_meta_data="/home/example/kvmimages/lb_machine/meta-data" cloud_init_iso_image="/home/example/kvmimages/lb_machine/cidata.iso"
+
+[lb:vars]
+vm_cpu=1
+vm_memory=2048
+vm_root_disk_size=20G
+
+# Create an OSEv3 group that contains the masters and nodes groups
+#[OSEv3:children]
+#masters
+#nodes
+#etcd
+#lb
+#nfs
+
+
+[all:vars]
+kvm_vm_pool_dir="/home/example/kvmimages/"
+vm_recreate=true
+cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
+
+
+manage_dns=true
+dns_servers=[192.168.1.148] # googles ['8.8.8.8','8.8.4.4']
+search_domain=ocp.example.com.com
+
+#RHEL Subscription Info
+rhel_username=example@example.com
+rhel_password=longpassword
+
+#default RHEL user
+rhel_user=user
+rhel_user_password=password123
