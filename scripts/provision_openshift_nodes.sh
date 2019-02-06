@@ -18,3 +18,11 @@ for n in $NODES; do
   NODEIP=$(cat $n | tr -d '"[]",')
   echo "${NODEIP}" >> inventory.vm.provision
 done
+
+
+NODES=$(ls lb*)
+
+for n in $NODES; do
+  NODEIP=$(cat $n | tr -d '"[]",')
+  echo "${NODEIP}" >> inventory.vm.provision
+done

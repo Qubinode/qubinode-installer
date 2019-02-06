@@ -1,6 +1,6 @@
 ---
 - hosts: OSEv3
-  remote_user: {{ rhel_user }}
+  remote_user: "{{ rhel_user }}"
   become: yes
   tasks:
   - name: upgrade all packages
@@ -51,7 +51,7 @@
       name:
         - docker-1.13.1
 - hosts: master
-  remote_user: {{ rhel_user }}
+  remote_user: "{{ rhel_user }}"
   become: yes
   tasks:
   - name: install java-1.8.0 packages

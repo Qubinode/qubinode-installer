@@ -1,6 +1,6 @@
 ---
 - hosts: jumpboxdeploy
-  remote_user: {{ rhel_user }}
+  remote_user: "{{ rhel_user }}"
   become: yes
   tasks:
   - name: upgrade all packages
@@ -44,8 +44,11 @@
         - ansible
         - pyOpenSSL
         - docker
+        - device-mapper-event-libs
+        - device-mapper-libs
         - httpd-tools
         - java-1.8.0-openjdk-devel.x86_64
+        - tmux
       state: present
   - name: Cloning OpenShift release-3.9 to machine
     git:
@@ -55,8 +58,8 @@
   - name: change openshift-ansible owner to {{ rhel_user }}
     file:
       path: /home/{{ rhel_user }}/openshift-ansible
-      owner: {{ rhel_user }}
-      group: {{ rhel_user }}
+      owner: "{{ rhel_user }}"
+      group: "{{ rhel_user }}"
       mode: 0775
   - name: Cloning  Bash full of Colors to machine
     git:

@@ -1,5 +1,5 @@
 ---
-- hosts: {{ machine }}
+- hosts: "{{ machine }}"
   connection: local
   gather_facts: false
   become: yes
