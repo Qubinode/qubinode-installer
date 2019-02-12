@@ -1,27 +1,32 @@
-[singlenode]
-nodename
+[example]
+example vm_name=example vm_local_hostname=example.ocp.tosinakinosho.com vm_hostname=example.ocp.tosinakinosho.com vm_data_dir="/home/example_user/kvmimages/example_machine" cloud_init_user_data="/home/example_user/kvmimages/example_machine/user-data"  cloud_init_meta_data="/home/example_user/kvmimages/example_machine/meta-data" cloud_init_iso_image="/home/example_user/kvmimages/example_machine/cidata.iso"
 
-[singlenode:vars]
-vm_name=nodename
-vm_local_hostname=nodename.example.com
-vm_hostname=nodename.example.com
-vm_data_dir="/home/takinosho/kvmimages/nodename_machine"
-# Environment Variables for DNS Server
-kvm_vm_pool_dir="/home/takinosho/kvmimages/"
-# Cloud Init Config
-vm_recreate=true
-cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
-cloud_init_user_data="/home/takinosho/kvmimages/nodename_machine/nodename/user-data"
-cloud_init_meta_data="/home/takinosho/kvmimages/nodename_machine/nodename/meta-data"
-cloud_init_iso_image="/home/takinosho/kvmimages/nodename_machine/nodename/cidata.iso"
-manage_dns=true
-dns_servers="'192.168.1.148'" # googles ['8.8.8.8','8.8.4.4']
-search_domain=example.com
+[example:vars]
 vm_cpu=2
-vm_memory=2048
+vm_memory=4096
 vm_root_disk_size=20G
 
 [all:vars]
+kvm_vm_pool_dir="/home/example_user/kvmimages/"
+vm_recreate=true
+cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
+manage_dns=true
+dns_servers=[1.1.1.1] # googles ['8.8.8.8','8.8.4.4']
+search_domain=example.com
+# Storage Options
+# block_size "bs" is the block size that will be used to read and/ or write the file. Increasing this can help with performance  or dictate how much data will be read or written.
+# count is the number of blocks that will be used.
+# normal External storage Options could be used for containers
+
+externalstorage=false
+ext_block_size=1M
+ext_block_count=1024
+
+# GlusterFS storage Options can be  used with OpenShift deployments
+glusterstorage=false
+gluster_block_size=1M
+gluster_block_count=1024
+
 #RHEL Subscription Info
 rhel_username=example@example.com
 rhel_password=example
