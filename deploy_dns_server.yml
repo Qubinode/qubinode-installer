@@ -8,14 +8,14 @@
   vars:
     bind_listen_ipv4: ['any']
     bind_allow_query: ['any']
-    bind_zone_master_server_ip: 10.90.30.176
+    bind_zone_master_server_ip: 192.168.1.15
     bind_forwarders: [1.1.1.1,8.8.8.8]
     bind_recursion: true
-    bind_zone_name: tosinakinosho.com
+    bind_zone_name: example.com
     bind_zone_networks:
-      - "10.90.30"
+      - "192.168.1"
     bind_zone_domains:
-    - name: tosinakinosho.com
-      ip: 10.90.30.176
+    - name: example.com
+      ip: 192.168.1.15
       aliases:
         - ns
