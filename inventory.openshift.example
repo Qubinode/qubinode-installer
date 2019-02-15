@@ -1,0 +1,83 @@
+[jumpbox]
+jumpbox vm_name=jumpbox vm_local_hostname=jumpbox.ocp.example.com vm_hostname=jumpbox.ocp.example.com vm_data_dir="/kvmdata/jumpbox_machine" cloud_init_user_data="/kvmdata/jumpbox_machine/user-data"  cloud_init_meta_data="/kvmdata/jumpbox_machine/meta-data" cloud_init_iso_image="/kvmdata/jumpbox_machine/cidata.iso"
+
+[jumpbox:vars]
+vm_cpu=2
+vm_memory=4096
+vm_root_disk_size=80G
+# Directory for storing pushed images on registry host.
+docker_registry_host="jumpbox.ocp.example.com"
+# Port to expose to host machine, for use in reverse proxy.
+docker_registry_expose_port=5000
+
+[master]
+master vm_name=master vm_local_hostname=master.ocp.example.com vm_hostname=master.ocp.example.com vm_data_dir="/kvmdata/master_machine" cloud_init_user_data="/kvmdata/master_machine/user-data"  cloud_init_meta_data="/kvmdata/master_machine/meta-data" cloud_init_iso_image="/kvmdata/master_machine/cidata.iso"
+
+[master:vars]
+vm_cpu=4
+vm_memory=16384
+vm_root_disk_size=20G
+#Storage Options
+#block_size "bs" is the block size that will be used to read and/ or write the file. Increasing this can help with performance  or dictate how much data will be read or written.
+#count is the number of blocks that will be used.
+#normal External storage Options could be used for containers
+externalstorage=true
+ext_block_size=60G
+ext_block_count=1024
+# GlusterFS storage Options can be  used with OpenShift deployments
+glusterstorage=false
+gluster_block_size=200G
+
+
+[nodes]
+node1 vm_name=node1 vm_local_hostname=node1.ocp.example.com vm_hostname=node1.ocp.example.com vm_data_dir="/kvmdata/node1_machine" cloud_init_user_data="/kvmdata/node1_machine/user-data"  cloud_init_meta_data="/kvmdata/node1_machine/meta-data" cloud_init_iso_image="/kvmdata/node1_machine/cidata.iso"
+node2 vm_name=node2 vm_local_hostname=node2.ocp.example.com vm_hostname=node2.ocp.example.com vm_data_dir="/kvmdata/node2_machine" cloud_init_user_data="/kvmdata/node2_machine/user-data"  cloud_init_meta_data="/kvmdata/node2_machine/meta-data" cloud_init_iso_image="/kvmdata/node2_machine/cidata.iso"
+node3 vm_name=node3 vm_local_hostname=node3.ocp.example.com vm_hostname=node3.ocp.example.com vm_data_dir="/kvmdata/node3_machine" cloud_init_user_data="/kvmdata/node3_machine/user-data"  cloud_init_meta_data="/kvmdata/node3_machine/meta-data" cloud_init_iso_image="/kvmdata/node3_machine/cidata.iso"
+
+[nodes:vars]
+vm_cpu=1
+vm_memory=8192
+vm_root_disk_size=20G
+#Storage Options
+#block_size "bs" is the block size that will be used to read and/ or write the file. Increasing this can help with performance  or dictate how much data will be read or written.
+#count is the number of blocks that will be used.
+#normal External storage Options could be used for containers
+externalstorage=true
+ext_block_size=60G
+# GlusterFS storage Options can be  used with OpenShift deployments
+glusterstorage=false
+gluster_block_size=200G
+
+
+#[lb]
+#lb vm_name=lb vm_local_hostname=lb.ocp.example.com vm_hostname=lb.ocp.example.com vm_data_dir="/kvmdata/lb_machine" cloud_init_user_data="/kvmdata/lb_machine/user-data"  cloud_init_meta_data="/kvmdata/lb_machine/meta-data" cloud_init_iso_image="/kvmdata/lb_machine/cidata.iso"
+
+#[lb:vars]
+#vm_cpu=1
+#vm_memory=2048
+#vm_root_disk_size=20G
+
+# Create an OSEv3 group that contains the masters and nodes groups
+#[OSEv3:children]
+#masters
+#nodes
+#etcd
+#lb
+#nfssudo
+
+
+[all:vars]
+kvm_vm_pool_dir="/kvmdata/"  # path to your kvm directory for vm images
+vm_recreate=true
+cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
+manage_dns=true
+dns_servers=[192.168.1.25] # googles ['8.8.8.8','8.8.4.4']
+search_domain=ocp.example.com
+
+#RHEL Subscription Info
+rhel_username=example@example.com
+rhel_password=Str0nGPa33word
+
+#default RHEL user
+rhel_user=example_user
+rhel_user_password=Str0nGPa33word
