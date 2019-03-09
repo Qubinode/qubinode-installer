@@ -1,28 +1,35 @@
 #!/bin/bash
 set -xe
-JUMPBOXIP=$(cat jumpbox | tr -d '"[]",')
+
+if [[ -f jumpbox ]]; then
+  JUMPBOXIP=$(cat jumpbox | tr -d '"[]",')
 cat <<EOF > inventory.vm.provision
 [jumpboxdeploy]
 ${JUMPBOXIP}
 
 EOF
+fi
 
 echo "[OSEv3]" >> inventory.vm.provision
-
-MASTERIP=$(cat master | tr -d '"[]",')
-echo "${MASTERIP}" >> inventory.vm.provision
-
-NODES=$(ls node*)
-
-for n in $NODES; do
-  NODEIP=$(cat $n | tr -d '"[]",')
-  echo "${NODEIP}" >> inventory.vm.provision
-done
+if [[ -f master ]]; then
+  MASTERIP=$(cat master | tr -d '"[]",')
+  echo "${MASTERIP}" >> inventory.vm.provision
+fi
 
 
-NODES=$(ls lb*)
+  NODES=$(ls node*)
 
-for n in $NODES; do
-  NODEIP=$(cat $n | tr -d '"[]",')
-  echo "${NODEIP}" >> inventory.vm.provision
-done
+  for n in $NODES; do
+    NODEIP=$(cat $n | tr -d '"[]",')
+    echo "${NODEIP}" >> inventory.vm.provision
+  done
+
+
+
+if [[ -f lb* ]]; then
+  NODES=$(ls lb*)
+  for n in $NODES; do
+    NODEIP=$(cat $n | tr -d '"[]",')
+    echo "${NODEIP}" >> inventory.vm.provision
+  done
+fi
