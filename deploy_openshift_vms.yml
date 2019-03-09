@@ -1,0 +1,17 @@
+---
+- hosts: jumpbox
+  gather_facts: false
+  roles:
+    - tosin2013.rhel7_kvm_cloud_init
+- hosts: master
+  gather_facts: false
+  roles:
+    - tosin2013.rhel7_kvm_cloud_init
+- hosts: nodes
+  gather_facts: false
+  roles:
+    - tosin2013.rhel7_kvm_cloud_init
+- hosts: lb
+  gather_facts: false
+  roles:
+    - tosin2013.rhel7_kvm_cloud_init
