@@ -27,18 +27,64 @@
     rhsm_repository:
       name: rhel-7-server-ansible-2.6-rpms
       state: enabled
+    when:
+      - ansible_distribution == "RedHat"
   - name: Enable rhel-7-server-rpms repository
     rhsm_repository:
       name: rhel-7-server-rpms
-      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
   - name: Enable rhel-7-server-extras-rpms repository
     rhsm_repository:
       name: rhel-7-server-extras-rpms
       state: enabled
+    when:
+      - ansible_distribution == "RedHat"
   - name: Enable rhel-7-server-optional-rpms repository
     rhsm_repository:
       name: rhel-7-server-optional-rpms
       state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Add Docker repo
+    get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docker-ce.repo
+    when:
+      - ansible_distribution == "CentOS"
+  - name: install base packages
+    yum:
+      name:
+        - pyOpenSSL
+        - device-mapper-event-libs
+        - device-mapper-libs
+        - httpd-tools
+        - java-1.8.0-openjdk-devel.x86_64
+        - tmux
+        - patch
+        - lvm2
+        - docker-ce
+        - epel-release
+        - python-pip
+      state: present
+    when:
+      - ansible_distribution == "CentOS"
+  - name: Run script to modifiy terminal layout
+    shell: |
+         pip install passlib
+    when:
+      - ansible_distribution == "CentOS"
+  - name: Download ansible-2.6.5 rpm for centos
+    get_url:
+      url: https://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ansible-2.6.5-1.el7.ans.noarch.rpm
+      dest: /tmp/ansible-2.6.5-1.el7.ans.noarch.rpm
+    when:
+      - ansible_distribution == "CentOS"
+  - name: Installing ansible-2.6.5-1.el7.ans.noarch.rpm on CentOS.
+    shell: |
+      yum install /tmp/ansible-2.6.5-1.el7.ans.noarch.rpm -y >> ansibleinstall.log
+    when:
+      - ansible_distribution == "CentOS"
   - name: Install a list of packages
     yum:
       name:
@@ -50,7 +96,10 @@
         - httpd-tools
         - java-1.8.0-openjdk-devel.x86_64
         - tmux
+        - patch
       state: present
+    when:
+      - ansible_distribution == "RedHat"
   - name: Cloning OpenShift release-3.11 to machine
     git:
       repo: 'https://github.com/openshift/openshift-ansible.git'
