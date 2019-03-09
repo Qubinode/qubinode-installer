@@ -1,0 +1,21 @@
+---
+- hosts: "{{ machinename }}"
+  remote_user: "{{ rhel_user }}"
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: example copying file with owner and permissions
+    copy:
+      src: "{{inventory_dir}}/hosts"
+      dest: /tmp/hosts
+      owner: "{{ rhel_user }}"
+      group: "{{ rhel_user }}"
+      mode: 0644
+  - name: Saving hosts file
+    command: cat /tmp/hosts
+    register: hosts_file
+  - name: insert/update eth0 configuration stanza in /etc/hosts
+    blockinfile:
+      path: /etc/hosts
+      block: |
+          {{ hosts_file.stdout }}

@@ -1,0 +1,131 @@
+---
+- hosts: OSEv3
+  remote_user: "{{ rhel_user }}"
+  become: yes
+  tasks:
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
+      - wget
+      - git
+      - net-tools
+      - bind-utils
+      - yum-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      state: present
+  - name: Enable rhel-7-server-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-extras-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-extras-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-ose-3.11-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ose-3.11-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-fast-datapath-rpms repository
+    rhsm_repository:
+      name: rhel-7-fast-datapath-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-ansible-2.6-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ansible-2.6-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-optional-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-optional-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
+    rhsm_repository:
+      name: rh-gluster-3-client-for-rhel-7-server-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+      - glusterstorage
+  - name: Install glusterfs-fuse
+    yum:
+      name:
+        - glusterfs-fuse
+    when:
+      - ansible_distribution == "RedHat"
+      - glusterstorage
+  - name: Install docker-1.13.1
+    yum:
+      name:
+        - docker-1.13.1
+    when:
+      - ansible_distribution == "RedHat"
+  - name: install centos dependent packages
+    yum:
+      name:
+        - pyOpenSSL
+        - device-mapper-event-libs
+        - device-mapper-libs
+        - httpd-tools
+        - java-1.8.0-openjdk-devel.x86_64
+        - tmux
+        - lvm2
+        - NetworkManager
+        - centos-release-gluster
+      state: present
+    when:
+      - ansible_distribution == "CentOS"
+  - name: enable NetworkManager for Openshift use CentOS
+    systemd:
+      name: NetworkManager
+      state: started
+      enabled: yes
+    when:
+      - ansible_distribution == "CentOS"
+  - name: install glusterfs-server packages
+    yum:
+      name:
+        - glusterfs-server
+      state: present
+    when:
+      - ansible_distribution == "CentOS"
+      - glusterstorage
+  - name: create docker-storage-setup file
+    copy:
+      dest: "/etc/sysconfig/docker-storage-setup"
+      content: |
+        STORAGE_DRIVER=overlay2
+        DEVS=/dev/vdb
+        VG=docker-vg
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Run  docker-storage-setup
+    command: docker-storage-setup
+    when:
+      - ansible_distribution == "RedHat"
+- hosts: master #remove
+  remote_user: "{{ rhel_user }}"
+  become: yes
+  tasks:
+  - name: install java-1.8.0 packages
+    yum:
+      name:
+      - java-1.8.0-openjdk-devel.x86_64

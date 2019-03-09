@@ -1,0 +1,12 @@
+---
+- hosts: "{{ machinename }}"
+  remote_user: "{{ rhel_user }}"
+  become: yes
+  tasks:
+  - name: Start service docker, if not started
+    service:
+      name:  docker
+      state: started
+  - name: Start Docker regisiry
+    shell: |
+      docker run -d -p 5000:5000 --restart=always --name registry registry:2
