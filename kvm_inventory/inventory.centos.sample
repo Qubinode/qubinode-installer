@@ -47,7 +47,7 @@ vm_root_disk_size=20G
 [all:vars]
 kvm_vm_pool_dir="/home/example/kvmimages/"
 vm_recreate=true
-cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
+#cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
 
 
 manage_dns=true
@@ -55,9 +55,9 @@ dns_servers=[192.168.1.148] # googles ['8.8.8.8','8.8.4.4']
 search_domain=ocp.example.com.com
 
 #RHEL Subscription Info
-rhel_username=example@example.com
-rhel_password=longpassword
+#rhel_username=example@example.com
+#rhel_password=longpassword
 
 #default RHEL user
-rhel_user=user
-rhel_user_password=password123
+#rhel_user=user
+#rhel_user_password=password123
