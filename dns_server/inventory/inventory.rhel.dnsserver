@@ -1,0 +1,26 @@
+[dns_server]
+dnsserver vm_name=dnsserver_other vm_local_hostname=dnsserver.example.com vm_hostname=dnsserver.example.com vm_data_dir="/home/takinosho/kvmimages/dnsserver_machine" cloud_init_user_data="/home/takinosho/kvmimages/dnsserver_machine/user-data"  cloud_init_meta_data="/home/takinosho/kvmimages/dnsserver_machine/meta-data" cloud_init_iso_image="/home/takinosho/kvmimages/dnsserver_machine/cidata.iso"
+
+[dns_server:vars]
+vm_cpu=1
+vm_memory=2048
+vm_root_disk_size=20G
+
+[all:vars]
+kvm_vm_pool_dir="/kvmdata/"
+vm_recreate=true
+#uncomment and edit if using RHEL
+cloud_init_vm_image="rhel-server-7.6-x86_64-kvm.qcow2"
+manage_dns=true
+dns_servers=[127.0.0.1] #DO NOT CHANGE THIS
+search_domain=example.com #CHANGEME
+
+#uncomment and edit if using RHEL
+#RHEL Subscription Info
+rhel_username=user@redhat.com
+rhel_password=Str0nGpAssW0rd
+
+
+#default RHEL user
+rhel_user=example
+rhel_user_password=P@ss3w0rD

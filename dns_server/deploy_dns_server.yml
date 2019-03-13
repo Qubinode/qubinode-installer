@@ -1,21 +1,22 @@
 # https://github.com/bertvv/ansible-role-bind/blob/docker-tests/test.yml
+# https://github.com/bertvv/ansible-role-bind
 ---
 - hosts: dns_server
-  remote_user: tosin
+  remote_user: "{{ rhel_user }}"
   become: yes
   roles:
   - blofeldthefish.ansible-role-bind
   vars:
     bind_listen_ipv4: ['any']
     bind_allow_query: ['any']
-    bind_zone_master_server_ip: 192.168.1.15
+    bind_zone_master_server_ip: 0.0.0.0
     bind_forwarders: [1.1.1.1,8.8.8.8]
     bind_recursion: true
     bind_zone_name: example.com
     bind_zone_networks:
-      - "192.168.1"
+      - "0.0.0"
     bind_zone_domains:
     - name: example.com
-      ip: 192.168.1.15
+      ip: 0.0.0.0
       aliases:
         - ns

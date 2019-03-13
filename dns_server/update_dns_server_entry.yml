@@ -1,0 +1,14 @@
+---
+- hosts: dns_server
+  remote_user: "{{ rhel_user }}"
+  become: yes
+  gather_facts: false
+  tasks:
+  - name: Add or modify ansible.example.com A to 192.168.1.1"
+    nsupdate:
+      key_name: "example.com."
+      key_secret: "dummykey=="
+      server: "192.168.1.5"
+      zone: "example.com."
+      record: "ansible"
+      value: "192.168.1.10"

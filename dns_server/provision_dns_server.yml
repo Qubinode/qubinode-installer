@@ -1,0 +1,56 @@
+- hosts: dns_server
+  remote_user: "{{rhel_user}}"
+  become: yes
+  tasks:
+  - name: update resolve.conf with temp dns for package installation
+    blockinfile:
+      path: /etc/resolv.conf
+      block: |
+        nameserver 8.8.8.8
+        nameserver 1.1.1.1
+  - name: Register as auto-subscribe to red hat subscription.
+    redhat_subscription:
+      state: present
+      username: "{{ rhel_username }}"
+      password: "{{ rhel_password }}"
+      auto_attach: true
+    when:
+      - ansible_distribution == "RedHat"
+  - name: update dhclient.conf with loopback for dns
+    blockinfile:
+      path: /etc/dhcp/dhclient.conf
+      block: |
+        supersede domain-name-servers 127.0.0.1;
+    when:
+      - ansible_distribution == "CentOS"
+  - name: update ifcfg-eth0 with  loopback for dns
+    blockinfile:
+      path:  /etc/sysconfig/network-scripts/ifcfg-eth0
+      block: |
+        PEERDNS=no
+        nameserver 127.0.0.1
+    when:
+      - ansible_distribution == "RedHat"
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install epel-release packages
+    yum:
+      name:
+        - epel-release
+      state: present
+    when:
+      - ansible_distribution == "CentOS"
+  - name: install python-pip packages
+    yum:
+      name:
+        - python-pip
+      state: present
+    when:
+      - ansible_distribution == "CentOS"
+  - name: Run script to modifiy terminal layout
+    shell: |
+        pip install dnspython
+    when:
+      - ansible_distribution == "CentOS"
