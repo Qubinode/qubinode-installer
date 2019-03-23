@@ -13,7 +13,7 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * mkdir ~/keys
 * mkdir /kvmdata/
 * oVirt or Red Hat Virtualation with OpenvSwith
-* preconfigured [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
+* KVM and preconfigured [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
 
 ## Quick start
 * install the following roles
@@ -126,8 +126,10 @@ ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
 * create [Public Bridge](https://www.linux-kvm.org/page/Networking#Public_Bridge) script
 * Cleanup functions in start_deployment.sh
 * OCP 4.1 Compatibility
-* better documetnation
-* finish manual install documentation  
+* Ansible Tower Integration
+* better documentation
+* finish manual install documentation
+* Add Architecture documentation
 
 
 ## Uninstall openshift
