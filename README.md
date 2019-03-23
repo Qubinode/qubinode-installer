@@ -10,18 +10,31 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * RHEL7 or CENTOS7
 * dnspython
 * pip [How to install pip on Red Hat Enterprise Linux?](https://access.redhat.com/solutions/1519803)
+* mkdir ~/keys
+* mkdir /kvmdata/
+* oVirt or Red Hat Virtualation with OpenvSwith
+* preconfigured [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
 
-## Quick start CentOS
+## Quick start
+* install the following roles
+  - for centos deployments ```ansible-galaxy install tosin2013.kvm_cloud_init_vm```
+  - for RHEL deployments ```ansible-galaxy install tosin2013.rhel7_kvm_cloud_init```
+  - for bind server ```ansible-galaxy install bertvv.bind```
+* (optional) deploy dns server
+  -
+  ```
+  $ ./dns_server/deploy_dns_server.sh
+  Usage for centos deployment: ./dns_server/deploy_dns_server.sh centos inventory.centos.dnsserver
+  Usage for rhel deployment: ./dns_server/deploy_dns_server.sh rhel inventory.rhel.dnsserver username
+  ```
 * Modify inventory.openshift
 * Modify inventory.3.11.centos.gluster
 * Run ./start_deployment.sh
 ```
 ./start_deployment.sh  centos inventory.openshift inventory.3.11.centos.gluster
+./start_deployment.sh  rhel inventory.openshift inventory.3.11.rhel.gluster
 ```
 * To Delete Run ./delete_openshift_deployment.sh inventory.openshift
-
-
-## Quick start Red Hat  
 
 ## Manual Deployment
 
@@ -36,7 +49,7 @@ ssh-add ~/.ssh/id_rsa
 2. Configure networking See [link](https://www.linux-kvm.org/page/Networking#Public_Bridge) I am using openvswitch in my deployment
 3. Install  kvm_cloud_init_vm  to do automated installed of kvm via ansible
 ```
-ansible-galaxy install exampleuser2013.kvm_cloud_init_vm
+ansible-galaxy install tosin2013.kvm_cloud_init_vm
 ```
 4. Install and configure dns server
 ```
@@ -110,15 +123,12 @@ ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
 ```
 
 ## To-Do
-* Change /etc/resolv.conf to 127.0.0.1 on dns server
 * create [Public Bridge](https://www.linux-kvm.org/page/Networking#Public_Bridge) script
-* write entries to dns server
-* Ansible config file edits
-  - host_key_checking=False
-  - private_key_file=/home/exampleuser/.ssh/id_rsa
-  - sudo_user
-* add ansible become ansible_become=yes to minimal file
-* add additional hard drive for containers on nodes
+* Cleanup functions in start_deployment.sh
+* OCP 4.1 Compatibility
+* better documetnation
+* finish manual install documentation  
+
 
 ## Uninstall openshift
 ansible-playbook -i inventory.redhat  playbooks/adhoc/uninstall.yml
