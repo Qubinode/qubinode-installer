@@ -10,11 +10,11 @@ if [[ -z $1 ]]; then
 fi
 
 function dellall() {
-  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=jumpbox"
-  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=master"
-  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=nodes"
-  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=lb"
-  rm -rf jumpbox master node1 node2 node3 lb hosts
+  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=jumpbox" || exit 1
+  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=master" || exit 1
+  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=nodes" || exit 1
+  sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=lb" || exit 1
+  rm -rf jumpbox master node1 node2 node3 lb hosts inventory.vm.provision
 }
 
 function selectone() {
@@ -24,22 +24,22 @@ function selectone() {
   do
     case $opt in
         "jumpbox")
-            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=jumpbox"
+            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=jumpbox" || exit 1
             rm jumpbox
             echo "Type 5 to exit."
             ;;
         "master")
-            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=master"
+            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=master" || exit 1
             rm master
             echo "Type 5 to exit."
             ;;
         "nodes")
-            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=nodes"
+            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=nodes" || exit 1
             rm node1 node2 node3
             echo "Type 5 to exit."
             ;;
         "lb")
-            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=lb"
+            sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=lb" || exit 1
             rm lb
             echo "Type 5 to exit."
             ;;
