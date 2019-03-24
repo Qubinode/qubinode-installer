@@ -3,6 +3,18 @@
   remote_user: "{{ rhel_user }}"
   become: yes
   tasks:
+  - name: Add EPEL repository for CentOS deployments
+    yum_repository:
+      name: epel
+      description: EPEL YUM repo
+      baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+    when:
+      - ansible_distribution == "CentOS"
+  - name: Importing rpm gpg-key for CentOS deployments.
+    shell: |
+       rpm --import http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7 >> /tmp/epelgpgimport.log
+    when:
+      - ansible_distribution == "CentOS"
   - name: upgrade all packages
     yum:
       name: '*'
@@ -52,7 +64,23 @@
       dest: /etc/yum.repos.d/docker-ce.repo
     when:
       - ansible_distribution == "CentOS"
-  - name: install base packages
+  - name: install required packages for CENTOS
+    yum:
+      name:
+        - pyOpenSSL
+        - device-mapper-event-libs
+        - device-mapper-libs
+        - httpd-tools
+        - java-1.8.0-openjdk-devel.x86_64
+        - tmux
+        - patch
+        - lvm2
+        - docker-ce
+        - python-pip
+      state: present
+    when:
+      - ansible_distribution == "CentOS"
+  - name: install required packages for RHEL
     yum:
       name:
         - pyOpenSSL
@@ -68,7 +96,7 @@
         - python-pip
       state: present
     when:
-      - ansible_distribution == "CentOS"
+      - ansible_distribution == "RedHat"
   - name: Run script to modifiy terminal layout
     shell: |
          pip install passlib
@@ -82,7 +110,7 @@
       - ansible_distribution == "CentOS"
   - name: Installing ansible-2.6.5-1.el7.ans.noarch.rpm on CentOS.
     shell: |
-      yum install /tmp/ansible-2.6.5-1.el7.ans.noarch.rpm -y >> ansibleinstall.log
+      yum install /tmp/ansible-2.6.5-1.el7.ans.noarch.rpm -y >> /tmp/ansibleinstall.log
     when:
       - ansible_distribution == "CentOS"
   - name: Install a list of packages
