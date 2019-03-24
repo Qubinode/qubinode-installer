@@ -1,0 +1,16 @@
+- hosts: dns_server
+  remote_user: "{{rhel_user}}"
+  become: yes
+  tasks:
+  - name: update named.conf with new zone {{ zone_name }}
+    blockinfile:
+      path: /etc/named.conf
+      block: |
+        zone "{{ zone_name }}.{{ domain_name }}" IN {
+          type master;
+          file "{{ domain_name }}";
+          notify yes;
+          allow-update { none; };
+        };
+  - name: runing configure dns keys on server
+    script: configure_dns_keys.sh "{{ key_name }}"  "{{ domain_name }}"  "{{ zone_name }}"

@@ -38,6 +38,13 @@
   - name: install epel-release packages
     yum:
       name:
+        - python-dns
+      state: present
+    when:
+      - ansible_distribution == "RedHat"
+  - name: install epel-release packages
+    yum:
+      name:
         - epel-release
       state: present
     when:

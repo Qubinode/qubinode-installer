@@ -4,11 +4,12 @@
   become: yes
   gather_facts: false
   tasks:
-  - name: Add or modify ansible.example.com A to 192.168.1.1"
+  - include_vars: dns_key/dns_key
+  - name: Add or modify {{ a_record }} A to {{ ip_address }}"
     nsupdate:
-      key_name: "example.com."
-      key_secret: "dummykey=="
-      server: "192.168.1.5"
+      key_name: "example.key"
+      key_secret: "{{ vault_dns_key }}"
+      server: "0.0.0.0"
       zone: "example.com."
-      record: "ansible"
-      value: "192.168.1.10"
+      record: "{{ a_record }}"
+      value: "{{ ip_address }}"
