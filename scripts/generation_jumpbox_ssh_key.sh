@@ -8,5 +8,8 @@ fi
 lastip=`echo "$2" | sed 's/^.*\.\([^.]*\)$/\1/'`
 echo $lastip
 
+echo -e "\e[32m************************\e[0m"
+echo -e "\e[32mGenerate SSH-KEY for jumpbox ${2}\e[0m"
+echo -e "\e[32m************************\e[0m"
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  $1@$2 "ssh-keygen"
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  $1@$2 "cat ~/.ssh/id_rsa.pub" > /home/$USER/keys/jumpbox.${lastip}.pub

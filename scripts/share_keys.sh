@@ -5,6 +5,9 @@ if [[ -z $1 ]] && [[ -z $2 ]]; then
   exit 1
 fi
 
+echo -e "\e[32m************************\e[0m"
+echo -e "\e[32mSharing  ssh-key keys with ${2}\e[0m"
+echo -e "\e[32m************************\e[0m"
 USERNAME=${2}
 KEYDIRECTORY=~/keys
 KEYPATH=$(ls -p ${KEYDIRECTORY})
