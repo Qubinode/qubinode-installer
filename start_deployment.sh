@@ -169,7 +169,13 @@ function set_arecord() {
     for n in $NODES; do
       NODEIP=$(cat $n | tr -d '"[]",')
       ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}.${DOMAINPREFIX}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}" --vault-password-file=ansible-vault.pass || exit 1
+      INFRANODE=$(cat inventory.3.11.centos.gluster | grep node-config-infra | tr   = " " | awk '{print $1}')
+      if [[ $n ==  $INFRANODE ]]; then
+        APPENDPOINT=$(cat inventory.3.11.centos.gluster | grep openshift_master_default_subdomain= | tr   = " " | awk '{print $2}')
+        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}" --vault-password-file=ansible-vault.pass || exit 1
+      fi
     done
+
 
   rm  ansible-vault.pass
 
