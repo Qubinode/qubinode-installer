@@ -6,9 +6,9 @@
     blockinfile:
       path: /etc/named.conf
       block: |
-        zone "{{ zone_name }}.{{ domain_name }}" IN {
+        zone "{{ zone_name }}" IN {
           type master;
-          file "{{ domain_name }}";
+          file "{{ key_name }}";
           notify yes;
           allow-update { none; };
         };

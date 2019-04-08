@@ -22,8 +22,11 @@ function display_help() {
 }
 
 function collectdnsinfo() {
+  echo -e "\e[32m************************\e[0m"
+  echo -e "\e[32m*ENTER DNS enviornment information. \e[0m"
+  echo -e "\e[32m************************\e[0m"
     read -p "Enter your dns zone name (Example: example.com): " DEFAULTDNSNAME
-    read -p "Enter your bind zone networks (Example: 192.168.1): " DNSZONE
+    read -p "Enter your bind zone networks (Example: 192.168.1): " DNSZONE #Add DNS Zone validation
 }
 
 function collectuserpassword() {
@@ -103,7 +106,14 @@ echo $lastip || exit 1
     sed -ri 's/^(\s*)(bind_zone_name\s*:\s*example.com\s*$)/\    bind_zone_name: '$DEFAULTDNSNAME'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
     sed -ri 's/(      - "0.0.0")/\      - "'$DNSZONE'" /'  $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
 
+    echo -e "\e[32m************************\e[0m"
+    echo -e "\e[32m*ENTER sudo password to provision dns server. \e[0m"
+    echo -e "\e[32m************************\e[0m"
     $USESUDO ansible-playbook -i inventory.vm.dnsserver  $FULLPATH/dns_server/provision_dns_server.yml  --extra-vars="rhel_user=centos"  || exit 1
+
+    echo -e "\e[32m************************\e[0m"
+    echo -e "\e[32m*Configuring bind server please enter sudo password: \e[0m"
+    echo -e "\e[32m************************\e[0m"
     $USESUDO ansible-playbook -i inventory.vm.dnsserver  $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml --extra-vars="rhel_user=centos"  || exit 1
 
     ansible-playbook   -i inventory.vm.dnsserver tasks/restart_vm.yml  --extra-vars="rhel_user=centos"
@@ -142,7 +152,13 @@ echo $lastip || exit 1
     sed -ri 's/(      - "0.0.0")/\      - "'$DNSZONE'" /'  $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
 
     collectuserpassword
+    echo -e "\e[32m************************\e[0m"
+    echo -e "\e[32m*ENTER sudo password to provision dns server. \e[0m"
+    echo -e "\e[32m************************\e[0m"
     $USESUDO ansible-playbook -i inventory.vm.dnsserver  $FULLPATH/dns_server/provision_dns_server.yml  --extra-vars="rhel_user=$3"    --extra-vars="rhel_username=$RHEL_USERNAME"   --extra-vars="rhel_password=$RHEL_PASSWORD" || exit 1
+    echo -e "\e[32m************************\e[0m"
+    echo -e "\e[32m*Configuring bind server please enter sudo password: \e[0m"
+    echo -e "\e[32m************************\e[0m"
     $USESUDO ansible-playbook -i inventory.vm.dnsserver  $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml --extra-vars="rhel_user=$3"  || exit 1
     ansible-playbook   -i inventory.vm.dnsserver tasks/restart_vm.yml  --extra-vars="rhel_user=$3"
   else

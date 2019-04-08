@@ -27,22 +27,22 @@ key ${KEYNAME} {
 };
 EOF
 
-
+DNSSERVERIP=$(hostname --ip-address)
 cat  <<EOF > /var/named/${KEYNAME}
-\$ORIGIN ${ZONE_NAME}.${DOMAIN_NAME}.
+\$ORIGIN ${ZONE_NAME}.
 \$TTL 1W
 
-@ IN SOA dnsserver.${ZONE_NAME}.${DOMAIN_NAME}. hostmaster.${ZONE_NAME}.${DOMAIN_NAME}. (
+@ IN SOA dnsserver.${ZONE_NAME}. hostmaster.${ZONE_NAME}. (
   19031602
   1D
   1H
   1W
   1D )
 
-                     IN  NS     dnsserver.${ZONE_NAME}.${DOMAIN_NAME}.
+                     IN  NS     dnsserver.${ZONE_NAME}.
 
 
-dnsserver            IN A     10.90.30.210
+dnsserver            IN A     ${DNSSERVERIP}
 EOF
 
   sed -i '/include "\/etc\/named.rfc1912.zones";/a include "\/etc\/named\/'${KEYNAME}'.";' /etc/named.conf || exit 1

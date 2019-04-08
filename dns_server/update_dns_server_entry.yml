@@ -10,6 +10,6 @@
       key_name: "example.key"
       key_secret: "{{ vault_dns_key }}"
       server: "0.0.0.0"
-      zone: "example.com."
+      zone: "example.com"
       record: "{{ a_record }}"
       value: "{{ ip_address }}"
