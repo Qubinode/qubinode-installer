@@ -11,7 +11,7 @@ if [[ -z $1 ]]; then
 fi
 
 KEYNAME=$1
-DOMAIN_NAME=$2
+SERVER_IP=$2
 ZONE_NAME=$3
 
 cd  /etc/named
@@ -46,7 +46,7 @@ dnsserver            IN A     ${DNSSERVERIP}
 EOF
 
   sed -i '/include "\/etc\/named.rfc1912.zones";/a include "\/etc\/named\/'${KEYNAME}'.";' /etc/named.conf || exit 1
-  sed -i   's/allow-update { none; };/allow-update { key '${KEYNAME}'. ; };/g' /etc/named.conf || exit 1
+  sed -i   's/allow-update { none; };/allow-update { key '${KEYNAME}'. ;  '${SERVER_IP}' ; };/g' /etc/named.conf || exit 1
 
   systemctl restart named || exit 1
 elif grep -q "/etc/named/${KEYNAME}." /etc/named.conf; then
