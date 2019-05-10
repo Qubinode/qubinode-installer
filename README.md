@@ -15,6 +15,9 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * oVirt or Red Hat Virtualation with OpenvSwith
 * KVM and preconfigured [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
 
+## Deployment Architecture
+* [start_deployment](architecture/start_deployment_arch_diagram.png)
+
 ## Quick start
 * install the following roles
   - for centos deployments ```ansible-galaxy install tosin2013.kvm_cloud_init_vm```
