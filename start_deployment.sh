@@ -18,7 +18,6 @@ source dns_server/lib/dns_functions.sh
 # The command line help #
 #########################
 function display_help() {
-    echo "Usage: $0 [option...] {start|stop|restart}" >&2
     echo
     echo "Usage for centos deployment: $0 centos inventory.centos.openshift  inventory.3.11.centos.gluster" >&2
     echo "Usage for rhel deployment: $0 rhel inventory.rhel.openshift  inventory.3.11.rhel.gluster" >&2
