@@ -1,6 +1,6 @@
 #!/bin/bash
 #Author: Tosin Akinosho
-# Script used to generate dns  for ansible playbooks  
+# Script used to generate dns  for ansible playbooks
 if [ "$#" -ne 5 ]; then
   echo "Please pass the required information."
   echo "Example: $0 example.com rhel-subscription-username rhel-subscription-password ssh-username ssh-password"
@@ -16,7 +16,7 @@ SSH_PASSWORD=$5
 
 cat > inventory.dnsserver <<EOF
 [dns_server]
-dnsserver vm_name=dnsserver vm_local_hostname=dnsserver.${DOMAINNAME} vm_hostname=dnsserver.${DOMAINNAME} vm_data_dir="/kvmimages/dnsserver_machine" cloud_init_user_data="/kvmimages/dnsserver_machine/user-data"  cloud_init_meta_data="/kvmimages/dnsserver_machine/meta-data" cloud_init_iso_image="/kvmimages/dnsserver_machine/cidata.iso"
+dnsserver vm_name=dnsserver vm_local_hostname=dnsserver.${DOMAINNAME} vm_hostname=dnsserver.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/dnsserver_machine" cloud_init_user_data="/kvm/kvmimages/dnsserver_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/dnsserver_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/dnsserver_machine/cidata.iso"
 
 [dns_server:vars]
 vm_cpu=1
@@ -24,7 +24,7 @@ vm_memory=2048
 vm_root_disk_size=20G
 
 [all:vars]
-kvm_vm_pool_dir="/kvmdata/"
+kvm_vm_pool_dir="/kvm/kvmdata"
 vm_recreate=true
 #uncomment and edit if using RHEL
 cloud_init_vm_image="${CLOUDIMAGE}"

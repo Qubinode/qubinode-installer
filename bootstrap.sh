@@ -15,7 +15,14 @@ if [[ -z ${DOMAINNAME} ]]; then
   DOMAINNAME="example.com"
 fi
 
+RHEL_IMAGE=$(ls /kvm/kvmdata/rhel-server-7.6-x86_64-kvm.qcow2  2>/dev/null)
+if [[ -z $RHEL_IMAGE ]]; then
+  cp /opt/kvmimage/rhel-server-7.6-x86_64-kvm.qcow2 /kvm/kvmdata/
+fi
+
 bash scripts/generate_dns_server_inventory.sh ${DOMAINNAME} ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} ${SSH_PASSWORD}
+
+./dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME
 
 # Deply dns sever and get ip
 
