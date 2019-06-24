@@ -3,25 +3,14 @@
   remote_user: "{{ rhel_user }}"
   become: yes
   tasks:
-  - name: upgrade all packages
-    yum:
-      name: '*'
-      state: latest
-  - name: install base packages
-    yum:
-      name:
-      - wget
-      - git
-      - net-tools
-      - bind-utils
-      - yum-utils
-      - iptables-services
-      - bridge-utils
-      - bash-completion
-      - kexec-tools
-      - sos
-      - psacct
+  - name: Register as auto-subscribe to red hat subscription.
+    redhat_subscription:
       state: present
+      username: "{{ rhel_username }}"
+      password: "{{ rhel_password }}"
+      auto_attach: true
+    when:
+      - ansible_distribution == "RedHat"
   - name: Enable rhel-7-server-rpms repository
     rhsm_repository:
       name: rhel-7-server-rpms
@@ -65,6 +54,25 @@
     when:
       - ansible_distribution == "RedHat"
       - glusterstorage
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
+      - wget
+      - git
+      - net-tools
+      - bind-utils
+      - yum-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      state: present
   - name: Install glusterfs-fuse
     yum:
       name:

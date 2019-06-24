@@ -15,26 +15,14 @@
        rpm --import http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7 >> /tmp/epelgpgimport.log
     when:
       - ansible_distribution == "CentOS"
-  - name: upgrade all packages
-    yum:
-      name: '*'
-      state: latest
-  - name: install base packages
-    yum:
-      name:
-      - wget
-      - git
-      - net-tools
-      - bind-utils
-      - yum-utils
-      - iptables-services
-      - bridge-utils
-      - bash-completion
-      - kexec-tools
-      - sos
-      - psacct
-      - vim
+  - name: Register as auto-subscribe to red hat subscription.
+    redhat_subscription:
       state: present
+      username: "{{ rhel_username }}"
+      password: "{{ rhel_password }}"
+      auto_attach: true
+    when:
+      - ansible_distribution == "RedHat"
   - name: Enable a Ansible 2.6 repository
     rhsm_repository:
       name: rhel-7-server-ansible-2.6-rpms
@@ -64,6 +52,26 @@
       dest: /etc/yum.repos.d/docker-ce.repo
     when:
       - ansible_distribution == "CentOS"
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
+      - wget
+      - git
+      - net-tools
+      - bind-utils
+      - yum-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      - vim
+      state: present
   - name: install required packages for CENTOS
     yum:
       name:
