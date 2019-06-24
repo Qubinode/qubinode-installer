@@ -1,6 +1,6 @@
 #!/bin/bash
 #Author: Tosin Akinosho
-# Script used to generate kvm inventory for inventory
+# Script used to generate kvm inventory for kvm deployments
 
 if [ "$#" -ne 6 ]; then
   echo "Please pass the required information."
@@ -41,6 +41,8 @@ vm_root_disk_size=120G
 [nodes]
 node1 vm_name=node1 vm_local_hostname=node1.ocp.${DOMAINNAME} vm_hostname=node1.ocp.${DOMAINNAME} vm_data_dir="/kvmimages/node1_machine" cloud_init_user_data="/kvmimages/node1_machine/user-data"  cloud_init_meta_data="/kvmimages/node1_machine/meta-data" cloud_init_iso_image="/kvmimages/node1_machine/cidata.iso"
 node2 vm_name=node2 vm_local_hostname=node2.ocp.${DOMAINNAME} vm_hostname=node2.ocp.${DOMAINNAME} vm_data_dir="/kvmimages/node2_machine" cloud_init_user_data="/kvmimages/node2_machine/user-data"  cloud_init_meta_data="/kvmimages/node2_machine/meta-data" cloud_init_iso_image="/kvmimages/node2_machine/cidata.iso"
+node3 vm_name=node3 vm_local_hostname=node3.ocp.${DOMAINNAME} vm_hostname=node3.ocp.${DOMAINNAME} vm_data_dir="/kvmimages/node3_machine" cloud_init_user_data="/kvmimages/node3_machine/user-data"  cloud_init_meta_data="/kvmimages/node3_machine/meta-data" cloud_init_iso_image="/kvmimages/node3_machine/cidata.iso"
+node4 vm_name=node4 vm_local_hostname=node4.ocp.${DOMAINNAME} vm_hostname=node4.ocp.${DOMAINNAME} vm_data_dir="/kvmimages/node4_machine" cloud_init_user_data="/kvmimages/node4_machine/user-data"  cloud_init_meta_data="/kvmimages/node4_machine/meta-data" cloud_init_iso_image="/kvmimages/node4_machine/cidata.iso"
 
 [nodes:vars]
 vm_cpu=2
@@ -65,7 +67,7 @@ vm_root_disk_size=20G
 
 
 [all:vars]
-kvm_vm_pool_dir="/kvmimages/"
+kvm_vm_pool_dir="/kvm/kvmdata"
 vm_recreate=true
 cloud_init_vm_image="${CLOUDIMAGE}"
 
