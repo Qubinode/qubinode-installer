@@ -1,18 +1,15 @@
 #!/bin/bash
 #Author: Tosin Akinosho
 # Script used to generate dns  for ansible playbooks
-if [ "$#" -ne 5 ]; then
-  echo "Please pass the required information."
-  echo "Example: $0 example.com rhel-subscription-username rhel-subscription-password ssh-username ssh-password"
+if [ ! -f bootstrap_env ]; then
+  echo "bootstrap_env was not found!!!"
+  echo "Plesae run bootstrap.sh again to configure bootstrap_env"
   exit 1
 fi
 
-DOMAINNAME=$1
+source bootstrap_env
+
 CLOUDIMAGE="rhel-server-7.6-x86_64-kvm.qcow2"
-RHEL_USERNAME=$2
-RHEL_PASSWORD=$3
-SSH_USERNAME=$4
-SSH_PASSWORD=$5
 
 cat > inventory.dnsserver <<EOF
 [dns_server]
