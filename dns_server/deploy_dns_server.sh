@@ -25,8 +25,10 @@ function collectdnsinfo() {
   echo -e "\e[32m************************\e[0m"
   echo -e "\e[32m*ENTER DNS enviornment information. \e[0m"
   echo -e "\e[32m************************\e[0m"
+  if [[ -z  $DNSZONE ]] && [[ -z $DEFAULTDNSNAME ]]; then
     read -p "Enter your dns zone name (Example: example.com): " DEFAULTDNSNAME
     read -p "Enter your bind zone networks (Example: 192.168.1): " DNSZONE #Add DNS Zone validation
+  fi
 }
 
 function collectuserpassword() {
@@ -64,6 +66,12 @@ function addssh() {
   source ssh-add-script.sh
 }
 
+function env_check() {
+  if [[ -f bootstrap_env ]]; then
+    source bootstrap_env
+  fi
+}
+
 function main() {
   # check_args "${@}"
   :
@@ -73,9 +81,11 @@ function main() {
   fi
 
   if [[ "$1" == "centos" ]] && [[ ! -z "$2" ]] ; then
+    env_check
     FULLPATH=$(pwd)
     validation
     addssh
+
     $USESUDO ansible-playbook -i $2 $FULLPATH/dns_server/deploy_dns_kvm_centos.yml || exit 1
 
     DNSFILEPATH=$(ls $(pwd)/dns*  | head -n1)
@@ -98,7 +108,9 @@ echo $lastip || exit 1
 
     scripts/share_keys.sh ${DNSSERVER} centos || exit 1
 
-    collectdnsinfo
+    if [[ -z $DEFAULTDNSNAME ]] && [[ -z $DNSZONE ]]; then
+      collectdnsinfo
+    fi
 
     sed -ri 's/^(\s*)(bind_zone_master_server_ip\s*:\s*0.0.0.0\s*$)/\    bind_zone_master_server_ip: '$DNSSERVER'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
     sed -ri 's/^(\s*)(ip\s*:\s*0.0.0.0\s*$)/\      ip: '$DNSSERVER'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
@@ -120,6 +132,7 @@ echo $lastip || exit 1
 
   elif [[ "$1" == "rhel" ]] && [[ ! -z "$2" ]] && [[ ! -z "$3" ]]; then
     FULLPATH=$(pwd)
+    env_check
     validation
     addssh
     $USESUDO ansible-playbook -i $2 $FULLPATH/dns_server/deploy_dns_kvm_rhel.yml || exit 1
@@ -143,15 +156,21 @@ echo $lastip || exit 1
     cp $FULLPATH/dns_server/deploy_dns_server.yml  $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml  || exit 1
 
     scripts/share_keys.sh ${DNSSERVER} $3
-    collectdnsinfo
+
+
+    if [[ -z $DEFAULTDNSNAME ]] && [[ -z $DNSZONE ]]; then
+      collectdnsinfo
+    fi
 
     sed -ri 's/^(\s*)(bind_zone_master_server_ip\s*:\s*0.0.0.0\s*$)/\    bind_zone_master_server_ip: '$DNSSERVER'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
     sed -ri 's/^(\s*)(ip\s*:\s*0.0.0.0\s*$)/\      ip: '$DNSSERVER'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
     sed -ri 's/^(    - name: example.com)/\    - name: '$DEFAULTDNSNAME'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
     sed -ri 's/^(\s*)(bind_zone_name\s*:\s*example.com\s*$)/\    bind_zone_name: '$DEFAULTDNSNAME'/' $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
     sed -ri 's/(      - "0.0.0")/\      - "'$DNSZONE'" /'  $FULLPATH/dns_server/deploy_dns_server.${lastip}.yml || exit 1
+    if [[ -z $RHEL_USERNAME ]] && [[ -z $RHEL_PASSWORD ]]; then
+      collectuserpassword
+    fi
 
-    collectuserpassword
     echo -e "\e[32m************************\e[0m"
     echo -e "\e[32m*ENTER sudo password to provision dns server. \e[0m"
     echo -e "\e[32m************************\e[0m"
