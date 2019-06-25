@@ -41,6 +41,7 @@ EOF
 
 systemctl start openvswitch.service
 systemctl enable openvswitch.service
+systemctl status openvswitch.service
 
 systemctl restart network.service
 
