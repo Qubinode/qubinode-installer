@@ -50,9 +50,8 @@ MASTERRESULT=$(grep -A12 '\[master:vars\]'  $1  | grep glusterstorage=true )
 CHECK_STATE=$(grep glusterstorage=true  inventory.vm.provision)
 echo $CHECK_STATE
 if [[ -z $CHECK_STATE ]]; then
-  echo "Doing Stuff"
   echo "" >> inventory.vm.provision
-  echo "[gluster:vars]" >> inventory.vm.provision
+  echo "[gluster]" >> inventory.vm.provision
   if [[ ! -z  "${RESULT}" ]] && [[ ! -z  "${MASTERRESULT}" ]] ; then
     populate_master_node
     populate_worker_node
@@ -61,4 +60,7 @@ if [[ -z $CHECK_STATE ]]; then
   elif [[ ! -z  "${MASTERRESULT}" ]]; then
     populate_master_node
   fi
+  echo "">> inventory.vm.provision
+  echo "[gluster:vars]" >> inventory.vm.provision
+  echo "glusterstorage=true" >> inventory.vm.provision
 fi

@@ -47,13 +47,6 @@
       state: enabled
     when:
       - ansible_distribution == "RedHat"
-  - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
-    rhsm_repository:
-      name: rh-gluster-3-client-for-rhel-7-server-rpms
-      state: enabled
-    when:
-      - ansible_distribution == "RedHat"
-      - glusterstorage
   - name: upgrade all packages
     yum:
       name: '*'
@@ -73,13 +66,6 @@
       - sos
       - psacct
       state: present
-  - name: Install glusterfs-fuse
-    yum:
-      name:
-        - glusterfs-fuse
-    when:
-      - ansible_distribution == "RedHat"
-      - glusterstorage
   - name: Install docker-1.13.1
     yum:
       name:
@@ -97,7 +83,6 @@
         - tmux
         - lvm2
         - NetworkManager
-        - centos-release-gluster
       state: present
     when:
       - ansible_distribution == "CentOS"
@@ -108,14 +93,6 @@
       enabled: yes
     when:
       - ansible_distribution == "CentOS"
-  - name: install glusterfs-server packages
-    yum:
-      name:
-        - glusterfs-server
-      state: present
-    when:
-      - ansible_distribution == "CentOS"
-      - glusterstorage
   - name: create docker-storage-setup file
     copy:
       dest: "/etc/sysconfig/docker-storage-setup"

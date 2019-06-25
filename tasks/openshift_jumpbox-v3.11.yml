@@ -88,23 +88,6 @@
       state: present
     when:
       - ansible_distribution == "CentOS"
-  - name: install required packages for RHEL
-    yum:
-      name:
-        - pyOpenSSL
-        - device-mapper-event-libs
-        - device-mapper-libs
-        - httpd-tools
-        - java-1.8.0-openjdk-devel.x86_64
-        - tmux
-        - patch
-        - lvm2
-        - docker-ce
-        - epel-release
-        - python-pip
-      state: present
-    when:
-      - ansible_distribution == "RedHat"
   - name: Run script to modifiy terminal layout
     shell: |
          pip install passlib
