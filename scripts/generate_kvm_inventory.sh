@@ -17,7 +17,7 @@ cat > inventory.rhel.openshift <<EOF
 #/
 
 [jumpbox]
-jumpbox vm_name=jumpbox vm_local_hostname=jumpbox.ocp.${DOMAINNAME} vm_hostname=jumpbox.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/jumpbox_machine" cloud_init_user_data="/kvm/kvmimages/jumpbox_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/jumpbox_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/jumpbox_machine/cidata.iso"
+jumpbox vm_name=jumpbox vm_local_hostname=jumpbox.ocp.${DEFAULTDNSNAME} vm_hostname=jumpbox.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/jumpbox_machine" cloud_init_user_data="/kvm/kvmimages/jumpbox_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/jumpbox_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/jumpbox_machine/cidata.iso"
 
 [jumpbox:vars]
 vm_cpu=2
@@ -25,7 +25,7 @@ vm_memory=4096
 vm_root_disk_size=30G
 
 [master]
-master vm_name=master vm_local_hostname=master.ocp.${DOMAINNAME} vm_hostname=master.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/master_machine" cloud_init_user_data="/kvm/kvmimages/master_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/master_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/master_machine/cidata.iso"
+master vm_name=master vm_local_hostname=master.ocp.${DEFAULTDNSNAME} vm_hostname=master.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/master_machine" cloud_init_user_data="/kvm/kvmimages/master_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/master_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/master_machine/cidata.iso"
 
 [master:vars]
 vm_cpu=4
@@ -44,10 +44,10 @@ gluster_block_size=30G
 gluster_block_count=1024
 
 [nodes]
-node1 vm_name=node1 vm_local_hostname=node1.ocp.${DOMAINNAME} vm_hostname=node1.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/node1_machine" cloud_init_user_data="/kvm/kvmimages/node1_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node1_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node1_machine/cidata.iso"
-node2 vm_name=node2 vm_local_hostname=node2.ocp.${DOMAINNAME} vm_hostname=node2.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/node2_machine" cloud_init_user_data="/kvm/kvmimages/node2_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node2_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node2_machine/cidata.iso"
-node3 vm_name=node3 vm_local_hostname=node3.ocp.${DOMAINNAME} vm_hostname=node3.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/node3_machine" cloud_init_user_data="/kvm/kvmimages/node3_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node3_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node3_machine/cidata.iso"
-node4 vm_name=node4 vm_local_hostname=node4.ocp.${DOMAINNAME} vm_hostname=node4.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/node4_machine" cloud_init_user_data="/kvm/kvmimages/node4_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node4_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node4_machine/cidata.iso"
+node1 vm_name=node1 vm_local_hostname=node1.ocp.${DEFAULTDNSNAME} vm_hostname=node1.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/node1_machine" cloud_init_user_data="/kvm/kvmimages/node1_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node1_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node1_machine/cidata.iso"
+node2 vm_name=node2 vm_local_hostname=node2.ocp.${DEFAULTDNSNAME} vm_hostname=node2.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/node2_machine" cloud_init_user_data="/kvm/kvmimages/node2_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node2_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node2_machine/cidata.iso"
+node3 vm_name=node3 vm_local_hostname=node3.ocp.${DEFAULTDNSNAME} vm_hostname=node3.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/node3_machine" cloud_init_user_data="/kvm/kvmimages/node3_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node3_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node3_machine/cidata.iso"
+node4 vm_name=node4 vm_local_hostname=node4.ocp.${DEFAULTDNSNAME} vm_hostname=node4.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/node4_machine" cloud_init_user_data="/kvm/kvmimages/node4_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node4_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node4_machine/cidata.iso"
 
 [nodes:vars]
 vm_cpu=2
@@ -67,7 +67,7 @@ gluster_block_count=1024
 
 
 [lb]
-lb vm_name=lb vm_local_hostname=lb.ocp.${DOMAINNAME} vm_hostname=lb.ocp.${DOMAINNAME} vm_data_dir="/kvm/kvmimages/lb_machine" cloud_init_user_data="/kvm/kvmimages/lb_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/lb_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/lb_machine/cidata.iso"
+lb vm_name=lb vm_local_hostname=lb.ocp.${DEFAULTDNSNAME} vm_hostname=lb.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/lb_machine" cloud_init_user_data="/kvm/kvmimages/lb_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/lb_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/lb_machine/cidata.iso"
 
 [lb:vars]
 vm_cpu=1
@@ -91,7 +91,7 @@ cloud_init_vm_image="${CLOUDIMAGE}"
 
 manage_dns=true
 dns_servers=[${DNSSERVERIP}] # googles ['8.8.8.8','8.8.4.4']
-search_domain=ocp.${DOMAINNAME}
+search_domain=ocp.${DEFAULTDNSNAME}
 
 #RHEL Subscription Info
 rhel_username=${RHEL_USERNAME}
