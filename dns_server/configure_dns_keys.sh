@@ -27,7 +27,7 @@ key ${KEYNAME} {
 };
 EOF
 
-DNSSERVERIP=$(hostname --ip-address)
+DNSSERVERIP=$(hostname --ip-address | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
 cat  <<EOF > /var/named/${KEYNAME}
 \$ORIGIN ${ZONE_NAME}.
 \$TTL 1W

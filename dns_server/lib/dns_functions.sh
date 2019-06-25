@@ -152,7 +152,12 @@ function set_arecord() {
 #########################
 function cleanup() {
   if [[ -f   ansible-vault.pass ]]; then
-    read -p "Would you like to remove ansible-vault.pass file? `echo $'\n\e[31mYou will not be able to use the update_dns_server_${lastip}_entry.yml if you do:\e[0m '` " -n 1 -r
+    if [[ -f bootstrap_env ]]; then
+      REPLY=n
+    else
+      read -p "Would you like to remove ansible-vault.pass file? `echo $'\n\e[31mYou will not be able to use the update_dns_server_${lastip}_entry.yml if you do:\e[0m '` " -n 1 -r
+    fi
+
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]
     then
