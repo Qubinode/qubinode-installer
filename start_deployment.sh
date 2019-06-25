@@ -80,20 +80,9 @@ function sharekey() {
   fi
 }
 
-function addgluster() {
-  RESULT=$(grep -A12 '\[nodes:vars\]'  $1 | grep glusterstorage=true)
-  MASTERRESULT=$(grep -A12 '\[master:vars\]'  $1 | grep glusterstorage=true)
-  if [[ ! $(grep glusterstorage=true  inventory.vm.provision) ]]; then
-    if [[ ! -z  "${RESULT}" ]] && [[ ! -z  "${MASTERRESULT}" ]] ; then
-      echo "[nodes:vars] glusterstorage=true"
-      echo "[master:vars] glusterstorage=true"
-      echo "[OSEv3:vars]" >> inventory.vm.provision
-      echo "glusterstorage=true" >> inventory.vm.provision
-    elif [[ ! -z  "${RESULT}" ]] ; then
-      echo "[nodes:vars] glusterstorage=true"
-    elif [[ ! -z  "${MASTERRESULT}" ]]; then
-      echo "[master:vars] glusterstorage=true"
-    fi
+function env_check() {
+  if [[ -f bootstrap_env ]]; then
+    source bootstrap_env
   fi
 }
 
@@ -106,6 +95,7 @@ main() {
     fi
 
     if [[ "$1" == "centos" ]] && [[ -f "$2"  ]] && [[ -f "$3"  ]]; then
+      env_check
       validation $2
       addssh
       configurednsforopenshift $2 centos
@@ -118,7 +108,7 @@ main() {
       echo -e "\e[32m************************\e[0m"
       echo -e "\e[32mCreating inventory files from newly created vms\e[0m"
       echo -e "\e[32m************************\e[0m"
-      bash scripts/provision_openshift_nodes.sh || exit 1
+      bash scripts/provision_openshift_nodes.sh $2 || exit 1
       ansible-playbook -i $2  tasks/hosts_generator.yml || exit 1
 
       ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=jumpboxdeploy" --extra-vars="rhel_user=centos" || exit 1
@@ -129,6 +119,8 @@ main() {
       echo "Generating ssh key on ${JUMPBOX}"
       scripts/generation_jumpbox_ssh_key.sh  centos ${JUMPBOX}
       sharekey centos
+
+      set_arecord $2 centos $3
 
       addgluster $2
 
@@ -142,10 +134,16 @@ main() {
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $3  centos@${JUMPBOX}:~/openshift-ansible
 
-      set_arecord $2 centos $3
-
     elif [[ "$1" == "rhel" ]]  && [[ -f "$2"  ]] && [[ -f "$3"  ]]; then
-      read -p "Enter USERNAME for vm login: " RHEL_USER
+
+      env_check
+
+      if [[ -z $SSH_USERNAME ]]; then
+        read -p "Enter USERNAME for vm login: " RHEL_USER
+      else
+        RHEL_USER=${SSH_USERNAME}
+      fi
+
       validation $2
       addssh
       configurednsforopenshift $2 ${RHEL_USER}
@@ -153,7 +151,7 @@ main() {
       echo -e "\e[32mDeploying Openshift vms\e[0m"
       $USESUDO  ansible-playbook -i $2 deploy_openshift_vms.yml  --become  || exit 1
       echo -e "\e[32mCreating inventory files from newly created vms\e[0m"
-      bash scripts/provision_openshift_nodes.sh || exit 1
+      bash scripts/provision_openshift_nodes.sh $2 || exit 1
       ansible-playbook -i $2  tasks/hosts_generator.yml || exit 1
 
       ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=jumpboxdeploy" --extra-vars="rhel_user=${RHEL_USER}" || exit 1
@@ -165,19 +163,21 @@ main() {
       scripts/generation_jumpbox_ssh_key.sh  ${RHEL_USER} ${JUMPBOX}
       sharekey ${RHEL_USER}
 
+      set_arecord $2 ${RHEL_USER} $3
+
       addgluster $2
 
-      ansible-playbook -i inventory.vm.provision tasks/openshift_jumpbox-v3.11.yml  --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=${RHEL_USER}" || exit 1
+      ansible-playbook -i inventory.vm.provision     tasks/openshift_jumpbox-v3.11.yml  --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=${RHEL_USER}"  --extra-vars="rhel_username=$RHEL_USERNAME"   --extra-vars="rhel_password=$RHEL_PASSWORD" || exit 1
 
       ansible-playbook -i inventory.vm.provision tasks/configure_docker_regisitry.yml --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=${RHEL_USER}" --become || exit 1
 
-      ansible-playbook -i inventory.vm.provision tasks/openshift_nodes-v3.11.yml   --extra-vars "rhel_user=${RHEL_USER}" || exit 1
+      ansible-playbook -i inventory.vm.provision tasks/openshift_nodes-v3.11.yml   --extra-vars "rhel_user=${RHEL_USER}"  --extra-vars="rhel_username=$RHEL_USERNAME"   --extra-vars="rhel_password=$RHEL_PASSWORD" || exit 1
+
+      ansible-playbook -i inventory.vm.provision tasks/openshift_gluster_config.yml  --extra-vars "rhel_user=${RHEL_USER}"   || exit 1
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh-add-script.sh  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $3  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
-
-      set_arecord $2 ${RHEL_USER} $3
 
     else
       display_help
