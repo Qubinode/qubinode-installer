@@ -48,7 +48,7 @@ done
 
 source bootstrap_env
 
-cat >inventory.3.11.rhel.gluster<<EOF
+cat >inventory.3.11.rhel.gluster.test<<EOF
 [OSEv3:children]
 masters
 nodes
@@ -81,7 +81,7 @@ debug_level=2
 openshift_release=${OPENSHIFT_RELEASE}
 openshift_deployment_type=openshift-enterprise
 
-oreg_url=registry.redhat.io/openshift3/ose-${component}:${version}
+oreg_url=registry.redhat.io/openshift3/ose-\${component}:\${version}
 oreg_auth_user=${RHEL_USERNAME}
 oreg_auth_password=${RHEL_PASSWORD}
 
