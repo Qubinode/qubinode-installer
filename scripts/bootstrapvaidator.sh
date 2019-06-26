@@ -58,7 +58,8 @@ function validations() {
 
 function running_install_check() {
   CHECKFOR_OCP_INSTALLATION=$(virsh list | grep running | wc -l)
-  if [[ $CHECKFOR_OCP_INSTALLATION -gt 7 ]] ; then
+  CHECKFOR_OCP_INSTALLATION_SHUTDOWN=$(virsh list | grep shutdown | wc -l)
+  if [[ $CHECKFOR_OCP_INSTALLATION -eq 7 ]] ; then
     while true; do
       read -p "A previous running installation of OpenShift has been found. Would you like to continue this will will your current deployment? " yn
       case $yn in
@@ -67,7 +68,7 @@ function running_install_check() {
           * ) echo "Please answer yes or no.";;
       esac
     done
-  elif [[ $CHECKFOR_OCP_INSTALLATION -gt 7 ]] ; then
+  elif [[ $CHECKFOR_OCP_INSTALLATION_SHUTDOWN -eq 7 ]] ; then
     while true; do
       read -p "A previous installation of OpenShift has been found. Would you like to continue this will will your current deployment? " yn
       case $yn in
@@ -77,7 +78,10 @@ function running_install_check() {
       esac
     done
   else
-    ./delete_openshift_deployment.sh inventory.rhel.openshift DELLALL;
+    CHECKFOR_DNS=$(virsh list | grep running | grep dnsserver | wc -l)
+    if [[ $CHECKFOR_DNS -ne 1 ]]; then
+      ./delete_openshift_deployment.sh inventory.rhel.openshift DELLALL;
+    fi
   fi
 
 }
