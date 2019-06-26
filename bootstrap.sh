@@ -8,14 +8,12 @@ source scripts/bootstrapvaidator.sh
 
 if [[ -f bootstrap_env ]]; then
     running_install_check
-    CHECKFOR_DNS=$(virsh list | grep running | wc -l)
-    if [[ $CHECKFOR_DNS == "running" ]] && [[ -f "skipask" ]]; then
+    CHECKFOR_DNS=$(virsh list | grep running | grep dnsserver | wc -l)
+    if [[ $CHECKFOR_DNS -eq 1 ]] && [[ -f "skipask" ]]; then
       sed -i 's/export CREATE_DNS_KEY=TRUE/export CREATE_DNS_KEY=FALSE/g' bootstrap_env
       source bootstrap_env
       DOMAINNAME=$DEFAULTDNSNAME
-    elif [[ $CHECKFOR_DNS == "running" ]] && [[ ! -f "skipask" ]]; then
-      #test for key
-      sed -i 's/export CREATE_DNS_KEY=TRUE/export CREATE_DNS_KEY=FALSE/g' bootstrap_env
+    elif [[ $CHECKFOR_DNS -eq 1 ]] && [[ ! -f "skipask" ]]; then
       source bootstrap_env
       DOMAINNAME=$DEFAULTDNSNAME
     else
@@ -43,9 +41,6 @@ fi
 bash scripts/generate_kvm_inventory.sh  || exit 1
 
 
-./start_deployment.sh  rhel inventory.rhel.openshift  inventory.3.11.rhel.gluster || exit 1
-
-
-bash scripts/generate_openshift_inventory.sh ${DOMAINNAME} v3.11.98 ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} || exit 1
+./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.98 || exit 1
 
 #rm bootstrap_env
