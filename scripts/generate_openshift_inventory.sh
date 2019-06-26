@@ -2,17 +2,51 @@
 #Author: Tosin Akinosho
 # Script used to generate openshift for openshift delopyment
 
-if [ "$#" -ne 5 ]; then
-  echo "Please pass the required information."
-  echo "Example: $0 example.com v3.11.98 rhel-subscription-username rhel-subscription-password ssh-username"
+if [ ! -f bootstrap_env ]; then
+  echo "bootstrap_env was not found!!!"
+  echo "Plesae run bootstrap.sh again to configure bootstrap_env"
   exit 1
 fi
 
-DOMAINNAME=$1
-OPENSHIFT_RELEASE=$2
-RHEL_USERNAME=$3
-RHEL_PASSWORD=$4
-SSH_USERNAME=$5
+if [ "$#" -ne 1 ]; then
+  echo "Please pass the required information."
+  echo "Example: $0 v3.11.98"
+  exit 1
+fi
+
+OPENSHIFT_RELEASE=$1
+
+NODES=$(ls node*)
+
+for n in $NODES; do
+  NODEIP=$(cat $n | tr -d '"[]",')
+
+   echo "$n ${NODEIP}"
+  case $n in
+    node1)
+      NODE1_IP=$NODEIP
+      ;;
+
+    node2)
+      NODE2_IP=$NODEIP
+      ;;
+
+    node3)
+      NODE3_IP=$NODEIP
+      ;;
+
+    node4)
+      NODE4_IP=$NODEIP
+      ;;
+
+    *)
+      break
+      ;;
+  esac
+done
+
+
+source bootstrap_env
 
 cat >inventory.3.11.rhel.gluster<<EOF
 [OSEv3:children]
@@ -22,23 +56,23 @@ etcd
 glusterfs
 
 [etcd]
-master.ocp.${DOMAINNAME} openshift_public_hostname=master.ocp.${DOMAINNAME}
+master.ocp.${DEFAULTDNSNAME} openshift_public_hostname=master.ocp.${DEFAULTDNSNAME}
 
 [masters]
-master.ocp.${DOMAINNAME} openshift_public_hostname=master.ocp.${DOMAINNAME}
+master.ocp.${DEFAULTDNSNAME} openshift_public_hostname=master.ocp.${DEFAULTDNSNAME}
 
 [nodes]
-master.ocp.${DOMAINNAME} openshift_public_hostname=master.ocp.${DOMAINNAME} openshift_node_group_name='node-config-master'
-node1.ocp.${DOMAINNAME} openshift_public_hostname=node1.ocp.${DOMAINNAME} openshift_node_group_name='node-config-infra'
-node2.ocp.${DOMAINNAME} openshift_public_hostname=node2.ocp.${DOMAINNAME} openshift_node_group_name='node-config-infra'
-node3.ocp.${DOMAINNAME} openshift_public_hostname=node3.ocp.${DOMAINNAME} openshift_node_group_name='node-config-compute'
-node4.ocp.${DOMAINNAME} openshift_public_hostname=node4.ocp.${DOMAINNAME} openshift_node_group_name='node-config-compute'
+master.ocp.${DEFAULTDNSNAME} openshift_public_hostname=master.ocp.${DEFAULTDNSNAME} openshift_node_group_name='node-config-master'
+node1.ocp.${DEFAULTDNSNAME} openshift_public_hostname=node1.ocp.${DEFAULTDNSNAME} openshift_node_group_name='node-config-infra'
+node2.ocp.${DEFAULTDNSNAME} openshift_public_hostname=node2.ocp.${DEFAULTDNSNAME} openshift_node_group_name='node-config-infra'
+node3.ocp.${DEFAULTDNSNAME} openshift_public_hostname=node3.ocp.${DEFAULTDNSNAME} openshift_node_group_name='node-config-compute'
+node4.ocp.${DEFAULTDNSNAME} openshift_public_hostname=node4.ocp.${DEFAULTDNSNAME} openshift_node_group_name='node-config-compute'
 
 [glusterfs]
-node1.ocp.${DOMAINNAME} glusterfs_ip=192.168.1.11 glusterfs_zone=1  glusterfs_devices='["/dev/vdc"]'
-node2.ocp.${DOMAINNAME} glusterfs_ip=192.168.1.12 glusterfs_zone=2 glusterfs_devices='["/dev/vdc"]'
-node3.ocp.${DOMAINNAME} glusterfs_ip=192.168.1.13 glusterfs_zone=3 glusterfs_devices='["/dev/vdc"]'
-node4.ocp.${DOMAINNAME} glusterfs_ip=192.168.1.14 glusterfs_zone=4 glusterfs_devices='["/dev/vdc"]'
+node1.ocp.${DEFAULTDNSNAME} glusterfs_ip=${NODE1_IP} glusterfs_zone=1  glusterfs_devices='["/dev/vdc"]'
+node2.ocp.${DEFAULTDNSNAME} glusterfs_ip=${NODE2_IP} glusterfs_zone=2 glusterfs_devices='["/dev/vdc"]'
+node3.ocp.${DEFAULTDNSNAME} glusterfs_ip=${NODE3_IP} glusterfs_zone=3 glusterfs_devices='["/dev/vdc"]'
+node4.ocp.${DEFAULTDNSNAME} glusterfs_ip=${NODE4_IP}  glusterfs_zone=4 glusterfs_devices='["/dev/vdc"]'
 
 [OSEv3:vars]
 ansible_ssh_user=${SSH_USERNAME}
@@ -53,9 +87,9 @@ oreg_auth_password=${RHEL_PASSWORD}
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
 openshift_master_htpasswd_file=/home/tosin/openshift-ansible/passwordFile
-openshift_docker_additional_registries=jumpbox.ocp.${DOMAINNAME}
-openshift_docker_insecure_registries=jumpbox.ocp.${DOMAINNAME}
-openshift_master_default_subdomain=apps.ocp.${DOMAINNAME}
+openshift_docker_additional_registries=jumpbox.ocp.${DEFAULTDNSNAME}
+openshift_docker_insecure_registries=jumpbox.ocp.${DEFAULTDNSNAME}
+openshift_master_default_subdomain=apps.ocp.${DEFAULTDNSNAME}
 
 #openshift operators
 openshift_enable_olm=true
