@@ -41,6 +41,6 @@ fi
 bash scripts/generate_kvm_inventory.sh  || exit 1
 
 
-./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.98 || exit 1
+./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104 || exit 1
 
 #rm bootstrap_env
