@@ -1,29 +1,51 @@
 #!/bin/bash
 # Author: Tosin Akinosho
-# Openshift-home-lab bootstrap script
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+set -x
 
-echo "Generating inventory file for dns server."
-read -p "Enter Domain Name default is example.com: " DOMAINNAME
-read -p "Enter Red Hat Subscription username: " RHEL_USERNAME
-read -s -p "Enter Red Hat Subscription password : " RHEL_PASSWORD
-echo
-read -p "Enter username to login to node " SSH_USERNAME
-read -s -p "Enter password to login to node  : " SSH_PASSWORD
-echo
+source scripts/bootstrapvaidator.sh
 
-if [[ -z ${DOMAINNAME} ]]; then
-  DOMAINNAME="example.com"
+
+if [[ -f bootstrap_env ]]; then
+    running_install_check
+    CHECKFOR_DNS=$(virsh list | grep running | wc -l)
+    if [[ $CHECKFOR_DNS == "running" ]] && [[ -f "skipask" ]]; then
+      sed -i 's/export CREATE_DNS_KEY=TRUE/export CREATE_DNS_KEY=FALSE/g' bootstrap_env
+      source bootstrap_env
+      DOMAINNAME=$DEFAULTDNSNAME
+    elif [[ $CHECKFOR_DNS == "running" ]] && [[ ! -f "skipask" ]]; then
+      #test for key
+      sed -i 's/export CREATE_DNS_KEY=TRUE/export CREATE_DNS_KEY=FALSE/g' bootstrap_env
+      source bootstrap_env
+      DOMAINNAME=$DEFAULTDNSNAME
+    else
+      askquestions
+
+      bash scripts/generate_dns_server_inventory.sh || exit 1
+
+      ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME || exit 1
+    fi
+else
+
+    askquestions
+    bash scripts/generate_dns_server_inventory.sh ${DOMAINNAME} ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} ${SSH_PASSWORD} || exit 1
+
+    ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME || exit 1
 fi
 
-RHEL_IMAGE=$(ls /kvm/kvmdata/rhel-server-7.6-x86_64-kvm.qcow2  2>/dev/null)
-if [[ -z $RHEL_IMAGE ]]; then
-  cp /opt/kvmimage/rhel-server-7.6-x86_64-kvm.qcow2 /kvm/kvmdata/
+DNSSERVERIP=$(cat dnsserver  | tr -d '"[]"')
+DNSCHECKINENV=$(cat bootstrap_env | grep $DNSSERVERIP 2>/dev/null)
+if [[ -z $DNSCHECKINENV ]]; then
+  echo "export DNSSERVERIP=$DNSSERVERIP" >> bootstrap_env
 fi
-
-bash scripts/generate_dns_server_inventory.sh ${DOMAINNAME} ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} ${SSH_PASSWORD}
-
-./dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME
 
 # Deply dns sever and get ip
+bash scripts/generate_kvm_inventory.sh  || exit 1
 
-#bash scripts/generate_dns_server_inventory.sh ${DOMAINNAME} ${DOMAINIP} ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} ${SSH_PASSWORD}
+
+./start_deployment.sh  rhel inventory.rhel.openshift  inventory.3.11.rhel.gluster || exit 1
+
+
+bash scripts/generate_openshift_inventory.sh ${DOMAINNAME} v3.11.98 ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} || exit 1
+
+#rm bootstrap_env
