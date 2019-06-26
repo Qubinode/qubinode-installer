@@ -21,7 +21,7 @@ cat >bootstrap_env<<EOF
 export RHEL_USERNAME=${RHEL_USERNAME}
 export RHEL_PASSWORD=${RHEL_PASSWORD}
 export DNSZONE=${DNSZONE}
-export DEFAULTDNSNAME=${DEFAULTDNSNAME}
+export DEFAULTDNSNAME=${DOMAINNAME}
 export SSH_USERNAME=${SSH_USERNAME}
 export CREATE_DNS_KEY=TRUE
 export DNS_KEY_NAME=${DNS_KEY_NAME}
@@ -29,6 +29,7 @@ export SSH_PASSWORD=${SSH_PASSWORD}
 EOF
 
   source bootstrap_env
+
 }
 
 function validations() {
