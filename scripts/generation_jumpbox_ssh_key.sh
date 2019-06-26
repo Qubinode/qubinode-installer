@@ -11,5 +11,5 @@ echo $lastip
 echo -e "\e[32m************************\e[0m"
 echo -e "\e[32mGenerate SSH-KEY for jumpbox ${2}\e[0m"
 echo -e "\e[32m************************\e[0m"
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  $1@$2 "ssh-keygen -b 4096 -t rsa -f ~/.ssh/ -q -N """
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  $1@$2 "cat ~/.ssh/id_rsa.pub" > /home/$USER/keys/jumpbox.${lastip}.pub
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  $1@$2 "ssh-keygen -b 4096 -t rsa -f ~/.ssh/id_rsa -q -N ''" || exit 1
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  $1@$2 "cat ~/.ssh/id_rsa.pub" > /root/keys/jumpbox.${lastip}.pub || exit 1
