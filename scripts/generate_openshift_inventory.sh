@@ -8,13 +8,14 @@ if [ ! -f bootstrap_env ]; then
   exit 1
 fi
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -ne 2 ]; then
   echo "Please pass the required information."
-  echo "Example: $0 v3.11.98"
+  echo "Example: $0 v3.11.98 rhel"
   exit 1
 fi
 
 OPENSHIFT_RELEASE=$1
+OS=$2
 
 NODES=$(ls node*)
 
@@ -48,7 +49,7 @@ done
 
 source bootstrap_env
 
-cat >inventory.3.11.rhel.gluster.test<<EOF
+cat >inventory.3.11.$OS.gluster<<EOF
 [OSEv3:children]
 masters
 nodes

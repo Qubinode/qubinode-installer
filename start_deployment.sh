@@ -10,6 +10,8 @@
 #/
 #/ EXAMPLES
 #/
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+set -x
 #########################
 # import functions      #
 #########################
@@ -19,8 +21,8 @@ source dns_server/lib/dns_functions.sh
 #########################
 function display_help() {
     echo
-    echo "Usage for centos deployment: $0 centos inventory.centos.openshift  inventory.3.11.centos.gluster" >&2
-    echo "Usage for rhel deployment: $0 rhel inventory.rhel.openshift  inventory.3.11.rhel.gluster" >&2
+    echo "Usage for centos deployment: $0 centos inventory.centos.openshift  v3.11.98" >&2
+    echo "Usage for rhel deployment: $0 rhel inventory.rhel.openshift  v3.11.98" >&2
     echo
     # echo some stuff here for the -a or --add-options
     exit 1
@@ -94,7 +96,7 @@ main() {
       exit 0
     fi
 
-    if [[ "$1" == "centos" ]] && [[ -f "$2"  ]] && [[ -f "$3"  ]]; then
+    if [[ "$1" == "centos" ]] && [[ -f "$2"  ]] && [[ ! -z "$3"  ]]; then
       env_check
       validation $2
       addssh
@@ -120,7 +122,9 @@ main() {
       scripts/generation_jumpbox_ssh_key.sh  centos ${JUMPBOX}
       sharekey centos
 
-      set_arecord $2 centos $3
+      bash scripts/generate_openshift_inventory.sh $3 centos || exit 1
+
+      set_arecord $2 centos inventory.3.11.${1}.gluster
 
       addgluster $2
 
@@ -132,9 +136,9 @@ main() {
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh-add-script.sh  centos@${JUMPBOX}:~/openshift-ansible
 
-      scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $3  centos@${JUMPBOX}:~/openshift-ansible
+      scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no inventory.3.11.${1}.gluster  centos@${JUMPBOX}:~/openshift-ansible
 
-    elif [[ "$1" == "rhel" ]]  && [[ -f "$2"  ]] && [[ -f "$3"  ]]; then
+    elif [[ "$1" == "rhel" ]]  && [[ -f "$2"  ]] && [[ ! -z "$3"  ]]; then
 
       env_check
 
@@ -163,7 +167,9 @@ main() {
       scripts/generation_jumpbox_ssh_key.sh  ${RHEL_USER} ${JUMPBOX}
       sharekey ${RHEL_USER}
 
-      set_arecord $2 ${RHEL_USER} $3
+      bash scripts/generate_openshift_inventory.sh $3 rhel || exit 1
+
+      set_arecord $2 ${RHEL_USER} inventory.3.11.${1}.gluster
 
       addgluster $2
 
@@ -177,7 +183,7 @@ main() {
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh-add-script.sh  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
 
-      scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $3  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
+      scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no inventory.3.11.${1}.gluster  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
 
     else
       display_help
