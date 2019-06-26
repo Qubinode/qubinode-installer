@@ -50,8 +50,8 @@ node3 vm_name=node3 vm_local_hostname=node3.ocp.${DEFAULTDNSNAME} vm_hostname=no
 node4 vm_name=node4 vm_local_hostname=node4.ocp.${DEFAULTDNSNAME} vm_hostname=node4.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/node4_machine" cloud_init_user_data="/kvm/kvmimages/node4_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/node4_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/node4_machine/cidata.iso"
 
 [nodes:vars]
-vm_cpu=2
-vm_memory=8192
+vm_cpu=4
+vm_memory=16384
 vm_root_disk_size=20G
 #Storage Options
 #block_size "bs" is the block size that will be used to read and/ or write the file. Increasing this can help with performance  or dictate how much data will be read or written.
@@ -66,13 +66,13 @@ gluster_block_size=200G
 gluster_block_count=1024
 
 
-[lb]
-lb vm_name=lb vm_local_hostname=lb.ocp.${DEFAULTDNSNAME} vm_hostname=lb.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/lb_machine" cloud_init_user_data="/kvm/kvmimages/lb_machine/user-data"  cloud_init_meta_data="/kvm/kvmimages/lb_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/lb_machine/cidata.iso"
+#[lb]
+#lb vm_name=lb vm_local_hostname=lb.ocp.${DEFAULTDNSNAME} vm_hostname=lb.ocp.${DEFAULTDNSNAME} vm_data_dir="/kvm/kvmimages/lb_machine" cloud_init_user_data="/kvm/kvmimages/lb_machine/#user-data"  cloud_init_meta_data="/kvm/kvmimages/lb_machine/meta-data" cloud_init_iso_image="/kvm/kvmimages/lb_machine/cidata.iso"
 
-[lb:vars]
-vm_cpu=1
-vm_memory=2048
-vm_root_disk_size=20G
+#[lb:vars]
+#vm_cpu=1
+#vm_memory=2048
+#vm_root_disk_size=20G
 
 # Create an OSEv3 group that contains the masters and nodes groups
 #[OSEv3:children]
