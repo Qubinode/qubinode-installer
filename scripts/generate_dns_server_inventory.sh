@@ -28,7 +28,7 @@ cloud_init_vm_image="${CLOUDIMAGE}"
 manage_dns=true
 dns_servers=[127.0.0.1] #DO NOT CHANGE THIS
 search_domain=${DOMAINNAME}
-dns_zone=10.90.30
+dns_zone=${DNSZONE}
 
 #uncomment and edit if using RHEL
 #RHEL Subscription Info
