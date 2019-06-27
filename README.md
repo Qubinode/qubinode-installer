@@ -1,19 +1,19 @@
-# openshift-home-lab - WIP
+# openshift-home-lab - v0.1.7
 OpenShift Home Lab on RHEL
 
 This document will explain how to get a home lab setup for Red Hat OpenShift on top of KVM for your home network.
 
 ## Requirements
 * Server with at least 16 GB Memory
-* Server With at least 1 TB of Hard Drive
+* Server With at least 1 TB of Secondary Hard Drive
 * Ansible version 2.6 and up
-* RHEL7 or CENTOS7
+* RHEL7
 * dnspython
 * pip [How to install pip on Red Hat Enterprise Linux?](https://access.redhat.com/solutions/1519803)
 * mkdir ~/keys
 * mkdir /kvmdata/
-* oVirt or Red Hat Virtualation with OpenvSwith
-* KVM and preconfigured [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
+* OpenvSwitch  [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
+* KVM
 
 ## Deployment Architecture
 * [start_deployment](architecture/start_deployment_arch_diagram.png)
@@ -22,7 +22,14 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * install the following roles
   - for centos deployments ```ansible-galaxy install tosin2013.kvm_cloud_init_vm```
   - for RHEL deployments ```ansible-galaxy install tosin2013.rhel7_kvm_cloud_init```
-  - for bind server ```ansible-galaxy install bertvv.bind```
+  - for bind server
+    ```
+    ansible-galaxy install bertvv.bind
+    ansible-galaxy install blofeldthefish.ansible-role-bind
+    ```
+
+* run the bootstrap.sh script
+
 * (optional) deploy dns server
   -
   ```
@@ -41,83 +48,44 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 
 ## Manual Deployment
 
-
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_rsa
-
 1. install kvm
 ```
 ./install_kvm_packages.sh
 ```
 2. Configure networking See [link](https://www.linux-kvm.org/page/Networking#Public_Bridge) I am using openvswitch in my deployment
-3. Install  kvm_cloud_init_vm  to do automated installed of kvm via ansible
+3. Install  kvm_cloud_init_vm  and tosin2013.rhel7_kvm_cloud_init ansible roles in order to deploy KVM
 ```
 ansible-galaxy install tosin2013.kvm_cloud_init_vm
+ansible-galaxy install tosin2013.rhel7_kvm_cloud_init
 ```
-4. Install and configure dns server
+4. Install and configure ansible role for  dns server
 ```
 ansible-galaxy install bertvv.bind
+ansible-galaxy install blofeldthefish.ansible-role-bind  
 ```
 5. Run ssh add script
 ```
 source ssh-add-script.sh
 ```
-6. run  deploy-dns-kvm.yml  script
-```
-ansible-inventory -i inventory.dnserver  --list
-ansible-playbook -i inventory.dnsserver deploy_dns_kvm.yml
-```
-7. create inventory.vm.dnserver script
-```
-cat dnsserver
-```
-8. Update deploy_dns_server.yml
+6. Update or modify the inventory file under dns_server/inventory based off your target OS.
 
-9. Run deploy-dns-server.yml playbook
+7. run  deploy_dns_server.sh script
 ```
-ansible-playbook -i inventory.vm.dnsserver deploy_dns_server.yml
-
-```
-10. update inventory.openshift file
-11. Run deploy_openshift_vms.yml playbook as root
-```
-ansible-playbook -i inventory.openshift deploy_openshift_vms.yml  --become
-```
-# Generate inventory.vm.provision script
-```
-scripts/provision_openshift_nodes.sh
+  ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver
 ```
 
+10. update kvm inventory under kvm_inventory based off your operating system
+11. Run start_deployment.sh script as root to deploy the KVM machines
 ```
-ansible-playbook -i inventory.openshift  tasks/hosts_generator.yml
-
-ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=jumpboxdeploy" --extra-vars="rhel_user=exampleuser"
-
-ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=OSEv3" --extra-vars="rhel_user=exampleuser"
-```
-as user
-```
-scripts/generation_jumpbox_ssh_key.sh  exampleuser 192.168.1.129
-scripts/share_keys.sh 192.168.1.133 exampleuser
+./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104
 ```
 
-# Configure jumpbox
+12. ssh into jumpbox and deploy openshift
+  - copy ssh-add-script to jumpbox
+  - edit redhat.3.11.inventory and copy to jumpbox
+  - ssh to jumpbox
 ```
-ansible-playbook -i inventory.vm.provision tasks/openshift_jumpbox-v3.11.yml  --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=exampleuser"
-```
-
-```
-ansible-playbook -i inventory.vm.provision tasks/configure_docker_regisitry.yml --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=exampleuser" --become
-```
-```
-ansible-playbook -i inventory.vm.provision tasks/openshift_nodes-v3.11.yml   --extra-vars "rhel_user=exampleuser"
-```
-
-copy ssh-add-script to jumpbox
-edit redhat.3.11.inventory and copy to jumpbox
-ssh to jumpbox
-```
-scp ssh-add-script.sh exampleuser@10.90.30.156:/tmp
+scp ssh-add-script.sh exampleuser@192.168.1.1=39:/tmp
 cd ~/openshift-ansible
 sudo htpasswd -c passwordFile username
 source ssh-add-script.sh
@@ -126,13 +94,10 @@ ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
 ```
 
 ## To-Do
-* create [Public Bridge](https://www.linux-kvm.org/page/Networking#Public_Bridge) script
 * Cleanup functions in start_deployment.sh
 * OCP 4.1 Compatibility
-* Ansible Tower Integration
 * better documentation
 * finish manual install documentation
-* Add Architecture documentation
 
 
 ## Uninstall openshift
