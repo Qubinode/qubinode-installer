@@ -93,8 +93,8 @@ openshift_docker_insecure_registries=jumpbox.ocp.${DEFAULTDNSNAME}
 openshift_master_default_subdomain=apps.ocp.${DEFAULTDNSNAME}
 
 #openshift operators
-openshift_enable_olm=true
-openshift_additional_registry_credentials=[{'host':'registry.connect.redhat.com','user':'${RHEL_USERNAME}','password':'${RHEL_PASSWORD},'test_image':'mongodb/enterprise-operator:0.3.2'}]
+#openshift_enable_olm=true
+#openshift_additional_registry_credentials=[{'host':'registry.connect.redhat.com','user':'${RHEL_USERNAME}','password':'${RHEL_PASSWORD},'test_image':'mongodb/enterprise-#operator:0.3.2'}]
 
 # registry
 openshift_hosted_registry_storage_kind=glusterfs

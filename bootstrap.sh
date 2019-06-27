@@ -21,7 +21,7 @@ if [[ -f bootstrap_env ]]; then
 
       bash scripts/generate_dns_server_inventory.sh || exit 1
 
-      ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME || exit 1
+      ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver  || exit 1
     fi
 else
 
@@ -43,4 +43,17 @@ bash scripts/generate_kvm_inventory.sh  || exit 1
 
 ./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104 || exit 1
 
+
+JUMPBOX=$(cat jumpbox  | tr -d '"[]"')
+read -p "KVM Deployment complete. if you would like to deploy OpenShift now press Y/N? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    ssh tosin@${JUMPBOX} '/home/'${SSH_USERNAME}'/start_openshift_deployment.sh' ${SSH_USERNAME} inventory.3.11.rhel.gluster
+else
+cat << EOF
+  You can deploy OpenShift at any time using the commands below.
+  ssh tosin@${JUMPBOX} '/home/${SSH_USERNAME}/start_openshift_deployment.sh' ${SSH_USERNAME} inventory.3.11.rhel.gluster
+EOF
+fi
 #rm bootstrap_env
