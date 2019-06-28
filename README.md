@@ -1,4 +1,4 @@
-# openshift-home-lab - v0.1.7
+# openshift-home-lab - WIP
 OpenShift Home Lab on RHEL
 
 This document will explain how to get a home lab setup for Red Hat OpenShift on top of KVM for your home network.
@@ -107,3 +107,5 @@ ansible all -i inventory.redhat -a "rm -rf /etc/origin"
 ## Architecture
 
 ## Links
+
+## Acknowledgments
