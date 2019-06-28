@@ -1,8 +1,6 @@
 #!/bin/bash
 # Author: Tosin Akinosho
-export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-set -x
-
+cd /opt/openshift-home-lab/Packages/openshift-home-lab/
 source scripts/bootstrapvaidator.sh
 
 
@@ -21,14 +19,14 @@ if [[ -f bootstrap_env ]]; then
 
       bash scripts/generate_dns_server_inventory.sh || exit 1
 
-      ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver  || exit 1
+      bash dns_server/deploy_dns_server.sh rhel inventory.dnsserver  $SSH_USERNAME || exit 1
     fi
 else
 
     askquestions
     bash scripts/generate_dns_server_inventory.sh ${DOMAINNAME} ${RHEL_USERNAME} ${RHEL_PASSWORD} ${SSH_USERNAME} ${SSH_PASSWORD} || exit 1
 
-    ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME || exit 1
+    bash dns_server/deploy_dns_server.sh rhel inventory.dnsserver $SSH_USERNAME || exit 1
 fi
 
 DNSSERVERIP=$(cat dnsserver  | tr -d '"[]"')
@@ -41,7 +39,7 @@ fi
 bash scripts/generate_kvm_inventory.sh  || exit 1
 
 
-./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104 || exit 1
+bash start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104 || exit 1
 
 
 JUMPBOX=$(cat jumpbox  | tr -d '"[]"')

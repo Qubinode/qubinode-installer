@@ -39,16 +39,18 @@ elif [[ $CHECKFOR_OCP_INSTALLATION_SHUTDOWN -eq 7 ]] ; then
 else
   CHECKFOR_DNS=$(virsh list | grep running | grep dnsserver | wc -l)
   if [[ $CHECKFOR_DNS -ne 1 ]]; then
-    echo "Warning OpenShift KVM master and worker nodes are not found." | tee /var/log/openshift_bootstrap_service.log
-    read -p "Would you like to deploy a new Openshift cluster?" -n 1 -r
+    echo "Warning OpenShift KVM master and worker nodes are not found.  " | tee /var/log/openshift_bootstrap_service.log
+    read -p "Would you like to deploy a new Openshift cluster?  " -n 1 -r
     echo    # (optional) move to a new line
-    if [[ ! $REPLY =~ ^[Yy]$ ]]
+    if [[ $REPLY =~ ^[Yy]$ ]]
     then
         echo "Deploying Openshift cluster" | tee /var/log/openshift_bootstrap_service.log
-        /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap.sh | tee /var/log/openshift_bootstrap_install.log
+        cd /opt/openshift-home-lab/Packages/openshift-home-lab/
+        bash /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap.sh | tee /var/log/openshift_bootstrap_install.log
     fi
   else
     echo "Start bootstrap script" | tee /var/log/openshift_bootstrap_service.log
-    /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap.sh | tee /var/log/openshift_bootstrap_install.log
+    cd /opt/openshift-home-lab/Packages/openshift-home-lab/
+    bash /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap.sh | tee /var/log/openshift_bootstrap_install.log
   fi
 fi
