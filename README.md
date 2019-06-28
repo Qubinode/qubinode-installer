@@ -29,22 +29,9 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
     ```
 
 * run the bootstrap.sh script
-
-* (optional) deploy dns server
-  -
-  ```
-  $ ./dns_server/deploy_dns_server.sh
-  Usage for centos deployment: ./dns_server/deploy_dns_server.sh centos inventory.centos.dnsserver
-  Usage for rhel deployment: ./dns_server/deploy_dns_server.sh rhel inventory.rhel.dnsserver username
-  ```
-* Modify inventory.openshift
-* Modify inventory.3.11.centos.gluster
-* Run ./start_deployment.sh
 ```
-./start_deployment.sh  centos inventory.openshift inventory.3.11.centos.gluster
-./start_deployment.sh  rhel inventory.openshift inventory.3.11.rhel.gluster
+./bootstrap.sh
 ```
-* To Delete Run ./delete_openshift_deployment.sh inventory.openshift
 
 ## Manual Deployment
 
@@ -104,6 +91,13 @@ ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
 ansible-playbook -i inventory.redhat  playbooks/adhoc/uninstall.yml
 ansible all -i inventory.redhat -a "rm -rf /etc/origin"
 
+## To delete deployment
+```
+./delete_openshift_deployment.sh inventory.openshift
+```
+
 ## Architecture
 
 ## Links
+
+## Acknowledgments

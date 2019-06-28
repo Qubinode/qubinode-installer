@@ -87,7 +87,7 @@ oreg_auth_user=${RHEL_USERNAME}
 oreg_auth_password=${RHEL_PASSWORD}
 
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
-openshift_master_htpasswd_file=/home/tosin/openshift-ansible/passwordFile
+openshift_master_htpasswd_file=/home/${SSH_USERNAME}/openshift-ansible/passwordFile
 openshift_docker_additional_registries=jumpbox.ocp.${DEFAULTDNSNAME}
 openshift_docker_insecure_registries=jumpbox.ocp.${DEFAULTDNSNAME}
 openshift_master_default_subdomain=apps.ocp.${DEFAULTDNSNAME}
