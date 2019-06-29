@@ -24,6 +24,7 @@
       vault_dns_key: "{{ user_data_action.stdout }}"
     when: file_details.stat.exists
   - include_vars: dns_key/dns_key
+    when: not file_details.stat.exists
   - name: Add or modify {{ a_record }} A to {{ ip_address }}"
     nsupdate:
       key_name: "example.key"

@@ -29,14 +29,14 @@ function configure_dns_for_arecord() {
     sleep 3s
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=${DNSKEY_PATH}" --vault-password-file=ansible-vault.pass || exit 1
+      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
     else
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file="  --vault-password-file=ansible-vault.pass || exit 1
     fi
 }
 ################################
 # manually enter key function  #
-###############################
+############################### --vault-password-file=ansible-vault.pass
 function manual_enter_key() {
   #statements
   if [[ -z $DNS_KEY_NAME ]]; then
