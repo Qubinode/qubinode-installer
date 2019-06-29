@@ -143,6 +143,19 @@ function set_arecord() {
       fi
     done
 
+    NODEONEIP=$(cat node1 | tr -d '"[]",')
+    NOTFOUND=$(  cat $3 | grep apps)
+    if [[ -z $NOTFOUND ]]; then
+      echo "Please change openshift_master_default_subdomain to include apps in name"
+      exit 1
+    fi
+    if [[ -f skipask ]]; then
+      source skipask
+      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.apps" --extra-vars="ip_address=${NODEONEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
+    else
+        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.apps" --extra-vars="ip_address=${NODEONEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+    fi
+
     echo "cleanup enviornment "
     cleanup
 }
