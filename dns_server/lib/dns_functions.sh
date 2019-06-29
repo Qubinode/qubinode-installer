@@ -99,7 +99,7 @@ function set_arecord() {
     JUMPBOXIP=$(cat jumpbox | tr -d '"[]",')
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" --vault-password-file=ansible-vault.pass || exit 1
+      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}"  || exit 1
       sleep 2s
     else
         ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
@@ -110,7 +110,7 @@ function set_arecord() {
     MASTERIP=$(cat master | tr -d '"[]",')
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" --vault-password-file=ansible-vault.pass || exit 1
+      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
     else
         ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
     fi
@@ -124,7 +124,7 @@ function set_arecord() {
       NODEIP=$(cat $n | tr -d '"[]",')
       if [[ -f skipask ]]; then
         source skipask
-        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" --vault-password-file=ansible-vault.pass || exit 1
+        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
       else
         ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
       fi
@@ -135,7 +135,7 @@ function set_arecord() {
         APPENDPOINT=$(cat ${3} | grep openshift_master_default_subdomain= | tr   = " " | awk '{print $2}' | tr . " "| awk '{print $1}')
         if [[ -f skipask ]]; then
           source skipask
-          ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" --vault-password-file=ansible-vault.pass || exit 1
+          ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
           dig +short test.${DOMAINNAME} @${DNSSERVER} | grep ${NODEIP} || exit 1
         else
           ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
