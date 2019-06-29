@@ -15,6 +15,7 @@ if [ "$#" -ne 2 ]; then
 fi
 
 OPENSHIFT_RELEASE=$1
+OPENSHIFT_PKG_VERSION_UPDATE=$(echo $1 | tr -d v)
 OS=$2
 
 NODES=$(ls node*)
@@ -79,7 +80,9 @@ node4.ocp.${DEFAULTDNSNAME} glusterfs_ip=${NODE4_IP}  glusterfs_zone=4 glusterfs
 ansible_ssh_user=${SSH_USERNAME}
 ansible_become=true
 debug_level=2
-openshift_release=${OPENSHIFT_RELEASE}
+openshift_release="3.11"
+openshift_image_tag=${OPENSHIFT_RELEASE}
+openshift_pkg_version=-${OPENSHIFT_PKG_VERSION_UPDATE}
 openshift_deployment_type=openshift-enterprise
 
 oreg_url=registry.redhat.io/openshift3/ose-\${component}:\${version}

@@ -12,10 +12,13 @@ function quickstart() {
   cd openshift-ansible/
   source ssh-add-script.sh
   if [[ ! -f passwordFile ]]; then
-    htpasswd -c passwordFile $USER
+    htpasswd -c passwordFile $USER || exit 1
   fi
   ansible-playbook -i $INVENTORY_FILE  playbooks/prerequisites.yml || exit 1
   ansible-playbook -i $INVENTORY_FILE  playbooks/deploy_cluster.yml || exit 1
 }
 
+echo "***********************************************"
+echo "*  Starting OpenShift Deployment from jumpbox *"
+echo "***********************************************"
 quickstart $1 $2
