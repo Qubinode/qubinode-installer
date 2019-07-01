@@ -15,3 +15,5 @@
     command: "rm -rf {{ vm_data_dir }}"
   - name: remove {{ vm_name }}.qcow2
     command: "rm -rf {{kvm_vm_pool_dir}}/{{ vm_name }}.qcow2"
+  - name: remove {{ vm_name }}_disk.img and gluster.img
+    command: "rm -rf {{kvm_vm_pool_dir}}/{{ vm_name }}*.img"

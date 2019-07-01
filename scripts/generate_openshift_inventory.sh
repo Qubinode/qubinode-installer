@@ -89,20 +89,22 @@ oreg_url=registry.redhat.io/openshift3/ose-\${component}:\${version}
 oreg_auth_user=${RHEL_USERNAME}
 oreg_auth_password=${RHEL_PASSWORD}
 
+# registry
+openshift_hosted_registry_storage_kind=glusterfs
+openshift_hosted_registry_storage_volume_size=10Gi
+openshift_hosted_registry_selector="node-role.kubernetes.io/infra=true"
+
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
 openshift_master_htpasswd_file=/home/${SSH_USERNAME}/openshift-ansible/passwordFile
 openshift_docker_additional_registries=jumpbox.ocp.${DEFAULTDNSNAME}
 openshift_docker_insecure_registries=jumpbox.ocp.${DEFAULTDNSNAME}
 openshift_master_default_subdomain=apps.ocp.${DEFAULTDNSNAME}
+os_firewall_use_firewalld=true
 
 #openshift operators
 #openshift_enable_olm=true
 #openshift_additional_registry_credentials=[{'host':'registry.connect.redhat.com','user':'${RHEL_USERNAME}','password':'${RHEL_PASSWORD},'test_image':'mongodb/enterprise-#operator:0.3.2'}]
 
-# registry
-openshift_hosted_registry_storage_kind=glusterfs
-openshift_hosted_registry_storage_volume_size=10Gi
-openshift_hosted_registry_selector="node-role.kubernetes.io/infra=true"
 
 # Container image to use for glusterfs pods
 openshift_storage_glusterfs_image="registry.redhat.io/rhgs3/rhgs-server-rhel7:v3.11"
@@ -119,7 +121,7 @@ openshift_storage_glusterfs_storageclass=true
 openshift_storage_glusterfs_storageclass_default=true
 openshift_storage_glusterfs_block_deploy=true
 openshift_storage_glusterfs_block_host_vol_create=true
-openshift_storage_glusterfs_block_host_vol_size=50
+openshift_storage_glusterfs_block_host_vol_size=190
 openshift_storage_glusterfs_block_storageclass=true
 openshift_storage_glusterfs_block_storageclass_default=false
 
@@ -140,7 +142,7 @@ openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra":"true"}
 # openshift_logging_es_pvc_dynamic=true
 # openshift_logging_storage_kind=dynamic
 # openshift_logging_es_pvc_size=10Gi
-# openshift_logging_es_cluster_size=3
+# openshift_logging_es_cluster_size=1
 # openshift_logging_es_pvc_storage_class_name='glusterfs-storage-block'
 # openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra":"true"}
 # openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra":"true"}

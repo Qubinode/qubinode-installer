@@ -88,8 +88,8 @@ ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
 
 
 ## Uninstall openshift
-ansible-playbook -i inventory.redhat  playbooks/adhoc/uninstall.yml
-ansible all -i inventory.redhat -a "rm -rf /etc/origin"
+ansible-playbook -i inventory.redhat  playbooks/adhoc/uninstall.yml  
+ansible all -i inventory.redhat -a "rm -rf /etc/origin"  
 
 ## To delete deployment
 ```

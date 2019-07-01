@@ -8,10 +8,10 @@ if [[ -f bootstrap_env ]]; then
     running_install_check
     CHECKFOR_DNS=$(virsh list | grep running | grep dnsserver | wc -l)
     if [[ $CHECKFOR_DNS -eq 1 ]] && [[ -f "skipask" ]]; then
-      sed -i 's/export CREATE_DNS_KEY=TRUE/export CREATE_DNS_KEY=FALSE/g' bootstrap_env
       source bootstrap_env
       DOMAINNAME=$DEFAULTDNSNAME
     elif [[ $CHECKFOR_DNS -eq 1 ]] && [[ ! -f "skipask" ]]; then
+      sed -i 's/export CREATE_DNS_KEY=TRUE/export CREATE_DNS_KEY=FALSE/g' bootstrap_env
       source bootstrap_env
       DOMAINNAME=$DEFAULTDNSNAME
     else
@@ -47,11 +47,11 @@ read -p "KVM Deployment complete. if you would like to deploy OpenShift now pres
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    ssh tosin@${JUMPBOX} '/home/'${SSH_USERNAME}'/start_openshift_deployment.sh' ${SSH_USERNAME} inventory.3.11.rhel.gluster
+    ssh ${SSH_USERNAME}@${JUMPBOX} '/home/'${SSH_USERNAME}'/start_openshift_deployment.sh' ${SSH_USERNAME} inventory.3.11.rhel.gluster
 else
 cat << EOF
   You can deploy OpenShift at any time using the commands below.
-  ssh tosin@${JUMPBOX} '/home/${SSH_USERNAME}/start_openshift_deployment.sh' ${SSH_USERNAME} inventory.3.11.rhel.gluster
+  ssh ${SSH_USERNAME}@${JUMPBOX} '/home/${SSH_USERNAME}/start_openshift_deployment.sh' ${SSH_USERNAME} inventory.3.11.rhel.gluster
 EOF
 fi
 #rm bootstrap_env
