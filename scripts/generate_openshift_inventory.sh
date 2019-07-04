@@ -130,23 +130,25 @@ openshift_metrics_install_metrics=true
 openshift_metrics_storage_kind=dynamic
 openshift_master_dynamic_provisioning_enabled=true
 openshift_metrics_hawkular_hostname=hawkular-metrics.{{openshift_master_default_subdomain}}
-openshift_metrics_cassandra_storage_type=pv
+openshift_metrics_cassandra_storage_type=dynamic
 openshift_metrics_storage_volume_size=10Gi
-openshift_metrics_cassanda_pvc_storage_class_name='glusterfs-storage-block'
+openshift_metrics_cassanda_pvc_storage_class_name='glusterfs-storage'
 openshift_metrics_hawkular_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_metrics_cassandra_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra":"true"}
 
 # logging
-# openshift_logging_install_logging=true
-# openshift_logging_es_pvc_dynamic=true
-# openshift_logging_storage_kind=dynamic
+#openshift_logging_install_logging=true
+#openshift_logging_es_pvc_dynamic=true
+#openshift_logging_storage_kind=dynamic
+# openshift_logging_use_ops=true
 # openshift_logging_es_pvc_size=10Gi
-# openshift_logging_es_cluster_size=1
-# openshift_logging_es_pvc_storage_class_name='glusterfs-storage-block'
-# openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra":"true"}
-# openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra":"true"}
-# openshift_logging_es_nodeselector={"node-role.kubernetes.io/infra":"true"}
+# openshift_logging_es_cluster_size=2
+# openshift_logging_es_pvc_storage_class_name='glusterfs-storage'
+# openshift_logging_elasticsearch_pvc_storage_class_name='glusterfs-storage'
+#openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra":"true"}
+#openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra":"true"}
+#openshift_logging_es_nodeselector={"node-role.kubernetes.io/infra":"true"}
 
 # prometheous operator
 # openshift_cluster_monitoring_operator_install=true
@@ -155,6 +157,6 @@ openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra":"true"}
 # openshift_cluster_monitoring_operator_alertmanager_storage_enabled=true
 # openshift_cluster_monitoring_operator_prometheus_storage_capacity=10Gi
 # openshift_cluster_monitoring_operator_alertmanager_storage_capacity=2Gi
-# openshift_cluster_monitoring_operator_prometheus_storage_class_name='glusterfs-storage-block'
-# openshift_cluster_monitoring_operator_alertmanager_storage_class_name='glusterfs-storage-block'
+# openshift_cluster_monitoring_operator_prometheus_storage_class_name='glusterfs-storage'
+# openshift_cluster_monitoring_operator_alertmanager_storage_class_name='glusterfs-storage'
 EOF
