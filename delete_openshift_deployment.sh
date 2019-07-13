@@ -15,6 +15,8 @@ function dellall() {
   sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=nodes" || exit 1
   sudo ansible-playbook -i  $1 tasks/delete_kvm.yml  --extra-vars "machine=lb" || exit 1
   rm -rf jumpbox master node* lb hosts inventory.vm.provision
+  rm -rf /kvm/kvmdata/node*
+  rm -rf /kvm/kvmdata/master*
 }
 
 function selectone() {

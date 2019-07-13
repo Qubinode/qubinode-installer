@@ -109,11 +109,6 @@ main() {
       echo -e "\e[32mCreating inventory files from newly created vms\e[0m"
       echo -e "\e[32m************************\e[0m"
       bash scripts/provision_openshift_nodes.sh $2 || exit 1
-      ansible-playbook -i $2  tasks/hosts_generator.yml || exit 1
-
-      ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=jumpboxdeploy" --extra-vars="rhel_user=centos" || exit 1
-
-      ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=OSEv3" --extra-vars="rhel_user=centos" || exit 1
 
       JUMPBOX=$(cat jumpbox | tr -d '"[]",')
       echo "Generating ssh key on ${JUMPBOX}"
@@ -124,7 +119,6 @@ main() {
 
       set_arecord $2 centos inventory.3.11.${1}.gluster
 
-      addgluster $2
 
       ansible-playbook -i inventory.vm.provision tasks/openshift_jumpbox-v3.11.yml  --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=centos" || exit 1
 
@@ -154,11 +148,6 @@ main() {
       $USESUDO  ansible-playbook -i $2 deploy_openshift_vms.yml  --become  || exit 1
       echo -e "\e[32mCreating inventory files from newly created vms\e[0m"
       bash scripts/provision_openshift_nodes.sh $2 || exit 1
-      ansible-playbook -i $2  tasks/hosts_generator.yml || exit 1
-
-      ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=jumpboxdeploy" --extra-vars="rhel_user=${RHEL_USER}" || exit 1
-
-      ansible-playbook -i inventory.vm.provision tasks/push_hosts_file.yml --extra-vars="machinename=OSEv3" --extra-vars="rhel_user=${RHEL_USER}" || exit 1
 
       JUMPBOX=$(cat jumpbox | tr -d '"[]",')
       echo "Generating ssh key on ${JUMPBOX}"
@@ -168,8 +157,6 @@ main() {
       bash scripts/generate_openshift_inventory.sh $3 rhel || exit 1
 
       set_arecord $2 ${RHEL_USER} inventory.3.11.${1}.gluster
-
-      addgluster $2
 
       ansible-playbook -i inventory.vm.provision     tasks/openshift_jumpbox-v3.11.yml  --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=${RHEL_USER}"  --extra-vars="rhel_username=$RHEL_USERNAME"   --extra-vars="rhel_password=$RHEL_PASSWORD" || exit 1
 
