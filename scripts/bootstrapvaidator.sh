@@ -53,6 +53,15 @@ function validations() {
   cp -ai /opt/ansible-plugins/* /etc/ansible/roles
   fi
 
+  CHECK_SUBSCRIPTION_STATUS=$( subscription-manager status  | grep 'Overall Status' | awk '{print $3}')
+  if [[ $CHECK_SUBSCRIPTION_STATUS != Current ]]; then
+    read -p "Would you like to register your $(dmidecode -s baseboard-manufacturer) server with Red Hat? " yn
+    case $yn in
+        [Yy]* )subscription-manager register && subscription-manager attach --auto; break;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+  fi
 }
 
 
