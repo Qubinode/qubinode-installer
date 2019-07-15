@@ -32,7 +32,10 @@ cat >/tmp/ocp-power-management.yml<<EOF
     - ocp-power-management
 EOF
 
-ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml
+ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml || exit 1
+
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${SSH_USERNAME}@master.$DOMAINNAME  halt "Shutting Down Node"
+virsh shutdown master
 
 rm /tmp/ocp-power-management.yml
 rm /tmp/cluster-inventory
