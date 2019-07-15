@@ -16,7 +16,8 @@ if [[ $CHECKFOR_OCP_INSTALLATION -eq 7 ]] ; then
       echo "Openshift Console URL:  https://master.$DOMAINNAME:8443"
     else
       echo "Testing if nodes are online"
-      ansible-playbook -i inventory.vm.provision tasks/wait_for_me.yml  --extra-vars "rhel_user=tosin" && echo "To troubleshoot cluster run ssh root@master scripts/check_system_state.sh both"|| exit 1
+      source /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap_env
+      ansible-playbook -i inventory.vm.provision tasks/wait_for_me.yml  --extra-vars "rhel_user=$SSH_USERNAME" && echo "To troubleshoot cluster run ssh $SSH_USERNAME@master scripts/check_system_state.sh both"|| exit 1
       echo "Openshift Console URL:  https://master.$DOMAINNAME:8443"
     fi
 
