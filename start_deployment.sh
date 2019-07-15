@@ -170,6 +170,9 @@ main() {
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no inventory.3.11.${1}.gluster  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
 
+      ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${RHEL_USER}@${MASTERIP} mkdir ~/scripts
+      scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /etc/ansible/roles/ocp-power-management/files/* ${RHEL_USER}@${MASTERIP}:~/scripts
+
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no start_openshift_deployment.sh ${RHEL_USER}@${JUMPBOX}:~
     else
       display_help

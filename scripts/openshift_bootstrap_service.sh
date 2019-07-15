@@ -10,6 +10,16 @@ CHECKFOR_OCP_INSTALLATION_SHUTDOWN=$(virsh list | grep shutdown | wc -l)
 CHECKFOR_OCP_INSTALLATION_POWERED_DOWN=$(virsh list --all | grep 'shut off' | wc -l)
 if [[ $CHECKFOR_OCP_INSTALLATION -eq 7 ]] ; then
     echo "OpenShift KVM Nodes are up and running." | tee /var/log/openshift_bootstrap_service.log
+    DOMAINNAME=$(cat inventory.rhel.openshift | grep search_domain| awk '{print $1}' | cut -d'=' -f2)
+    OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "https://master.$DOMAINNAME:8443" --insecure)
+    if [[ OCP_STATUS -eq 200 ]];  then
+      echo "Openshift Console URL:  https://master.$DOMAINNAME:8443"
+    else
+      echo "Testing if nodes are online"
+      ansible-playbook -i inventory.vm.provision tasks/wait_for_me.yml  --extra-vars "rhel_user=tosin" && echo "To troubleshoot cluster run ssh root@master scripts/check_system_state.sh both"|| exit 1
+      echo "Openshift Console URL:  https://master.$DOMAINNAME:8443"
+    fi
+
 elif [[ $CHECKFOR_OCP_INSTALLATION_POWERED_DOWN -eq 7 ]] ; then
     echo "Warning OpenShift KVM nodes are deployed but they are powered down." | tee /var/log/openshift_bootstrap_service.log
     read -p "Would you like to start them up?" -n 1 -r | tee /var/log/openshift_bootstrap_service.log

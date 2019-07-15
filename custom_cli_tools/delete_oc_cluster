@@ -1,0 +1,17 @@
+#!/bin/bash
+set -xe
+
+source /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap_env
+
+read -p "Would you like to delete all the VM's Y/N? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  cd /opt/openshift-home-lab/Packages/openshift-home-lab/
+  bash delete_openshift_deployment.sh inventory.rhel.openshift DELLALL
+else
+  cd /opt/openshift-home-lab/Packages/openshift-home-lab/
+  bash delete_openshift_deployment.sh inventory.rhel.openshift
+fi
+
+cd ~
