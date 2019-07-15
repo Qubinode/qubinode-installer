@@ -1,0 +1,42 @@
+#!/bin/bash
+
+source /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap_env
+DOMAINNAME=$(cat /opt/openshift-home-lab/Packages/openshift-home-lab/inventory.rhel.openshift | grep search_domain| awk '{print $1}' | cut -d'=' -f2)
+
+cat >/tmp/cluster-inventory<<EOF
+[master]
+master.ocp.example.com
+
+[master:vars]
+#options for power_state reboot, halt, running
+power_state="running"
+rhel_user="${SSH_USERNAME}"
+# use for master node endpoint
+master_node="master.$DOMAINNAME"
+# FQDN names used for power down and power up tasks
+fdqn_node_names=["node4.$DOMAINNAME","node3.$DOMAINNAME","node2.$DOMAINNAME","node1.$DOMAINNAME"]
+fqdn_compute_names=["node4.$DOMAINNAME","node3.$DOMAINNAME"]
+
+# node names used for power up and power down nodes
+node_names=["node1","node2","node3","node4"]
+infra_nodes=["node1","node2"]
+compute_nodes=["node3","node4"]
+EOF
+
+cat >/tmp/ocp-power-management.yml<<EOF
+---
+- hosts: master
+  remote_user: tosin
+  gather_facts: no
+  roles:
+    - ocp-power-management
+EOF
+
+ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml
+
+
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${SSH_USERNAME}@master.$DOMAINNAME  halt "Shutting Down Node"
+virsh shutdown master
+
+rm /tmp/ocp-power-management.yml
+rm /tmp/cluster-inventory
