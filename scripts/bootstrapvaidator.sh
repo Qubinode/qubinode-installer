@@ -57,7 +57,9 @@ function validations() {
   if [[ $CHECK_SUBSCRIPTION_STATUS != Current ]]; then
     read -p "Would you like to register your $(dmidecode -s baseboard-manufacturer) server with Red Hat? " yn
     case $yn in
-        [Yy]* )subscription-manager register && subscription-manager attach --auto; break;;
+        [Yy]* )
+          subscription-manager register --username ${RHEL_USERNAME} --password ${RHEL_PASSWORD} --auto-attach
+          break;;
         [Nn]* ) break;;
         * ) echo "Please answer yes or no.";;
     esac
