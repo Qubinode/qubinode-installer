@@ -2,8 +2,13 @@
 ###
 # Collecting system information status
 ###
-monitor | tee /var/log/openshift_bootstrap_service.log
 echo ""
+
+CHECK_COCKPIT_SERVICE=$(systemctl status cockpit | grep inactive)
+if [[ ! -z $CHECK_COCKPIT_SERVICE ]]; then
+    echo "Cockpit service is not running."
+    ansible-playbook /opt/openshift-home-lab/Packages/openshift-home-lab/tasks/check_cockpit_service.yml
+fi
 
 CHECKFOR_OCP_INSTALLATION=$(virsh list | grep running | wc -l)
 CHECKFOR_OCP_INSTALLATION_SHUTDOWN=$(virsh list | grep shutdown | wc -l)
