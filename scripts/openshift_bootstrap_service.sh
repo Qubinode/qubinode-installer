@@ -4,7 +4,7 @@
 ###
 echo ""
 
-CHECK_COCKPIT_SERVICE=$(systemctl status cockpit | grep inactive 2> /dev/null)
+CHECK_COCKPIT_SERVICE=$(systemctl status cockpit | grep inactive 2>/dev/null)
 if [[ ! -z $CHECK_COCKPIT_SERVICE ]]; then
     echo "Cockpit service is not running."
     ansible-playbook /opt/openshift-home-lab/Packages/openshift-home-lab/tasks/check_cockpit_service.yml
@@ -13,11 +13,11 @@ fi
 customcli=$(ls /opt/openshift-home-lab/Packages/openshift-home-lab/custom_cli_tools | grep _ | tr '\r\n' ' ')
 for i in /opt/openshift-home-lab/Packages/openshift-home-lab/custom_cli_tools/*
 do
-   echo "line: ${i}"
+   #echo "line: ${i}"
    if [[ $i != *".TBL"*  ]]; then
      checkforscript=$(ls /usr/local/bin/${i}  2> /dev/null)
      if [[ -z $checkforscript ]]; then
-       echo "Copying $i to /usr/local/bin/"
+       #echo "Copying $i to /usr/local/bin/"
        chmod +x ${i}
        mv ${i} /usr/local/bin/
      fi
