@@ -6,7 +6,9 @@ echo ""
 
 CHECK_COCKPIT_SERVICE=$(systemctl status cockpit | grep inactive 2>/dev/null)
 if [[ ! -z $CHECK_COCKPIT_SERVICE ]]; then
+    echo "*******************************"
     echo "Cockpit service is not running."
+    echo "*******************************"
     ansible-playbook /opt/openshift-home-lab/Packages/openshift-home-lab/tasks/check_cockpit_service.yml
 fi
 
