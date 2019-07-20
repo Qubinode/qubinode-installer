@@ -166,6 +166,13 @@ main() {
 
       ansible-playbook -i inventory.vm.provision tasks/openshift_gluster_config.yml  --extra-vars "rhel_user=${RHEL_USER}"   || exit 1
 
+      DNSSERVER=$(cat dnsserver | tr -d '"[]",')
+      CHECKDNSSERVER=$(cat /etc/resolv.conf | grep $DNSSERVER)
+      if [[ -z $CHECKDNSSERVER ]]; then
+        sed -i '/^search.*/i nameserver '${DNSSERVER}''  /etc/resolv.conf
+      fi
+
+
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh-add-script.sh  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
 
       scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no inventory.3.11.${1}.gluster  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible

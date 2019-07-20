@@ -4,14 +4,20 @@
 ###
 echo ""
 
-CHECK_COCKPIT_SERVICE=$(systemctl status cockpit | grep inactive 2>/dev/null)
-if [[ ! -z $CHECK_COCKPIT_SERVICE ]]; then
+HOSTIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
+COCKPIT_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "https://$HOSTIP:9090" --insecure)
+if [[ OCP_STATUS -eq 200 ]];  then
     echo "*******************************"
     echo "Cockpit service is not running."
     echo "*******************************"
     ansible-playbook /opt/openshift-home-lab/Packages/openshift-home-lab/tasks/check_cockpit_service.yml
 fi
 
+echo "Cockpit URL: https://$HOSTIP:9090"
+echo "*******************************"
+
+echo ""
+sleep 5s
 customcli=$(ls /opt/openshift-home-lab/Packages/openshift-home-lab/custom_cli_tools | grep _ | tr '\r\n' ' ')
 for i in /opt/openshift-home-lab/Packages/openshift-home-lab/custom_cli_tools/*
 do
@@ -21,7 +27,7 @@ do
      if [[ -z $checkforscript ]]; then
        #echo "Copying $i to /usr/local/bin/"
        chmod +x ${i}
-       mv ${i} /usr/local/bin/
+       cp ${i} /usr/local/bin/
      fi
    fi
 done
@@ -31,14 +37,19 @@ CHECKFOR_OCP_INSTALLATION_SHUTDOWN=$(virsh list | grep shutdown | wc -l)
 CHECKFOR_OCP_INSTALLATION_POWERED_DOWN=$(virsh list --all | grep 'shut off' | wc -l)
 if [[ $CHECKFOR_OCP_INSTALLATION -eq 7 ]] ; then
     echo "OpenShift KVM Nodes are up and running." | tee /var/log/openshift_bootstrap_service.log
-    DOMAINNAME=$(cat inventory.rhel.openshift | grep search_domain| awk '{print $1}' | cut -d'=' -f2)
+    DNSSERVER=$(cat /opt/openshift-home-lab/Packages/openshift-home-lab/dnsserver | tr -d '"[]",')
+    CHECKDNSSERVER=$(cat /etc/resolv.conf | grep $DNSSERVER)
+    if [[ -z $CHECKDNSSERVER ]]; then
+      sed -i '/^search.*/i nameserver '${DNSSERVER}''  /etc/resolv.conf
+    fi
+    DOMAINNAME=$(cat /opt/openshift-home-lab/Packages/openshift-home-lab/inventory.rhel.openshift | grep search_domain| awk '{print $1}' | cut -d'=' -f2)
     OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "https://master.$DOMAINNAME:8443" --insecure)
     if [[ OCP_STATUS -eq 200 ]];  then
       echo "Openshift Console URL:  https://master.$DOMAINNAME:8443"
     else
       echo "Testing if nodes are online"
       source /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap_env
-      ansible-playbook -i inventory.vm.provision tasks/wait_for_me.yml  --extra-vars "rhel_user=$SSH_USERNAME" && echo "To troubleshoot cluster run ssh $SSH_USERNAME@master scripts/check_system_state.sh both"|| exit 1
+      ansible-playbook -i /opt/openshift-home-lab/Packages/openshift-home-lab/inventory.vm.provision /opt/openshift-home-lab/Packages/openshift-home-lab/tasks/wait_for_nodes.yml  --extra-vars "rhel_user=$SSH_USERNAME" && echo "To troubleshoot cluster run ssh $SSH_USERNAME@master scripts/check_system_state.sh both"|| exit 1
       echo "Openshift Console URL:  https://master.$DOMAINNAME:8443"
     fi
 
