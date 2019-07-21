@@ -6,7 +6,7 @@ echo ""
 
 HOSTIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
 COCKPIT_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "https://$HOSTIP:9090" --insecure)
-if [[ OCP_STATUS -eq 200 ]];  then
+if [[ $COCKPIT_STATUS -eq 200 ]];  then
     echo "*******************************"
     echo "Cockpit service is not running."
     echo "*******************************"
