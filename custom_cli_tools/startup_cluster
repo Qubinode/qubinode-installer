@@ -5,7 +5,7 @@ DOMAINNAME=$(cat /opt/openshift-home-lab/Packages/openshift-home-lab/inventory.r
 
 cat >/tmp/cluster-inventory<<EOF
 [master]
-master.ocp.example.com
+master.$DOMAINNAME
 
 [master:vars]
 #options for power_state reboot, halt, running
@@ -15,6 +15,7 @@ rhel_user="${SSH_USERNAME}"
 master_node="master.$DOMAINNAME"
 # FQDN names used for power down and power up tasks
 fdqn_node_names=["node4.$DOMAINNAME","node3.$DOMAINNAME","node2.$DOMAINNAME","node1.$DOMAINNAME"]
+fqdn_infra_names=["node1.$DOMAINNAME","node2.$DOMAINNAME"]
 fqdn_compute_names=["node4.$DOMAINNAME","node3.$DOMAINNAME"]
 
 # node names used for power up and power down nodes
@@ -29,7 +30,7 @@ cat >/tmp/ocp-power-management.yml<<EOF
   remote_user: tosin
   gather_facts: no
   roles:
-    - ocp-power-management
+    - tosin2013.ocp_power_management
 EOF
 
 ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml  || exit 1

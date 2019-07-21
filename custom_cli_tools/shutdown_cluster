@@ -5,7 +5,7 @@ DOMAINNAME=$(cat /opt/openshift-home-lab/Packages/openshift-home-lab/inventory.r
 
 cat >/tmp/cluster-inventory<<EOF
 [master]
-master.ocp.example.com
+master.$DOMAINNAME
 
 [master:vars]
 #options for power_state reboot, halt, running
@@ -29,12 +29,12 @@ cat >/tmp/ocp-power-management.yml<<EOF
   remote_user: tosin
   gather_facts: no
   roles:
-    - ocp-power-management
+    - tosin2013.ocp_power_management
 EOF
 
 ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml || exit 1
 
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${SSH_USERNAME}@master.$DOMAINNAME  halt "Shutting Down Node"
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${SSH_USERNAME}@master.$DOMAINNAME  "halt 'Shutting Down Node'"
 virsh shutdown master
 
 rm /tmp/ocp-power-management.yml
