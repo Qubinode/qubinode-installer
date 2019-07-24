@@ -27,7 +27,7 @@ EOF
 cat >/tmp/ocp-power-management.yml<<EOF
 ---
 - hosts: master
-  remote_user: tosin
+  remote_user: ${SSH_USERNAME}
   gather_facts: no
   roles:
     - tosin2013.ocp_power_management
