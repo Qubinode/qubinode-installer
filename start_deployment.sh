@@ -8,13 +8,7 @@
 OPENSHIFT_RELEASE_VERSION="v3.11.98"
 DEFAULT_PRODUCT="ocp"
 VALID_PRODUCTS="okd ${DEFAULT_PRODUCT}"
-#########################
-# import functions      #
-#########################
-#source dns_server/lib/dns_functions.sh
-#########################
-# The command line help #
-#########################
+
 function display_help() {
     SCRIPT=$(basename "${BASH_SOURCE[0]}")
 
