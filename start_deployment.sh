@@ -73,6 +73,61 @@ function dns_configuration () {
     fi
 }
 
+function deploy_openshift () {
+    configure_dns_for_arecord $2 centos
+    echo -e "\e[32m************************\e[0m"
+    echo -e "\e[32mDeploying Openshift vms\e[0m"
+    echo -e "\e[32m************************\e[0m"
+    $USESUDO ansible-playbook  -i $2 deploy_openshift_vms_centos.yml --become || exit 1
+    $USESUDO  ansible-playbook -i $2 deploy_openshift_vms.yml  --become  || exit 1
+    echo -e "\e[32m************************\e[0m"
+    echo -e "\e[32mCreating inventory files from newly created vms\e[0m"
+    echo -e "\e[32m************************\e[0m"
+    bash scripts/provision_openshift_nodes.sh $2 || exit 1
+}
+
+function deploy_
+
+function deploy_jumpbox () {
+    JUMPBOX=$(cat jumpbox | tr -d '"[]",')
+    echo "Generating ssh key on ${JUMPBOX}"
+
+    scripts/generation_jumpbox_ssh_key.sh centos ${JUMPBOX}
+    scripts/generation_jumpbox_ssh_key.sh  ${RHEL_USER} ${JUMPBOX}
+
+    sharekey centos
+    sharekey ${RHEL_USER}
+
+    bash scripts/generate_openshift_inventory.sh $3 centos || exit 1
+    bash scripts/generate_openshift_inventory.sh $3 rhel || exit 1
+
+    set_arecord $2 centos inventory.3.11.${1}.gluster
+    set_arecord $2 ${RHEL_USER} inventory.3.11.${1}.gluster
+
+    ansible-playbook -i inventory.vm.provision tasks/openshift_jumpbox-v3.11.yml  --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=centos" || exit 1
+    ansible-playbook -i inventory.vm.provision tasks/openshift_jumpbox-v3.11.yml --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=${RHEL_USER}"  --extra-vars="rhel_username=$RHEL_USERNAME"   --extra-vars="rhel_password=$RHEL_PASSWORD" || exit 1
+
+    ansible-playbook -i inventory.vm.provision tasks/configure_docker_regisitry.yml --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=centos" --become || exit 1
+    ansible-playbook -i inventory.vm.provision tasks/configure_docker_regisitry.yml --extra-vars "machinename=jumpboxdeploy" --extra-vars "rhel_user=${RHEL_USER}" --become || exit 1
+
+    ansible-playbook -i inventory.vm.provision tasks/openshift_nodes-v3.11.yml --extra-vars "rhel_user=centos" || exit 1
+    ansible-playbook -i inventory.vm.provision tasks/openshift_nodes-v3.11.yml --extra-vars "rhel_user=${RHEL_USER}"  --extra-vars="rhel_username=$RHEL_USERNAME" --extra-vars="rhel_password=$RHEL_PASSWORD" || exit 1
+
+    ansible-playbook -i inventory.vm.provision tasks/openshift_gluster_config.yml  --extra-vars "rhel_user=${RHEL_USER}"   || exit 1
+
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh-add-script.sh  centos@${JUMPBOX}:~/openshift-ansible
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh-add-script.sh  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
+
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no inventory.3.11.${1}.gluster  centos@${JUMPBOX}:~/openshift-ansible
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no inventory.3.11.${1}.gluster  ${RHEL_USER}@${JUMPBOX}:~/openshift-ansible
+
+    ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${RHEL_USER}@${MASTERIP}
+    mkdir ~/scripts
+
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /etc/ansible/roles/ocp-power-management/files/* ${RHEL_USER}@${MASTERIP}:~/scripts
+    scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no start_openshift_deployment.sh ${RHEL_USER}@${JUMPBOX}:~
+}
+
 # validate product pass by user
 function validate_product_by_user () {
     for item in $(echo "$VALID_PRODUCTS")
