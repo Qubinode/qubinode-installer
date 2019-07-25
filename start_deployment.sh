@@ -30,13 +30,39 @@ function check_args () {
     fi
 }
 
-function deploy_dns_server () {
+# misc prereqs
+function setup_prereqs () {
+    if [ -z "$SSH_AUTH_SOCK" ] ; then
+        eval "$(ssh-agent -s)"
+        test -f ~/.ssh/id_rsa && ssh-add ~/.ssh/id_rsa
+    fi
+}
+
+function dns_configuration () {
     if [ "A${skip_dns}" != "Atrue" ]; then
+        
+        # ensure the dns_functions.sh is loaded
+        if [ -f "${project_dir}/dns_server/lib/dns_functions.sh" ]; then
+          source "${project_dir}/dns_server/lib/dns_functions.sh"
+        else
+            echo "dns_function.sh not found"; exit 1
+        fi
+        
         kvm_inventory=$1
         
-        env_check
-        validation $2
-        addssh
+        # import bootstrap_env, this file would exist if the installation
+        # started for the bootable iso/usb 
+        if [[ -f bootstrap_env ]]; then
+            source bootstrap_env
+        fi
+
+      DOMAINNAME=$(cat "${kvm_inventory}" | grep search_domain| awk '{print $1}' | cut -d'=' -f2)
+      if [ "A${DOMAINNAME}" == "A" ]; then
+          echo "Please enter fill out search domain in ${kvm_inventory}"
+          exit 1
+      fi
+
+        setup_prereqs
         configurednsforopenshift $2 centos
         configure_dns_for_arecord $2 centos
     else
@@ -45,6 +71,7 @@ function deploy_dns_server () {
         # to verify the required dns entries are available
         echo "Do run fuction to verify dns"
         configure_dns_for_arecord $2 centos
+    fi
 }
 
 # validate product pass by user

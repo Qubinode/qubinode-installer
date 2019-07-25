@@ -1,6 +1,8 @@
 ############################################
 # configure_dns_for_arecord functions      #
 ###########################################
+
+dns_inventory="${project_dir}/inventories/inventory.vm.dnsserver"
 function configure_dns_for_arecord() {
     DNSSERVER=$(cat ${1} | grep dns_servers=* | tr -d '"[]",' | awk '{print $1}' | cut -d'=' -f2)
     DOMAINNAME=$(cat ${1} | grep search_domain| awk '{print $1}' | cut -d'=' -f2)
@@ -189,15 +191,15 @@ function configurednsforopenshift() {
 
   DNSSERVER=$(cat ${1} | grep dns_servers=* | tr -d '"[]",' | awk '{print $1}' | cut -d'=' -f2)
 
-  if [[ ! -f inventory.vm.dnsserver ]]; then
-cat <<EOF > inventory.vm.dnsserver
+  if [[ ! -f "${project_dir}/inventories/inventory.vm.dnsserver" ]]; then
+cat <<EOF > "${project_dir}/inventories/inventory.vm.dnsserver"
 [dns_server]
 ${DNSSERVER}
 
 EOF
 fi
 
-  CHECK_DNS=$(cat inventory.vm.dnsserver | grep $DNSSERVER)
+  CHECK_DNS=$(cat "${project_dir}/inventories/inventory.vm.dnsserver" | grep $DNSSERVER)
   if [[ -z $CHECK_DNS ]]; then
     echo -e "\e[31mDouble check inventory.vm.dnsserver and ${1} files current dns server ip is incorrect \e[0m"
     exit 1
@@ -207,7 +209,7 @@ fi
   echo -e "\e[32mChecking if dns server is online.\e[0m"
   echo -e "\e[32m************************\e[0m"
   sleep 3s
-  ansible-playbook -i inventory.vm.dnsserver dns_server/port_verification.yml   --extra-vars="port_num=53" --extra-vars="rhel_user=${2}" || exit 1
+  ansible-playbook -i "${project_dir}/inventories/inventory.vm.dnsserver" dns_server/port_verification.yml   --extra-vars="port_num=53" --extra-vars="rhel_user=${2}" || exit 1
 
   if [[ $CREATE_DNS_KEY == "TRUE" ]]; then
     REPLY=y
@@ -227,7 +229,7 @@ fi
     fi
 
     echo -e "\e[32m************************\e[0m"
-    ansible-playbook -i inventory.vm.dnsserver dns_server/configure_dns_server_for_openshift.yml  --extra-vars="zone_name=${DNS_ZONE}" --extra-vars="key_name=${DNS_KEY_NAME}" --extra-vars="dns_server_ip=${DNS_IP}"  --extra-vars="rhel_user=$2" --extra-vars="domain_name=${DOMAINNAME}.com" --extra-vars="server_ip=$(hostname --ip-address | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | head -1)"|| exit 1
+    ansible-playbook -i "${project_dir}/inventories/inventory.vm.dnsserver" dns_server/configure_dns_server_for_openshift.yml  --extra-vars="zone_name=${DNS_ZONE}" --extra-vars="key_name=${DNS_KEY_NAME}" --extra-vars="dns_server_ip=${DNS_IP}"  --extra-vars="rhel_user=$2" --extra-vars="domain_name=${DOMAINNAME}.com" --extra-vars="server_ip=$(hostname --ip-address | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | head -1)"|| exit 1
 cat <<EOF > skipask
 KEYNAME=${DNS_KEY_NAME}
 DNSKEY_PATH=/etc/named/${DNS_KEY_NAME}.
