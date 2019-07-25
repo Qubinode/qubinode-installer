@@ -31,9 +31,20 @@ function check_args () {
 }
 
 function deploy_dns_server () {
-    source "${PROJECT_DIR}/dns_server/lib/dns_functions.sh"
-    #$2 = domainname
-    configurednsforopenshift $2 centos
+    if [ "A${skip_dns}" != "Atrue" ]; then
+        kvm_inventory=$1
+        
+        env_check
+        validation $2
+        addssh
+        configurednsforopenshift $2 centos
+        configure_dns_for_arecord $2 centos
+    else
+        # this assumes you are providing your own dns server
+        # we need to be able to do a nsupdate against your dns server
+        # to verify the required dns entries are available
+        echo "Do run fuction to verify dns"
+        configure_dns_for_arecord $2 centos
 }
 
 # validate product pass by user
