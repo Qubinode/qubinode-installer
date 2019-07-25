@@ -47,7 +47,7 @@ function dns_configuration () {
         else
             echo "dns_function.sh not found"; exit 1
         fi
-        
+
         kvm_inventory=$1
         
         # import bootstrap_env, this file would exist if the installation
@@ -63,8 +63,7 @@ function dns_configuration () {
       fi
 
         setup_prereqs
-        configurednsforopenshift $2 centos
-        configure_dns_for_arecord $2 centos
+        configurednsforopenshift "${kvm_inventory}" centos
     else
         # this assumes you are providing your own dns server
         # we need to be able to do a nsupdate against your dns server

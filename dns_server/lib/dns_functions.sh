@@ -12,28 +12,28 @@ function configure_dns_for_arecord() {
     oct2=$(echo ${DNSSERVER} | tr "." " " | awk '{ print $2 }')
     oct3=$(echo ${DNSSERVER} | tr "." " " | awk '{ print $3 }')
 
-    echo "Generating dns_server/update_dns_server_${lastip}_entry.yml" || exit 1
+    echo "Generating ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml" || exit 1
 
-    cp  dns_server/update_dns_server_entry.yml  dns_server/update_dns_server_${lastip}_entry.yml  || exit 1
-    sed -ri 's/^(\s*)(zone\s*:\s*"example.com"\s*$)/\      zone: "'$DOMAINNAME'"/' dns_server/update_dns_server_${lastip}_entry.yml || exit 1
-    sed -ri 's/^(\s*)(server\s*:\s*"0.0.0.0"\s*$)/\      server: "'$DNSSERVER'"/' dns_server/update_dns_server_${lastip}_entry.yml || exit 1
+    cp  ${project_dir}/dns_server/update_dns_server_entry.yml  ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  || exit 1
+    sed -ri 's/^(\s*)(zone\s*:\s*"example.com"\s*$)/\      zone: "'$DOMAINNAME'"/' ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml || exit 1
+    sed -ri 's/^(\s*)(server\s*:\s*"0.0.0.0"\s*$)/\      server: "'$DNSSERVER'"/' ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml || exit 1
 
     if [[ -f skipask ]]; then
       source skipask
-      sed -ri 's/^(\s*)(key_name\s*:\s*"example.key"\s*$)/\      key_name: "'$KEYNAME'."/' dns_server/update_dns_server_${lastip}_entry.yml || exit 1
+      sed -ri 's/^(\s*)(key_name\s*:\s*"example.key"\s*$)/\      key_name: "'$KEYNAME'."/' ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml || exit 1
     else
       manual_enter_key
     fi
 
     echo "Verifing DNS Configuration"
-    cat dns_server/update_dns_server_${lastip}_entry.yml | grep "${DNSSERVER}"  || exit 1
+    cat ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml | grep "${DNSSERVER}"  || exit 1
     echo -e "\e[32mTESTING test.${DOMAINNAME} ${oct1}.${oct2}.${oct3}.250\e[0m"
     sleep 3s
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
+      ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
     else
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file="  --vault-password-file=ansible-vault.pass || exit 1
+      ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=test" --extra-vars="ip_address=${oct1}.${oct2}.${oct3}.250" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file="  --vault-password-file=ansible-vault.pass || exit 1
     fi
 }
 ################################
@@ -47,7 +47,7 @@ function manual_enter_key() {
     echo -e "\e[32m************************\e[0m"
   fi
 
-  sed -ri 's/^(\s*)(key_name\s*:\s*"example.key"\s*$)/\      key_name: "'$DNS_KEY_NAME'."/' dns_server/update_dns_server_${lastip}_entry.yml || exit 1
+  sed -ri 's/^(\s*)(key_name\s*:\s*"example.key"\s*$)/\      key_name: "'$DNS_KEY_NAME'."/' ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml || exit 1
 
   echo -e "\e[32m************************\e[0m"
   echo -e "\e[32mKey secret for DNS server this will allow script to write a records to your dnsserver: \e[0m"
@@ -62,8 +62,8 @@ function manual_enter_key() {
        SECERT_KEY+=$key
     fi
   done
-#echo "${SECERT_KEY}" > dns_server/dns_key/dns_key
-cat <<YAML > dns_server/dns_key/dns_key
+#echo "${SECERT_KEY}" > ${project_dir}/dns_server/dns_key/dns_key
+cat <<YAML > ${project_dir}/dns_server/dns_key/dns_key
 ---
 vault_dns_key: ${SECERT_KEY}
 
@@ -84,7 +84,7 @@ YAML
   done
     echo "${SECERT_KEY}" >   ansible-vault.pass
 
-    ansible-vault encrypt dns_server/dns_key/dns_key   --vault-password-file=ansible-vault.pass
+    ansible-vault encrypt ${project_dir}/dns_server/dns_key/dns_key   --vault-password-file=ansible-vault.pass
 
 }
 
@@ -101,10 +101,10 @@ function set_arecord() {
     JUMPBOXIP=$(cat jumpbox | tr -d '"[]",')
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}"  || exit 1
+      ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}"  || exit 1
       sleep 2s
     else
-        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+        ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=jumpbox" --extra-vars="ip_address=${JUMPBOXIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
     fi
 
 
@@ -112,9 +112,9 @@ function set_arecord() {
     MASTERIP=$(cat master | tr -d '"[]",')
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
+      ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
     else
-        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+        ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=master" --extra-vars="ip_address=${MASTERIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
     fi
 
     sleep 2s
@@ -126,9 +126,9 @@ function set_arecord() {
       NODEIP=$(cat $n | tr -d '"[]",')
       if [[ -f skipask ]]; then
         source skipask
-        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
+        ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
       else
-        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+        ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=${n}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}" --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
       fi
 
       INFRANODE=$(cat ${3} | grep node-config-infra | tr   = " " | awk '{print $1}')
@@ -137,10 +137,10 @@ function set_arecord() {
         APPENDPOINT=$(cat ${3} | grep openshift_master_default_subdomain= | tr   = " " | awk '{print $2}' | tr . " "| awk '{print $1}')
         if [[ -f skipask ]]; then
           source skipask
-          ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
+          ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
           dig +short test.${DOMAINNAME} @${DNSSERVER} | grep ${NODEIP} || exit 1
         else
-          ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+          ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.${APPENDPOINT}" --extra-vars="ip_address=${NODEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
         fi
       fi
     done
@@ -153,9 +153,9 @@ function set_arecord() {
     fi
     if [[ -f skipask ]]; then
       source skipask
-      ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.apps" --extra-vars="ip_address=${NODEONEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
+      ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.apps" --extra-vars="ip_address=${NODEONEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=${DNSKEY_PATH}" || exit 1
     else
-        ansible-playbook -i inventory.vm.dnsserver dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.apps" --extra-vars="ip_address=${NODEONEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
+        ansible-playbook -i inventory.vm.dnsserver ${project_dir}/dns_server/update_dns_server_${lastip}_entry.yml  --extra-vars="a_record=*.apps" --extra-vars="ip_address=${NODEONEIP}" --extra-vars="rhel_user=${2}"  --extra-vars="user_data_file=" --vault-password-file=ansible-vault.pass || exit 1
     fi
 
     echo "cleanup enviornment "
@@ -209,7 +209,7 @@ fi
   echo -e "\e[32mChecking if dns server is online.\e[0m"
   echo -e "\e[32m************************\e[0m"
   sleep 3s
-  ansible-playbook -i "${project_dir}/inventories/inventory.vm.dnsserver" dns_server/port_verification.yml   --extra-vars="port_num=53" --extra-vars="rhel_user=${2}" || exit 1
+  ansible-playbook -i "${project_dir}/inventories/inventory.vm.dnsserver" ${project_dir}/dns_server/port_verification.yml   --extra-vars="port_num=53" --extra-vars="rhel_user=${2}" || exit 1
 
   if [[ $CREATE_DNS_KEY == "TRUE" ]]; then
     REPLY=y
@@ -229,7 +229,7 @@ fi
     fi
 
     echo -e "\e[32m************************\e[0m"
-    ansible-playbook -i "${project_dir}/inventories/inventory.vm.dnsserver" dns_server/configure_dns_server_for_openshift.yml  --extra-vars="zone_name=${DNS_ZONE}" --extra-vars="key_name=${DNS_KEY_NAME}" --extra-vars="dns_server_ip=${DNS_IP}"  --extra-vars="rhel_user=$2" --extra-vars="domain_name=${DOMAINNAME}.com" --extra-vars="server_ip=$(hostname --ip-address | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | head -1)"|| exit 1
+    ansible-playbook -i "${project_dir}/inventories/inventory.vm.dnsserver" ${project_dir}/dns_server/configure_dns_server_for_openshift.yml  --extra-vars="zone_name=${DNS_ZONE}" --extra-vars="key_name=${DNS_KEY_NAME}" --extra-vars="dns_server_ip=${DNS_IP}"  --extra-vars="rhel_user=$2" --extra-vars="domain_name=${DOMAINNAME}.com" --extra-vars="server_ip=$(hostname --ip-address | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}" | head -1)"|| exit 1
 cat <<EOF > skipask
 KEYNAME=${DNS_KEY_NAME}
 DNSKEY_PATH=/etc/named/${DNS_KEY_NAME}.
