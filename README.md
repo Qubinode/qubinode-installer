@@ -1,4 +1,4 @@
-# openshift-home-lab - v0.1.9
+# openshift-home-lab - v0.2.0
 OpenShift Home Lab on RHEL
 
 This document will explain how to get a home lab setup for Red Hat OpenShift on top of KVM for your home network.
@@ -26,11 +26,22 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
     ```
     ansible-galaxy install bertvv.bind
     ansible-galaxy install blofeldthefish.ansible-role-bind
+    ansible-galaxy install tosin2013.ocp_power_management
     ```
+* Create directory for scripts
+```
+mkdir -p /opt/openshift-home-lab/Packages/
+```
+* copy repo to /opt/openshift-home-lab/Packages/openshift-home-lab/
+```
+cd  /opt/openshift-home-lab/Packages/
+git clone https://github.com/tosin2013/openshift-home-lab.git
+```
 
 * run the bootstrap.sh script
 ```
-./bootstrap.sh
+cd openshift-home-lab
+run ./bootstrap.sh
 ```
 
 ## Manual Deployment
@@ -39,7 +50,9 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 ```
 ./install_kvm_packages.sh
 ```
-2. Configure networking See [link](https://www.linux-kvm.org/page/Networking#Public_Bridge) I am using openvswitch in my deployment
+2. Build an OpenvSwitch RPM for your server and install it to your server [Fedora, RHEL 7.x Packaging for Open vSwitch](http://docs.openvswitch.org/en/latest/intro/install/fedora/)
+- You can also review the [configure-ovs-interface.sh](scripts/configure-ovs-interface.sh) script
+
 3. Install  kvm_cloud_init_vm  and tosin2013.rhel7_kvm_cloud_init ansible roles in order to deploy KVM
 ```
 ansible-galaxy install tosin2013.kvm_cloud_init_vm
@@ -71,14 +84,14 @@ source ssh-add-script.sh
   - copy ssh-add-script to jumpbox
   - edit redhat.3.11.inventory and copy to jumpbox
   - ssh to jumpbox
-```
-scp ssh-add-script.sh exampleuser@192.168.1.1=39:/tmp
-cd ~/openshift-ansible
-sudo htpasswd -c passwordFile username
-source ssh-add-script.sh
-ansible-playbook -i inventory.redhat  playbooks/prerequisites.yml
-ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
-```
+    ```
+    scp ssh-add-script.sh exampleuser@192.168.1.1=39:/tmp
+    cd ~/openshift-ansible
+    sudo htpasswd -c passwordFile username
+    source ssh-add-script.sh
+    ansible-playbook -i inventory.redhat  playbooks/prerequisites.yml
+    ansible-playbook -i inventory.redhat  playbooks/deploy_cluster.yml
+    ```
 
 ## To-Do
 * Cleanup functions in start_deployment.sh
@@ -97,7 +110,11 @@ ansible all -i inventory.redhat -a "rm -rf /etc/origin"
 ```
 
 ## Architecture
+[Link](https://github.com/tosin2013/openshift-home-lab/tree/master/architecture)
 
 ## Links
 
 ## Acknowledgments
+* [bertvv](https://github.com/bertvv)
+* [karlmdavis](https://github.com/karlmdavis)
+* [Jooho](https://github.com/Jooho)
