@@ -133,3 +133,7 @@ ansible all -i inventory.redhat -a "rm -rf /etc/origin"
 * [bertvv](https://github.com/bertvv)
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
+
+## Author
+Tosin Akinosho - [tosin2013](https://github.com/tosin2013/openshift-home-lab)
+Open to committers
