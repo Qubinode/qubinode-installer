@@ -116,9 +116,10 @@ source ssh-add-script.sh
 
 
 ## Uninstall openshift
+```
 ansible-playbook -i inventory.redhat  playbooks/adhoc/uninstall.yml  
 ansible all -i inventory.redhat -a "rm -rf /etc/origin"  
-
+```
 ## To delete deployment
 ```
 ./delete_openshift_deployment.sh inventory.openshift
