@@ -4,7 +4,7 @@ OpenShift Home Lab on RHEL
 This document will explain how to get a home lab setup for Red Hat OpenShift on top of KVM for your home network.
 
 ## Requirements
-* Server with at least 16 GB Memory
+* Server with at least 64 GB Memory
 * Server With at least 1 TB of Secondary Hard Drive
 * Ansible version 2.6 and up
 * RHEL7
