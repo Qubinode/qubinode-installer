@@ -136,5 +136,5 @@ ansible all -i inventory.redhat -a "rm -rf /etc/origin"
 * [Jooho](https://github.com/Jooho)
 
 ## Author
-Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
-Open to committers
+Tosin Akinosho - [tosin2013](https://github.com/tosin2013)  
+Open to committers  
