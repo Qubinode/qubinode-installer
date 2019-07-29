@@ -1,4 +1,4 @@
-# openshift-home-lab - v0.2.0
+# openshift-home-lab
 OpenShift Home Lab on RHEL
 
 This document will explain how to get a home lab setup for Red Hat OpenShift on top of KVM for your home network.

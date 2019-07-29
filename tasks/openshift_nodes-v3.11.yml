@@ -72,27 +72,17 @@
         - docker-1.13.1
     when:
       - ansible_distribution == "RedHat"
-  - name: install centos dependent packages
-    yum:
-      name:
-        - pyOpenSSL
-        - device-mapper-event-libs
-        - device-mapper-libs
-        - httpd-tools
-        - java-1.8.0-openjdk-devel.x86_64
-        - tmux
-        - lvm2
-        - NetworkManager
-      state: present
-    when:
-      - ansible_distribution == "CentOS"
-  - name: enable NetworkManager for Openshift use CentOS
-    systemd:
-      name: NetworkManager
-      state: started
-      enabled: yes
-    when:
-      - ansible_distribution == "CentOS"
+  - name: cleanup hosts files on openshift nodes
+    synchronize:
+      src: /etc/hosts
+      dest: /etc/hosts
+    become: yes
+  - name: update hosts file with node ip
+    shell: |
+        CHECKFORENTRY=$(cat /etc/hosts | grep {{ inventory_hostname }})
+        if [[ -z $CHECKFORENTRY ]]; then
+          echo "{{ ansible_default_ipv4.address }} {{ inventory_hostname }}" >> /etc/hosts
+        fi
   - name: create docker-storage-setup file
     copy:
       dest: "/etc/sysconfig/docker-storage-setup"
