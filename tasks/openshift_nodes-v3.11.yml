@@ -79,9 +79,9 @@
     become: yes
   - name: update hosts file with node ip
     shell: |
-        CHECKFORENTRY=$(cat /etc/hosts | grep {{ inventory_hostname }})
+        CHECKFORENTRY=$(cat /etc/hosts | grep $HOSTNAME)
         if [[ -z $CHECKFORENTRY ]]; then
-          echo "{{ ansible_default_ipv4.address }} {{ inventory_hostname }}" >> /etc/hosts
+          echo "{{ ansible_default_ipv4.address }} $HOSTNAME" >> /etc/hosts
         fi
   - name: create docker-storage-setup file
     copy:

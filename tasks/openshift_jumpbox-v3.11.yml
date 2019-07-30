@@ -3,18 +3,6 @@
   remote_user: "{{ rhel_user }}"
   become: yes
   tasks:
-  - name: Add EPEL repository for CentOS deployments
-    yum_repository:
-      name: epel
-      description: EPEL YUM repo
-      baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
-    when:
-      - ansible_distribution == "CentOS"
-  - name: Importing rpm gpg-key for CentOS deployments.
-    shell: |
-       rpm --import http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7 >> /tmp/epelgpgimport.log
-    when:
-      - ansible_distribution == "CentOS"
   - name: Register as auto-subscribe to red hat subscription.
     redhat_subscription:
       state: present
@@ -46,12 +34,12 @@
       state: enabled
     when:
       - ansible_distribution == "RedHat"
-  - name: Add Docker repo
-    get_url:
-      url: https://download.docker.com/linux/centos/docker-ce.repo
-      dest: /etc/yum.repos.d/docker-ce.repo
+  - name: Enable rhel-7-server-ose-3.11-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ose-3.11-rpms
+      state: enabled
     when:
-      - ansible_distribution == "CentOS"
+      - ansible_distribution == "RedHat"rhel-7-server-ose-3.11-rpms
   - name: upgrade all packages
     yum:
       name: '*'
@@ -71,39 +59,8 @@
       - sos
       - psacct
       - vim
+      - atomic-openshift-clients
       state: present
-  - name: install required packages for CENTOS
-    yum:
-      name:
-        - pyOpenSSL
-        - device-mapper-event-libs
-        - device-mapper-libs
-        - httpd-tools
-        - java-1.8.0-openjdk-devel.x86_64
-        - tmux
-        - patch
-        - lvm2
-        - docker-ce
-        - python-pip
-      state: present
-    when:
-      - ansible_distribution == "CentOS"
-  - name: Run script to modifiy terminal layout
-    shell: |
-         pip install passlib
-    when:
-      - ansible_distribution == "CentOS"
-  - name: Download ansible-2.6.5 rpm for centos
-    get_url:
-      url: https://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ansible-2.6.5-1.el7.ans.noarch.rpm
-      dest: /tmp/ansible-2.6.5-1.el7.ans.noarch.rpm
-    when:
-      - ansible_distribution == "CentOS"
-  - name: Installing ansible-2.6.5-1.el7.ans.noarch.rpm on CentOS.
-    shell: |
-      yum install /tmp/ansible-2.6.5-1.el7.ans.noarch.rpm -y >> /tmp/ansibleinstall.log
-    when:
-      - ansible_distribution == "CentOS"
   - name: Install a list of packages
     yum:
       name:
