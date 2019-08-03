@@ -83,6 +83,136 @@ function setup_required_paths () {
     fi
 }
 
+function read_sensitive_data () {
+    prompt="$1"
+    while IFS= read -p "$prompt" -r -s -n 1 char
+    do
+        if [[ $char == $'\0' ]]
+        then
+            break
+        fi
+        prompt='*'
+        input+="$char"
+    done
+    echo "$input"
+}
+
+function rhsm_register () {
+    is_registered_tmp=$(mktemp)
+    subscription-manager identity > "${is_registered_tmp}" 2>&1
+    is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
+    if [ "A${is_registered}" == "A" ]; then
+        echo "$(hostname) is registered to RHSM."
+    else
+        PS3="Which option are you using to register the system 'Activation Key' (akey) or Username/Pass (upass): "
+        options=("akey" "upass")
+        select opt in akey upass
+        do
+            case $opt in
+                akey)
+                   rhsm_registration="$opt"
+                   break
+                   ;;
+                upass)
+                   rhsm_registration="$opt"
+                   break
+                   ;;
+                *)
+                   echo "Error: Please try again";;
+            esac
+        done
+        
+        if [ "A${rhsm_registration}" == "Aupass" ]; 
+        then
+            echo -n "Enter your RHSM username and press [ENTER]: "
+            read rhsm_username
+            unset rhsm_password
+            prompt='Enter your RHSM password and press [ENTER]: '
+            rhsm_password=$(read_sensitive_data "${prompt}")
+            echo
+            subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force > /dev/null 2>&1
+        elif [ "A${rhsm_registration}" == "Aakey" ]; 
+        then
+            echo -n "Enter your RHSM activation key and press [ENTER]: "
+            read rhsm_activationkey
+            unset rhsm_org
+            prompt='Enter your RHSM ORG ID and press [ENTER]: '
+            rhsm_org=$(read_sensitive_data "${prompt}")
+            echo
+            subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force > /dev/null 2>&1
+    
+        else
+            echo -n "Unknown issue: cannot register system!"
+            exit 1
+        fi
+    
+    
+        # validate registration
+        is_registered_tmp=$(mktemp)
+        subscription-manager identity > "${is_registered_tmp}" 2>&1
+        is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
+        if [ "A${is_registered}" == "A" ]; then
+            echo "Successfully registered $(hostname) to RHSM."
+        else
+            echo "Unsuccessfully registered $(hostname) to RHSM."
+            exit 1
+        fi
+    
+    fi
+}
+
+function setup_ansible () {
+    # install python
+    if [ ! -f /usr/bin/python ];
+    then
+       echo "installing python"
+       yum install -y -q -e 0 python python3-pip python2-pip
+    else
+       echo "python is installed"
+    fi
+
+    # install ansible
+    if [ ! -f /usr/bin/ansible ];
+    then
+       subscription-manager repos --list-enabled | grep rhel-7-server-ansible-2-rpms >/dev/null 2>&1 ||\
+                                        subscription-manager repos --enable=rhel-7-server-ansible-2-rpms
+       yum install -y -q -e 0 ansible
+    else
+       echo "ansible is installed"
+    fi
+    
+    # setup vault
+    if [ -f /usr/bin/ansible ];
+    then
+        echo "Setting up vault and encrypting vault file ${ansible_vault}"
+        openssl rand -base64 512|xargs > ~/.vaultkey
+        grep 'ANSIBLE_VAULT' "${ansible_vault}" >/dev/null 2>&1 ||\
+          ansible-vault encrypt "${ansible_vault}" --vault-password-file=~/.vaultkey
+    else
+        echo "Ansible not found, please install and retry."
+        exit 1
+    fi
+        
+}
+
+function ask_for_required_vaules () {
+    read -p "Enter your dns domain or press [ENTER] for the default [lab.example]: " domain
+    domain=${domain:-lab.example}
+
+    read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_server_public
+    dns_server_public=${dns_server_public:-1.1.1.1}
+
+    unset root_user_pass
+    prompt='Enter a password for the root user and press [ENTER]: '
+    root_user_pass=$(read_sensitive_data "${prompt}")
+
+    unset idm_admin_pwd
+    prompt='Enter a password for the IDM server console and press [ENTER]: '
+    idm_admin_pwd=$(read_sensitive_data "${prompt}")
+
+    idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
+}
+
 while getopts ":hip:" opt;
 do
     case $opt in
@@ -111,5 +241,5 @@ shift "$((OPTIND-1))"
 validate_product_by_user
 setup_required_paths
    
-echo $project_dir
-echo $config_file
+echo "project_dir: $project_dir"
+echo "config_file: $config_file"
