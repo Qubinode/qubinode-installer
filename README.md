@@ -18,6 +18,18 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 ## Deployment Architecture
 * [start_deployment](architecture/start_deployment_arch_diagram.png)
 
+## System Verification
+Before running the following scripts verify that CPU virtualization extensions are enabled.
+
+```
+$ grep -E "vmx|svm" /proc/cpuinfo
+```
+If this command shows any output, the required extensions are enabled.
+
+If this command shows no output, either your hardware does not support virtualization features, or these features are not enabled in your system's BIOS. See the Virtualization Deployment and Administration Guide for details on how to check for, and enable these features.
+
+[More info](https://access.redhat.com/articles/1344173#Q_how-verify-enable-cpu-extensions)
+
 ## Quick start
 
 * install kvm
