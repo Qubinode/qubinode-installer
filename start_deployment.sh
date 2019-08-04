@@ -348,6 +348,14 @@ vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
 hosts_inventory_file="${project_dir}/inventory/hosts"
 
+# copy sample vars file to playbook/vars directory
+if [ ! -f "${vars_file}" ]
+then
+  cp "${project_dir}/samples/all.yml" "${vars_file}"
+  sed -i "s/inventory_file: \"\"/inventory_file: "$hosts_inventory_file"/g" "${vars_file}"
+fi
+
+# create vault vars file
 if [ ! -f "${vault_vars_file}" ]
 then
     cat > "${vault_vars_file}" <<EOF
@@ -363,6 +371,7 @@ idm_admin_pwd: ""
 EOF
 fi
 
+# create ansible inventory file
 if [ ! -f "${hosts_inventory_file}" ]
 then
     cat > "${hosts_inventory_file}" <<EOF
@@ -370,6 +379,7 @@ localhost               ansible_connection=local ansible_user=root
 EOF
 fi
 
+# Run main functions
 ask_for_values "${vars_file}"
 ask_for_vault_values "${vault_vars_file}"
 rhsm_register
