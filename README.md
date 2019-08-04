@@ -135,7 +135,7 @@ source ssh-add-script.sh
   - edit redhat.3.11.inventory and copy to jumpbox
   - ssh to jumpbox
     ```
-    scp ssh-add-script.sh exampleuser@192.168.1.1=39:/tmp
+    scp ssh-add-script.sh exampleuser@192.168.1.139:/tmp
     cd ~/openshift-ansible
     sudo htpasswd -c passwordFile username
     source ssh-add-script.sh
