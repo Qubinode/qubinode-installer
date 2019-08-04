@@ -104,15 +104,15 @@ cd  /opt/openshift-home-lab/Packages/
 git clone https://github.com/tosin2013/openshift-home-lab.git
 ```
 9. Generate ssh key for ansible for ansible to use.
+```
+ssh-keygen
+```
 
 10. Run ssh add script
 ```
 source ssh-add-script.sh
 ```
 11. Update or modify the inventory file under dns_server/inventory based off your target OS.
-```
-ssh-keygen
-```
 
 12. run  deploy_dns_server.sh script
 ```
