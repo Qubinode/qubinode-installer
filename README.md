@@ -16,6 +16,8 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * mkdir /kvm/kvmimages/
 * OpenvSwitch  [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
 * KVM
+* Downloaded a RHEL 7.6 KVM image from redhat.com
+- Deployed with Red Hat Enterprise Linux 7.6 KVM Guest Image: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
 
 ## Deployment Architecture
 * [start_deployment](architecture/start_deployment_arch_diagram.png)
@@ -31,6 +33,14 @@ If this command shows any output, the required extensions are enabled.
 If this command shows no output, either your hardware does not support virtualization features, or these features are not enabled in your system's BIOS. See the Virtualization Deployment and Administration Guide for details on how to check for, and enable these features.
 
 [More info](https://access.redhat.com/articles/1344173#Q_how-verify-enable-cpu-extensions)
+
+**Hard drive Validation**
+Ensure you are using two hard drives for a recommend setup. One hard drive should be ssh and the second hard drive should be NVME.
+* SSD will contain your host operating system.
+* NVME should be used for data generated from the KVM environment. Such as the hard drive and data for the kvms. This will be the /kvm/ path
+
+Review the link on how to create a lvm for the /kvm/ directory.
+* https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/logical_volume_manager_administration/lvm_examples
 
 ## Quick start
 
@@ -149,6 +159,8 @@ source ssh-add-script.sh
 * OCP 4.1 Compatibility
 * better documentation
 * finish manual install documentation
+* Test deployment with RHEL8
+* Test Deployment with RHEL 7.7
 
 
 ## Uninstall openshift
