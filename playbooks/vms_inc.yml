@@ -1,0 +1,11 @@
+- name: create virtual machines
+  vars:
+    domain: lab.example
+    vm_cpu: "{{ outer_item.vm_cpu }}"
+    vm_memory: "{{ outer_item.vm_memory }}"
+    vm_root_disk_size: "{{ outer_item.vm_root_disk_size }}"
+    xternalstorage: "{{ outer_item.externalstorage }}"
+    vm_recreate: false
+  debug:
+    msg: "Create VM: ocp-{{ outer_item.name }}{{ '%02x' |format(item) }}.{{ domain }}"
+  loop: "{{ range(1, outer_item.qty|int +1)|list }}"

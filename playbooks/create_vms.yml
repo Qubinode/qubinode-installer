@@ -1,0 +1,14 @@
+- name: deploy all VMs required
+  hosts: localhost
+  become: no
+  gather_facts: no
+  vars_files:
+    - vars/vm_vars.yml
+
+  tasks:
+    - name: loop through vm types
+      include_tasks: vms_inc.yml
+      loop: "{{ instances }}"
+      loop_control:
+        loop_var: outer_item
+        label: outer_item.name
