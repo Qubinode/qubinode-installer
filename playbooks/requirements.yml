@@ -3,3 +3,6 @@
 
 - src: https://github.com/flyemsafe/swygue.edge_host_setup.git
   version: master
+
+- src: https://github.com/flyemsafe/ansible-idm.git
+  version: master
