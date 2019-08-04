@@ -63,39 +63,54 @@ run ./bootstrap.sh
 2. Build an OpenvSwitch RPM for your server and install it to your server [Fedora, RHEL 7.x Packaging for Open vSwitch](http://docs.openvswitch.org/en/latest/intro/install/fedora/)
 - You can also review the [configure-ovs-interface.sh](scripts/configure-ovs-interface.sh) script
 
-3. Install  kvm_cloud_init_vm  and tosin2013.rhel7_kvm_cloud_init ansible roles in order to deploy KVM
+3. Install ansible
+```
+yum install ansible -y
+```
+
+4. Install  kvm_cloud_init_vm  and tosin2013.rhel7_kvm_cloud_init ansible roles in order to deploy KVM
 ```
 ansible-galaxy install tosin2013.kvm_cloud_init_vm
 ansible-galaxy install tosin2013.rhel7_kvm_cloud_init
 ```
-4. Install and configure ansible role for  dns server
+5. Install and configure ansible role for  dns server
 ```
 ansible-galaxy install bertvv.bind
 ansible-galaxy install blofeldthefish.ansible-role-bind  
 ```
-5. Install and configure ansible role for power management
+6. Install and configure ansible role for power management
 ```
 ansible-galaxy install tosin2013.ocp_power_management
 ```
+7. Create directory for scripts
+```
+mkdir -p /opt/openshift-home-lab/Packages/
+```
+8. copy repo to /opt/openshift-home-lab/Packages/openshift-home-lab/ -> This should be changed to a variable  in the future. 
+```
+cd  /opt/openshift-home-lab/Packages/
+git clone https://github.com/tosin2013/openshift-home-lab.git
+```
+9. Generate ssh key for ansible for ansible to use.
 
-6. Run ssh add script
+10. Run ssh add script
 ```
 source ssh-add-script.sh
 ```
-7. Update or modify the inventory file under dns_server/inventory based off your target OS.
+11. Update or modify the inventory file under dns_server/inventory based off your target OS.
 
-8. run  deploy_dns_server.sh script
+12. run  deploy_dns_server.sh script
 ```
   ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver
 ```
 
-9. update kvm inventory under kvm_inventory based off your operating system
-10. Run start_deployment.sh script as root to deploy the KVM machines
+13. update kvm inventory under kvm_inventory based off your operating system
+14. Run start_deployment.sh script as root to deploy the KVM machines
 ```
 ./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104
 ```
 
-11. ssh into jumpbox and deploy openshift
+15. ssh into jumpbox and deploy openshift
   - copy ssh-add-script to jumpbox
   - edit redhat.3.11.inventory and copy to jumpbox
   - ssh to jumpbox
