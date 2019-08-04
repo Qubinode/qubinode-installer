@@ -16,11 +16,9 @@ dns_servers=[127.0.0.1] #DO NOT CHANGE THIS
 search_domain=example.com
 dns_zone=192.168.1
 
-#uncomment and edit if using RHEL
 #RHEL Subscription Info
 rhel_username=user@redhat.com
 rhel_password=Str0nGpAssW0rd
-
 
 #default RHEL user
 rhel_user=example

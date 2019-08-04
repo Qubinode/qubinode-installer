@@ -119,13 +119,16 @@ source ssh-add-script.sh
   ./dns_server/deploy_dns_server.sh rhel inventory.dnsserver
 ```
 
-13. update kvm inventory under kvm_inventory based off your operating system
-14. Run start_deployment.sh script as root to deploy the KVM machines
+13. update kvm inventory under kvm_inventory based off your operating system  and move it into the same directory as start_deployment.
+
+14. update the openshift inventory under openshift_inventory and move it into the same directory as start_deployment.
+
+15. Run start_deployment.sh script as root to deploy the KVM machines
 ```
 ./start_deployment.sh  rhel inventory.rhel.openshift  v3.11.104
 ```
 
-15. ssh into jumpbox and deploy openshift
+16. ssh into jumpbox and deploy openshift
   - copy ssh-add-script to jumpbox
   - edit redhat.3.11.inventory and copy to jumpbox
   - ssh to jumpbox

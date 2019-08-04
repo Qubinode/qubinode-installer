@@ -154,7 +154,9 @@ main() {
       scripts/generation_jumpbox_ssh_key.sh  ${RHEL_USER} ${JUMPBOX}
       sharekey ${RHEL_USER}
 
-      bash scripts/generate_openshift_inventory.sh $3 rhel || exit 1
+      if [[ ! -f inventory.3.11.${1}.gluster  ]]; then
+          bash scripts/generate_openshift_inventory.sh $3 rhel || exit 1
+      fi
 
       set_arecord $2 ${RHEL_USER} inventory.3.11.${1}.gluster
 
