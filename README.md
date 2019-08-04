@@ -11,7 +11,9 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * dnspython
 * pip [How to install pip on Red Hat Enterprise Linux?](https://access.redhat.com/solutions/1519803)
 * mkdir ~/keys
-* mkdir /kvmdata/
+* mkdir /kvm
+* mkdir /kvm/kvmdata
+* mkdir /kvm/kvmimages/
 * OpenvSwitch  [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
 * KVM
 
