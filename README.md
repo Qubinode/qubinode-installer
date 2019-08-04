@@ -16,8 +16,7 @@ This document will explain how to get a home lab setup for Red Hat OpenShift on 
 * mkdir /kvm/kvmimages/
 * OpenvSwitch  [openvswitch](https://www.linuxtechi.com/install-use-openvswitch-kvm-centos-7-rhel-7/)
 * KVM
-* Downloaded a RHEL 7.6 KVM image from redhat.com
-- Deployed with Red Hat Enterprise Linux 7.6 KVM Guest Image: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
+
 
 ## Deployment Architecture
 * [start_deployment](architecture/start_deployment_arch_diagram.png)
@@ -41,6 +40,9 @@ Ensure you are using two hard drives for a recommend setup. One hard drive shoul
 
 Review the link on how to create a lvm for the /kvm/ directory.
 * https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/logical_volume_manager_administration/lvm_examples
+
+* Downloaded a RHEL 7.6 KVM image from redhat.com to the /kvm/data directory
+- Deployed with Red Hat Enterprise Linux 7.6 KVM Guest Image: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
 
 ## Quick start
 
