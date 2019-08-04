@@ -346,6 +346,7 @@ setup_required_paths
 vault_key_file="/home/${CURRENT_USER}/.vaultkey"
 vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
+hosts_inventory_file="${project_dir}/inventory/hosts"
 
 if [ ! -f "${vault_vars_file}" ]
 then
@@ -362,13 +363,25 @@ idm_admin_pwd: ""
 EOF
 fi
 
+if [ ! -f "${hosts_inventory_file}" ]
+then
+    cat > "${hosts_inventory_file}" <<EOF
+localhost               ansible_connection=local ansible_user=root
+EOF
+fi
 
 ask_for_values "${vars_file}"
 ask_for_vault_values "${vault_vars_file}"
 rhsm_register
 setup_ansible "${vault_vars_file}"
 
-sed -i "s/rhsm_activationkey: \"\"/rhsm_org: "$rhsm_activationkey"/g" "${vars_file}"
+
+# Run playbook to setup host
+ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+
+# Deploy VMS
+ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+
 
 # validate user provided options
 validate_product_by_user
