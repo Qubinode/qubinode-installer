@@ -1,0 +1,10 @@
+---
+- hosts: idm01
+  remote_user: admin
+  become: true
+
+  tasks:
+    - name: Install IDM server
+      include_role:
+        name: ansible-idm
+      tags: [install,preinstall,installer,firewall,always,result]
