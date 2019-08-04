@@ -104,48 +104,16 @@ function rhsm_register () {
     if [ "A${is_registered}" == "A" ]; then
         echo "$(hostname) is registered to RHSM."
     else
-        PS3="Which option are you using to register the system 'Activation Key' (akey) or Username/Pass (upass): "
-        options=("akey" "upass")
-        select opt in akey upass
-        do
-            case $opt in
-                akey)
-                   rhsm_registration="$opt"
-                   break
-                   ;;
-                upass)
-                   rhsm_registration="$opt"
-                   break
-                   ;;
-                *)
-                   echo "Error: Please try again";;
-            esac
-        done
-        
-        if [ "A${rhsm_registration}" == "Aupass" ]; 
+        if [ "A${rhsm_reg_method}" == "Aupass" ]; 
         then
-            echo -n "Enter your RHSM username and press [ENTER]: "
-            read rhsm_username
-            unset rhsm_password
-            prompt='Enter your RHSM password and press [ENTER]: '
-            rhsm_password=$(read_sensitive_data "${prompt}")
-            echo
             subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force > /dev/null 2>&1
-        elif [ "A${rhsm_registration}" == "Aakey" ]; 
+        elif [ "A${rhsm_reg_method}" == "Aakey" ]; 
         then
-            echo -n "Enter your RHSM activation key and press [ENTER]: "
-            read rhsm_activationkey
-            unset rhsm_org
-            prompt='Enter your RHSM ORG ID and press [ENTER]: '
-            rhsm_org=$(read_sensitive_data "${prompt}")
-            echo
             subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force > /dev/null 2>&1
-    
         else
             echo -n "Unknown issue: cannot register system!"
             exit 1
         fi
-    
     
         # validate registration
         is_registered_tmp=$(mktemp)
@@ -184,10 +152,11 @@ function setup_ansible () {
     # setup vault
     if [ -f /usr/bin/ansible ];
     then
-        echo "Setting up vault and encrypting vault file ${ansible_vault}"
+        echo "Setting up vault and encrypting vault file ${vars_file}"
         openssl rand -base64 512|xargs > ~/.vaultkey
-        grep 'ANSIBLE_VAULT' "${ansible_vault}" >/dev/null 2>&1 ||\
-          ansible-vault encrypt "${ansible_vault}" --vault-password-file=~/.vaultkey
+        grep 'ANSIBLE_VAULT' "${vars_file}" >/dev/null 2>&1 ||\
+          ansible-vault encrypt "${vars_file}"
+        ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml"
     else
         echo "Ansible not found, please install and retry."
         exit 1
@@ -195,22 +164,92 @@ function setup_ansible () {
         
 }
 
-function ask_for_required_vaules () {
+function check_required_vars () {
+    total=$#
+    count=0
+    vars="$@"
+
+    if cat "${vars_file}"| grep -q VAULT
+    then
+        ansible-vault decrypt "${vars_file}"
+        ansible_encrypt=yes
+    fi
+
+    for var in $vars
+    do
+        if grep '""' "${vars_file}"|grep -q $var
+        then
+            echo "checking vars"
+            count=`expr $count + 1`
+        #    ask_for_required_vaules
+        #break
+        fi
+    done
+
+    echo "total required variables are $total"
+    echo "total missing is $count"
+
+    if [ "A${ansible_encrypt}" == "Ayes" ]
+    then
+        ansible-vault encrypt "${vars_file}"
+    fi
+}
+
+function ask_for_values () {
     read -p "Enter your dns domain or press [ENTER] for the default [lab.example]: " domain
     domain=${domain:-lab.example}
 
     read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_server_public
     dns_server_public=${dns_server_public:-1.1.1.1}
+}
 
+function ask_for_vault_values () {
     unset root_user_pass
     prompt='Enter a password for the root user and press [ENTER]: '
     root_user_pass=$(read_sensitive_data "${prompt}")
+    echo ""
 
     unset idm_admin_pwd
     prompt='Enter a password for the IDM server console and press [ENTER]: '
     idm_admin_pwd=$(read_sensitive_data "${prompt}")
+    echo ""
 
-    idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
+    echo ""
+    PS3="Which option are you using to register the system 'Activation Key' (akey) or Username/Pass (upass): "
+    options=("akey" "upass")
+    select opt in akey upass
+    do
+        case $opt in
+            akey)
+                rhsm_reg_method="$opt"
+                break
+                ;;
+            upass)
+                rhsm_reg_method="$opt"
+                break
+                ;;
+            *)
+                echo "Error: Please try again";;
+            esac
+        done
+        
+        if [ "A${rhsm_reg_method}" == "Aupass" ]; 
+        then
+            echo -n "Enter your RHSM username and press [ENTER]: "
+            read rhsm_username
+            unset rhsm_password
+            prompt='Enter your RHSM password and press [ENTER]: '
+            rhsm_password=$(read_sensitive_data "${prompt}")
+            echo
+        elif [ "A${rhsm_reg_method}" == "Aakey" ]; 
+        then
+            echo -n "Enter your RHSM activation key and press [ENTER]: "
+            read rhsm_activationkey
+            unset rhsm_org
+            prompt='Enter your RHSM ORG ID and press [ENTER]: '
+            rhsm_org=$(read_sensitive_data "${prompt}")
+            echo
+        fi
 }
 
 while getopts ":hip:" opt;
@@ -237,9 +276,36 @@ do
 done
 shift "$((OPTIND-1))"
 
+setup_required_paths
+# setup ansible vaults varaibles
+vars_file="${project_dir}/playbooks/vars/vault.yml"
+vars="rhsm_reg_method root_user_pass idm_dm_pwd idm_admin_pwd"
+
+    # Setup ansible vars
+    sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vars_file}"
+    sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vars_file}"
+    sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vars_file}"
+    sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vars_file}"
+    sed -i "s/rhsm_reg_method: \"\"/rhsm_reg_method: "$rhsm_reg_method"/g" "${vars_file}"
+    sed -i "s/domain: \"\"/domain: "$domain"/g" "${vars_file}"
+    sed -i "s/dns_server_public: \"\"/dns_server_public: "$dns_server_public"/g" "${vars_file}"
+    sed -i "s/root_user_pass: \"\"/root_user_pass: "$root_user_pass"/g" "${vars_file}"
+    sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vars_file}"
+    idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
+
+
+
+
+
+
+check_required_vars $vars
+rhsm_register
+#setup_ansible
+
+sed -i "s/rhsm_activationkey: \"\"/rhsm_org: "$rhsm_activationkey"/g" "${vars_file}"
+
 # validate user provided options
 validate_product_by_user
-setup_required_paths
    
 echo "project_dir: $project_dir"
 echo "config_file: $config_file"
