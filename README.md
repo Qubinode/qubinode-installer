@@ -38,7 +38,7 @@ Ensure you are using two hard drives for a recommend setup. One hard drive shoul
 * SSD will contain your host operating system.
 * NVME should be used for data generated from the KVM environment. Such as the hard drive and data for the kvms. This will be the /kvm/ path
 
-Review the link on how to create a lvm for the /kvm/ directory.
+**Review the link on how to create a lvm for the /kvm/ directory.**
 * https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/logical_volume_manager_administration/lvm_examples
 
 **Download a RHEL 7.6 KVM image from redhat.com and place it into the /kvm/data directory**
