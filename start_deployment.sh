@@ -209,6 +209,14 @@ function ask_for_values () {
 function ask_for_vault_values () {
     vars_file=$1
 
+cat << EOH >&2
+
+ The following prompts will ask you values that are required for the installation
+ to continue. If you make a mistake when entering passwords, pressing the Backspace 
+ key will not fix it. Just hit Ctrl+c to cancel and run this script again.
+
+EOH
+
     if cat "${vars_file}"| grep -q VAULT
     then
         test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vars_file}"
@@ -354,13 +362,6 @@ idm_admin_pwd: ""
 EOF
 fi
 
-cat << EOH >&2
-
- The following prompts will ask you values that are required for the installation
- to continue. If you make a mistake when entering passwords, pressing the Backspace 
- key will not fix it. Just hit Ctrl+c to cancel and run this script again.
-
-EOH
 
 ask_for_values "${vars_file}"
 ask_for_vault_values "${vault_vars_file}"
