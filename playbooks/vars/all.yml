@@ -1,26 +1,37 @@
 ---
+# Deploy VMs
+#vm_provision_vars: "{{ vm_data_dir }}/{{ vm_name }}/provision_vars.yml"
+inventory_file: /home/rheron/openshift-home-lab/inventory/hosts
+vm_network_br: lunchnet
+admin_user_password: "{{ root_user_pass }}"
+kvm_vm_root_pwd: "{{ root_user_pass }}"
+vm_domain: "{{ domain }}"
+rhsm_org: "{{ rhsm_org }}"
+rhsm_activationkey: "{{ rhsm_activationkey }}"
 instances:
   - name: master
     vm_cpu: 4
     vm_memory: 16384
     vm_root_disk_size: 20G
-    externalstorage: true
     vm_recreate: false
+    extra_storage:
+      - size: 80G
+        enable: true
     qty: 2
   - name: node
     vm_cpu: 4
     vm_memory: 16384
     vm_root_disk_size: 20G
-    externalstorage: true
+    extra_storage: []
     vm_recreate: false
     qty: 2
   - name: dns
     vm_cpu: 4
     vm_memory: 16384
     vm_root_disk_size: 20G
-    externalstorage: true
+    extra_storage: []
     vm_recreate: false
-    qty: 2
+    qty: 1
 
 # DNS Server
 domain: lab.example
