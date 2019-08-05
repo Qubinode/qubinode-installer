@@ -6,3 +6,9 @@
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: master
+
+- src: https://github.com/flyemsafe/swygue-redhat-subscription.git
+  version: master
+
+- src: https://github.com/ahuffman/ansible-resolv.git
+  version: master
