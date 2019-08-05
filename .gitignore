@@ -1,0 +1,8 @@
+ansible.log
+playbooks/roles/*
+!playbooks/roles/.gitkeep
+playbooks/vars/vault.yml
+inventory/hosts
+*.swp
+modules
+all.yml
