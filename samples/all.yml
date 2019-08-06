@@ -1,12 +1,16 @@
 ---
 # Deploy VMs
+#vm_provision_vars: "{{ vm_data_dir }}/{{ vm_name }}/provision_vars.yml"
+update_inventory: true
 inventory_file: ""
-vm_network_br: ""
+vm_libvirt_net: ""
 admin_user_password: "{{ root_user_pass }}"
 kvm_vm_root_pwd: "{{ root_user_pass }}"
 vm_domain: "{{ domain }}"
 rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
+rhsm_org_id: "{{ rhsm_org }}"
+org_id: "{{ rhsm_org }}"
 instances:
   - name: master
     vm_cpu: 4
@@ -35,9 +39,10 @@ instances:
 # DNS Server
 domain: ""
 dns_server_public: ""
-idm_reverse_zone: ""
+idm_reverse_zone:
+  - changeme.in-addr.arpa
 idm_public_ip: ""    # IP address of the IDM server
-idm_hostname: "ocp-idm01.{{ domain }}"
+idm_hostname: "ocp-idm01"
 idm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms
@@ -49,5 +54,6 @@ idm_realm: "{{ domain | upper }}"
 idm_forward_ip: "{{ dns_server_public }}"
 idm_dm_pwd: "{{ idm_dm_pwd }}"
 idm_admin_pwd: "{{ idm_admin_password }}"
+idm_admin_password: "{{ idm_admin_pwd }}"
 idm_ssh_pwd: "{{ root_user_pass }}"
-idm_ssh_user: root
+idm_ssh_user: admin
