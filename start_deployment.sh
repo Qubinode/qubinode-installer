@@ -186,9 +186,12 @@ function setup_ansible () {
         fi
 
         # Ensure roles are downloaded
+        echo ""
         echo "Downloading required roles"
         #ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
         ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml"
+        echo ""
+        echo ""
 
         # Ensure required modules are downloaded
         if [ ! -f "${project_dir}/modules/redhat_repositories.py" ]
@@ -360,7 +363,7 @@ EOH
     fi
 }
 
-while getopts ":hicp:" opt;
+while getopts ":hick:p:d:" opt;
 do
     case $opt in
         h) display_help
@@ -368,6 +371,12 @@ do
            ;;
         i) check_args; generate_inventory=true;;
         c) check_args; clean_project=true;;
+        k) check_args;
+           kvm_host=$OPTARG
+           ;;
+        d) check_args;
+           deploy_vm=$OPTARG
+           ;;
         p) check_args
            product=$OPTARG
            ;;
@@ -471,18 +480,48 @@ echo "# Collecting values for ${vars_file} #"
 echo "#************************************************#"
 echo ""
 ask_for_values "${vars_file}"
-exit
 ask_for_vault_values "${vault_vars_file}"
 rhsm_register
-#setup_ansible "${vault_vars_file}"
-
-echo "${vars_file}"
+setup_ansible "${vault_vars_file}"
 
 # Run playbook to setup host
-#ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+if [ "A${kvm_host}" == "Asetup" ]
+then
+    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+elif [ "A${kvm_host}" == "Askip" ]
+then
+    echo "Skipping running ${project_dir}/playbooks/setup_kvmhost.yml"
+else
+    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+fi
 
 # Deploy VMS
-#ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+if [ "A${deploy_vm}" == "Adeploy" ]
+then
+    if grep vm_teardown "${vars_file}"|grep -q true
+    then
+        sed -i "s/vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+    fi
+    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+elif [ "A${deploy_vm}" == "Aundeploy" ]
+then
+    if grep vm_teardown "${vars_file}"|grep -q false
+    then
+        sed -i "s/vm_teardown: false/vm_teardown: true/g" "${vars_file}"
+    fi
+    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+elif [ "A${deploy_vm}" == "Askip" ]
+then
+    echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+else
+    if grep vm_teardown "${vars_file}"|grep -q true
+    then
+        sed -i "s/vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+    fi
+    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+fi
+
+exit
 
 # Deploy IDM server
 if [ "A${skip_dns}" != "Atrue" ]
