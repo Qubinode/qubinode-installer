@@ -369,6 +369,8 @@ function prereqs () {
     vars_file="${project_dir}/playbooks/vars/all.yml"
     hosts_inventory_file="${project_dir}/inventory/hosts"
     IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+    # HOST Gateway not currently in use
+    GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
     ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
@@ -436,10 +438,30 @@ EOF
     setup_ansible "${vault_vars_file}"
 }
 
+function setup_kvm_host () {
+    # Run playbook to setup host
+    if [ "A${kvm_host}" == "Atrue" ]
+    then
+        if [ "A${kvm_host_opt}" == "Asetup" ]
+        then
+            always_run
+            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+        elif [ "A${kvm_host_opt}" == "Askip" ]
+            then
+            echo "Skipping running ${project_dir}/playbooks/setup_kvmhost.yml"
+        else
+           display_help
+        fi
+    fi
+}
+
 echo ""
 echo ""
 OPTIND=1
-if (($# == 0)); then
+NUM_ARGS="$#"
+
+if [ "${NUM_ARGS}" == "0" ]
+then
     deploy='Deploy the default OpenShift Cluster'
     display='Display Help'
     declare -a options=("${deploy}" "${display}")
@@ -447,7 +469,14 @@ if (($# == 0)); then
     option=($(echo "${selected_option}"))
     if [ "${option}" == "Deploy" ]
     then
-        echo "${deploy}"
+        NUM_ARGS=1
+        check=true
+        kvm_host=true
+        kvm_host_opt=setup
+        deploy_vm=true
+        deploy_vm_opt=deploy
+        dns=true
+        dns_opt=server
     elif [ "${option}" == "Display" ]
     then
         echo "displaying help"
@@ -464,17 +493,28 @@ do
         h) display_help
            exit 1
            ;;
-        c) check_args; clean_project=true;;
+        c) check_args; 
+           clean_project=true
+           check=true
+           ;;
         k) check_args;
-           kvm_host=$OPTARG
+           check=true
+           kvm_host=true
+           kvm_host_opt=$OPTARG
            ;;
         d) check_args;
-           deploy_vm=$OPTARG
+           check=true
+           deploy_vm_opt=$OPTARG
+           deploy_vm="true"
            ;;
         b) check_args;
+           check=true
+           dns=true
            dns_opt=$OPTARG
            ;;
         p) check_args
+           check=true
+           product=true
            product=$OPTARG
            ;;
        --) shift; break;;
@@ -495,63 +535,64 @@ shift "$((OPTIND-1))"
 ##       MAIN               ##
 ##############################
 
-# run pre flight
-prereqs
-
-# check for clean up argument
-if [ "A${clean_project}" == "Atrue" ]
+if [ "${NUM_ARGS}" != "0" ] && [ "A${check}" != "A" ]
 then
-   rm -f "${vault_vars_file}"
-   rm -f "${vars_file}"
-   rm -f "${hosts_inventory_file}"
-   rm -f "${hosts_inventory_file}"
-fi
+    # run pre flight
+    prereqs
 
-
-# Run playbook to setup host
-if [ "A${kvm_host}" == "Asetup" ]
-then
-    always_run
-    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
-elif [ "A${kvm_host}" == "Askip" ]
-then
-    echo "Skipping running ${project_dir}/playbooks/setup_kvmhost.yml"
-else
-   display_help
-fi
-
-# Deploy VMS
-if [ "A${deploy_vm}" == "Adeploy" ]
-then
-    always_run
-    if grep vm_teardown "${vars_file}"|grep -q true
+    # check for clean up argument
+    if [ "A${clean_project}" == "Atrue" ]
     then
-        sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+       rm -f "${vault_vars_file}"
+       rm -f "${vars_file}"
+       rm -f "${hosts_inventory_file}"
+       rm -f "${hosts_inventory_file}"
     fi
-    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
-elif [ "A${deploy_vm}" == "Aundeploy" ]
-then
-    always_run
-    if grep vm_teardown "${vars_file}"|grep -q false
-    then
-        sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
-    fi
-    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
-elif [ "A${deploy_vm}" == "Askip" ]
-then
-    echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
-else
-    display_help
-fi
 
-# Deploy IDM server
-if [ "A${dns_opt}" == "Aserver" ]
-then
-    always_run
-    echo "UPDATING idm_public_ip"
-    SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
-    sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-    ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+    setup_kvm_host 
+
+   # Deploy VMS
+   if [ "A${deploy_vm}" == "Atrue" ]
+   then
+       echo "running deploy vm fucntion"
+       if [ "A${deploy_vm_opt}" == "Adeploy" ]
+       then
+           always_run
+           if grep vm_teardown "${vars_file}"|grep -q true
+           then
+               sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+           fi
+           ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+        elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
+        then
+            always_run
+            if grep vm_teardown "${vars_file}"|grep -q false
+            then
+                sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
+            fi
+            ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
+        elif [ "A${deploy_vm_opt}" == "Askip" ]
+        then
+            echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+        else
+            display_help
+        fi
+    fi
+    
+    # Deploy IDM server
+    if [ "A${dns}" == "Atrue" ]
+    then
+        if [ "A${dns_opt}" == "Aserver" ]
+        then
+            always_run
+            echo "UPDATING idm_public_ip"
+            SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
+            sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+            ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+        else
+           display_help
+        fi
+    fi
 else
     display_help
 fi
