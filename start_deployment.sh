@@ -264,6 +264,7 @@ function ask_for_values () {
         network=($(echo "${selected_option}"))
         sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
     fi
+
     
 }
 
@@ -403,14 +404,12 @@ NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
 PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
 ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
 
-echo $vars_file
-echo ${project_dir}
-exit
 # check for clean up argument
 if [ "A${clean_project}" == "Atrue" ]
 then
    rm -f "${vault_vars_file}"
    rm -f "${vars_file}"
+   rm -f "${hosts_inventory_file}"
    rm -f "${hosts_inventory_file}"
 fi
 
@@ -431,7 +430,6 @@ fi
 if [ ! -f "${vars_file}" ]
 then
   cp "${project_dir}/samples/all.yml" "${vars_file}"
-  sed -i "s/inventory_file: \"\"/inventory_file: "$hosts_inventory_file"/g" "${vars_file}"
 fi
 
 # create vault vars file
@@ -456,6 +454,13 @@ then
     cat > "${hosts_inventory_file}" <<EOF
 localhost               ansible_connection=local ansible_user=root
 EOF
+fi
+
+# add inventory file to all.yml
+if grep '""' "${vars_file}"|grep -q inventory_file
+then
+    echo "need to update inventory"
+    sed -i "s#inventory_file: \"\"#inventory_file: "$hosts_inventory_file"#g" "${vars_file}"
 fi
 
 # Run main functions
