@@ -7,16 +7,32 @@
 
 function display_help() {
     SCRIPT=$(basename "${BASH_SOURCE[0]}")
-
     cat << EOH >&2
+
 Basic usage: ${SCRIPT} [options]
-    -p      Deploy okd or ocp: default is ocp
-                   ---    ---             ---
-    -s      Skip DNS server deployment
-    -u      Skip creating DNS entries
+    -p      Deploy a container platform - options are:
+                okd - deploy upstream openshift
+                ocp - deploy Red Hat OpenShift Platform <subscription required>    
+    
     -c      Clean up project directory
+
+    -b      DNS operations - options are:
+              server  - install dns server
+              records - create dns records 
+
+    -k      Run kvm host setup - options are
+                skip - don't run setup
+                setup - run the setup
+
+    -d      VMs operations - options are
+                deploy   - deploy all vms
+                undeploy - delete all vms
+                skip     - delete all vms
+
     -h      Display this help menu
+
 EOH
+
 }
 
 # validates that the argument options are valid
@@ -28,26 +44,6 @@ function check_args () {
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
     fi
-}
-
-# This function is not in use at the moment
-# the plan is to use it to deploy the dns server
-function deploy_dns_server () {
-    if [ "A${skip_dns}" != "Atrue" ]; then
-        kvm_inventory=$1
-        
-        env_check
-        validation $2
-        addssh
-        configurednsforopenshift $2 centos
-        configure_dns_for_arecord $2 centos
-    else
-        # this assumes you are providing your own dns server
-        # we need to be able to do a nsupdate against your dns server
-        # to verify the required dns entries are available
-        echo "Do run fuction to verify dns"
-        configure_dns_for_arecord $2 centos
-   fi
 }
 
 # not in used: this should be the function
@@ -363,13 +359,12 @@ EOH
     fi
 }
 
-while getopts ":hick:p:d:" opt;
+while getopts ":hck:p:d:b:" opt;
 do
     case $opt in
         h) display_help
            exit 1
            ;;
-        i) check_args; generate_inventory=true;;
         c) check_args; clean_project=true;;
         k) check_args;
            kvm_host=$OPTARG
@@ -377,10 +372,12 @@ do
         d) check_args;
            deploy_vm=$OPTARG
            ;;
+        b) check_args;
+           dns_opt=$OPTARG
+           ;;
         p) check_args
            product=$OPTARG
            ;;
-        s) check_args; skip_dns=true;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2
            display_help
@@ -521,20 +518,14 @@ else
     ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
 fi
 
-exit
 
 # Deploy IDM server
-if [ "A${skip_dns}" != "Atrue" ]
+if [ "A${dns_opt}" == "Aserver" ]
 then
     echo "UPDATING idm_public_ip"
-    SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts")
+    SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
     sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
     ansible-playbook "${project_dir}/playbooks/idm_server.yml"
 fi
 
-
-# validate user provided options
-validate_product_by_user
-   
-echo "project_dir: $project_dir"
-echo "config_file: $config_file"
+exit 0
