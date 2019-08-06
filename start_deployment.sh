@@ -359,6 +359,105 @@ EOH
     fi
 }
 
+function prereqs () {
+    # setup required paths
+    setup_required_paths
+    # setup MAIN variables
+    CURRENT_USER=$(whoami)
+    vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+    vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
+    vars_file="${project_dir}/playbooks/vars/all.yml"
+    hosts_inventory_file="${project_dir}/inventory/hosts"
+    IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+    NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
+    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
+    ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
+}
+
+function always_run () {
+    if [ "A${CURRENT_USER}" != "Aroot" ]
+    then
+        echo "Checking if password less suoders is setup for ${CURRENT_USER}."
+        sudo test -f "/etc/sudoers.d/${CURRENT_USER}"
+        if [ "A$?" != "A0" ]
+        then
+            echo "Setting up /etc/sudoers.d/${CURRENT_USER}"
+            echo "Please enter the password for the root user at the prompt."
+            echo ""
+            su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
+       fi
+    fi
+
+    # copy sample vars file to playbook/vars directory
+    if [ ! -f "${vars_file}" ]
+    then
+      cp "${project_dir}/samples/all.yml" "${vars_file}"
+    fi
+
+    # create vault vars file
+    if [ ! -f "${vault_vars_file}" ]
+    then
+        cat > "${vault_vars_file}" <<EOF
+rhsm_username: ""
+rhsm_password: ""
+rhsm_org: ""
+rhsm_activationkey: ""
+rhsm_reg_method: ""
+root_user_pass: ""
+idm_ssh_user: root
+idm_dm_pwd: ""
+idm_admin_pwd: ""
+EOF
+    fi
+
+    # create ansible inventory file
+    if [ ! -f "${hosts_inventory_file}" ]
+    then
+        cat > "${hosts_inventory_file}" <<EOF
+localhost               ansible_connection=local ansible_user=root
+EOF
+    fi
+
+    # add inventory file to all.yml
+    if grep '""' "${vars_file}"|grep -q inventory_file
+    then
+        echo "need to update inventory"
+        sed -i "s#inventory_file: \"\"#inventory_file: "$hosts_inventory_file"#g" "${vars_file}"
+    fi
+
+    echo ""
+    echo "#************************************************#"
+    echo "# Collecting values for ${vars_file} #"
+    echo "#************************************************#"
+    echo ""
+    ask_for_values "${vars_file}"
+    ask_for_vault_values "${vault_vars_file}"
+    rhsm_register
+    setup_ansible "${vault_vars_file}"
+}
+
+echo ""
+echo ""
+OPTIND=1
+if (($# == 0)); then
+    deploy='Deploy the default OpenShift Cluster'
+    display='Display Help'
+    declare -a options=("${deploy}" "${display}")
+    createmenu "${options[@]}"
+    option=($(echo "${selected_option}"))
+    if [ "${option}" == "Deploy" ]
+    then
+        echo "${deploy}"
+    elif [ "${option}" == "Display" ]
+    then
+        echo "displaying help"
+        display_help
+        exit
+    else
+        exit
+    fi
+fi
+
 while getopts ":hck:p:d:b:" opt;
 do
     case $opt in
@@ -396,19 +495,8 @@ shift "$((OPTIND-1))"
 ##       MAIN               ##
 ##############################
 
-# setup required paths
-setup_required_paths
-
-# setup MAIN variables
-CURRENT_USER=$(whoami)
-vault_key_file="/home/${CURRENT_USER}/.vaultkey"
-vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
-vars_file="${project_dir}/playbooks/vars/all.yml"
-hosts_inventory_file="${project_dir}/inventory/hosts"
-IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
-PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
+# run pre flight
+prereqs
 
 # check for clean up argument
 if [ "A${clean_project}" == "Atrue" ]
@@ -419,113 +507,53 @@ then
    rm -f "${hosts_inventory_file}"
 fi
 
-if [ "A${CURRENT_USER}" != "Aroot" ]
-then
-    echo "Checking if password less suoders is setup for ${CURRENT_USER}."
-    sudo test -f "/etc/sudoers.d/${CURRENT_USER}"
-    if [ "A$?" != "A0" ]
-    then
-        echo "Setting up /etc/sudoers.d/${CURRENT_USER}"
-        echo "Please enter the password for the root user at the prompt."
-        echo ""
-        su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
-   fi
-fi
-
-# copy sample vars file to playbook/vars directory
-if [ ! -f "${vars_file}" ]
-then
-  cp "${project_dir}/samples/all.yml" "${vars_file}"
-fi
-
-# create vault vars file
-if [ ! -f "${vault_vars_file}" ]
-then
-    cat > "${vault_vars_file}" <<EOF
-rhsm_username: ""
-rhsm_password: ""
-rhsm_org: ""
-rhsm_activationkey: ""
-rhsm_reg_method: ""
-root_user_pass: ""
-idm_ssh_user: root
-idm_dm_pwd: ""
-idm_admin_pwd: ""
-EOF
-fi
-
-# create ansible inventory file
-if [ ! -f "${hosts_inventory_file}" ]
-then
-    cat > "${hosts_inventory_file}" <<EOF
-localhost               ansible_connection=local ansible_user=root
-EOF
-fi
-
-# add inventory file to all.yml
-if grep '""' "${vars_file}"|grep -q inventory_file
-then
-    echo "need to update inventory"
-    sed -i "s#inventory_file: \"\"#inventory_file: "$hosts_inventory_file"#g" "${vars_file}"
-fi
-
-# Run main functions
-
-echo ""
-echo "#************************************************#"
-echo "# Collecting values for ${vars_file} #"
-echo "#************************************************#"
-echo ""
-ask_for_values "${vars_file}"
-ask_for_vault_values "${vault_vars_file}"
-rhsm_register
-setup_ansible "${vault_vars_file}"
 
 # Run playbook to setup host
 if [ "A${kvm_host}" == "Asetup" ]
 then
+    always_run
     ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
 elif [ "A${kvm_host}" == "Askip" ]
 then
     echo "Skipping running ${project_dir}/playbooks/setup_kvmhost.yml"
 else
-    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+   display_help
 fi
 
 # Deploy VMS
 if [ "A${deploy_vm}" == "Adeploy" ]
 then
+    always_run
     if grep vm_teardown "${vars_file}"|grep -q true
     then
-        sed -i "s/vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+        sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
     fi
     ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
 elif [ "A${deploy_vm}" == "Aundeploy" ]
 then
+    always_run
     if grep vm_teardown "${vars_file}"|grep -q false
     then
-        sed -i "s/vm_teardown: false/vm_teardown: true/g" "${vars_file}"
+        sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
     fi
-    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
 elif [ "A${deploy_vm}" == "Askip" ]
 then
     echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
 else
-    if grep vm_teardown "${vars_file}"|grep -q true
-    then
-        sed -i "s/vm_teardown: true/vm_teardown: false/g" "${vars_file}"
-    fi
-    ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+    display_help
 fi
-
 
 # Deploy IDM server
 if [ "A${dns_opt}" == "Aserver" ]
 then
+    always_run
     echo "UPDATING idm_public_ip"
     SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
     sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
     ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+else
+    display_help
 fi
 
 exit 0
