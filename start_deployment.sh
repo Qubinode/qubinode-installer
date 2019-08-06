@@ -18,6 +18,9 @@ Basic usage: ${SCRIPT} [options]
 EOH
 }
 
+# validates that the argument options are valid
+# e.g. if script -s-p pass, it won't use '-' as 
+# an argument for -s
 function check_args () {
     if [[ $OPTARG =~ ^-[h/p/u/s]$ ]]
     then
@@ -26,6 +29,8 @@ function check_args () {
     fi
 }
 
+# This function is not in use at the moment
+# the plan is to use it to deploy the dns server
 function deploy_dns_server () {
     if [ "A${skip_dns}" != "Atrue" ]; then
         kvm_inventory=$1
@@ -44,7 +49,9 @@ function deploy_dns_server () {
    fi
 }
 
-# validate product pass by user
+# not in used: this should be the function
+# that asked the user if they want to install
+# openshift or OKD
 function validate_product_by_user () {
     for item in $(echo "$VALID_PRODUCTS")
     do
@@ -58,6 +65,7 @@ function validate_product_by_user () {
     done
 }
 
+# just shows the below error message
 config_err_msg () {
     cat << EOH >&2
   Could not find start_deployment.conf in the current path ${project_dir}. 
@@ -65,12 +73,15 @@ config_err_msg () {
 EOH
 }
 
-# check for openshift-home-lab-directory and setup paths
+# this function just make sure the script
+# knows the full path to the project directory
+# and runs the config_err_msg if it can't determine
+# that start_deployment.conf can find the project directory
 function setup_required_paths () {
     current_dir=$(pwd)
     script_dir=$(dirname ${BASH_SOURCE[0]})
-    current_dir_config="${current_dir}/inventory/group_vars/all"
-    script_dir_config="${script_dir}/inventory/group_vars/all"
+    current_dir_config="${current_dir}/playbook/vars"
+    script_dir_config="${script_dir}/playbook/vars"
 
     if [ -f "${current_dir_config}" ]; then
         project_dir="${current_dir}"
@@ -83,6 +94,8 @@ function setup_required_paths () {
     fi
 }
 
+# this configs prints out asterisks when sensitive data
+# is being entered
 function read_sensitive_data () {
     prompt="$1"
     while IFS= read -p "$prompt" -r -s -n 1 char
@@ -97,6 +110,9 @@ function read_sensitive_data () {
     echo "$input"
 }
 
+# this function checks if the system is registered to RHSM
+# validate the registration or register the system
+# if it's not registered
 function rhsm_register () {
     is_registered_tmp=$(mktemp)
     sudo subscription-manager identity > "${is_registered_tmp}" 2>&1
@@ -129,6 +145,9 @@ function rhsm_register () {
     fi
 }
 
+# this function make sure Ansible is installed
+# along with any other dependancy the project
+# depends on
 function setup_ansible () {
     vaultfile=$1
 
@@ -136,7 +155,7 @@ function setup_ansible () {
     if [ ! -f /usr/bin/python ];
     then
        echo "installing python"
-       sudo yum install -y -q -e 0 python python3-pip python2-pip
+       sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
     else
        echo "python is installed"
     fi
@@ -191,10 +210,31 @@ function setup_ansible () {
         
 }
 
+# generic user choice menu
+# this should eventually be used anywhere we need
+# to provide user with choice
+createmenu () {
+    select selected_option; do # in "$@" is the default
+        if [ "$REPLY" -eq "$REPLY" 2>/dev/null ]
+        then
+            if [ 1 -le "$REPLY" ] && [ "$REPLY" -le $(($#)) ]; then
+                break;
+            else
+                echo "Please make a vaild selection (1-$#)."
+            fi
+         else
+            echo "Please make a vaild selection (1-$#)."
+         fi
+    done
+}
 
+# This is where we prompt users for answers to
+# keys we have predefined. Any senstive data is
+# collected using a different function
 function ask_for_values () {
     varsfile=$1
-
+    
+    # ask user for DNS domain or use default
     if grep '""' "${varsfile}"|grep -q domain
     then
         read -p "Enter your dns domain or press [ENTER] for the default [lab.example]: " domain
@@ -202,6 +242,7 @@ function ask_for_values () {
         sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
     fi
 
+    # ask user for public DNS server or use default
     if grep '""' "${varsfile}"|grep -q dns_server_public
     then
         read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_server_public
@@ -209,6 +250,7 @@ function ask_for_values () {
         sed -i "s/dns_server_public: \"\"/dns_server_public: "$dns_server_public"/g" "${varsfile}"
     fi
 
+    # ask user for their IP network and use the default
     if cat "${varsfile}"|grep -q changeme.in-addr.arpa
     then
         read -p "Enter your IP Network or press [ENTER] for the default [$NETWORK]: " network
@@ -216,6 +258,17 @@ function ask_for_values () {
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
         sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${varsfile}"
     fi
+
+    # ask user to choose which libvirt network to use
+    if grep '""' "${varsfile}"|grep -q vm_libvirt_net
+    then
+        declare -a networks=()
+        mapfile -t networks < <(sudo virsh net-list --name|sed '/^[[:space:]]*$/d')
+        createmenu "${networks[@]}"
+        network=($(echo "${selected_option}"))
+        sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
+    fi
+    
 }
 
 function ask_for_vault_values () {
@@ -395,7 +448,7 @@ fi
 ask_for_values "${vars_file}"
 ask_for_vault_values "${vault_vars_file}"
 rhsm_register
-setup_ansible "${vault_vars_file}"
+#setup_ansible "${vault_vars_file}"
 
 echo "${vars_file}"
 
@@ -411,7 +464,6 @@ then
     echo "UPDATING idm_public_ip"
     SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts")
     sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-    exit
     ansible-playbook "${project_dir}/playbooks/idm_server.yml"
 fi
 
