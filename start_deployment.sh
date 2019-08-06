@@ -14,6 +14,7 @@ Basic usage: ${SCRIPT} [options]
                    ---    ---             ---
     -s      Skip DNS server deployment
     -u      Skip creating DNS entries
+    -c      Clean up project directory
     -h      Display this help menu
 EOH
 }
@@ -78,18 +79,13 @@ EOH
 # and runs the config_err_msg if it can't determine
 # that start_deployment.conf can find the project directory
 function setup_required_paths () {
-    current_dir=$(pwd)
-    script_dir=$(dirname ${BASH_SOURCE[0]})
-    current_dir_config="${current_dir}/playbook/vars"
-    script_dir_config="${script_dir}/playbook/vars"
+    project_dir="`dirname \"$0\"`"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
 
-    if [ -f "${current_dir_config}" ]; then
-        project_dir="${current_dir}"
-        config_file="${current_dir_config}"
-    elif [ ! -f "${script_dir_config}" ]; then
-        project_dir="${script_dir}"
-        config_file="${script_dir_config}"
-    else
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
         config_err_msg; exit 1
     fi
 }
@@ -363,13 +359,14 @@ EOH
     fi
 }
 
-while getopts ":hip:" opt;
+while getopts ":hicp:" opt;
 do
     case $opt in
         h) display_help
            exit 1
            ;;
         i) check_args; generate_inventory=true;;
+        c) check_args; clean_project=true;;
         p) check_args
            product=$OPTARG
            ;;
@@ -387,7 +384,36 @@ do
 done
 shift "$((OPTIND-1))"
 
+
+##############################
+##       MAIN               ##
+##############################
+
+# setup required paths
+setup_required_paths
+
+# setup MAIN variables
 CURRENT_USER=$(whoami)
+vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
+vars_file="${project_dir}/playbooks/vars/all.yml"
+hosts_inventory_file="${project_dir}/inventory/hosts"
+IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
+PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
+ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
+
+echo $vars_file
+echo ${project_dir}
+exit
+# check for clean up argument
+if [ "A${clean_project}" == "Atrue" ]
+then
+   rm -f "${vault_vars_file}"
+   rm -f "${vars_file}"
+   rm -f "${hosts_inventory_file}"
+fi
+
 if [ "A${CURRENT_USER}" != "Aroot" ]
 then
     echo "Checking if password less suoders is setup for ${CURRENT_USER}."
@@ -400,18 +426,6 @@ then
         su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
    fi
 fi
-
-IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
-PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
-
-setup_required_paths
-# setup ansible vaults varaibles
-vault_key_file="/home/${CURRENT_USER}/.vaultkey"
-vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
-vars_file="${project_dir}/playbooks/vars/all.yml"
-hosts_inventory_file="${project_dir}/inventory/hosts"
 
 # copy sample vars file to playbook/vars directory
 if [ ! -f "${vars_file}" ]
@@ -445,7 +459,14 @@ EOF
 fi
 
 # Run main functions
+
+echo ""
+echo "#************************************************#"
+echo "# Collecting values for ${vars_file} #"
+echo "#************************************************#"
+echo ""
 ask_for_values "${vars_file}"
+exit
 ask_for_vault_values "${vault_vars_file}"
 rhsm_register
 #setup_ansible "${vault_vars_file}"
