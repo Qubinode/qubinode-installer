@@ -417,6 +417,7 @@ EOF
     then
         cat > "${hosts_inventory_file}" <<EOF
 localhost               ansible_connection=local ansible_user=root
+[ocp]
 EOF
     fi
 
