@@ -10,6 +10,7 @@ rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
 org_id: "{{ rhsm_org }}"
+vm_teardown: false
 instances:
   - name: master
     vm_cpu: 4
