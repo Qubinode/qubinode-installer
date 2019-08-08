@@ -367,7 +367,8 @@ function prereqs () {
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
-    hosts_inventory_file="${project_dir}/inventory/hosts"
+    hosts_inventory_dir="${project_dir}/inventory"
+    inventory_file="${hosts_inventory_dir}/hosts"
     IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -413,9 +414,9 @@ EOF
     fi
 
     # create ansible inventory file
-    if [ ! -f "${hosts_inventory_file}" ]
+    if [ ! -f "${hosts_inventory_dir}/hosts" ]
     then
-        cat > "${hosts_inventory_file}" <<EOF
+        cat > "${hosts_inventory_dir}/hosts" <<EOF
 localhost               ansible_connection=local ansible_user=root
 [ocp]
 EOF
@@ -425,7 +426,7 @@ EOF
     if grep '""' "${vars_file}"|grep -q inventory_file
     then
         echo "need to update inventory"
-        sed -i "s#inventory_file: \"\"#inventory_file: "$hosts_inventory_file"#g" "${vars_file}"
+        sed -i "s#inventory_file: \"\"#inventory_file: "$inventory_file"#g" "${vars_file}"
     fi
 
     echo ""
@@ -546,8 +547,7 @@ then
     then
        rm -f "${vault_vars_file}"
        rm -f "${vars_file}"
-       rm -f "${hosts_inventory_file}"
-       rm -f "${hosts_inventory_file}"
+       rm -f "${hosts_inventory_dir}/*"
     fi
 
     setup_kvm_host 
