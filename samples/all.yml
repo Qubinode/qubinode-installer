@@ -1,7 +1,8 @@
 ---
 # all non sensitive varaibles are defined here
 update_inventory: true
-inventory_file: ""
+inventory_dir: ""
+inventory_file: "{{ inventory_dir }}/hosts"
 vm_libvirt_net: ""
 admin_user_password: "{{ root_user_pass }}"
 kvm_vm_root_pwd: "{{ root_user_pass }}"
@@ -10,6 +11,8 @@ rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
 org_id: "{{ rhsm_org }}"
+vm_teardown: false
+admin_user: admin
 instances:
   - name: master
     vm_cpu: 4
@@ -51,11 +54,18 @@ idm_packages:
   - ipa-server
   - ipa-server-dns
 idm_realm: "{{ domain | upper }}"
-idm_admin_user: admin
 idm_forward_ip: "{{ dns_server_public }}"
+idm_admin_user: admin
 idm_ssh_pwd: "{{ root_user_pass }}"
 idm_ssh_user: root
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
-ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}'
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}'"
+rhsm_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-optional-rpms
+  - rhel-7-server-supplementary-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-ose-3.11-rpms
+  - rhel-7-server-ansible-2-rpms
