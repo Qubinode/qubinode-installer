@@ -1,0 +1,40 @@
+- name: vm post deployment
+  hosts: localhost
+  become: yes
+  gather_facts: no
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+    - name: include update inventory
+      include_tasks: vms_inventory.yml
+      loop: "{{ instances }}"
+      loop_control:
+        loop_var: outer_item
+        label: outer_item.name
+
+    - name: run subscription role
+      include_role:
+        name: swygue-redhat-subscription
+
+    - name: install packages
+      vars:
+        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,openshift-ansible,cri-o"
+      yum:
+        name: "{{ pkgs }}"
+
+- name: setup repos
+  hosts: 
+    - masters
+    - nodes
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+    - name: run subscription role
+      include_role:
+        name: swygue-redhat-subscription
