@@ -593,6 +593,10 @@ then
             #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
             sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
             ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+        elif [ "A${dns_opt}" == "Arecords" ]
+        then
+            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
         else
            display_help
         fi
