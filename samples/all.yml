@@ -1,6 +1,5 @@
 ---
-# Deploy VMs
-#vm_provision_vars: "{{ vm_data_dir }}/{{ vm_name }}/provision_vars.yml"
+# all non sensitive varaibles are defined here
 update_inventory: true
 inventory_file: ""
 vm_libvirt_net: ""
@@ -37,6 +36,7 @@ instances:
     qty: 1
 
 # DNS Server
+dns_wildcard: "*.apps"
 domain: ""
 dns_server_public: ""
 idm_reverse_zone:
@@ -51,9 +51,11 @@ idm_packages:
   - ipa-server
   - ipa-server-dns
 idm_realm: "{{ domain | upper }}"
+idm_admin_user: admin
 idm_forward_ip: "{{ dns_server_public }}"
-idm_dm_pwd: "{{ idm_dm_pwd }}"
-idm_admin_pwd: "{{ idm_admin_password }}"
-idm_admin_password: "{{ idm_admin_pwd }}"
 idm_ssh_pwd: "{{ root_user_pass }}"
-idm_ssh_user: admin
+idm_ssh_user: root
+ipa_client_principal: "{{ idm_admin_user }}"
+ipa_client_pass: "{{ idm_dm_pwd }}"
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}'
