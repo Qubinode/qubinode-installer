@@ -1,0 +1,73 @@
+- name: add dns entries to IDM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+    - name: get ocp-master01 ip
+      set_fact:
+        wild_card_domain_ip: "{{ hostvars['ocp-master01'].ansible_host }}"
+      with_items: "{{ groups['ocp'] }}"
+
+    - name: add idm server to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ idm_public_ip }} {{ idm_hostname }} {{ ipa_host }}"
+        state: present
+
+    - name: Generate IPA Session Cookie
+      vars:
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/login_password"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Accept: "text/plain"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
+      register: ipa_session
+
+    - name: Debug ipa_session
+      debug:
+        var: ipa_session
+        verbosity: 2
+
+    - name: Create A/PTR Records
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ hostvars[item].inventory_hostname }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: true
+        body_format: json
+      loop: "{{ groups['ocp'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+
+    - name: Create Wildcard for Applications
+      ipa_dnsrecord:
+        name: "{{ dns_wildcard }}"
+        zone_name: "{{ domain }}"
+        record_type: A
+        record_value: "{{ wild_card_domain_ip }}"
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ idm_admin_user }}"
+        ipa_pass: "{{ idm_admin_pwd }}"
+        validate_certs: no
+        record_ttl: 300
+        state: present
