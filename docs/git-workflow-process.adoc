@@ -14,7 +14,7 @@
 1. Contributior joins project
 1. Contributior is assigned feature or bugfix they would need to work on.
 1. Feature or bugfix branch is created.
-1."mainline" will testing branch before it is moved to master and release branches.
+1. "mainline" will testing branch before it is moved to master and release branches.
 
 == Example workflow
 1. UserA and UserB would like to test features before pushing to master.
