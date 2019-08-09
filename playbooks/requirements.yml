@@ -12,3 +12,6 @@
 
 - src: https://github.com/ahuffman/ansible-resolv.git
   version: master
+
+- src: https://github.com/tosin2013/openshift-inventory.git
+  version: master
