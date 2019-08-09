@@ -1,0 +1,34 @@
+= OpenShift Home Lab WorkFlow Process
+
+.Bulleted
+* To-Do
+- define process on how to become a contriubutor 
+- Define standard names for features and bug fix branch
+- define pull request access for people that are not in the core group
+- define "mainline" testing strategy
+- define release schedule 
+- define mainline branch testing team
+- define pull request questionare for new issues
+
+*Branch workflow Process*
+1. Contributior joins project
+2. Contributior is assigned feature or bugfix they would need to work on. 
+3. feature or bugfix branch is created
+4. "mainline" will testing branch before it is moved to master and release branches
+
+*Example workflow*
+1. UserA and UserB would like to test features before pushing to master.
+2. userA would create a feature branch.
+3. UserB would create a feature branch. 
+4. UserA and UserB would create a featureA + FeatureB branch ex. "integration-branch"
+5. "integration-branch" will be join developed between the two users.
+6. Once UserA and UserB aggree on fuctionaility of branch merge that branch into mainline.
+7. "mainline" will tested by mainline testers before it can be release to master. 
+8. delete integration branch after mainline testing is complete. 
+9. delete feature branch as needed. 
+
+*Issue requests*
+When issues are generated in project. Place the commit id in the issue before it is closed. 
+
+*Pull process*
+
