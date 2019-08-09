@@ -2,33 +2,32 @@
 
 .Bulleted
 * To-Do
-- define process on how to become a contriubutor 
-- Define standard names for features and bug fix branch 
-- define pull request access for people that are not in the core group 
-- define "mainline" testing strategy 
-- define release schedule 
-- define mainline branch testing team 
-- define pull request questionare for new issues 
+- define process on how to become a contriubutor
+- Define standard names for features and bug fix branch
+- define pull request access for people that are not in the core group
+- define "mainline" testing strategy
+- define release schedule
+- define mainline branch testing team
+- define pull request questionare for new issues
 
-*Branch workflow Process* 
-. Contributior joins project 
-. Contributior is assigned feature or bugfix they would need to work on.  
-. Feature or bugfix branch is created. 
-. "mainline" will testing branch before it is moved to master and release branches. 
+== Branch workflow Process
+1. Contributior joins project
+1. Contributior is assigned feature or bugfix they would need to work on.
+1. Feature or bugfix branch is created.
+1."mainline" will testing branch before it is moved to master and release branches.
 
-*Example workflow*
-. UserA and UserB would like to test features before pushing to master. 
-. userA would create a feature branch. 
-. UserB would create a feature branch. 
-. UserA and UserB would create a featureA + FeatureB branch ex. "integration-branch" 
-. "integration-branch" will be join developed between the two users. 
-. Once UserA and UserB aggree on fuctionaility of branch merge that branch into mainline. 
-. "mainline" will tested by mainline testers before it can be release to master. 
-. delete integration branch after mainline testing is complete. 
-. delete feature branch as needed. 
+== Example workflow
+1. UserA and UserB would like to test features before pushing to master.
+1.userA would create a feature branch.
+1.UserB would create a feature branch.
+1. UserA and UserB would create a featureA + FeatureB branch ex. "integration-branch"
+1."integration-branch" will be join developed between the two users.
+1.Once UserA and UserB aggree on fuctionaility of branch merge that branch into mainline.
+1. "mainline" will tested by mainline testers before it can be release to master.
+1. delete integration branch after mainline testing is complete.
+1. delete feature branch as needed.
 
-*Issue requests* 
-When issues are generated in project. Place the commit id in the issue before it is closed. 
+== Issue requests
+When issues are generated in project. Place the commit id in the issue before it is closed.
 
-*Pull process* 
-
+== Pull process
