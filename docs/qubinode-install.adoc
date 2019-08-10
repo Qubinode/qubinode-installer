@@ -1,0 +1,21 @@
+Basic usage: ${SCRIPT} [options]
+    -p      Deploy a container platform - options are:
+                okd - deploy upstream openshift
+                ocp - deploy Red Hat OpenShift Platform <subscription required>
+
+    -c      Clean up project directory
+
+    -b      DNS operations - options are:
+              server  - install dns server
+              records - create dns records
+
+    -k      Run kvm host setup - options are
+                skip - don't run setup
+                setup - run the setup
+
+    -d      VMs operations - options are
+                deploy   - deploy all vms
+                undeploy - delete all vms
+                skip     - delete all vms
+
+    -h      Display this help menu

@@ -6,33 +6,7 @@
 #set -x
 
 function display_help() {
-    SCRIPT=$(basename "${BASH_SOURCE[0]}")
-    cat << EOH >&2
-
-Basic usage: ${SCRIPT} [options]
-    -p      Deploy a container platform - options are:
-                okd - deploy upstream openshift
-                ocp - deploy Red Hat OpenShift Platform <subscription required>
-
-    -c      Clean up project directory
-
-    -b      DNS operations - options are:
-              server  - install dns server
-              records - create dns records
-
-    -k      Run kvm host setup - options are
-                skip - don't run setup
-                setup - run the setup
-
-    -d      VMs operations - options are
-                deploy   - deploy all vms
-                undeploy - delete all vms
-                skip     - delete all vms
-
-    -h      Display this help menu
-
-EOH
-
+    cat $"{project_dir}/docs/qubinode-install.adoc"
 }
 
 # validates that the argument options are valid
@@ -459,6 +433,92 @@ function openshift-setup() {
   fi
 }
 
+function qubinode_project_cleanup () {
+    # check for clean up argument
+    if [ "A${clean_project}" == "Atrue" ]
+    then
+       rm -f "${vault_vars_file}"
+       rm -f "${vars_file}"
+       rm -f "${hosts_inventory_dir}/*"
+    fi
+}
+
+
+function qubinode_deploy_vm () {
+   # Deploy VMS
+   if [ "A${deploy_vm}" == "Atrue" ]
+   then
+       echo "running deploy vm fucntion"
+       if [ "A${deploy_vm_opt}" == "Adeploy" ]
+       then
+           always_run
+           if grep vm_teardown "${vars_file}"|grep -q true
+           then
+               sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+           fi
+           ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+        elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
+        then
+            always_run
+            if grep vm_teardown "${vars_file}"|grep -q false
+            then
+                sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
+            fi
+            ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
+        elif [ "A${deploy_vm_opt}" == "Askip" ]
+        then
+            echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+        else
+            display_help
+        fi
+    fi
+}
+
+function qubinode_deploy_idm () {
+    # Deploy IDM server
+    if [ "A${dns}" == "Atrue" ]
+    then
+        if [ "A${dns_opt}" == "Aserver" ]
+        then
+            always_run
+            echo "UPDATING idm_public_ip"
+            SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
+            #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+            echo "Updating idm_public_ip to $SRV_IP"
+            #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+            sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+            ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+        elif [ "A${dns_opt}" == "Arecords" ]
+        then
+            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+        else
+           display_help
+        fi
+    fi
+}
+
+function qubinode_deploy_openshift () {
+    # OpenShift Deployment
+    if [ "A${product}" == "Atrue" ]
+    then
+        if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
+        then
+            always_run
+            echo "Generating Openshift inventory file for ${product_opt}"
+            openshift-setup
+            ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
+            cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
+        else
+           display_help
+        fi
+    fi
+}
+
+##############################
+##       MAIN               ##
+##############################
+
 echo ""
 echo ""
 OPTIND=1
@@ -547,89 +607,16 @@ done
 shift "$((OPTIND-1))"
 
 
-##############################
-##       MAIN               ##
-##############################
-
 if [ "${NUM_ARGS}" != "0" ] && [ "A${check}" != "A" ]
 then
     # run pre flight
     prereqs
-
-    # check for clean up argument
-    if [ "A${clean_project}" == "Atrue" ]
-    then
-       rm -f "${vault_vars_file}"
-       rm -f "${vars_file}"
-       rm -f "${hosts_inventory_dir}/*"
-    fi
-
+    qubinode_project_cleanup
     setup_kvm_host
+    qubinode_deploy_vm
+    qubinode_deploy_idm
+    qubinode_deploy_openshift
 
-   # Deploy VMS
-   if [ "A${deploy_vm}" == "Atrue" ]
-   then
-       echo "running deploy vm fucntion"
-       if [ "A${deploy_vm_opt}" == "Adeploy" ]
-       then
-           always_run
-           if grep vm_teardown "${vars_file}"|grep -q true
-           then
-               sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
-           fi
-           ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
-        elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
-        then
-            always_run
-            if grep vm_teardown "${vars_file}"|grep -q false
-            then
-                sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
-            fi
-            ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
-        elif [ "A${deploy_vm_opt}" == "Askip" ]
-        then
-            echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
-        else
-            display_help
-        fi
-    fi
-
-    # Deploy IDM server
-    if [ "A${dns}" == "Atrue" ]
-    then
-        if [ "A${dns_opt}" == "Aserver" ]
-        then
-            always_run
-            echo "UPDATING idm_public_ip"
-            SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
-            #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            echo "Updating idm_public_ip to $SRV_IP"
-            #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            ansible-playbook "${project_dir}/playbooks/idm_server.yml"
-            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
-        elif [ "A${dns_opt}" == "Arecords" ]
-        then
-            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
-        else
-           display_help
-        fi
-    fi
-
-    # OpenShift Deployment
-    if [ "A${product}" == "Atrue" ]
-    then
-        if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
-        then
-            always_run
-            echo "Generating Openshift inventory file for ${product_opt}"
-            openshift-setup
-            ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
-            cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
-        else
-           display_help
-        fi
-    fi
 else
     display_help
 fi
