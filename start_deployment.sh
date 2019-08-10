@@ -12,13 +12,13 @@ function display_help() {
 Basic usage: ${SCRIPT} [options]
     -p      Deploy a container platform - options are:
                 okd - deploy upstream openshift
-                ocp - deploy Red Hat OpenShift Platform <subscription required>    
-    
+                ocp - deploy Red Hat OpenShift Platform <subscription required>
+
     -c      Clean up project directory
 
     -b      DNS operations - options are:
               server  - install dns server
-              records - create dns records 
+              records - create dns records
 
     -k      Run kvm host setup - options are
                 skip - don't run setup
@@ -36,7 +36,7 @@ EOH
 }
 
 # validates that the argument options are valid
-# e.g. if script -s-p pass, it won't use '-' as 
+# e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
     if [[ $OPTARG =~ ^-[h/p/u/s]$ ]]
@@ -65,7 +65,7 @@ function validate_product_by_user () {
 # just shows the below error message
 config_err_msg () {
     cat << EOH >&2
-  Could not find start_deployment.conf in the current path ${project_dir}. 
+  Could not find start_deployment.conf in the current path ${project_dir}.
   Please make sure you are in the openshift-home-lab-directory."
 EOH
 }
@@ -112,17 +112,17 @@ function rhsm_register () {
     if [ "A${is_registered}" == "A" ]; then
         echo "$(hostname) is registered to RHSM."
     else
-        if [ "A${rhsm_reg_method}" == "Aupass" ]; 
+        if [ "A${rhsm_reg_method}" == "Aupass" ];
         then
             sudo subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force > /dev/null 2>&1
-        elif [ "A${rhsm_reg_method}" == "Aakey" ]; 
+        elif [ "A${rhsm_reg_method}" == "Aakey" ];
         then
             sudo subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force > /dev/null 2>&1
         else
             echo -n "Unknown issue: cannot register system!"
             exit 1
         fi
-    
+
         # validate registration
         is_registered_tmp=$(mktemp)
         sudo subscription-manager identity > "${is_registered_tmp}" 2>&1
@@ -133,7 +133,7 @@ function rhsm_register () {
             echo "Unsuccessfully registered $(hostname) to RHSM."
             exit 1
         fi
-    
+
     fi
 }
 
@@ -163,7 +163,7 @@ function setup_ansible () {
     else
        echo "ansible is installed"
     fi
-    
+
     # setup vault
     if [ -f /usr/bin/ansible ];
     then
@@ -172,8 +172,8 @@ function setup_ansible () {
             echo "Create ansible-vault password file ${vault_key_file}"
             openssl rand -base64 512|xargs > "${vault_key_file}"
         fi
-    
-        if cat "${vaultfile}" | grep -q VAULT 
+
+        if cat "${vaultfile}" | grep -q VAULT
         then
             echo "${vaultfile} is encrypted"
         else
@@ -202,7 +202,7 @@ function setup_ansible () {
         echo "Ansible not found, please install and retry."
         exit 1
     fi
-        
+
 }
 
 # generic user choice menu
@@ -228,7 +228,7 @@ createmenu () {
 # collected using a different function
 function ask_for_values () {
     varsfile=$1
-    
+
     # ask user for DNS domain or use default
     if grep '""' "${varsfile}"|grep -q domain
     then
@@ -264,7 +264,7 @@ function ask_for_values () {
         sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
     fi
 
-    
+
 }
 
 function ask_for_vault_values () {
@@ -273,7 +273,7 @@ function ask_for_vault_values () {
 cat << EOH >&2
 
  The following prompts will ask you values that are required for the installation
- to continue. If you make a mistake when entering passwords, pressing the Backspace 
+ to continue. If you make a mistake when entering passwords, pressing the Backspace
  key will not fix it. Just hit Ctrl+c to cancel and run this script again.
 
 EOH
@@ -328,8 +328,8 @@ EOH
                     echo "Error: Please try again";;
                 esac
             done
-        
-            if [ "A${rhsm_reg_method}" == "Aupass" ]; 
+
+            if [ "A${rhsm_reg_method}" == "Aupass" ];
             then
                 echo -n "Enter your RHSM username and press [ENTER]: "
                 read rhsm_username
@@ -339,7 +339,7 @@ EOH
                 sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaultfile}"
                 sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaultfile}"
                 echo
-            elif [ "A${rhsm_reg_method}" == "Aakey" ]; 
+            elif [ "A${rhsm_reg_method}" == "Aakey" ];
             then
                 echo -n "Enter your RHSM activation key and press [ENTER]: "
                 read rhsm_activationkey
@@ -457,6 +457,14 @@ function setup_kvm_host () {
     fi
 }
 
+function openshift-setup() {
+  if [[ ${product_opt} == "ocp" ]]; then
+    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+  elif [[ ${product_opt} == "okd" ]]; then
+    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+  fi
+}
+
 echo ""
 echo ""
 OPTIND=1
@@ -471,14 +479,26 @@ then
     option=($(echo "${selected_option}"))
     if [ "${option}" == "Deploy" ]
     then
-        NUM_ARGS=1
-        check=true
-        kvm_host=true
-        kvm_host_opt=setup
-        deploy_vm=true
-        deploy_vm_opt=deploy
-        dns=true
-        dns_opt=server
+      NUM_ARGS=1
+      check=true
+      kvm_host=true
+      kvm_host_opt=setup
+      deploy_vm=true
+      deploy_vm_opt=deploy
+      dns=true
+      dns_opt=server
+    elif [ "${option}" == "ocp" ]
+    then
+      NUM_ARGS=1
+      check=true
+      product=true
+      product_opt=ocp
+    elif [ "${option}" == "okd" ]
+    then
+      NUM_ARGS=1
+      check=true
+      product=true
+      product_opt=okd
     elif [ "${option}" == "Display" ]
     then
         echo "displaying help"
@@ -495,7 +515,7 @@ do
         h) display_help
            exit 1
            ;;
-        c) check_args; 
+        c) check_args;
            clean_project=true
            check=true
            ;;
@@ -517,7 +537,7 @@ do
         p) check_args
            check=true
            product=true
-           product=$OPTARG
+           product_opt=$OPTARG
            ;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2
@@ -550,7 +570,7 @@ then
        rm -f "${hosts_inventory_dir}/*"
     fi
 
-    setup_kvm_host 
+    setup_kvm_host
 
    # Deploy VMS
    if [ "A${deploy_vm}" == "Atrue" ]
@@ -579,7 +599,7 @@ then
             display_help
         fi
     fi
-    
+
     # Deploy IDM server
     if [ "A${dns}" == "Atrue" ]
     then
@@ -597,6 +617,21 @@ then
         elif [ "A${dns_opt}" == "Arecords" ]
         then
             ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+        else
+           display_help
+        fi
+    fi
+
+    # OpenShift Deployment
+    if [ "A${product}" == "Atrue" ]
+    then
+        if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
+        then
+            always_run
+            echo "Generating Openshift inventory file for ${product_opt}"
+            openshift-setup
+            ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
+            cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
         else
            display_help
         fi

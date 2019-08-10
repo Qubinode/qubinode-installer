@@ -1,0 +1,11 @@
+---
+- name: Generate Inventory
+  hosts: localhost
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+  tasks:
+    - name: Generating Inventory File
+      include_role:
+        name: openshift-inventory
