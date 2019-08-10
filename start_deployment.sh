@@ -407,17 +407,7 @@ function always_run () {
     # create vault vars file
     if [ ! -f "${vault_vars_file}" ]
     then
-        cat > "${vault_vars_file}" <<EOF
-rhsm_username: ""
-rhsm_password: ""
-rhsm_org: ""
-rhsm_activationkey: ""
-rhsm_reg_method: ""
-root_user_pass: ""
-idm_ssh_user: root
-idm_dm_pwd: ""
-idm_admin_pwd: ""
-EOF
+        cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
     fi
 
     # create ansible inventory file
