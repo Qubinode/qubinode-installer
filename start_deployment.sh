@@ -380,8 +380,8 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-    ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
-    VALID_PRODUCTS=("okd" "ocp")
+    ANSIBLE_REPO=$(awk '/ansible_repo/ {print $2}' "${project_dir}/samples/all.yml")
+    VALID_PRODUCTS=$(awk '/valid_products/ {print $2}' "${project_dir}/samples/all.yml")
 }
 
 function always_run () {
