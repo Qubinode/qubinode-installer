@@ -413,10 +413,7 @@ function always_run () {
     # create ansible inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
     then
-        cat > "${hosts_inventory_dir}/hosts" <<EOF
-localhost               ansible_connection=local ansible_user=root
-[ocp]
-EOF
+        cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
     fi
 
     # add inventory file to all.yml
