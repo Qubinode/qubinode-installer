@@ -80,11 +80,29 @@ function read_sensitive_data () {
       fi
     done
 }
+
+# Ensure RHEL is set to the supported release
+function set_rhel_release () {
+    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' samples/all.yml |grep [0-9])
+    RELEASE="Release: ${RHEL_RELEASE}"
+    CURRENT_RELEASE=$(sudo subscription-manager release --show)
+
+    if [ "A${RELEASE}" != "A${CURRENT_RELEASE}" ]
+    then
+        echo "Setting RHEL to the supported release: ${RHEL_RELEASE}"
+        sudo subscription-manager release --unset
+        sudo subscription-manager release --set="${RHEL_RELEASE}"
+    else
+       echo "RHEL release is set to the supported release: ${CURRENT_RELEASE}"
+    fi
+}
+
 # this function checks if the system is registered to RHSM
 # validate the registration or register the system
 # if it's not registered
 function rhsm_register () {
     is_registered_tmp=$(mktemp)
+    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' samples/all.yml |grep [0-9])
     sudo subscription-manager identity > "${is_registered_tmp}" 2>&1
     is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
     if [ "A${is_registered}" == "A" ]; then
@@ -92,10 +110,12 @@ function rhsm_register () {
     else
         if [ "A${rhsm_reg_method}" == "Aupass" ];
         then
-            sudo subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force > /dev/null 2>&1
+            sudo subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
+            set_rhel_release
         elif [ "A${rhsm_reg_method}" == "Aakey" ];
         then
-            sudo subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force > /dev/null 2>&1
+            sudo subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
+            set_rhel_release
         else
             echo -n "Unknown issue: cannot register system!"
             exit 1

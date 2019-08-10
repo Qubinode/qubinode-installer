@@ -12,30 +12,54 @@ rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
 org_id: "{{ rhsm_org }}"
 vm_teardown: false
+admin_user: admin
 instances:
   - name: master
+    enable: true
     vm_cpu: 4
     vm_memory: 16384
     vm_root_disk_size: 20G
     vm_recreate: false
+    vm_teardown: false
+    inventory_group: masters
     extra_storage:
       - size: 80G
         enable: true
-    qty: 2
+    qty: 1
   - name: node
+    enable: true
     vm_cpu: 4
     vm_memory: 16384
     vm_root_disk_size: 20G
-    extra_storage: []
+    vm_teardown: false
+    inventory_group: nodes
+    extra_storage:
+      - size: 80G
+        enable: true
     vm_recreate: false
-    qty: 2
+    qty: 4
   - name: dns
-    vm_cpu: 4
-    vm_memory: 16384
+    enable: true
+    vm_cpu: 2
+    vm_memory: 2048
     vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: dns
     extra_storage: []
     vm_recreate: false
     qty: 1
+  #- name: gluster
+  #  enable: false
+  #  vm_cpu: 4
+  #  vm_memory: 16384
+  #  vm_root_disk_size: 20G
+  #  vm_teardown: false
+  #  inventory_group: nodes
+  #  extra_storage:
+  #    - size: 80G
+  #      enable: true
+  #  vm_recreate: false
+  #  qty: 4
 
 # DNS Server
 dns_wildcard: "*.apps"
@@ -60,6 +84,14 @@ idm_ssh_user: root
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
-ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}'"
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.7-rpms
+rhel_release: 7.6
+rhsm_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-optional-rpms
+  - rhel-7-server-supplementary-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-ose-3.11-rpms
+  - "{{ ansible_repo }}"
 valid_products: "okd,ocp"
