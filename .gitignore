@@ -3,7 +3,7 @@ playbooks/roles/*
 !playbooks/roles/.gitkeep
 playbooks/vars/*
 !playbooks/vars/.gitkeep
-inventory/hosts
+inventory/*
+!inventory/.gitkeep
 *.swp
-modules
 all.yml
