@@ -305,7 +305,7 @@ function ask_for_vault_values () {
         unset idm_admin_pwd
         echo -n 'Enter a password for the IDM server console and press [ENTER]: '
         read_sensitive_data
-        idm_admin_pwd="${read_sensitive_data}"
+        idm_admin_pwd="${sensitive_data}"
         sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
         echo ""
     fi
@@ -338,7 +338,7 @@ function ask_for_vault_values () {
                 unset rhsm_password
                 echo -n 'Enter your RHSM password and press [ENTER]: '
                 read_sensitive_data
-                rhsm_password="${read_sensitive_data}"
+                rhsm_password="${sensitive_data}"
                 sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaultfile}"
                 sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaultfile}"
                 echo
@@ -349,7 +349,7 @@ function ask_for_vault_values () {
                 unset rhsm_org
                 echo -n 'Enter your RHSM ORG ID and press [ENTER]: '
                 read_sensitive_data
-                rhsm_org="${read_sensitive_data}"
+                rhsm_org="${sensitive_data}"
                 sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vaultfile}"
                 sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vaultfile}"
                 echo
