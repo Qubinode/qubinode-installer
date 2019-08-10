@@ -6,7 +6,9 @@
 #set -x
 
 function display_help() {
-    cat $"{project_dir}/docs/qubinode-install.adoc"
+    setup_required_paths
+    SCRIPT="$0"
+    cat < "${project_dir}/docs/qubinode-install.adoc"
 }
 
 # validates that the argument options are valid
@@ -616,8 +618,8 @@ fi
 
 if [ "${NUM_ARGS}" != "0" ] && [ "A${check}" != "A" ]
 then
-    # run pre flight
     prereqs
+    exit
     qubinode_project_cleanup
     setup_kvm_host
     qubinode_deploy_vm

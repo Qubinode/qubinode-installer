@@ -1,4 +1,4 @@
-Basic usage: ${SCRIPT} [options]
+Basic usage: qubinode-installer [options]
     -p      Deploy a container platform - options are:
                 okd - deploy upstream openshift
                 ocp - deploy Red Hat OpenShift Platform <subscription required>
