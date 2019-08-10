@@ -443,7 +443,6 @@ function qubinode_project_cleanup () {
     fi
 }
 
-
 function qubinode_deploy_vm () {
    # Deploy VMS
    if [ "A${deploy_vm}" == "Atrue" ]
@@ -515,6 +514,51 @@ function qubinode_deploy_openshift () {
     fi
 }
 
+function get_user_options () {
+    while getopts ":hck:p:d:b:" opt;
+    do
+        case $opt in
+            h) display_help
+               exit 1
+               ;;
+            c) check_args;
+               clean_project=true
+               check=true
+               ;;
+            k) check_args;
+               check=true
+               kvm_host=true
+               kvm_host_opt=$OPTARG
+               ;;
+            d) check_args;
+               check=true
+               deploy_vm_opt=$OPTARG
+               deploy_vm="true"
+               ;;
+            b) check_args;
+               check=true
+               dns=true
+               dns_opt=$OPTARG
+               ;;
+            p) check_args
+               check=true
+               product=true
+               product_opt=$OPTARG
+               ;;
+           --) shift; break;;
+           -*) echo Unrecognized flag : "$1" >&2
+               display_help
+               exit 1
+               ;;
+           \?) echo Unrecognized flag : "$1" >&2
+               display_help
+               exit 1
+               ;;
+        esac
+    done
+    shift "$((OPTIND-1))"
+}
+
 ##############################
 ##       MAIN               ##
 ##############################
@@ -524,6 +568,8 @@ echo ""
 OPTIND=1
 NUM_ARGS="$#"
 
+# if no arguments are passed, run the default installation
+# default installation is to install OpenShift (ocp)
 if [ "${NUM_ARGS}" == "0" ]
 then
     deploy='Deploy the default OpenShift Cluster'
@@ -558,53 +604,14 @@ then
         echo "displaying help"
         display_help
         exit
+    elif [ "${NUM_ARGS}" != 0 ]
+    then
+        get_user_options
     else
+        display_help
         exit
     fi
 fi
-
-while getopts ":hck:p:d:b:" opt;
-do
-    case $opt in
-        h) display_help
-           exit 1
-           ;;
-        c) check_args;
-           clean_project=true
-           check=true
-           ;;
-        k) check_args;
-           check=true
-           kvm_host=true
-           kvm_host_opt=$OPTARG
-           ;;
-        d) check_args;
-           check=true
-           deploy_vm_opt=$OPTARG
-           deploy_vm="true"
-           ;;
-        b) check_args;
-           check=true
-           dns=true
-           dns_opt=$OPTARG
-           ;;
-        p) check_args
-           check=true
-           product=true
-           product_opt=$OPTARG
-           ;;
-       --) shift; break;;
-       -*) echo Unrecognized flag : "$1" >&2
-           display_help
-           exit 1
-           ;;
-       \?) echo Unrecognized flag : "$1" >&2
-           display_help
-           exit 1
-           ;;
-    esac
-done
-shift "$((OPTIND-1))"
 
 
 if [ "${NUM_ARGS}" != "0" ] && [ "A${check}" != "A" ]
