@@ -1,0 +1,42 @@
+- name: create masters group file
+  file: 
+    path: "{{ inventory_dir }}/{{ item }}"
+    state: touch
+  loop:
+    - masters
+    - nodes
+    - dns
+
+- name: create masters group section
+  lineinfile:
+    path: "{{ inventory_dir }}/masters"
+    line: '[masters]'
+    state: present
+
+- name: adding host to master group
+  vars:
+    group: masters
+  include_tasks: vms_inventory_outer.yml
+  
+- name: create nodes section
+  lineinfile:
+    path: "{{ inventory_dir }}/nodes"
+    line: '[nodes]'
+    state: present
+
+- name: adding host to nodes group
+  vars:
+    group: nodes
+  include_tasks: vms_inventory_outer.yml
+  
+- name: create dns group section
+  lineinfile:
+    path: "{{ inventory_dir }}/dns"
+    line: '[dns]'
+    state: present
+
+- name: adding host to dns group
+  vars:
+    group: dns
+  include_tasks: vms_inventory_outer.yml
+  

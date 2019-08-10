@@ -1,0 +1,11 @@
+---
+- name: setup KVM host
+  hosts: localhost
+  become: yes
+  vars_files:
+    - vars/all.yml
+
+  tasks:
+     - name: running KVM host setup
+       include_role:
+         name: swygue.edge_host_setup

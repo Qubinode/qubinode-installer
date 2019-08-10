@@ -1,0 +1,35 @@
+---
+- hosts: ocp-dns01
+  remote_user: admin
+  become: true
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+#    - name: ensure /etc/resolv is setup correctly
+#      vars:
+#        resolv_nameservers:
+#          - "{{ dns_server_public }}"
+#          - "127.0.0.1"
+#        resolv_domain: "{{ domain }}"
+#        resolv_search:
+#          - "{{ domain }}"
+#        resolv_options:
+#          - "timeout:2"
+#      include_role:
+#        name: ansible-resolv
+
+    - name: ensure system is registered to Red Hat
+      include_role:
+        name: swygue-redhat-subscription
+
+    - name: update system
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install IDM server
+      include_role:
+        name: ansible-idm
+      tags: [install,preinstall,installer,firewall,always,result]
