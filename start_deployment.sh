@@ -157,8 +157,10 @@ function setup_ansible () {
     # install ansible
     if [ ! -f /usr/bin/ansible ];
     then
-       if ! sudo subscription-manager repos --list-enabled | grep -q "${ANSIBLE_REPO}"
+       CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
+       if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}"]
        then
+           sudo subscription-manager repos --disable="${CURRENT_REPO}"
            sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
        fi
        sudo yum install -y -q -e 0 ansible
@@ -192,11 +194,11 @@ function setup_ansible () {
         echo ""
 
         # Ensure required modules are downloaded
-        if [ ! -f "${project_dir}/modules/redhat_repositories.py" ]
+        if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
         then
-            test -d "${project_dir}/modules" || mkdir "${project_dir}/modules"
+            test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
             CURRENT_DIR=$(pwd)
-            cd "${project_dir}/modules/"
+            cd "${project_dir}/playbooks/modules/"
             wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
             cd "${CURRENT_DIR}"
         fi
