@@ -46,9 +46,7 @@ function check_args () {
     fi
 }
 
-# not in used: this should be the function
-# that asked the user if they want to install
-# openshift or OKD
+# validate the product the user wants to install
 function validate_product_by_user () {
     for item in $(echo "$VALID_PRODUCTS")
     do
@@ -89,19 +87,23 @@ function setup_required_paths () {
 # this configs prints out asterisks when sensitive data
 # is being entered
 function read_sensitive_data () {
-    prompt="$1"
-    while IFS= read -p "$prompt" -r -s -n 1 char
-    do
-        if [[ $char == $'\0' ]]
-        then
-            break
-        fi
-        prompt='*'
-        input+="$char"
+    # based on shorturl.at/BEHY3
+    sensitive_data=''
+    while IFS= read -r -s -n1 char; do
+      [[ -z $char ]] && { printf '\n'; break; } # ENTER pressed; output \n and break.
+      if [[ $char == $'\x7f' ]]; then # backspace was pressed
+          # Remove last char from output variable.
+          [[ -n $sensitive_data ]] && sensitive_data=${sensitive_data%?}
+          # Erase '*' to the left.
+          printf '\b \b'
+      else
+        # Add typed char to output variable.
+        sensitive_data+=$char
+        # Print '*' in its stead.
+        printf '*'
+      fi
     done
-    echo "$input"
 }
-
 # this function checks if the system is registered to RHSM
 # validate the registration or register the system
 # if it's not registered
@@ -270,40 +272,40 @@ function ask_for_values () {
 function ask_for_vault_values () {
     vaultfile=$1
 
-cat << EOH >&2
-
- The following prompts will ask you values that are required for the installation
- to continue. If you make a mistake when entering passwords, pressing the Backspace
- key will not fix it. Just hit Ctrl+c to cancel and run this script again.
-
-EOH
-
+    # This is the passwordto be stored in the password to encrypt 
+    # sensitive data using ansible-vault.
     if cat "${vaultfile}"| grep -q VAULT
     then
         test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaultfile}"
         ansible_encrypt=yes
     fi
 
+    # Generate a ramdom password for IDM directory manager
+    # This will not prompt the user 
     if grep '""' "${vaultfile}"|grep -q idm_dm_pwd
     then
         idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
         sed -i "s/idm_dm_pwd: \"\"/idm_dm_pwd: "$idm_dm_pwd"/g" "${vaultfile}"
     fi
-
+   
+    # root user password to be set for virtual instances created
     if grep '""' "${vaultfile}"|grep -q root_user_pass
     then
         unset root_user_pass
-        prompt='Enter a password for the root user and press [ENTER]: '
-        root_user_pass=$(read_sensitive_data "${prompt}")
+        echo -n 'Enter a password for the root user and press [ENTER]: '
+        read_sensitive_data
+        root_user_pass="${sensitive_data}"
         sed -i "s/root_user_pass: \"\"/root_user_pass: "$root_user_pass"/g" "${vaultfile}"
         echo ""
     fi
 
+    # This is the password used to log into the IDM server webconsole and also the admin user
     if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
     then
         unset idm_admin_pwd
-        prompt='Enter a password for the IDM server console and press [ENTER]: '
-        idm_admin_pwd=$(read_sensitive_data "${prompt}")
+        echo -n 'Enter a password for the IDM server console and press [ENTER]: '
+        read_sensitive_data
+        idm_admin_pwd="${read_sensitive_data}"
         sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
         echo ""
     fi
@@ -334,8 +336,9 @@ EOH
                 echo -n "Enter your RHSM username and press [ENTER]: "
                 read rhsm_username
                 unset rhsm_password
-                prompt='Enter your RHSM password and press [ENTER]: '
-                rhsm_password=$(read_sensitive_data "${prompt}")
+                echo -n 'Enter your RHSM password and press [ENTER]: '
+                read_sensitive_data
+                rhsm_password="${read_sensitive_data}"
                 sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaultfile}"
                 sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaultfile}"
                 echo
@@ -344,8 +347,9 @@ EOH
                 echo -n "Enter your RHSM activation key and press [ENTER]: "
                 read rhsm_activationkey
                 unset rhsm_org
-                prompt='Enter your RHSM ORG ID and press [ENTER]: '
-                rhsm_org=$(read_sensitive_data "${prompt}")
+                echo -n 'Enter your RHSM ORG ID and press [ENTER]: '
+                read_sensitive_data
+                rhsm_org="${read_sensitive_data}"
                 sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vaultfile}"
                 sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vaultfile}"
                 echo
@@ -375,6 +379,7 @@ function prereqs () {
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
     ANSIBLE_REPO=rhel-7-server-ansible-2-rpms
+    VALID_PRODUCTS=("okd" "ocp")
 }
 
 function always_run () {
