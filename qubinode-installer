@@ -490,27 +490,24 @@ function qubinode_deploy_vm () {
     fi
 }
 
-function qubinode_deploy_idm () {
+function qubi_dns_manager () {
+    prereqs
+    option="$1"
     # Deploy IDM server
-    if [ "A${dns}" == "Atrue" ]
+    if [ "A${option}" == "Aserver" ]
     then
-        if [ "A${dns_opt}" == "Aserver" ]
-        then
-            always_run
-            echo "UPDATING idm_public_ip"
-            SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
-            #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            echo "Updating idm_public_ip to $SRV_IP"
-            #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            ansible-playbook "${project_dir}/playbooks/idm_server.yml"
-            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
-        elif [ "A${dns_opt}" == "Arecords" ]
-        then
-            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
-        else
-           display_help
-        fi
+        SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
+        #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+        echo "Updating idm_public_ip to $SRV_IP"
+        #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+        sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+        echo "Configuring DNS server"
+        ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+    elif [ "A${option}" == "Arecords" ]
+    then
+        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+    else
+       display_help
     fi
 }
 
@@ -639,9 +636,10 @@ else
             setup_kvm_host
             qubinode_deploy_vm
             qubinode_deploy_idm
+            qubi_dns_manager server
         elif [ "${maintenance}" == "dns" ]
         then
-            qubinode_populate_dns
+            qubi_dns_manager records
         else
             display_help
         fi
