@@ -1,0 +1,120 @@
+---
+- name: setup openshift developer box
+  hosts: localhost
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+  become: yes
+
+  tasks:
+  - name: Register as auto-subscribe to red hat subscription.
+    redhat_subscription:
+      state: present
+      username: "{{ rhsm_username }}"
+      password: "{{ rhsm_password }}"
+      auto_attach: true
+  - name: Enable a Ansible 2.6 repository
+    rhsm_repository:
+      name: rhel-7-server-ansible-2.6-rpms
+      state: enabled
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Enable rhel-7-server-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-rpms
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Enable rhel-7-server-extras-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-extras-rpms
+      state: enabled
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Enable rhel-7-server-optional-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-optional-rpms
+      state: enabled
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Get Openshift PoolID
+    shell: subscription-manager list --available --matches '*OpenShift*' | grep Pool | awk '{print $3}'
+    register: openshift_poolid
+    failed_when: "openshift_poolid.rc == 2"
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Save Openshift PoolID
+    set_fact:
+      openshift_pool_id: "{{ openshift_poolid.stdout }}"
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Attach to the OpenShift subscription Pool
+    command: subscription-manager attach --pool={{ openshift_pool_id }}
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Enable rhel-7-server-ose-3.11-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ose-3.11-rpms
+      state: enabled
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
+      - wget
+      - git
+      - net-tools
+      - bind-utils
+      - yum-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      - vim
+      - atomic-openshift-clients
+      state: present
+  - name: Install a list of packages
+    yum:
+      name:
+        - ansible
+        - pyOpenSSL
+        - docker
+        - device-mapper-event-libs
+        - device-mapper-libs
+        - httpd-tools
+        - java-1.8.0-openjdk-devel.x86_64
+        - tmux
+        - patch
+      state: present
+  - name: Installing OpenShift Ansible RPM
+    yum:
+      name:
+        - openshift-ansible
+      state: present
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Cloning OpenShift release-3.11 to machine
+    git:
+      repo: 'https://github.com/openshift/openshift-ansible.git'
+      dest: /home/{{ ssh_username }}/openshift-ansible
+      version: release-3.11
+    when: openshift_deployment_type == 'origin'
+  - name: change openshift-ansible owner to {{ ssh_username }}
+    file:
+      path: /home/{{ ssh_username }}/openshift-ansible
+      owner: "{{ ssh_username }}"
+      group: "{{ ssh_username }}"
+      mode: 0775
+    when: openshift_deployment_type == 'origin'
+  - name: Cloning  Bash full of Colors to machine
+    git:
+      repo: 'https://github.com/tosin2013/bash-full-of-colors.git'
+      dest: /home/{{ ssh_username }}/bash-full-of-colors
+  - name: Run script to modifiy terminal layout
+    shell: |
+      cd /home/{{ ssh_username }}
+      [ -f .bashrc ] && mv -v .bashrc /tmp/bashrc.old
+      [ -f .bash_profile ] && mv -v .bash_profile /tmp/bash_profile.old
+      [ -f .bash_aliases ] && mv -v .bash_aliases /tmp/bash_aliases.old
+      [ -f .bash_logout ] && mv -v .bash_logout /tmp/bash_logout.old
+      cp /home/{{ ssh_username }}/bash-full-of-colors/bashrc.sh /home/{{ ssh_username }}/.bashrc
+      cp /home/{{ ssh_username }}/bash-full-of-colors/bash_profile.sh /home/{{ ssh_username }}/.bash_profile
+      cp /home/{{ ssh_username }}/bash-full-of-colors/bash_aliases.sh /home/{{ ssh_username }}/.bash_aliases
+      cp /home/{{ ssh_username }}/bash-full-of-colors/bash_logout.sh /home/{{ ssh_username }}/.bash_logout
+      rm -rf bash-full-of-colors/
