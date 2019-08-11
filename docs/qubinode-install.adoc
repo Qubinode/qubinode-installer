@@ -18,20 +18,13 @@ Main Options:
 
             Example: qubinode-installer -m clean
 
-Optional:
-            
-
-    -b      DNS operations - options are:
-              server  - install dns server
-              records - create dns records
-
-    -k      Run kvm host setup - options are
-                skip - don't run setup
-                setup - run the setup
-
-    -d      VMs operations - options are
-                deploy   - deploy all vms
-                undeploy - delete all vms
-                skip     - delete all vms
-
     -h      Display this help menu
+
+Optional sub arguments for -c :
+            
+    -b      Sample description (not implemented)
+
+    -k      Sample description (not implemented)
+
+    -d      Sample description (not implemented)
+

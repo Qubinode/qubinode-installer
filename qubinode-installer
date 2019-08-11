@@ -157,6 +157,7 @@ function setup_ansible () {
     if [ ! -f /usr/bin/ansible ];
     then
        CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
+       # check to make sure the support ansible repo is enabled
        if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}"]
        then
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
@@ -379,7 +380,7 @@ function prereqs () {
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
 }
 
-function setup_vars_sudoers () {
+function setup_sudoers () {
     echo "Setting up playbooks vars and user sudoers"
     prereqs
     if [ "A${CURRENT_USER}" != "Aroot" ]
@@ -394,7 +395,10 @@ function setup_vars_sudoers () {
             su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
        fi
     fi
+}
 
+function setup_variables () {
+    prereqs
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
     then
@@ -590,29 +594,65 @@ else
             qubinode_project_cleanup
         elif [ "${maintenance}" == "setup" ]
         then
-            setup_vars_sudoers
+            setup_sudoers
+            setup_variables
         elif [ "${maintenance}" == "rhsm" ]
         then
-            setup_vars_sudoers
+            setup_sudoers
+            setup_variables
             rhsm_register
         elif [ "${maintenance}" == "ansible" ]
         then
-            setup_vars_sudoers
+            setup_sudoers
+            setup_variables
             rhsm_register
             setup_ansible "${vault_vars_file}"
         elif [ "${maintenance}" == "host" ]
         then
-            setup_vars_sudoers
+            setup_sudoers
+            setup_variables
             rhsm_register
             setup_ansible "${vault_vars_file}"
             setup_kvm_host
+        elif [ "${maintenance}" == "deploy" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_deploy_vm
+        elif [ "${maintenance}" == "undeploy" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_deploy_vm
+        elif [ "${maintenance}" == "dns" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_deploy_vm
+            qubinode_deploy_idm
+        elif [ "${maintenance}" == "dns" ]
+        then
+            qubinode_populate_dns
         else
             display_help
         fi
     elif [ "A${cluster}" != "A" ]
-        if [ "${maintenance}" == "clean" ]
-        then
     then
+        if [ "${cluster}" == "ocp" ]
+        then
+          echo "install openshiftcluster"
+        fi
+     else
+         display_menu
     fi
 fi
 
