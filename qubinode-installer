@@ -381,7 +381,6 @@ function prereqs () {
 }
 
 function setup_sudoers () {
-    echo "Setting up playbooks vars and user sudoers"
     prereqs
     if [ "A${CURRENT_USER}" != "Aroot" ]
     then
@@ -393,6 +392,8 @@ function setup_sudoers () {
             echo "Please enter the password for the root user at the prompt."
             echo ""
             su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
+        else
+           echo "/etc/sudoers.d/${CURRENT_USER} exist"
        fi
     fi
 }
@@ -467,7 +468,7 @@ function qubinode_project_cleanup () {
     fi
 }
 
-function qubinode_deploy_vm () {
+function qubinode_vm_manager () {
    # Deploy VMS
    if [ "A${deploy_vm}" == "Atrue" ]
    then
@@ -588,7 +589,21 @@ done
 shift "$((OPTIND-1))"
 
 if (( $OPTIND == 1 )); then
-   echo "Default option"
+   cat < docs/default_message
+   default_message=("Continue with the default installation" "Display the help menu")
+   createmenu "${default_message[@]}"
+   result=($(echo "${selected_option}"))
+   if [ "A${result}" == "ADisplay" ]
+   then
+       display_help
+   elif [ "A${result}" == "AContinue" ]
+   then
+       echo $result
+       #default_install
+   else
+       echo $result
+      echo "Unknown issue, please run the installer again"
+   fi
 else
     if [ "A${maintenance}" != "A" ]
     then
@@ -599,10 +614,12 @@ else
         then
             setup_sudoers
             setup_variables
+            ask_user_input
         elif [ "${maintenance}" == "rhsm" ]
         then
             setup_sudoers
             setup_variables
+            ask_user_input
             rhsm_register
         elif [ "${maintenance}" == "ansible" ]
         then
@@ -624,7 +641,7 @@ else
             rhsm_register
             setup_ansible "${vault_vars_file}"
             setup_kvm_host
-            qubinode_deploy_vm
+            qubinode_vm_manager deploy
         elif [ "${maintenance}" == "undeploy" ]
         then
             setup_sudoers
@@ -632,7 +649,7 @@ else
             rhsm_register
             setup_ansible "${vault_vars_file}"
             setup_kvm_host
-            qubinode_deploy_vm
+            qubinode_vm_manager undeploy
         elif [ "${maintenance}" == "dns" ]
         then
             setup_sudoers
@@ -640,11 +657,17 @@ else
             rhsm_register
             setup_ansible "${vault_vars_file}"
             setup_kvm_host
-            qubinode_deploy_vm
-            qubinode_deploy_idm
+            qubinode_vm_manager deploy
             qubi_dns_manager server
         elif [ "${maintenance}" == "dns" ]
         then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_vm_manager deploy
+            qubi_dns_manager server
             qubi_dns_manager records
         else
             display_help
