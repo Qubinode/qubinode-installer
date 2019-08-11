@@ -470,31 +470,27 @@ function qubinode_project_cleanup () {
 
 function qubinode_vm_manager () {
    # Deploy VMS
-   if [ "A${deploy_vm}" == "Atrue" ]
+   prereqs
+   deploy_vm_opt="$1"
+   if [ "A${deploy_vm_opt}" == "Adeploy" ]
    then
-       echo "running deploy vm fucntion"
-       if [ "A${deploy_vm_opt}" == "Adeploy" ]
+       if grep vm_teardown "${vars_file}"|grep -q true
        then
-           always_run
-           if grep vm_teardown "${vars_file}"|grep -q true
-           then
-               sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
-           fi
-           ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
-        elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
+           sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+       fi
+       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+    elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
+    then
+        if grep vm_teardown "${vars_file}"|grep -q false
         then
-            always_run
-            if grep vm_teardown "${vars_file}"|grep -q false
-            then
-                sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
-            fi
-            ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
-        elif [ "A${deploy_vm_opt}" == "Askip" ]
-        then
-            echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
-        else
-            display_help
+            sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
         fi
+        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
+    elif [ "A${deploy_vm_opt}" == "Askip" ]
+    then
+        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+    else
+        display_help
     fi
 }
 
@@ -534,6 +530,17 @@ function qubinode_deploy_openshift () {
            display_help
         fi
     fi
+}
+
+function default_install () {
+    setup_sudoers
+    setup_variables
+    rhsm_register
+    setup_ansible "${vault_vars_file}"
+    setup_kvm_host
+    qubinode_vm_manager deploy
+    qubi_dns_manager server
+    qubi_dns_manager records
 }
 
 ##############################
@@ -598,8 +605,7 @@ if (( $OPTIND == 1 )); then
        display_help
    elif [ "A${result}" == "AContinue" ]
    then
-       echo $result
-       #default_install
+       default_install
    else
        echo $result
       echo "Unknown issue, please run the installer again"
@@ -644,11 +650,6 @@ else
             qubinode_vm_manager deploy
         elif [ "${maintenance}" == "undeploy" ]
         then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible "${vault_vars_file}"
-            setup_kvm_host
             qubinode_vm_manager undeploy
         elif [ "${maintenance}" == "dns" ]
         then
@@ -676,7 +677,10 @@ else
     then
         if [ "${cluster}" == "ocp" ]
         then
-          echo "install openshiftcluster"
+          echo "Install OpenShift Cluster"
+          default_install
+        else
+            display_menu
         fi
      else
          display_menu
