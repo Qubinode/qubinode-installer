@@ -423,7 +423,9 @@ function setup_variables () {
         echo "need to update inventory"
         sed -i "s#inventory_file: \"\"#inventory_file: "$inventory_file"#g" "${vars_file}"
     fi
+}
 
+function ask_user_input () {
     echo ""
     echo ""
     ask_for_values "${vars_file}"
@@ -445,18 +447,23 @@ function openshift-setup() {
 }
 
 function qubinode_project_cleanup () {
-    echo "Cleaning out project folder"
-    echo ""
     prereqs
-    if [ "A${clean_project}" == "Atrue" ]
+    FILES=$(find "${project_dir}/inventory/" -type f | grep -v gitkeep)
+    if [ -f "${vault_vars_file}" ]
     then
-       rm -f "${vault_vars_file}"
-       rm -f "${vars_file}"
-       FILES=$(find "${project_dir}/inventory/" -type f | grep -v gitkeep)
+        echo "Removing ${vault_vars_file}" && rm -f "${vault_vars_file}"
+    elif [ -f "${vars_file}" ]
+    then
+        echo "Removing ${vars_file}" && rm -f "${vars_file}"
+    elif [ "A${FILES}" != "A" ]
+    then
        for f in $(echo "${FILES}")
        do
-           rm -f $f
+           test -f "${f}" && echo "Removing ${f}" && rm -f "${f}"
        done
+    else
+        echo "Project directory: ${project_dir} state is already clean"
+        echo ""
     fi
 }
 
@@ -587,7 +594,6 @@ else
     then
         if [ "${maintenance}" == "clean" ]
         then
-            clean_project=true
             qubinode_project_cleanup
         elif [ "${maintenance}" == "setup" ]
         then
