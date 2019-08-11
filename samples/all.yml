@@ -3,7 +3,7 @@
 update_inventory: true
 inventory_dir: ""
 inventory_file: "{{ inventory_dir }}/hosts"
-vm_libvirt_net: ""
+vm_libvirt_net: "qubinet"
 admin_user_password: "{{ root_user_pass }}"
 kvm_vm_root_pwd: "{{ root_user_pass }}"
 vm_domain: "{{ domain }}"
@@ -95,3 +95,21 @@ rhsm_repos:
   - rhel-7-server-ose-3.11-rpms
   - "{{ ansible_repo }}"
 valid_products: "okd,ocp"
+ 
+ # LVM
+logical_volumes:
+  - name: qubi_images
+    size: 100%FREE
+    mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
+    fstype: xfs
+device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1 ') }}" 
+vgname: vg_qubi
+
+# Libvirt network
+libvirt_host_networks:
+  - name: "{{ vm_libvirt_net }}"
+    mode: bridge
+    bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}" 
+kvm_bridge_type: Bridge
+kvm_host_bootproto: dhcp
+       
