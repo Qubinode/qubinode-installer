@@ -102,8 +102,8 @@ logical_volumes:
     size: 100%FREE
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
     fstype: xfs
-device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1 ') }}" 
-vgname: vg_qubi
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1 ') }}" 
+vg_name: vg_qubi
 
 # Libvirt network
 libvirt_host_networks:
