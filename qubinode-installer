@@ -107,13 +107,16 @@ function rhsm_register () {
     is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
     if [ "A${is_registered}" == "A" ]; then
         echo "$(hostname) is registered to RHSM."
+        set_rhel_release
     else
         if [ "A${rhsm_reg_method}" == "Aupass" ];
         then
+            echo "Registering system to RHSM using username and password."
             sudo subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
             set_rhel_release
         elif [ "A${rhsm_reg_method}" == "Aakey" ];
         then
+            echo "Registering system to RHSM using activation-keys."
             sudo subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
             set_rhel_release
         else
@@ -376,11 +379,11 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-    ANSIBLE_REPO=$(awk '/ansible_repo/ {print $2}' "${project_dir}/samples/all.yml")
-    VALID_PRODUCTS=$(awk '/valid_products/ {print $2}' "${project_dir}/samples/all.yml")
 }
 
-function always_run () {
+function setup_vars_sudoers () {
+    echo "Setting up playbooks vars and user sudoers"
+    prereqs
     if [ "A${CURRENT_USER}" != "Aroot" ]
     then
         echo "Checking if password less suoders is setup for ${CURRENT_USER}."
@@ -420,31 +423,15 @@ function always_run () {
     fi
 
     echo ""
-    echo "#************************************************#"
-    echo "# Collecting values for ${vars_file} #"
-    echo "#************************************************#"
     echo ""
     ask_for_values "${vars_file}"
     ask_for_vault_values "${vault_vars_file}"
-    rhsm_register
-    setup_ansible "${vault_vars_file}"
+    ANSIBLE_REPO=$(awk '/ansible_repo/ {print $2}' "${vault_vars_file}")
+    VALID_PRODUCTS=$(awk '/valid_products/ {print $2}' "${vault_vars_file}")
 }
 
 function setup_kvm_host () {
-    # Run playbook to setup host
-    if [ "A${kvm_host}" == "Atrue" ]
-    then
-        if [ "A${kvm_host_opt}" == "Asetup" ]
-        then
-            always_run
-            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
-        elif [ "A${kvm_host_opt}" == "Askip" ]
-            then
-            echo "Skipping running ${project_dir}/playbooks/setup_kvmhost.yml"
-        else
-           display_help
-        fi
-    fi
+    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
 }
 
 function openshift-setup() {
@@ -456,12 +443,18 @@ function openshift-setup() {
 }
 
 function qubinode_project_cleanup () {
-    # check for clean up argument
+    echo "Cleaning out project folder"
+    echo ""
+    prereqs
     if [ "A${clean_project}" == "Atrue" ]
     then
        rm -f "${vault_vars_file}"
        rm -f "${vars_file}"
-       rm -f "${hosts_inventory_dir}/*"
+       FILES=$(find "${project_dir}/inventory/" -type f | grep -v gitkeep)
+       for f in $(echo "${FILES}")
+       do
+           rm -f $f
+       done
     fi
 }
 
@@ -536,5 +529,93 @@ function qubinode_deploy_openshift () {
     fi
 }
 
+##############################
+##       MAIN               ##
+##############################
+
+echo ""
+echo ""
+OPTIND=1
+NUM_ARGS="$#"
+ALL_ARGS="$@"
+
+while getopts ":hk:p:d:b:m:" opt;
+do
+    case $opt in
+        h) display_help
+           exit 1
+           ;;
+        m) check_args
+           maintenance=$OPTARG
+           ;;
+        k) check_args;
+           check=true
+           kvm_host=true
+           kvm_host_opt=$OPTARG
+           ;;
+        d) check_args;
+           check=true
+           deploy_vm_opt=$OPTARG
+           deploy_vm="true"
+           ;;
+        b) check_args;
+           check=true
+           dns=true
+           dns_opt=$OPTARG
+           ;;
+        p) check_args
+           check=true
+           product=true
+           product_opt=$OPTARG
+           ;;
+       --) shift; break;;
+       -*) echo Unrecognized flag : "$1" >&2
+           display_help
+           exit 1
+           ;;
+       \?) echo Unrecognized flag : "$1" >&2
+           display_help
+           exit 1
+           ;;
+    esac
+done
+shift "$((OPTIND-1))"
+
+if (( $OPTIND == 1 )); then
+   echo "Default option"
+else
+    if [ "A${maintenance}" != "A" ]
+    then
+        if [ "${maintenance}" == "clean" ]
+        then
+            clean_project=true
+            qubinode_project_cleanup
+        elif [ "${maintenance}" == "setup" ]
+        then
+            setup_vars_sudoers
+        elif [ "${maintenance}" == "rhsm" ]
+        then
+            setup_vars_sudoers
+            rhsm_register
+        elif [ "${maintenance}" == "ansible" ]
+        then
+            setup_vars_sudoers
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+        elif [ "${maintenance}" == "host" ]
+        then
+            setup_vars_sudoers
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+        else
+            display_help
+        fi
+    elif [ "A${cluster}" != "A" ]
+        if [ "${maintenance}" == "clean" ]
+        then
+    then
+    fi
+fi
 
 exit 0
