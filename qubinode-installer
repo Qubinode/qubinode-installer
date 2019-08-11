@@ -257,17 +257,15 @@ function ask_for_values () {
         sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${varsfile}"
     fi
 
-    # ask user to choose which libvirt network to use
-    if grep '""' "${varsfile}"|grep -q vm_libvirt_net
-    then
-        declare -a networks=()
-        mapfile -t networks < <(sudo virsh net-list --name|sed '/^[[:space:]]*$/d')
-        createmenu "${networks[@]}"
-        network=($(echo "${selected_option}"))
-        sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
-    fi
-
-
+    # # ask user to choose which libvirt network to use
+    # if grep '""' "${varsfile}"|grep -q vm_libvirt_net
+    # then
+    #     declare -a networks=()
+    #     mapfile -t networks < <(sudo virsh net-list --name|sed '/^[[:space:]]*$/d')
+    #     createmenu "${networks[@]}"
+    #     network=($(echo "${selected_option}"))
+    #     sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
+    # fi
 }
 
 function ask_for_vault_values () {

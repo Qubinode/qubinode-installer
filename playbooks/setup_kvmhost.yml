@@ -6,6 +6,14 @@
     - vars/all.yml
 
   tasks:
-     - name: running KVM host setup
-       include_role:
+    - name: create libvirt logical volume
+      include_role:
+         name: swygue-lvm
+
+    - name: running KVM host setup
+      include_role:
          name: swygue.edge_host_setup
+
+    - name: validate KVM host setup
+      include_role:
+         name: edge_hosts_validate
