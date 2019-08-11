@@ -589,11 +589,13 @@ echo ""
 echo ""
 OPTIND=1
 NUM_ARGS="$#"
+ALL_ARGS="$@"
 
 # if no arguments are passed, run the default installation
 # default installation is to install OpenShift (ocp)
 if [ "${NUM_ARGS}" == "0" ]
 then
+    echo "NO ARGUMENTS PASSED"
     deploy='Deploy the default OpenShift Cluster'
     display='Display Help'
     declare -a options=("${deploy}" "${display}")
@@ -626,21 +628,26 @@ then
         echo "displaying help"
         display_help
         exit
-    elif [ "${NUM_ARGS}" != 0 ]
-    then
-        get_user_options
     else
         display_help
         exit
     fi
+elif [ "${NUM_ARGS}" != 0 ]
+then
+    echo "GET USER OPTIONS"
+    get_user_options "${ALL_ARGS}"
+else
+    display_help
+    exit
 fi
 
 
 if [ "${NUM_ARGS}" != "0" ] && [ "A${check}" != "A" ]
 then
+    echo $ALL_ARGS
     prereqs
-    exit
     qubinode_project_cleanup
+    exit
     setup_kvm_host
     qubinode_deploy_vm
     qubinode_deploy_idm
