@@ -36,8 +36,31 @@ instances:
     extra_storage:
       - size: 80G
         enable: true
+      - size: 200G
     vm_recreate: false
-    qty: 4
+    qty: 2
+  - name: infra
+    enable: true
+    vm_cpu: 4
+    vm_memory: 16384
+    vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: nodes
+    extra_storage:
+      - size: 80G
+        enable: true
+      - size: 200G
+    vm_recreate: false
+    qty: 2
+  - name: lb
+    enable: true
+    vm_cpu: 2
+    vm_memory: 2048
+    vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: lbs
+    extra_storage: []
+    vm_recreate: false
   - name: dns
     enable: true
     vm_cpu: 2
@@ -48,18 +71,6 @@ instances:
     extra_storage: []
     vm_recreate: false
     qty: 1
-  #- name: gluster
-  #  enable: false
-  #  vm_cpu: 4
-  #  vm_memory: 16384
-  #  vm_root_disk_size: 20G
-  #  vm_teardown: false
-  #  inventory_group: nodes
-  #  extra_storage:
-  #    - size: 80G
-  #      enable: true
-  #  vm_recreate: false
-  #  qty: 4
 
 # DNS Server
 dns_wildcard: "*.apps"
@@ -81,10 +92,10 @@ idm_forward_ip: "{{ dns_server_public }}"
 idm_admin_user: admin
 idm_ssh_pwd: "{{ root_user_pass }}"
 idm_ssh_user: root
-ipa_client_principal: "{{ idm_admin_user }}"
-ipa_client_pass: "{{ idm_dm_pwd }}"
-ipa_host: "{{ idm_hostname }}.{{ domain }}"
-ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
+#ipa_client_principal: "{{ idm_admin_user }}"
+#ipa_client_pass: "{{ idm_dm_pwd }}"
+#ipa_host: "{{ idm_hostname }}.{{ domain }}"
+#ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.7-rpms
 rhel_release: 7.6
 rhsm_repos:
@@ -112,4 +123,3 @@ libvirt_host_networks:
     bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}" 
 kvm_bridge_type: Bridge
 kvm_host_bootproto: dhcp
-       
