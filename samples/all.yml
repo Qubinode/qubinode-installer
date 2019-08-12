@@ -96,7 +96,7 @@ idm_ssh_user: root
 #ipa_client_pass: "{{ idm_dm_pwd }}"
 #ipa_host: "{{ idm_hostname }}.{{ domain }}"
 #ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
-ansible_repo: rhel-7-server-ansible-2.7-rpms
+ansible_repo: rhel-7-server-ansible-2.6-rpms
 rhel_release: 7.6
 rhsm_repos:
   - rhel-7-server-rpms
@@ -113,7 +113,7 @@ logical_volumes:
     size: 100%FREE
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
     fstype: xfs
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1 ') }}" 
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}" 
 vg_name: vg_qubi
 
 # Libvirt network
@@ -123,3 +123,6 @@ libvirt_host_networks:
     bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}" 
 kvm_bridge_type: Bridge
 kvm_host_bootproto: dhcp
+
+# KVM host packages
+libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server"       
