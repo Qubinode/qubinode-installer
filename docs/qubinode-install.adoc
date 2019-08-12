@@ -5,6 +5,8 @@ Main Options:
                 okd - deploy upstream openshift
                 ocp - deploy Red Hat OpenShift Platform <subscription required>
 
+            Example: qubinode-installer -c ocp
+
     -m      Run project maintenance tasks with one of the following options:
                 clean    - remove all files created in the project folder
                 setup    - setup playbooks vars and user sudoers
