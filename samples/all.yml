@@ -126,3 +126,23 @@ kvm_host_bootproto: dhcp
 
 # KVM host packages
 libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server"       
+
+# Required for OpenShift/OKD
+inventory_destination: "{{ inventory_dir }}"
+glusterfs: True
+htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_release: "3.11"
+openshift_image_tag: v3.11.104
+openshift_pkg_version: 3.11.104
+openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+#rhsm_username: "example@redhat.com"
+##rhsm_password: "asdfdasfds"
+ssh_username: "{{ idm_admin_user }}"
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('190') }}"
+metrics_storage_volume_size: 10Gi
+
+# Features
+enable_openshift_operators: True
+enable_metrics: True
+enable_logging: False
+enable_prometheous_operator: False

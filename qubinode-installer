@@ -440,6 +440,15 @@ function setup_kvm_host () {
 }
 
 function openshift-setup() {
+
+ # 1. https://github.com/tosin2013/openshift-home-lab/blob/developer/playbooks/setup_openshift_deployer_node.yml
+ # 2.  https://github.com/tosin2013/openshift-home-lab/blob/developer/playbooks/post_deploy_vms.yml
+ # 3.   echo "Generating Openshift inventory file for ${product_opt}"
+ #           openshift-setup
+ #           ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
+ #           cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
+ # 4. https://github.com/tosin2013/openshift-home-lab/blob/vm-post-deployment/start_openshift_deployment.sh
+
   if [[ ${product_opt} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
   elif [[ ${product_opt} == "okd" ]]; then
