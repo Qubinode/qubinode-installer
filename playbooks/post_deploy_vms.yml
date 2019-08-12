@@ -20,14 +20,50 @@
 
     - name: install packages
       vars:
-        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,openshift-ansible,cri-o"
+        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,openshift-ansible,docker-1.13.1"
       yum:
         name: "{{ pkgs }}"
 
+    - name: create docker-storage-setup file
+      copy:
+        dest: "/etc/sysconfig/docker-storage-setup"
+        content: |
+          STORAGE_DRIVER=overlay2
+          DEVS=/dev/vdb
+          VG=docker-vg
+
+    - name: Run  docker-storage-setup
+      command: docker-storage-setup
+
+      - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
+        rhsm_repository:
+          name: rh-gluster-3-client-for-rhel-7-server-rpms
+          state: enabled
+        when:
+          - ansible_distribution == "RedHat"
+          - glusterfs
+
+      - name: Install glusterfs-fuse
+        yum:
+          name:
+            - glusterfs-fuse
+        when:
+          - ansible_distribution == "RedHat"
+          - glusterfs
+      - name: install glusterfs-server packages
+        yum:
+          name:
+            - glusterfs-server
+          state: present
+        when:
+          - vm_group == 'infra' || vm_group == 'nodes'
+          - glusterfs
+
 - name: setup repos
-  hosts: 
+  hosts:
     - masters
     - nodes
+    - lb
   become: yes
   gather_facts: yes
   vars_files:
@@ -38,3 +74,4 @@
     - name: run subscription role
       include_role:
         name: swygue-redhat-subscription
+      when: openshift_deployment_type == 'openshift-enterprise'
