@@ -2,6 +2,7 @@
 # all non sensitive variables are defined here
 update_inventory: true
 inventory_dir: ""
+project_dir: ""
 inventory_file: "{{ inventory_dir }}/hosts"
 vm_libvirt_net: "qubinet"
 admin_user_password: "{{ root_user_pass }}"

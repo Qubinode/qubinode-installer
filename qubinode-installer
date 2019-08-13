@@ -595,6 +595,12 @@ function setup_variables () {
         echo "${vars_file} inventory_dir variable"
         sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
+
+    if grep '""' "${vars_file}"|grep -q project_dir
+    then
+        echo "${vars_file} project_dir variable"
+        sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
+    fi
 }
 
 function ask_user_input () {
