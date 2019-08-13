@@ -590,10 +590,10 @@ function setup_variables () {
     fi
 
     # add inventory file to all.yml
-    if grep '""' "${vars_file}"|grep -q inventory_file
+    if grep '""' "${vars_file}"|grep -q inventory_dir
     then
-        echo "need to update inventory"
-        sed -i "s#inventory_file: \"\"#inventory_file: "$inventory_file"#g" "${vars_file}"
+        echo "${vars_file} inventory_dir variable"
+        sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
 }
 
@@ -612,7 +612,12 @@ function setup_kvm_host () {
         echo "Please run qubinode-installer -m setup"
         echo ""
     fi
-    exit 
+    if grep '""' "${vars_file}"|grep -q inventory_dir
+    then
+        echo "No value set for inventory_dir in ${vars_file}"
+        echo "Please run qubinode-installer -m setup"
+        echo ""
+    fi
     ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
 }
 

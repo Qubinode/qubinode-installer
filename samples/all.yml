@@ -111,7 +111,7 @@ valid_products: "okd,ocp"
  # LVM
 logical_volumes:
   - name: qubi_images
-    size: 100% 
+    size: 100%FREE 
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
     fstype: xfs
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}" 
