@@ -3,7 +3,6 @@ rhsm_username: ""
 rhsm_password: ""
 rhsm_org: ""
 rhsm_activationkey: ""
-rhsm_reg_method: ""
 root_user_pass: ""
 idm_ssh_user: root
 idm_dm_pwd: ""

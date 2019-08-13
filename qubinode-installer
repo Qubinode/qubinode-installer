@@ -11,6 +11,46 @@ function display_help() {
     cat < "${project_dir}/docs/qubinode-install.adoc"
 }
 
+# The functions is_root, has_sudo and elevate_cmd was taken from https://bit.ly/2H42ppN
+# These functions are use to elevate a regular using either sudo or the root user password
+function is_root () {
+    return $(id -u)
+}
+
+function has_sudo() {
+    local prompt
+
+    prompt=$(sudo -nv 2>&1)
+    if [ $? -eq 0 ]; then
+    echo "has_sudo__pass_set"
+    elif echo $prompt | grep -q '^sudo:'; then
+    echo "has_sudo__needs_pass"
+    else
+    echo "no_sudo"
+    fi
+}
+
+function elevate_cmd () {
+    local cmd=$@
+
+    HAS_SUDO=$(has_sudo)
+
+    case "$HAS_SUDO" in
+    has_sudo__pass_set)
+        sudo $cmd
+        ;;
+    has_sudo__needs_pass)
+        #echo "Please supply sudo password for the following command: sudo $cmd"
+        sudo $cmd
+        ;;
+    *)
+        echo "Please supply root password for the following command: su -c \"$cmd\""
+        su -c "$cmd"
+        ;;
+    esac
+}
+
+
 # validates that the argument options are valid
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
@@ -97,44 +137,141 @@ function set_rhel_release () {
     fi
 }
 
+function check_for_dns () {
+    record=$1
+    if [ -f /usr/bin/dig ]
+    then
+        resolvedIP=$(nslookup "$record" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
+    elif [ -f /usr/bin/nslookup ]
+    then
+        resolvedIP=$(dig +short "$record")
+    else
+        echo "Can't find the dig or nslookup command, please resolved and run script again"
+        exit 1
+    fi
+    
+    if [ "A${resolvedIP}" == "A" ]
+    then
+        echo "DNS resolution for $record failed!"
+        echo "Please ensure you have access to the internet or /etc/resolv.conf has the correct entries"
+        exit 1
+    fi
+}
+
+# check if a given or given files exist
+function does_file_exist () {
+    exist=()
+    for f in $(echo "$@")
+    do
+        if [ -f $f ]
+        then
+            exist=("${exist[@]}" "$f")
+        fi
+    done
+
+    if [ ${#exist[@]} -ne 0 ]
+    then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# This function checks the status of RHSM registration
+function check_rhsm_status () {
+    status_result=$(mktemp)
+    sudo subscription-manager status > "${status_result}" 2>&1
+    status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
+    if [ "A${status}" != "ACurrent" ]
+    then
+        sudo subscription-manager refresh
+        sudo subscription-manager attach --auto
+    fi
+
+    #check again
+    sudo subscription-manager status > "${status_result}" 2>&1
+    status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
+    if [ "A${status}" != "ACurrent" ]
+    then
+        echo "Cannot resolved $(hostname) subscription status"
+        echo "Error details are: "
+        cat "${status_result}"
+        echo ""
+        echo "Please resolved and try again"
+        echo ""
+        exit 1
+    fi
+} 
+
 # this function checks if the system is registered to RHSM
 # validate the registration or register the system
 # if it's not registered
 function rhsm_register () {
-    is_registered_tmp=$(mktemp)
-    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' samples/all.yml |grep [0-9])
-    sudo subscription-manager identity > "${is_registered_tmp}" 2>&1
-    is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
-    if [ "A${is_registered}" == "A" ]; then
-        echo "$(hostname) is registered to RHSM."
-        set_rhel_release
+    prereqs
+    vaultfile="${vault_vars_file}"
+    varsfile="${vars_file}"
+    does_exist=$(does_file_exist "${vault_vars_file} ${vars_file}")
+    if [ "A${does_exist}" == "Ano" ]
+    then
+        echo "The file ${vars_file} and ${vault_vars_file} does not exist"
+        echo ""
+        echo "Try running: qubinode-installer -m setup"
+        echo ""
+        exit 1
+    fi
+
+    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
+    IS_REGISTERED_tmp=$(mktemp)
+    sudo subscription-manager identity > "${IS_REGISTERED_tmp}" 2>&1
+
+    # decrypt ansible vault
+    decrypt_ansible_vault "${vault_vars_file}"
+
+    # Gather subscription infomration
+    rhsm_reg_method=$(awk '/rhsm_reg_method/ {print $2}' "${vars_file}")
+    if [ "A${rhsm_reg_method}" == "AUsername" ]
+    then
+        rhsm_msg="Registering system to rhsm using your username/password"
+        rhsm_username=$(awk '/rhsm_username/ {print $2}' "${vaultfile}")
+        rhsm_password=$(awk '/rhsm_password/ {print $2}' "${vaultfile}")
+        rhsm_cmd_opts="--username='${rhsm_username}' --password='${rhsm_password}'"
+    elif [ "A${rhsm_reg_method}" == "AActivation" ]
+    then
+        rhsm_msg="Registering system to rhsm using your activaiton key"
+        rhsm_org=$(awk '/rhsm_org/ {print $2}' "${vaultfile}")
+        rhsm_activationkey=$(awk '/rhsm_activationkey/ {print $2}' "${vaultfile}")
+        rhsm_cmd_opts="--org='${rhsm_org}' --activationkey='${rhsm_activationkey}'"
     else
-        if [ "A${rhsm_reg_method}" == "Aupass" ];
-        then
-            echo "Registering system to RHSM using username and password."
-            sudo subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
-            set_rhel_release
-        elif [ "A${rhsm_reg_method}" == "Aakey" ];
-        then
-            echo "Registering system to RHSM using activation-keys."
-            sudo subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
-            set_rhel_release
-        else
-            echo -n "Unknown issue: cannot register system!"
-            exit 1
-        fi
+        echo "The value of rhsm_reg_method in "${vars_file}" is not a valid value."
+        echo "Valid options are 'Activation' or 'Username'."
+        echo ""
+        echo "Try running: qubinode-installer -m setup"
+        echo ""
+        exit 1
+    fi
 
-        # validate registration
-        is_registered_tmp=$(mktemp)
-        sudo subscription-manager identity > "${is_registered_tmp}" 2>&1
-        is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
-        if [ "A${is_registered}" == "A" ]; then
-            echo "Successfully registered $(hostname) to RHSM."
-        else
-            echo "Unsuccessfully registered $(hostname) to RHSM."
-            exit 1
-        fi
+    #encrupt vault file
+    encrypt_ansible_vault "${vault_vars_file}"
 
+    IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")
+    if [ "A${IS_REGISTERED}" == "AThis system is not yet registered" ]
+    then
+        check_for_dns subscription.rhsm.redhat.com
+        echo "${rhsm_msg}"
+        rhsm_reg_result=$(mktemp)
+        echo sudo subscription-manager register "${rhsm_cmd_opts}" --force --release="'${RHEL_RELEASE}'"|sh > "${rhsm_reg_result}" 2>&1
+        #> "${rhsm_reg_result}" 2>&1
+        RESULT="$?"
+        if [ "A${RESULT}" == "A${RESULT}" ]
+        then
+            echo "Successfully registered $(hostname) to RHSM"
+            cat "${rhsm_reg_result}"
+        else
+            echo "$(hostname) registration to RHSM was unsuccessfull"
+            cat "${rhsm_reg_result}"
+        fi
+    else
+        echo "$(hostname) is already registered"
     fi
 }
 
@@ -142,7 +279,9 @@ function rhsm_register () {
 # along with any other dependancy the project
 # depends on
 function setup_ansible () {
-    vaultfile=$1
+    prereqs
+    vaultfile="${vault_vars_file}"
+    check_rhsm_status
 
     # install python
     if [ ! -f /usr/bin/python ];
@@ -156,14 +295,15 @@ function setup_ansible () {
     # install ansible
     if [ ! -f /usr/bin/ansible ];
     then
+       ANSIBLE_REPO=$(awk '/ansible_repo:/ {print $2}' "${vars_file}")
        CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
        # check to make sure the support ansible repo is enabled
-       if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}"]
+       if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
        then
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
            sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
        fi
-       sudo yum install -y -q -e 0 ansible
+       sudo yum install -y -q -e 0 ansible git
     else
        echo "ansible is installed"
     fi
@@ -269,16 +409,50 @@ function ask_for_values () {
     # fi
 }
 
-function ask_for_vault_values () {
-    vaultfile=$1
-
-    # This is the passwordto be stored in the password to encrypt 
-    # sensitive data using ansible-vault.
-    if cat "${vaultfile}"| grep -q VAULT
+function get_rhsm_user_and_pass () {
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
     then
-        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaultfile}"
+        echo -n "Enter your RHSM username and press [ENTER]: "
+        read rhsm_username
+        sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaulted_file}"
+    fi
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_password
+    then
+        unset rhsm_password
+        echo -n 'Enter your RHSM password and press [ENTER]: '
+        read_sensitive_data
+        rhsm_password="${sensitive_data}"
+        sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaulted_file}"
+    fi
+}
+
+function decrypt_ansible_vault () {
+    vaulted_file="$1"
+    grep -q VAULT "${vaulted_file}"
+    if [ "A$?" == "A1" ]
+    then
+        #echo "${vaulted_file} is not encrypted"
+        :
+    else 
+        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
         ansible_encrypt=yes
     fi
+}
+
+function encrypt_ansible_vault () {
+    vaulted_file="$1"
+    if [ "A${ansible_encrypt}" == "Ayes" ]
+    then
+        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaulted_file}"
+    fi
+}
+
+function ask_for_vault_values () {
+    vaultfile=$1
+    varsfile=$2
+
+    # decrypt ansible vault file
+    decrypt_ansible_vault "${vaultfile}"
 
     # Generate a ramdom password for IDM directory manager
     # This will not prompt the user 
@@ -310,57 +484,56 @@ function ask_for_vault_values () {
         echo ""
     fi
 
-    if grep '""' "${vaultfile}"|grep -q rhsm_reg_method
+    if grep '""' "${vars_file}"|grep -q rhsm_reg_method
     then
         echo ""
-        PS3="Which option are you using to register the system 'Activation Key' (akey) or Username/Pass (upass): "
-        options=("akey" "upass")
-        select opt in akey upass
-        do
-            case $opt in
-                akey)
-                    rhsm_reg_method="$opt"
-                    break
-                    ;;
-                upass)
-                    rhsm_reg_method="$opt"
-                    break
-                    ;;
-                *)
-                    echo "Error: Please try again";;
-                esac
-            done
-
-            if [ "A${rhsm_reg_method}" == "Aupass" ];
+        echo "Which option are you using to register the system? : "
+        rhsm_msg=("Activation Key" "Username and Password")
+        createmenu "${rhsm_msg[@]}"
+        rhsm_reg_method=($(echo "${selected_option}"))
+        sed -i "s/rhsm_reg_method: \"\"/rhsm_reg_method: "$rhsm_reg_method"/g" "${vars_file}"
+        if [ "A${rhsm_reg_method}" == "AUsername" ];
+        then
+            echo ""
+            get_rhsm_user_and_pass
+        elif [ "A${rhsm_reg_method}" == "AActivation" ];
+        then
+            if grep '""' "${vault_vars_file}"|grep -q rhsm_username
             then
-                echo -n "Enter your RHSM username and press [ENTER]: "
-                read rhsm_username
-                unset rhsm_password
-                echo -n 'Enter your RHSM password and press [ENTER]: '
-                read_sensitive_data
-                rhsm_password="${sensitive_data}"
-                sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaultfile}"
-                sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaultfile}"
-                echo
-            elif [ "A${rhsm_reg_method}" == "Aakey" ];
+                echo ""
+                echo "We still need to get your RHSM username and password."
+                echo "We need this to pull containers for OpenShift Platform Installation."
+                echo ""
+                get_rhsm_user_and_pass
+                echo ""
+            fi
+
+            if grep '""' "${vault_vars_file}"|grep -q rhsm_activationkey
             then
                 echo -n "Enter your RHSM activation key and press [ENTER]: "
                 read rhsm_activationkey
                 unset rhsm_org
+                sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vaultfile}"
+            fi
+            if grep '""' "${vault_vars_file}"|grep -q rhsm_org
+            then
                 echo -n 'Enter your RHSM ORG ID and press [ENTER]: '
                 read_sensitive_data
                 rhsm_org="${sensitive_data}"
                 sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vaultfile}"
-                sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vaultfile}"
-                echo
+                echo ""
             fi
-            sed -i "s/rhsm_reg_method: \"\"/rhsm_reg_method: "$rhsm_reg_method"/g" "${vaultfile}"
+        fi
+    elif grep '""' "${vaultfile}"|grep -q rhsm_username
+    then
+        echo ""
+        get_rhsm_user_and_pass
+    else
+        echo "Credentials for RHSM is already collected."
     fi
 
-    if [ "A${ansible_encrypt}" == "Ayes" ]
-    then
-        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
-    fi
+    # encrypt ansible vault
+    encrypt_ansible_vault "${vaultfile}"
 }
 
 function prereqs () {
@@ -382,19 +555,17 @@ function prereqs () {
 
 function setup_sudoers () {
     prereqs
-    if [ "A${CURRENT_USER}" != "Aroot" ]
+    echo "Checking if ${CURRENT_USER} is setup for password-less sudo: "
+    elevate_cmd test -f "/etc/sudoers.d/${CURRENT_USER}"
+    if [ "A$?" != "A0" ]
     then
-        echo "Checking if password less suoders is setup for ${CURRENT_USER}."
-        sudo test -f "/etc/sudoers.d/${CURRENT_USER}"
-        if [ "A$?" != "A0" ]
-        then
-            echo "Setting up /etc/sudoers.d/${CURRENT_USER}"
-            echo "Please enter the password for the root user at the prompt."
-            echo ""
-            su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
-        else
-           echo "/etc/sudoers.d/${CURRENT_USER} exist"
-       fi
+        SUDOERS_TMP=$(mktemp)
+        echo "Setting up /etc/sudoers.d/${CURRENT_USER}"
+	echo "${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL" > "${SUDOERS_TMP}"
+        elevate_cmd cp "${SUDOERS_TMP}" "/etc/sudoers.d/${CURRENT_USER}"
+        sudo chmod 0440 "/etc/sudoers.d/${CURRENT_USER}"
+    else
+        echo "${CURRENT_USER} is setup for password-less sudo"
     fi
 }
 
@@ -431,8 +602,6 @@ function ask_user_input () {
     echo ""
     ask_for_values "${vars_file}"
     ask_for_vault_values "${vault_vars_file}"
-    ANSIBLE_REPO=$(awk '/ansible_repo/ {print $2}' "${vault_vars_file}")
-    VALID_PRODUCTS=$(awk '/valid_products/ {print $2}' "${vault_vars_file}")
 }
 
 function setup_kvm_host () {
@@ -458,22 +627,21 @@ function openshift-setup() {
 
 function qubinode_project_cleanup () {
     prereqs
-    FILES=$(find "${project_dir}/inventory/" -type f | grep -v gitkeep)
-    if [ -f "${vault_vars_file}" ]
+    FILES=()
+    mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
+    if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
     then
-        echo "Removing ${vault_vars_file}" && rm -f "${vault_vars_file}"
-    elif [ -f "${vars_file}" ]
+        FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+    fi
+
+    if [ ${#FILES[@]} -eq 0 ]
     then
-        echo "Removing ${vars_file}" && rm -f "${vars_file}"
-    elif [ "A${FILES}" != "A" ]
-    then
-       for f in $(echo "${FILES}")
-       do
-           test -f "${f}" && echo "Removing ${f}" && rm -f "${f}"
-       done
-    else
         echo "Project directory: ${project_dir} state is already clean"
-        echo ""
+    else
+        for f in $(echo "${FILES[@]}")
+        do
+            test -f $f && rm $f
+        done
     fi
 }
 
@@ -556,6 +724,12 @@ function default_install () {
 ##       MAIN               ##
 ##############################
 
+# Exit if this is executed as the root user
+if is_root; then
+    echo "Error: qubi-installer should be run as a normal user, not as root!"
+    exit 1
+fi
+
 echo ""
 echo ""
 OPTIND=1
@@ -632,22 +806,20 @@ else
             ask_user_input
         elif [ "${maintenance}" == "rhsm" ]
         then
-            setup_sudoers
-            setup_variables
-            ask_user_input
             rhsm_register
         elif [ "${maintenance}" == "ansible" ]
         then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible "${vault_vars_file}"
+            #setup_sudoers
+            #setup_variables
+            #ask_user_input
+            #rhsm_register
+            setup_ansible
         elif [ "${maintenance}" == "host" ]
         then
             setup_sudoers
             setup_variables
             rhsm_register
-            setup_ansible "${vault_vars_file}"
+            setup_ansible 
             setup_kvm_host
         elif [ "${maintenance}" == "deploy" ]
         then

@@ -11,6 +11,7 @@ rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
 org_id: "{{ rhsm_org }}"
+rhsm_reg_method: ""
 vm_teardown: false
 admin_user: admin
 instances:
