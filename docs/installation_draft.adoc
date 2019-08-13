@@ -1,0 +1,52 @@
+// NOTE: this is a draft installation doc
+Installing The Qubinode
+=======================
+Author's Name <rheron@rodhouse.org>
+v0.0, 2019-08
+:imagesdir: images
+:toc: preamble
+
+This guide should get you up and running with qubinode.
+
+:numbered!:
+[abstract]
+Introduction
+------------
+
+The qubinode is a prescriptive installation of either Red Hat OpenShift Platform or The Origin Community Distribution of Kubernetes.
+
+:numbered:
+
+Installing Red Hat Enterprise Linux
+-----------------------------------
+
+* Get your developer subscription of RHEL
+* Download the RHEL 7.6 iso
+
+:numbered:
+
+Prepare the system 
+-------------------
+
+ - Connect to the system as the user admin
+
+```
+ssh admin@ip-address
+```
+
+ - Download the qubinode-installer project
+
+```
+wget https://github.com/tosin2013/openshift-home-lab/archive/start_deployment_cleanup.zip
+unzip start_deployment_cleanup.zip
+rm -f start_deployment_cleanup.zip
+mv openshift-home-lab-start_deployment_cleanup openshift-home-lab
+cd openshift-home-lab
+```
+
+ - Download the qcow image
+
+From your web browser:
+1. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
+2. Find "Red Hat Enterprise Linux 7.6 KVM Guest Image" and right click on the *Download Now" box
+3. wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
