@@ -605,7 +605,15 @@ function ask_user_input () {
 }
 
 function setup_kvm_host () {
-    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+    prereqs
+    if [ ! -f "${hosts_inventory_dir}/hosts" ]
+    then
+        echo "Inventory file ${hosts_inventory_dir}/hosts is missing"
+        echo "Please run qubinode-installer -m setup"
+        echo ""
+    fi
+    exit 
+    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
 }
 
 function openshift-setup() {
@@ -816,10 +824,10 @@ else
             setup_ansible
         elif [ "${maintenance}" == "host" ]
         then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible 
+            #setup_sudoers
+            #setup_variables
+            #rhsm_register
+            #setup_ansible 
             setup_kvm_host
         elif [ "${maintenance}" == "deploy" ]
         then
