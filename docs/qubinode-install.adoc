@@ -24,9 +24,14 @@ Main Options:
 
 Optional sub arguments for -c :
             
-    -b      Sample description (not implemented)
+    -b      Run health checks, options are:
+                cluster - runs a helath check of the cluster
+                diag    - runs a adv health check
 
-    -k      Sample description (not implemented)
+    -k      Uninstall the OpenShift cluster 
 
-    -d      Sample description (not implemented)
+            Example running a health check on the cluster:
 
+               quibinode-installer -c ocp -b cluster
+
+Optional sub arguments for -m :
