@@ -107,13 +107,16 @@ function rhsm_register () {
     is_registered=$(grep -o 'This system is not yet registered' "${is_registered_tmp}")
     if [ "A${is_registered}" == "A" ]; then
         echo "$(hostname) is registered to RHSM."
+        set_rhel_release
     else
         if [ "A${rhsm_reg_method}" == "Aupass" ];
         then
+            echo "Registering system to RHSM using username and password."
             sudo subscription-manager register --username="$rhsm_username" --password="$rhsm_password" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
             set_rhel_release
         elif [ "A${rhsm_reg_method}" == "Aakey" ];
         then
+            echo "Registering system to RHSM using activation-keys."
             sudo subscription-manager register --org="$rhsm_org" --activationkey="$rhsm_activationkey" --force --release="${RHEL_RELEASE}" > /dev/null 2>&1
             set_rhel_release
         else
@@ -154,6 +157,7 @@ function setup_ansible () {
     if [ ! -f /usr/bin/ansible ];
     then
        CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
+       # check to make sure the support ansible repo is enabled
        if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}"]
        then
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
@@ -374,11 +378,10 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-    ANSIBLE_REPO=$(awk '/ansible_repo/ {print $2}' "${project_dir}/samples/all.yml")
-    VALID_PRODUCTS=$(awk '/valid_products/ {print $2}' "${project_dir}/samples/all.yml")
 }
 
-function always_run () {
+function setup_sudoers () {
+    prereqs
     if [ "A${CURRENT_USER}" != "Aroot" ]
     then
         echo "Checking if password less suoders is setup for ${CURRENT_USER}."
@@ -389,9 +392,14 @@ function always_run () {
             echo "Please enter the password for the root user at the prompt."
             echo ""
             su root -c "echo '${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/${CURRENT_USER}"
+        else
+           echo "/etc/sudoers.d/${CURRENT_USER} exist"
        fi
     fi
+}
 
+function setup_variables () {
+    prereqs
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
     then
@@ -416,36 +424,31 @@ function always_run () {
         echo "need to update inventory"
         sed -i "s#inventory_file: \"\"#inventory_file: "$inventory_file"#g" "${vars_file}"
     fi
+}
 
+function ask_user_input () {
     echo ""
-    echo "#************************************************#"
-    echo "# Collecting values for ${vars_file} #"
-    echo "#************************************************#"
     echo ""
     ask_for_values "${vars_file}"
     ask_for_vault_values "${vault_vars_file}"
-    rhsm_register
-    setup_ansible "${vault_vars_file}"
+    ANSIBLE_REPO=$(awk '/ansible_repo/ {print $2}' "${vault_vars_file}")
+    VALID_PRODUCTS=$(awk '/valid_products/ {print $2}' "${vault_vars_file}")
 }
 
 function setup_kvm_host () {
-    # Run playbook to setup host
-    if [ "A${kvm_host}" == "Atrue" ]
-    then
-        if [ "A${kvm_host_opt}" == "Asetup" ]
-        then
-            always_run
-            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
-        elif [ "A${kvm_host_opt}" == "Askip" ]
-            then
-            echo "Skipping running ${project_dir}/playbooks/setup_kvmhost.yml"
-        else
-           display_help
-        fi
-    fi
+    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
 }
 
 function openshift-setup() {
+
+ # 1. https://github.com/tosin2013/openshift-home-lab/blob/developer/playbooks/setup_openshift_deployer_node.yml
+ # 2.  https://github.com/tosin2013/openshift-home-lab/blob/developer/playbooks/post_deploy_vms.yml
+ # 3.   echo "Generating Openshift inventory file for ${product_opt}"
+ #           openshift-setup
+ #           ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
+ #           cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
+ # 4. https://github.com/tosin2013/openshift-home-lab/blob/vm-post-deployment/start_openshift_deployment.sh
+
   if [[ ${product_opt} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
   elif [[ ${product_opt} == "okd" ]]; then
@@ -454,66 +457,70 @@ function openshift-setup() {
 }
 
 function qubinode_project_cleanup () {
-    # check for clean up argument
-    if [ "A${clean_project}" == "Atrue" ]
+    prereqs
+    FILES=$(find "${project_dir}/inventory/" -type f | grep -v gitkeep)
+    if [ -f "${vault_vars_file}" ]
     then
-       rm -f "${vault_vars_file}"
-       rm -f "${vars_file}"
-       rm -f "${hosts_inventory_dir}/*"
+        echo "Removing ${vault_vars_file}" && rm -f "${vault_vars_file}"
+    elif [ -f "${vars_file}" ]
+    then
+        echo "Removing ${vars_file}" && rm -f "${vars_file}"
+    elif [ "A${FILES}" != "A" ]
+    then
+       for f in $(echo "${FILES}")
+       do
+           test -f "${f}" && echo "Removing ${f}" && rm -f "${f}"
+       done
+    else
+        echo "Project directory: ${project_dir} state is already clean"
+        echo ""
     fi
 }
 
-function qubinode_deploy_vm () {
+function qubinode_vm_manager () {
    # Deploy VMS
-   if [ "A${deploy_vm}" == "Atrue" ]
+   prereqs
+   deploy_vm_opt="$1"
+   if [ "A${deploy_vm_opt}" == "Adeploy" ]
    then
-       echo "running deploy vm fucntion"
-       if [ "A${deploy_vm_opt}" == "Adeploy" ]
+       if grep vm_teardown "${vars_file}"|grep -q true
        then
-           always_run
-           if grep vm_teardown "${vars_file}"|grep -q true
-           then
-               sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
-           fi
-           ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
-        elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
+           sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
+       fi
+       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+    elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
+    then
+        if grep vm_teardown "${vars_file}"|grep -q false
         then
-            always_run
-            if grep vm_teardown "${vars_file}"|grep -q false
-            then
-                sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
-            fi
-            ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
-        elif [ "A${deploy_vm_opt}" == "Askip" ]
-        then
-            echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
-        else
-            display_help
+            sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
         fi
+        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
+    elif [ "A${deploy_vm_opt}" == "Askip" ]
+    then
+        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+    else
+        display_help
     fi
 }
 
-function qubinode_deploy_idm () {
+function qubi_dns_manager () {
+    prereqs
+    option="$1"
     # Deploy IDM server
-    if [ "A${dns}" == "Atrue" ]
+    if [ "A${option}" == "Aserver" ]
     then
-        if [ "A${dns_opt}" == "Aserver" ]
-        then
-            always_run
-            echo "UPDATING idm_public_ip"
-            SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
-            #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            echo "Updating idm_public_ip to $SRV_IP"
-            #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-            ansible-playbook "${project_dir}/playbooks/idm_server.yml"
-            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
-        elif [ "A${dns_opt}" == "Arecords" ]
-        then
-            ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
-        else
-           display_help
-        fi
+        SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
+        #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+        echo "Updating idm_public_ip to $SRV_IP"
+        #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+        sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+        echo "Configuring DNS server"
+        ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+    elif [ "A${option}" == "Arecords" ]
+    then
+        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+    else
+       display_help
     fi
 }
 
@@ -534,5 +541,159 @@ function qubinode_deploy_openshift () {
     fi
 }
 
+function default_install () {
+    setup_sudoers
+    setup_variables
+    rhsm_register
+    setup_ansible "${vault_vars_file}"
+    setup_kvm_host
+    qubinode_vm_manager deploy
+    qubi_dns_manager server
+    qubi_dns_manager records
+}
+
+##############################
+##       MAIN               ##
+##############################
+
+echo ""
+echo ""
+OPTIND=1
+NUM_ARGS="$#"
+ALL_ARGS="$@"
+
+while getopts ":hk:p:d:b:m:" opt;
+do
+    case $opt in
+        h) display_help
+           exit 1
+           ;;
+        m) check_args
+           maintenance=$OPTARG
+           ;;
+        k) check_args;
+           check=true
+           kvm_host=true
+           kvm_host_opt=$OPTARG
+           ;;
+        d) check_args;
+           check=true
+           deploy_vm_opt=$OPTARG
+           deploy_vm="true"
+           ;;
+        b) check_args;
+           check=true
+           dns=true
+           dns_opt=$OPTARG
+           ;;
+        p) check_args
+           check=true
+           product=true
+           product_opt=$OPTARG
+           ;;
+       --) shift; break;;
+       -*) echo Unrecognized flag : "$1" >&2
+           display_help
+           exit 1
+           ;;
+       \?) echo Unrecognized flag : "$1" >&2
+           display_help
+           exit 1
+           ;;
+    esac
+done
+shift "$((OPTIND-1))"
+
+if (( $OPTIND == 1 )); then
+   cat < docs/default_message
+   default_message=("Continue with the default installation" "Display the help menu")
+   createmenu "${default_message[@]}"
+   result=($(echo "${selected_option}"))
+   if [ "A${result}" == "ADisplay" ]
+   then
+       display_help
+   elif [ "A${result}" == "AContinue" ]
+   then
+       default_install
+   else
+       echo $result
+      echo "Unknown issue, please run the installer again"
+   fi
+else
+    if [ "A${maintenance}" != "A" ]
+    then
+        if [ "${maintenance}" == "clean" ]
+        then
+            qubinode_project_cleanup
+        elif [ "${maintenance}" == "setup" ]
+        then
+            setup_sudoers
+            setup_variables
+            ask_user_input
+        elif [ "${maintenance}" == "rhsm" ]
+        then
+            setup_sudoers
+            setup_variables
+            ask_user_input
+            rhsm_register
+        elif [ "${maintenance}" == "ansible" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+        elif [ "${maintenance}" == "host" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+        elif [ "${maintenance}" == "deploy" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_vm_manager deploy
+        elif [ "${maintenance}" == "undeploy" ]
+        then
+            qubinode_vm_manager undeploy
+        elif [ "${maintenance}" == "dns" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_vm_manager deploy
+            qubi_dns_manager server
+        elif [ "${maintenance}" == "dns" ]
+        then
+            setup_sudoers
+            setup_variables
+            rhsm_register
+            setup_ansible "${vault_vars_file}"
+            setup_kvm_host
+            qubinode_vm_manager deploy
+            qubi_dns_manager server
+            qubi_dns_manager records
+        else
+            display_help
+        fi
+    elif [ "A${cluster}" != "A" ]
+    then
+        if [ "${cluster}" == "ocp" ]
+        then
+          echo "Install OpenShift Cluster"
+          default_install
+        else
+            display_menu
+        fi
+     else
+         display_menu
+    fi
+fi
 
 exit 0

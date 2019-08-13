@@ -1,0 +1,11 @@
+    This installer will install Red Hat OpenShift Platform onto this host with the following:
+
+      - 1 master node
+      - 2 infra node
+      - 2 app node
+
+    With the Gluster running on the infra and app nodes to provide container storage.
+    If you wish to continue with this install choose the continue option otherwise
+    display the help menu to see the available options.
+
+
