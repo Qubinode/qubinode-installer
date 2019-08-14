@@ -266,12 +266,26 @@ function rhsm_register () {
         then
             echo "Successfully registered $(hostname) to RHSM"
             cat "${rhsm_reg_result}"
+            check_rhsm_status
+            POOL_ID=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}')
         else
             echo "$(hostname) registration to RHSM was unsuccessfull"
             cat "${rhsm_reg_result}"
         fi
     else
         echo "$(hostname) is already registered"
+        check_rhsm_status
+        POOL_ID=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}')
+    fi
+
+    # set subscription pool id
+    if [ "A${POOL_ID}" != "A" ]
+    then
+        if grep '""' "${vars_file}"|grep -q openshift_pool_id
+        then
+            echo "${vars_file} openshift_pool_id variable"
+            sed -i "s#openshift_pool_id: \"\"#openshift_pool_id: "$POOL_ID"#g" "${vars_file}"
+        fi
     fi
 }
 
@@ -539,7 +553,8 @@ function ask_for_vault_values () {
 function prereqs () {
     # setup required paths
     setup_required_paths
-    # setup MAIN variables
+    # 
+    # set subscription pool dsetup MAIN variables
     CURRENT_USER=$(whoami)
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
@@ -551,6 +566,8 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
+    default_if=$(ip route list | awk '/^default/ {print $5}')
+    NETMASK_PREFIX=$(ip -o -f inet addr show $default_if | awk '{print $4}'|cut -d'/' -f2)
 }
 
 function setup_sudoers () {
@@ -596,11 +613,30 @@ function setup_variables () {
         sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
 
+    # Set KVM project dir
     if grep '""' "${vars_file}"|grep -q project_dir
     then
         echo "${vars_file} project_dir variable"
         sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
     fi
+
+    # Set KVM host ip info
+    if grep '""' "${vars_file}"|grep -q kvm_host_ip
+    then
+        echo "${vars_file} kvm_host_ip variable"
+        sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
+    fi
+    if grep '""' "${vars_file}"|grep -q kvm_host_gw
+    then
+        echo "${vars_file} kvm_host_gw variable"
+        sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
+    fi
+    if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
+    then
+        echo "${vars_file} kvm_host_mask_prefix variable"
+        sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
+    fi
+
 }
 
 function ask_user_input () {
@@ -624,6 +660,10 @@ function setup_kvm_host () {
         echo "Please run qubinode-installer -m setup"
         echo ""
     fi
+
+    # future check for pool id
+    #if grep '""' "${vars_file}"|grep -q openshift_pool_id
+    #then
     ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
 }
 
