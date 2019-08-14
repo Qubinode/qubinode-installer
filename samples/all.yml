@@ -94,6 +94,10 @@ idm_forward_ip: "{{ dns_server_public }}"
 idm_admin_user: admin
 idm_ssh_pwd: "{{ root_user_pass }}"
 idm_ssh_user: root
+dns_servers:
+  - "{{ idm_public_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
+
 #ipa_client_principal: "{{ idm_admin_user }}"
 #ipa_client_pass: "{{ idm_dm_pwd }}"
 #ipa_host: "{{ idm_hostname }}.{{ domain }}"
@@ -165,3 +169,6 @@ enable_openshift_operators: True
 enable_metrics: True
 enable_logging: False
 enable_prometheous_operator: False
+
+search_domains: 
+  - "{{ vm_domain }}"
