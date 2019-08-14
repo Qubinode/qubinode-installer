@@ -99,20 +99,21 @@ idm_ssh_user: root
 #ipa_host: "{{ idm_hostname }}.{{ domain }}"
 #ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.6-rpms
+openshift_repo: rhel-7-server-ose-3.11-rpms
 rhel_release: 7.6
 rhsm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
   - rhel-7-server-supplementary-rpms
   - rhel-7-server-extras-rpms
-  - rhel-7-server-ose-3.11-rpms
+  - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
 valid_products: "okd,ocp"
  
  # LVM
 logical_volumes:
   - name: qubi_images
-    size: 100%FREE 
+    size: "+100%FREE"
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
     fstype: xfs
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}" 
@@ -124,7 +125,11 @@ libvirt_host_networks:
     mode: bridge
     bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}" 
 kvm_bridge_type: Bridge
-kvm_host_bootproto: dhcp
+kvm_host_bootproto: none
+kvm_host_ip: ""
+kvm_host_gw: ""
+kvm_host_mask_prefix: ""
+kvm_host_netmask: ""
 
 # KVM host packages
 qubi_required_pkgs: | 
@@ -144,6 +149,7 @@ libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, 
 inventory_destination: "{{ inventory_dir }}"
 glusterfs: True
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_pool_id: ""
 openshift_release: "3.11"
 openshift_image_tag: v3.11.104
 openshift_pkg_version: 3.11.104
