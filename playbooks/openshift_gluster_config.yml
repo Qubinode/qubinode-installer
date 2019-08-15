@@ -1,0 +1,14 @@
+---
+- hosts: glusterfs
+  remote_user: "{{ ansible_ssh_user }}"
+  become: yes
+  tasks:
+  - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
+    rhsm_repository:
+      name: rh-gluster-3-client-for-rhel-7-server-rpms
+      state: enabled
+
+  - name: Install glusterfs-fuse
+    yum:
+      name:
+        - glusterfs-fuse

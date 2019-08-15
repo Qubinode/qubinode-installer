@@ -15,6 +15,7 @@ org_id: "{{ rhsm_org }}"
 rhsm_reg_method: ""
 vm_teardown: false
 admin_user: admin
+openshift_user: changeme
 instances:
   - name: master
     enable: true
