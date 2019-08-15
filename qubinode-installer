@@ -778,7 +778,8 @@ function openshift-setup() {
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   cat $INVENTORYDIR/inventory.3.11.rhel.gluster
   HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/configure-openshift-nodes.yml
+  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml"
+  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml"
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   htpasswd -c ${HTPASSFILE} $OCUSER
 
