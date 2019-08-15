@@ -7,12 +7,18 @@
   become: yes
 
   tasks:
-  - name: Register as auto-subscribe to red hat subscription.
-    redhat_subscription:
-      state: present
-      username: "{{ rhsm_username }}"
-      password: "{{ rhsm_password }}"
-      auto_attach: true
+  - name:  Attach a specific subscription through the Customer Portal
+    command: subscription-manager refresh
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name:  Attach a subscription from any available that match the system
+    command: subscription-manager attach --auto
+    when: openshift_deployment_type == 'openshift-enterprise'
+  - name: Get Openshift PoolID
+    shell: subscription-manager list --available --matches '*OpenShift*' | grep Pool | awk '{print $3}'
+    when: openshift_deployment_type == 'openshift-enterprise'
+    register: openshift_poolid
+    failed_when: "openshift_poolid.rc == 2"
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Enable a Ansible 2.6 repository
     rhsm_repository:
       name: rhel-7-server-ansible-2.6-rpms
@@ -31,11 +37,6 @@
     rhsm_repository:
       name: rhel-7-server-optional-rpms
       state: enabled
-    when: openshift_deployment_type == 'openshift-enterprise'
-  - name: Get Openshift PoolID
-    shell: subscription-manager list --available --matches '*OpenShift*' | grep Pool | awk '{print $3}'
-    register: openshift_poolid
-    failed_when: "openshift_poolid.rc == 2"
     when: openshift_deployment_type == 'openshift-enterprise'
   - name: Save Openshift PoolID
     set_fact:

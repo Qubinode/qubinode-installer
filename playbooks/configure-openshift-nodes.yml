@@ -1,14 +1,18 @@
 ---
-- hosts: OSEv3
-  remote_user: "{{ rhel_user }}"
+- hosts: OSEv3:children
+  remote_user: "{{ ansible_ssh_user }}"
   become: yes
   tasks:
   - name: Register as auto-subscribe to red hat subscription.
     redhat_subscription:
       state: present
-      username: "{{ rhel_username }}"
-      password: "{{ rhel_password }}"
+      username: "{{ oreg_auth_user }}"
+      password: "{{ oreg_auth_password }}"
       auto_attach: true
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Attach a specific subscription through the Customer Portal
+    command: subscription-manager refresh
     when:
       - ansible_distribution == "RedHat"
   - name: Enable rhel-7-server-rpms repository

@@ -14,6 +14,8 @@ Basic usage: ${SCRIPT} [options]
                 okd - deploy upstream openshift
                 ocp - deploy Red Hat OpenShift Platform <subscription required>
 
+    -u      Uninstal openshift installation
+
     -c      Clean up project directory
 
     -b      DNS operations - options are:
@@ -631,7 +633,14 @@ then
             echo "Generating Openshift inventory file for ${product_opt}"
             openshift-setup
             ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
-            cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
+            INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+            cat $INVENTORYDIR/inventory.3.11.rhel.gluster
+            HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
+            ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/configure-openshift-nodes.yml
+            OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
+            htpasswd -c ${HTPASSFILE} $OCUSER
+            ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
+            ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
         else
            display_help
         fi
