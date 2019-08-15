@@ -1,0 +1,102 @@
+---
+- hosts: OSEv3:children
+  remote_user: "{{ ansible_ssh_user }}"
+  become: yes
+  tasks:
+  - name: Register as auto-subscribe to red hat subscription.
+    redhat_subscription:
+      state: present
+      username: "{{ oreg_auth_user }}"
+      password: "{{ oreg_auth_password }}"
+      auto_attach: true
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Attach a specific subscription through the Customer Portal
+    command: subscription-manager refresh
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-extras-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-extras-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-ose-3.11-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ose-3.11-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-fast-datapath-rpms repository
+    rhsm_repository:
+      name: rhel-7-fast-datapath-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-ansible-2.6-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-ansible-2.6-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Enable rhel-7-server-optional-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-optional-rpms
+      state: enabled
+    when:
+      - ansible_distribution == "RedHat"
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
+      - wget
+      - git
+      - net-tools
+      - bind-utils
+      - yum-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      state: present
+  - name: Install docker-1.13.1
+    yum:
+      name:
+        - docker-1.13.1
+    when:
+      - ansible_distribution == "RedHat"
+  - name: cleanup hosts files on openshift nodes
+    synchronize:
+      src: /etc/hosts
+      dest: /etc/hosts
+    become: yes
+  - name: update hosts file with node ip
+    shell: |
+        CHECKFORENTRY=$(cat /etc/hosts | grep $HOSTNAME)
+        if [[ -z $CHECKFORENTRY ]]; then
+          echo "{{ ansible_default_ipv4.address }} $HOSTNAME" >> /etc/hosts
+        fi
+  - name: create docker-storage-setup file
+    copy:
+      dest: "/etc/sysconfig/docker-storage-setup"
+      content: |
+        STORAGE_DRIVER=overlay2
+        DEVS=/dev/vdb
+        VG=docker-vg
+    when:
+      - ansible_distribution == "RedHat"
+  - name: Run  docker-storage-setup
+    command: docker-storage-setup
+    when:
+      - ansible_distribution == "RedHat"

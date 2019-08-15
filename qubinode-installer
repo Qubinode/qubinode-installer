@@ -768,18 +768,26 @@ function setup_kvm_host () {
 
 function openshift-setup() {
 
- # 1. https://github.com/tosin2013/openshift-home-lab/blob/developer/playbooks/setup_openshift_deployer_node.yml
- # 2.  https://github.com/tosin2013/openshift-home-lab/blob/developer/playbooks/post_deploy_vms.yml
- # 3.   echo "Generating Openshift inventory file for ${product_opt}"
- #           openshift-setup
- #           ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
- #           cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
- # 4. https://github.com/tosin2013/openshift-home-lab/blob/vm-post-deployment/start_openshift_deployment.sh
-
   if [[ ${product_opt} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
   elif [[ ${product_opt} == "okd" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+  fi
+
+  ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
+  INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+  cat $INVENTORYDIR/inventory.3.11.rhel.gluster
+  HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
+  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/configure-openshift-nodes.yml
+  OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
+  htpasswd -c ${HTPASSFILE} $OCUSER
+
+  if [[ ${product_opt} == "ocp" ]]; then
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
+  elif [[ ${product_opt} == "okd" ]]; then
+    echo "Work in Progress"
+    exit 1
   fi
 }
 
@@ -887,10 +895,8 @@ function qubinode_deploy_openshift () {
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
             always_run
-            echo "Generating Openshift inventory file for ${product_opt}"
+            echo "Deploying OpenShift ${product_opt}"
             openshift-setup
-            ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
-            cat ~/openshift-home-lab/inventory.3.11.rhel.gluster
         else
            display_help
         fi
