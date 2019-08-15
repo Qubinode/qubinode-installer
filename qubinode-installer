@@ -149,7 +149,7 @@ function check_for_dns () {
         echo "Can't find the dig or nslookup command, please resolved and run script again"
         exit 1
     fi
-    
+
     if [ "A${resolvedIP}" == "A" ]
     then
         echo "DNS resolution for $record failed!"
@@ -179,7 +179,7 @@ function does_file_exist () {
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-   
+
     sudo subscription-manager identity > /dev/null 2>&1
     RESULT="$?"
     if [ "A${RESULT}" == "A1" ]
@@ -189,7 +189,7 @@ function check_rhsm_status () {
         echo ""
         exit 1
     fi
-     
+
     status_result=$(mktemp)
     sudo subscription-manager status > "${status_result}" 2>&1
     status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
@@ -212,7 +212,7 @@ function check_rhsm_status () {
         echo ""
         exit 1
     fi
-} 
+}
 
 function check_for_hash () {
     if [ -n $string ] && [ `expr "$string" : '[0-9a-fA-F]\{32\}\|[0-9a-fA-F]\{40\}'` -eq ${#string} ]
@@ -229,7 +229,7 @@ function check_for_openshift_subscription () {
     AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
     CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
     if [ "A${CONSUMED}" != "A" ]
-    then 
+    then
         CHECK=$(check_for_hash "${CONSUMED}")
         if [ "A${CHECK}" == "Avalid" ]
         then
@@ -323,6 +323,16 @@ function rhsm_register () {
         echo "$(hostname) is already registered"
         check_rhsm_status
         check_for_openshift_subscription
+    fi
+
+    # set subscription pool id
+    if [ "A${POOL_ID}" != "A" ]
+    then
+        if grep '""' "${vars_file}"|grep -q openshift_pool_id
+        then
+            echo "${vars_file} openshift_pool_id variable"
+            sed -i "s#openshift_pool_id: \"\"#openshift_pool_id: "$POOL_ID"#g" "${vars_file}"
+        fi
     fi
 
     # set subscription pool id
@@ -509,7 +519,7 @@ function decrypt_ansible_vault () {
     then
         #echo "${vaulted_file} is not encrypted"
         :
-    else 
+    else
         test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
         ansible_encrypt=yes
     fi
@@ -531,13 +541,13 @@ function ask_for_vault_values () {
     decrypt_ansible_vault "${vaultfile}"
 
     # Generate a ramdom password for IDM directory manager
-    # This will not prompt the user 
+    # This will not prompt the user
     if grep '""' "${vaultfile}"|grep -q idm_dm_pwd
     then
         idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
         sed -i "s/idm_dm_pwd: \"\"/idm_dm_pwd: "$idm_dm_pwd"/g" "${vaultfile}"
     fi
-   
+
     # root user password to be set for virtual instances created
     if grep '""' "${vaultfile}"|grep -q root_user_pass
     then
@@ -615,7 +625,7 @@ function ask_for_vault_values () {
 function prereqs () {
     # setup required paths
     setup_required_paths
-    # 
+    #
     # set subscription pool dsetup MAIN variables
     CURRENT_USER=$(whoami)
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
@@ -630,6 +640,7 @@ function prereqs () {
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
     DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+    NETMASK_PREFIX=$(ip -o -f inet addr show $default_if | awk '{print $4}'|cut -d'/' -f2)
 }
 
 function setup_sudoers () {
@@ -688,22 +699,24 @@ function setup_variables () {
         echo "${vars_file} kvm_host_ip variable"
         sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
     fi
+
     if grep '""' "${vars_file}"|grep -q kvm_host_gw
     then
         echo "${vars_file} kvm_host_gw variable"
         sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
     fi
+
     if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
     then
         echo "${vars_file} kvm_host_mask_prefix variable"
         sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
     fi
+
     if grep '""' "${vars_file}"|grep -q kvm_host_interface
     then
         echo "${vars_file} kvm_host_interface variable"
         sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
     fi
-
 }
 
 function ask_user_input () {
@@ -746,7 +759,6 @@ function setup_kvm_host () {
         echo ""
         exit 1
     fi
-    
 
     # future check for pool id
     #if grep '""' "${vars_file}"|grep -q openshift_pool_id
@@ -849,7 +861,7 @@ function qubi_dns_manager () {
         echo ""
         exit 1
     fi
-        
+
     # Deploy IDM server
     if [ "A${option}" == "Aserver" ]
     then
@@ -995,7 +1007,7 @@ else
             #setup_sudoers
             #setup_variables
             #rhsm_register
-            #setup_ansible 
+            #setup_ansible
             setup_kvm_host
         elif [ "${maintenance}" == "deploy" ]
         then

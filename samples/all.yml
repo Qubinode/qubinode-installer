@@ -116,21 +116,21 @@ rhsm_repos:
   - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
 valid_products: "okd,ocp"
- 
+
  # LVM
 logical_volumes:
   - name: qubi_images
     size: "+100%FREE"
-    mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
+    mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
     fstype: xfs
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}" 
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
 
 # Libvirt network
 libvirt_host_networks:
   - name: "{{ vm_libvirt_net }}"
     mode: bridge
-    bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}" 
+    bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}"
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_ip: ""
@@ -140,15 +140,15 @@ kvm_host_netmask: ""
 kvm_host_interface: ""
 
 # KVM host packages
-qubi_required_pkgs: | 
-   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, 
-   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, 
-   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, 
-   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, 
-   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, 
-   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils, 
-   bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible, 
-   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, 
+qubi_required_pkgs: |
+   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm,
+   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon,
+   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard,
+   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
+   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
+   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
+   bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible"
 
 libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, python-dns"
@@ -174,5 +174,5 @@ enable_metrics: True
 enable_logging: False
 enable_prometheous_operator: False
 
-search_domains: 
+search_domains:
   - "{{ vm_domain }}"
