@@ -2,6 +2,7 @@
 # all non sensitive variables are defined here
 update_inventory: true
 inventory_dir: ""
+project_dir: ""
 inventory_file: "{{ inventory_dir }}/hosts"
 vm_libvirt_net: "qubinet"
 admin_user_password: "{{ root_user_pass }}"
@@ -38,6 +39,7 @@ instances:
       - size: 80G
         enable: true
       - size: 200G
+        enable: true
     vm_recreate: false
     qty: 2
   - name: infra
@@ -51,6 +53,7 @@ instances:
       - size: 80G
         enable: true
       - size: 200G
+        enable: true
     vm_recreate: false
     qty: 2
   - name: lb
@@ -62,6 +65,7 @@ instances:
     inventory_group: lbs
     extra_storage: []
     vm_recreate: false
+    qty: 1
   - name: dns
     enable: true
     vm_cpu: 2
@@ -93,25 +97,30 @@ idm_forward_ip: "{{ dns_server_public }}"
 idm_admin_user: admin
 idm_ssh_pwd: "{{ root_user_pass }}"
 idm_ssh_user: root
+dns_servers:
+  - "{{ idm_public_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
+
 #ipa_client_principal: "{{ idm_admin_user }}"
 #ipa_client_pass: "{{ idm_dm_pwd }}"
 #ipa_host: "{{ idm_hostname }}.{{ domain }}"
 #ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.6-rpms
+openshift_repo: rhel-7-server-ose-3.11-rpms
 rhel_release: 7.6
 rhsm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
   - rhel-7-server-supplementary-rpms
   - rhel-7-server-extras-rpms
-  - rhel-7-server-ose-3.11-rpms
+  - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
 valid_products: "okd,ocp"
  
  # LVM
 logical_volumes:
   - name: qubi_images
-    size: 100% 
+    size: "+100%FREE"
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}" 
     fstype: xfs
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}" 
@@ -123,7 +132,12 @@ libvirt_host_networks:
     mode: bridge
     bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}" 
 kvm_bridge_type: Bridge
-kvm_host_bootproto: dhcp
+kvm_host_bootproto: none
+kvm_host_ip: ""
+kvm_host_gw: ""
+kvm_host_mask_prefix: ""
+kvm_host_netmask: ""
+kvm_host_interface: ""
 
 # KVM host packages
 qubi_required_pkgs: | 
@@ -137,12 +151,13 @@ qubi_required_pkgs: |
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, 
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible"
 
-libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server"       
+libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, python-dns"
 
 # Required for OpenShift/OKD
 inventory_destination: "{{ inventory_dir }}"
 glusterfs: True
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_pool_id: ""
 openshift_release: "3.11"
 openshift_image_tag: v3.11.104
 openshift_pkg_version: 3.11.104
@@ -158,3 +173,6 @@ enable_openshift_operators: True
 enable_metrics: True
 enable_logging: False
 enable_prometheous_operator: False
+
+search_domains: 
+  - "{{ vm_domain }}"

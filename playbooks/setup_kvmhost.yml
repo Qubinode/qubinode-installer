@@ -4,8 +4,17 @@
   become: yes
   vars_files:
     - vars/all.yml
+    - vars/vault.yml
 
   tasks:
+    - name: ensure RHSM subscription
+      vars:
+        rhsm_user: "{{ rhsm_username | default('') }}"
+        rhsm_pass: "{{ rhsm_password | default('') }}"
+        rhsm_pool_ids: "{{ openshift_pool_id | default('') }}"
+      include_role:
+        name: swygue-redhat-subscription
+      
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm

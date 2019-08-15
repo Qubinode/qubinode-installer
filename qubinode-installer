@@ -179,6 +179,17 @@ function does_file_exist () {
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
+   
+    sudo subscription-manager identity > /dev/null 2>&1
+    RESULT="$?"
+    if [ "A${RESULT}" == "A1" ]
+    then
+        echo "This system is not yet registered"
+        echo "Please run qubinode-installer -m rhsm"
+        echo ""
+        exit 1
+    fi
+     
     status_result=$(mktemp)
     sudo subscription-manager status > "${status_result}" 2>&1
     status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
@@ -203,6 +214,42 @@ function check_rhsm_status () {
     fi
 } 
 
+function check_for_hash () {
+    if [ -n $string ] && [ `expr "$string" : '[0-9a-fA-F]\{32\}\|[0-9a-fA-F]\{40\}'` -eq ${#string} ]
+    then
+        echo "valid"
+    else
+        echo "invalid"
+    fi
+}
+
+
+function check_for_openshift_subscription () {
+    #subscription-manager list --all --available --matches 'Red Hat OpenShift Container Platform' --pool-only
+    AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
+    CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
+    if [ "A${CONSUMED}" != "A" ]
+    then 
+        CHECK=$(check_for_hash "${CONSUMED}")
+        if [ "A${CHECK}" == "Avalid" ]
+        then
+            POOL_ID="${CONSUMED}"
+        else
+            POOL_ID=""
+        fi
+    elif [ "A${AVAILABLE}" != "A" ]
+    then
+        CHECK=$(check_for_hash "${AVAILABLE}")
+        if [ "A${CHECK}" == "Avalid" ]
+        then
+            POOL_ID="${AVAILABLE}"
+        else
+            POOL_ID=""
+        fi
+    else
+         POOL_ID=""
+    fi
+}
 # this function checks if the system is registered to RHSM
 # validate the registration or register the system
 # if it's not registered
@@ -266,13 +313,35 @@ function rhsm_register () {
         then
             echo "Successfully registered $(hostname) to RHSM"
             cat "${rhsm_reg_result}"
+            check_rhsm_status
+            check_for_openshift_subscription
         else
             echo "$(hostname) registration to RHSM was unsuccessfull"
             cat "${rhsm_reg_result}"
         fi
     else
         echo "$(hostname) is already registered"
+        check_rhsm_status
+        check_for_openshift_subscription
     fi
+
+    # set subscription pool id
+    #if [ "A${cluster}" == "Aocp" ]
+    #then
+        if [ "A${POOL_ID}" != "A" ]
+        then
+            echo "Setting pool id for OpenShift Container Platform"
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "${vars_file} openshift_pool_id variable"
+                #sed -i "s#openshift_pool_id: \"\"#openshift_pool_id: "$POOL_ID"#g" "${vars_file}"
+                sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${vars_file}"
+            fi
+        else
+            cat "${project_dir}/docs/subscription_pool_message"
+            exit 1
+        fi
+    #fi
 }
 
 # this function make sure Ansible is installed
@@ -281,6 +350,13 @@ function rhsm_register () {
 function setup_ansible () {
     prereqs
     vaultfile="${vault_vars_file}"
+    HAS_SUDO=$(has_sudo)
+    if [ "A${HAS_SUDO}" == "Ano_sudo" ]
+    then
+        echo "You do not have sudo access"
+        echo "Please run qubinode-installer -m setup"
+        exit 1
+    fi
     check_rhsm_status
 
     # install python
@@ -539,7 +615,8 @@ function ask_for_vault_values () {
 function prereqs () {
     # setup required paths
     setup_required_paths
-    # setup MAIN variables
+    # 
+    # set subscription pool dsetup MAIN variables
     CURRENT_USER=$(whoami)
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
@@ -551,6 +628,8 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
+    DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+    NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
 }
 
 function setup_sudoers () {
@@ -590,11 +669,41 @@ function setup_variables () {
     fi
 
     # add inventory file to all.yml
-    if grep '""' "${vars_file}"|grep -q inventory_file
+    if grep '""' "${vars_file}"|grep -q inventory_dir
     then
-        echo "need to update inventory"
-        sed -i "s#inventory_file: \"\"#inventory_file: "$inventory_file"#g" "${vars_file}"
+        echo "${vars_file} inventory_dir variable"
+        sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
+
+    # Set KVM project dir
+    if grep '""' "${vars_file}"|grep -q project_dir
+    then
+        echo "${vars_file} project_dir variable"
+        sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
+    fi
+
+    # Set KVM host ip info
+    if grep '""' "${vars_file}"|grep -q kvm_host_ip
+    then
+        echo "${vars_file} kvm_host_ip variable"
+        sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
+    fi
+    if grep '""' "${vars_file}"|grep -q kvm_host_gw
+    then
+        echo "${vars_file} kvm_host_gw variable"
+        sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
+    fi
+    if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
+    then
+        echo "${vars_file} kvm_host_mask_prefix variable"
+        sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
+    fi
+    if grep '""' "${vars_file}"|grep -q kvm_host_interface
+    then
+        echo "${vars_file} kvm_host_interface variable"
+        sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
+    fi
+
 }
 
 function ask_user_input () {
@@ -605,7 +714,44 @@ function ask_user_input () {
 }
 
 function setup_kvm_host () {
-    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml"
+    prereqs
+    if [ ! -f "${hosts_inventory_dir}/hosts" ]
+    then
+        echo "Inventory file ${hosts_inventory_dir}/hosts is missing"
+        echo "Please run qubinode-installer -m setup"
+        echo ""
+        exit 1
+    fi
+
+    if [ -f "${vars_file}" ]
+    then
+        if grep '""' "${vars_file}"|grep -q inventory_dir
+        then
+            echo "No value set for inventory_dir in ${vars_file}"
+            echo "Please run qubinode-installer -m setup"
+            echo ""
+            exit 1
+        fi
+     else
+        echo "${vars_file} is missing"
+        echo "Please run qubinode-installer -m setup"
+        echo ""
+        exit 1
+     fi
+
+     if [ ! -f /usr/bin/ansible ]
+    then
+        echo "Ansible is not installed"
+        echo "Please run qubinode-installer -m ansible"
+        echo ""
+        exit 1
+    fi
+    
+
+    # future check for pool id
+    #if grep '""' "${vars_file}"|grep -q openshift_pool_id
+    #then
+    ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
 }
 
 function openshift-setup() {
@@ -649,6 +795,20 @@ function qubinode_vm_manager () {
    # Deploy VMS
    prereqs
    deploy_vm_opt="$1"
+   if [ ! -f "${vars_file}" ]
+   then
+       echo "${vars_file} is missing"
+       echo "Please run qubinode-installer -m setup"
+       echo ""
+       exit 1
+   fi
+   if [ ! -f /usr/bin/ansible ]
+   then
+       echo "Ansible is not installed"
+       echo "Please run qubinode-installer -m ansible"
+       echo ""
+       exit 1
+   fi
    if [ "A${deploy_vm_opt}" == "Adeploy" ]
    then
        if grep vm_teardown "${vars_file}"|grep -q true
@@ -674,6 +834,22 @@ function qubinode_vm_manager () {
 function qubi_dns_manager () {
     prereqs
     option="$1"
+    if [ ! -f "${project_dir}/inventory/hosts" ]
+    then
+        echo "${project_dir}/inventory/hosts is missing"
+        echo "Please run quibinode-installer -m setup"
+        echo ""
+        exit 1
+    fi
+
+    if [ ! -f /usr/bin/ansible ]
+    then
+        echo "Ansible is not installed"
+        echo "Please run qubinode-installer -m ansible"
+        echo ""
+        exit 1
+    fi
+        
     # Deploy IDM server
     if [ "A${option}" == "Aserver" ]
     then
@@ -816,30 +992,30 @@ else
             setup_ansible
         elif [ "${maintenance}" == "host" ]
         then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible 
+            #setup_sudoers
+            #setup_variables
+            #rhsm_register
+            #setup_ansible 
             setup_kvm_host
         elif [ "${maintenance}" == "deploy" ]
         then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible "${vault_vars_file}"
-            setup_kvm_host
+            #setup_sudoers
+            #setup_variables
+            #rhsm_register
+            #setup_ansible "${vault_vars_file}"
+            #setup_kvm_host
             qubinode_vm_manager deploy
         elif [ "${maintenance}" == "undeploy" ]
         then
             qubinode_vm_manager undeploy
         elif [ "${maintenance}" == "dns" ]
         then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible "${vault_vars_file}"
-            setup_kvm_host
-            qubinode_vm_manager deploy
+            #setup_sudoers
+            #setup_variables
+            #rhsm_register
+            #setup_ansible "${vault_vars_file}"
+            #setup_kvm_host
+            #qubinode_vm_manager deploy
             qubi_dns_manager server
         elif [ "${maintenance}" == "dns" ]
         then
@@ -861,10 +1037,10 @@ else
           echo "Install OpenShift Cluster"
           default_install
         else
-            display_menu
+            display_help
         fi
      else
-         display_menu
+         display_help
     fi
 fi
 
