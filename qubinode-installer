@@ -774,18 +774,18 @@ function openshift-setup() {
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
   fi
 
-  ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml"
+  ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   cat $INVENTORYDIR/inventory.3.11.rhel.gluster
   HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml"
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml"
+  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
+  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   htpasswd -c ${HTPASSFILE} $OCUSER
 
   if [[ ${product_opt} == "ocp" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml || exit $?
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
     echo "Work in Progress"
     exit 1
@@ -913,6 +913,7 @@ function default_install () {
     qubinode_vm_manager deploy
     qubi_dns_manager server
     qubi_dns_manager records
+    qubinode_deploy_openshift
 }
 
 ##############################
@@ -1049,12 +1050,16 @@ else
         else
             display_help
         fi
-    elif [ "A${cluster}" != "A" ]
+    elif [ "A${product_opt}" != "A" ]
     then
-        if [ "${cluster}" == "ocp" ]
+        if [ "${product_opt}" == "ocp" ]
         then
           echo "Install OpenShift Cluster"
-          default_install
+          #default_install
+          setup_sudoervim
+          setup_variables
+          setup_ansible "${vault_vars_file}"
+          qubinode_deploy_openshift
         else
             display_help
         fi
