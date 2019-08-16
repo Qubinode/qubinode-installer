@@ -32,7 +32,7 @@ instances:
   - name: node
     enable: true
     vm_cpu: 4
-    vm_memory: 16384
+    vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: nodes
@@ -42,11 +42,11 @@ instances:
       - size: 160G
         enable: true
     vm_recreate: false
-    qty: 2
+    qty: 1
   - name: infra
     enable: true
     vm_cpu: 4
-    vm_memory: 16384
+    vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: nodes
