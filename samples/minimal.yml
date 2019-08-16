@@ -1,0 +1,179 @@
+---
+# all non sensitive variables are defined here
+update_inventory: true
+inventory_dir: ""
+project_dir: ""
+inventory_file: "{{ inventory_dir }}/hosts"
+vm_libvirt_net: "qubinet"
+admin_user_password: "{{ root_user_pass }}"
+kvm_vm_root_pwd: "{{ root_user_pass }}"
+vm_domain: "{{ domain }}"
+rhsm_org: "{{ rhsm_org }}"
+rhsm_activationkey: "{{ rhsm_activationkey }}"
+rhsm_org_id: "{{ rhsm_org }}"
+org_id: "{{ rhsm_org }}"
+rhsm_reg_method: ""
+vm_teardown: false
+admin_user: admin
+openshift_user: changeme
+instances:
+  - name: master
+    enable: true
+    vm_cpu: 4
+    vm_memory: 16384
+    vm_root_disk_size: 20G
+    vm_recreate: false
+    vm_teardown: false
+    inventory_group: masters
+    extra_storage:
+      - size: 60G
+        enable: true
+    qty: 1
+  - name: node
+    enable: true
+    vm_cpu: 4
+    vm_memory: 8192
+    vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: nodes
+    extra_storage:
+      - size: 60G
+        enable: true
+      - size: 160G
+        enable: true
+    vm_recreate: false
+    qty: 2
+  - name: infra
+    enable: true
+    vm_cpu: 4
+    vm_memory: 8192
+    vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: nodes
+    extra_storage:
+      - size: 60G
+        enable: true
+      - size: 160G
+        enable: true
+    vm_recreate: false
+    qty: 2
+  - name: lb
+    enable: true
+    vm_cpu: 2
+    vm_memory: 2048
+    vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: lbs
+    extra_storage: []
+    vm_recreate: false
+    qty: 1
+  - name: dns
+    enable: true
+    vm_cpu: 2
+    vm_memory: 2048
+    vm_root_disk_size: 20G
+    vm_teardown: false
+    inventory_group: dns
+    extra_storage: []
+    vm_recreate: false
+    qty: 1
+
+# DNS Server
+dns_wildcard: "*.apps"
+domain: ""
+dns_server_public: ""
+idm_reverse_zone:
+  - changeme.in-addr.arpa
+idm_public_ip: ""    # IP address of the IDM server
+idm_hostname: "ocp-idm01"
+idm_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-optional-rpms
+idm_packages:
+  - ipa-server
+  - ipa-server-dns
+idm_realm: "{{ domain | upper }}"
+idm_forward_ip: "{{ dns_server_public }}"
+idm_admin_user: admin
+idm_ssh_pwd: "{{ root_user_pass }}"
+idm_ssh_user: root
+dns_servers:
+  - "{{ idm_public_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
+
+#ipa_client_principal: "{{ idm_admin_user }}"
+#ipa_client_pass: "{{ idm_dm_pwd }}"
+#ipa_host: "{{ idm_hostname }}.{{ domain }}"
+#ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
+ansible_repo: rhel-7-server-ansible-2.6-rpms
+openshift_repo: rhel-7-server-ose-3.11-rpms
+rhel_release: 7.6
+rhsm_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-optional-rpms
+  - rhel-7-server-supplementary-rpms
+  - rhel-7-server-extras-rpms
+  - "{{ openshift_repo }}"
+  - "{{ ansible_repo }}"
+valid_products: "okd,ocp"
+
+ # LVM
+logical_volumes:
+  - name: qubi_images
+    size: "+100%FREE"
+    mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
+    fstype: xfs
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
+vg_name: vg_qubi
+
+# Libvirt network
+libvirt_host_networks:
+  - name: "{{ vm_libvirt_net }}"
+    mode: bridge
+    bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}"
+kvm_bridge_type: Bridge
+kvm_host_bootproto: none
+kvm_host_ip: ""
+kvm_host_gw: ""
+kvm_host_mask_prefix: ""
+kvm_host_netmask: ""
+kvm_host_interface: ""
+
+# KVM host packages
+qubi_required_pkgs: |
+   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm,
+   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon,
+   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard,
+   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
+   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
+   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
+   bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
+   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible"
+
+libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, python-dns"
+
+# Required for OpenShift/OKD
+inventory_destination: "{{ inventory_dir }}"
+glusterfs: True
+htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_pool_id: ""
+openshift_release: "3.11"
+openshift_image_tag: v3.11.104
+openshift_pkg_version: 3.11.104
+openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+#rhsm_username: "example@redhat.com"
+##rhsm_password: "asdfdasfds"
+ssh_username: "{{ idm_admin_user }}"
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
+metrics_storage_volume_size: 10Gi
+
+# Features
+enable_openshift_operators: True
+enable_metrics: True
+enable_logging: False
+enable_prometheous_operator: False
+
+search_domains:
+  - "{{ vm_domain }}"
