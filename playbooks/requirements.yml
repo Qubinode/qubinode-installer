@@ -1,4 +1,4 @@
-- src: https://github.com/flyemsafe/ansible-role-rhel7-kvm-cloud-init.git
+- src: https://github.com/tosin2013/ansible-role-rhel7-kvm-cloud-init.git
   version: master
 
 - src: https://github.com/flyemsafe/swygue.edge_host_setup.git
@@ -18,6 +18,6 @@
 
 - src: https://github.com/amalivert/edge_hosts_validate.git
   version: master
-  
+
 - src: https://github.com/flyemsafe/swygue-lvm.git
   version: master
