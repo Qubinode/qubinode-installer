@@ -1056,7 +1056,7 @@ else
         then
           echo "Install OpenShift Cluster"
           #default_install
-          setup_sudoervim
+          setup_sudoers
           setup_variables
           setup_ansible "${vault_vars_file}"
           qubinode_deploy_openshift
