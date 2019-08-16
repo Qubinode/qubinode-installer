@@ -563,20 +563,20 @@ function ask_for_vault_values () {
     if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
     then
         unset idm_admin_pwd
-        echo "Important: Password must be at least 8 characters long."
-        echo -n 'Enter a password for the IDM server console and press [ENTER]: '
-        read_sensitive_data
-        idm_admin_pwd="${sensitive_data}"
-        if [ ${#idm_admin_pwd} -lt 8 ]
-        then
-            echo "Password must be at least 8 characters long"
-            echo "Please re-run the installer"
-            exit
-            #TODO: change the above code to something that reprompts the user to enter
-            # the password when it's too short
-        else 
-            sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
-            echo ""
+        while [[ ${#idm_admin_pwd} -lt 8 ]]
+        do
+            echo -n 'Enter a password for the IDM server console and press [ENTER]: '
+            read_sensitive_data
+            idm_admin_pwd="${sensitive_data}"
+            if [ ${#idm_admin_pwd} -lt 8 ]
+            then
+                echo "Important: Password must be at least 8 characters long."
+                echo "Password must be at least 8 characters long"
+                echo "Please re-run the installer"
+            fi
+        done
+        sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
+        echo ""
         fi
     fi
 
