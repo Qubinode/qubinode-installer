@@ -818,6 +818,8 @@ function qubinode_project_cleanup () {
         for f in $(echo "${FILES[@]}")
         do
             test -f $f && rm $f
+            echo "purged $f"
+
         done
     fi
 }
