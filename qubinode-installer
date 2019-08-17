@@ -415,7 +415,7 @@ function setup_ansible () {
         echo ""
         echo "Downloading required roles"
         #ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
-        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml"
+        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
         echo ""
         echo ""
 
@@ -846,17 +846,17 @@ function qubinode_vm_manager () {
        then
            sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
        fi
-       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" || exit $?
     elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
     then
         if grep vm_teardown "${vars_file}"|grep -q false
         then
             sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
         fi
-        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
+        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true" || exit $?
     elif [ "A${deploy_vm_opt}" == "Askip" ]
     then
-        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml" || exit $?
     else
         display_help
     fi
@@ -890,10 +890,10 @@ function qubi_dns_manager () {
         #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
         sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
         echo "Configuring DNS server"
-        ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+        ansible-playbook "${project_dir}/playbooks/idm_server.yml" || exit $?
     elif [ "A${option}" == "Arecords" ]
     then
-        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
     else
        display_help
     fi
@@ -1068,7 +1068,7 @@ else
           #default_install
           setup_sudoers
           setup_variables
-          setup_ansible "${vault_vars_file}"
+          #setup_ansible "${vault_vars_file}"
           qubinode_deploy_openshift
         else
             display_help

@@ -1,7 +1,7 @@
 Basic usage: qubinode-installer [options]
 
 Main Options:
-    -c      Deploy one of the following container platforms: 
+    -p      Deploy one of the following container platforms:
                 okd - deploy upstream openshift
                 ocp - deploy Red Hat OpenShift Platform <subscription required>
 
@@ -22,13 +22,13 @@ Main Options:
 
     -h      Display this help menu
 
-Optional sub arguments for -c :
-            
+Optional sub arguments for -p :
+
     -b      Run health checks, options are:
                 cluster - runs a helath check of the cluster
                 diag    - runs a adv health check
 
-    -k      Uninstall the OpenShift cluster 
+    -k      Uninstall the OpenShift cluster
 
             Example running a health check on the cluster:
 
