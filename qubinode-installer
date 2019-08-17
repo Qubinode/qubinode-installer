@@ -783,7 +783,7 @@ function openshift-setup() {
   elif [[ ${product_opt} == "okd" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
   fi
-
+  ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   cat $INVENTORYDIR/inventory.3.11.rhel.gluster
@@ -791,7 +791,9 @@ function openshift-setup() {
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
-  htpasswd -c ${HTPASSFILE} $OCUSER
+  if [[ ! -f ${HTPASSFILE} ]]; then 
+    htpasswd -c ${HTPASSFILE} $OCUSER
+  fi 
 
   if [[ ${product_opt} == "ocp" ]]; then
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml || exit $?
