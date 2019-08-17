@@ -577,7 +577,7 @@ function ask_for_vault_values () {
         done
         sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
         echo ""
-        fi
+        #fi
     fi
 
     if grep '""' "${vars_file}"|grep -q rhsm_reg_method
