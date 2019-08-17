@@ -3,14 +3,20 @@
   remote_user: "{{ ansible_ssh_user }}"
   become: yes
   tasks:
-  - name: Register as auto-subscribe to red hat subscription.
-    redhat_subscription:
-      state: present
-      username: "{{ oreg_auth_user }}"
-      password: "{{ oreg_auth_password }}"
-      auto_attach: true
+  - name: refresh subscription-manager 
+    command: subscription-manager refresh
     when:
       - ansible_distribution == "RedHat"
+
+  - name: auto attach to  subscription-manager 
+    command: subscription-manager attach --auto
+    when:
+      - ansible_distribution == "RedHat"
+      
+  - name: ensure system is registered to Red Hat
+    include_role:
+      name: swygue-redhat-subscription
+
   - name: Attach a specific subscription through the Customer Portal
     command: subscription-manager refresh
     when:

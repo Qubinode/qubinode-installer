@@ -19,6 +19,11 @@
 #          - "timeout:2"
 #      include_role:
 #        name: ansible-resolv
+    - name: refresh subscription-manager 
+      command: subscription-manager refresh
+
+    - name: auto attach to  subscription-manager 
+      command: subscription-manager attach --auto
 
     - name: ensure system is registered to Red Hat
       include_role:

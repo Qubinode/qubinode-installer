@@ -415,7 +415,7 @@ function setup_ansible () {
         echo ""
         echo "Downloading required roles"
         #ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
-        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml"
+        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
         echo ""
         echo ""
 
@@ -783,19 +783,27 @@ function openshift-setup() {
   elif [[ ${product_opt} == "okd" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
   fi
-
+  ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   cat $INVENTORYDIR/inventory.3.11.rhel.gluster
   HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
+  CHECKFORLB=$(sudo virsh list | grep lb | awk '{print $2}')
+  if [[ ! -z $CHECKFORLB ]]; then 
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_lb_config.yml" || exit $?
+  fi 
+
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
-  htpasswd -c ${HTPASSFILE} $OCUSER
+  if [[ ! -f ${HTPASSFILE} ]]; then 
+    htpasswd -c ${HTPASSFILE} $OCUSER
+  fi 
 
   if [[ ${product_opt} == "ocp" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml || exit $?
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml || exit $?
+    cd /usr/share/ansible/openshift-ansible
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
     echo "Work in Progress"
     exit 1
@@ -848,17 +856,17 @@ function qubinode_vm_manager () {
        then
            sed -i "s/^vm_teardown: true/vm_teardown: false/g" "${vars_file}"
        fi
-       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml"
+       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" || exit $?
     elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
     then
         if grep vm_teardown "${vars_file}"|grep -q false
         then
             sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
         fi
-        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true"
+        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true" || exit $?
     elif [ "A${deploy_vm_opt}" == "Askip" ]
     then
-        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml"
+        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml" || exit $?
     else
         display_help
     fi
@@ -892,10 +900,10 @@ function qubi_dns_manager () {
         #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
         sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
         echo "Configuring DNS server"
-        ansible-playbook "${project_dir}/playbooks/idm_server.yml"
+        ansible-playbook "${project_dir}/playbooks/idm_server.yml" || exit $?
     elif [ "A${option}" == "Arecords" ]
     then
-        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml"
+        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
     else
        display_help
     fi
@@ -1070,7 +1078,7 @@ else
           #default_install
           setup_sudoers
           setup_variables
-          setup_ansible "${vault_vars_file}"
+          #setup_ansible "${vault_vars_file}"
           qubinode_deploy_openshift
         else
             display_help
