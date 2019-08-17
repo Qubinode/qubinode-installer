@@ -790,14 +790,20 @@ function openshift-setup() {
   HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
+  CHECKFORLB=$(sudo virsh list | grep lb | awk '{print $2}')
+  if [[ ! -z $CHECKFORLB ]]; then 
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_lb_config.yml" || exit $?
+  fi 
+
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then 
     htpasswd -c ${HTPASSFILE} $OCUSER
   fi 
 
   if [[ ${product_opt} == "ocp" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml || exit $?
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml || exit $?
+    cd /usr/share/ansible/openshift-ansible
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
     echo "Work in Progress"
     exit 1

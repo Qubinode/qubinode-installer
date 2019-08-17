@@ -1,0 +1,16 @@
+---
+- hosts: lb
+  remote_user: "{{ ansible_ssh_user }}"
+  become: yes
+  tasks:
+    - name: refresh subscription-manager 
+      command: subscription-manager refresh
+      when:
+        - ansible_distribution == "RedHat"
+    - name: auto attach to  subscription-manager 
+      command: subscription-manager attach --auto
+      when:
+        - ansible_distribution == "RedHat"
+    - name: ensure system is registered to Red Hat
+      include_role:
+        name: swygue-redhat-subscription
