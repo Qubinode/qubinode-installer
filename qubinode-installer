@@ -798,7 +798,10 @@ function openshift-setup() {
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then 
     htpasswd -c ${HTPASSFILE} $OCUSER
-  fi 
+  fi  
+
+  echo "Running Qubi node openshift deployment checks."
+  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
 
   if [[ ${product_opt} == "ocp" ]]; then
     cd /usr/share/ansible/openshift-ansible
@@ -1055,6 +1058,7 @@ else
             #setup_kvm_host
             #qubinode_vm_manager deploy
             qubi_dns_manager server
+            qubi_dns_manager records
         elif [ "${maintenance}" == "dns" ]
         then
             setup_sudoers
