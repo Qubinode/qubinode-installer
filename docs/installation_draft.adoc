@@ -70,3 +70,11 @@ From your web browser:
 2. Find "Red Hat Enterprise Linux 7.6 KVM Guest Image" and right click on the *Download Now" box
 3. wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
 
+Installer maintenance mode
+--------------------------
+
+1. Run setup to satisfy all perquisites
+
+```
+./qubinode-installer -m setup
+```
