@@ -1,0 +1,15 @@
+- hosts: all
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+  tasks:
+  - name: obtain the fully qualified domain name of the host
+    shell: hostname -f
+    ignore_errors: no
+
+  - name: loop through vm types
+    include_tasks: openshift-pre-installation-checks.yml
+    loop: "{{ instances }}"
+    loop_control:
+      loop_var: outer_item
+      label: outer_item.name
