@@ -34,9 +34,9 @@ The Qubinode installer currently supports OpenShift 3.11.x builds.
 ## Contribute
 
 ## Support
-If you need support, start with [the troubleshooting guide]()
+If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
 
-If you have any direct questions, reach out to us [using the guide]().
+If you have any direct questions, reach out to us [using the guide](docs/communication.adoc).
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
