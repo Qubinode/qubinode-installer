@@ -752,10 +752,28 @@ function installer_preflight () {
     setup_variables
     ask_user_input
 
+    # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
     then
         echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
+    fi
+
+    # check for required OS qcow image and copy it to right location
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
+    os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
+    if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
+    then
+        if [ -f "${project_dir}/${os_qcow_image}" ]
+        then
+            sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
+        else 
+            echo "Could not find ${project_dir}/${os_qcow_image}, please download the ${os_qcow_image} to ${project_dir}."
+            echo "Please refer the documentation for additional information."
+            exit 1
+        fi
+    else
+        echo "The require OS image ${libvirt_dir}/${os_qcow_image} was found."
     fi
 }
 

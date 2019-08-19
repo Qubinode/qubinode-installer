@@ -190,3 +190,7 @@ dns_server_vm:
     dns_group: dns
     dns_extra_storage: []
     dns_enable: true
+
+# Use to create VM
+os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
+
