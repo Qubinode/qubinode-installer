@@ -1,0 +1,35 @@
+- name: Deploy IDM VM
+  hosts: localhost
+  become: yes
+  gather_facts: no
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+    - name: Create KVM VM
+      debug:
+        msg:
+          - vm_name: "{{ dns_server_vm.dns_name }}"
+          - vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
+          - vm_memory: "{{ dns_server_vm.dns_memory }}"
+          - vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
+          - vm_teardown: "{{ dns_server_vm.dns_teardown }}"
+          - vm_recreate: "{{ dns_server_vm.dns_recreate }}"
+          - inventory_group: "{{ dns_server_vm.dns_group }}"
+          - extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
+          - enable: "{{ dns_server_vm.dns_enable }}"
+
+    - name: Create KVM VM
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+        vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
+        vm_memory: "{{ dns_server_vm.dns_memory }}"
+        vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
+        vm_teardown: "{{ dns_server_vm.dns_teardown }}"
+        vm_recreate: "{{ dns_server_vm.dns_recreate }}"
+        inventory_group: "{{ dns_server_vm.dns_group }}"
+        extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
+        enable: "{{ dns_server_vm.dns_enable }}"
+      include_role:
+        name: ansible-role-rhel7-kvm-cloud-init
