@@ -1,5 +1,0 @@
-#!/bin/bash
-
-source /opt/openshift-home-lab/Packages/openshift-home-lab/bootstrap_env || exit 1
-MASTERIP=$(cat /opt/openshift-home-lab/Packages/openshift-home-lab/master | tr -d '"[]",')
-ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SSH_USERNAME@$MASTERIP /home/$SSH_USERNAME/scripts/check_system_state.sh both || exit 1

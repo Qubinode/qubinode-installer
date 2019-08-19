@@ -1,2 +1,0 @@
-#!/bin/bash
-/opt/openshift-home-lab/Packages/openshift-home-lab/scripts/openshift_bootstrap_service.sh
