@@ -746,19 +746,7 @@ function ask_user_input () {
     ask_for_vault_values "${vault_vars_file}"
 }
 
-function installer_preflight () {
-    setup_sudoers
-    setup_user_ssh_key
-    setup_variables
-    ask_user_input
-
-    # Setup admin user variable
-    if grep '""' "${vars_file}"|grep -q admin_user
-    then
-        echo "Updating ${vars_file} admin_user variable"
-        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
-    fi
-
+function check_for_rhel_qcow_image () {
     # check for required OS qcow image and copy it to right location
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
     os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
@@ -774,6 +762,21 @@ function installer_preflight () {
         fi
     else
         echo "The require OS image ${libvirt_dir}/${os_qcow_image} was found."
+    fi
+}
+
+function installer_preflight () {
+    setup_sudoers
+    setup_user_ssh_key
+    setup_variables
+    ask_user_input
+    check_for_rhel_qcow_image
+
+    # Setup admin user variable
+    if grep '""' "${vars_file}"|grep -q admin_user
+    then
+        echo "Updating ${vars_file} admin_user variable"
+        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
 }
 
@@ -915,6 +918,9 @@ function qubinode_vm_manager () {
        echo ""
        exit 1
    fi
+
+   # Check for required Qcow image
+   check_for_rhel_qcow_image
 
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
