@@ -45,5 +45,5 @@ If you have any direct questions, reach out to us [using the guide]().
 
 ## Author
 Tosin Akinosho - [tosin2013](https://github.com/tosin2013)  
-Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
-Abnerson Malivert - [amalivert](https://github.com/amalivert)
+Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)  
+Abnerson Malivert - [amalivert](https://github.com/amalivert)  
