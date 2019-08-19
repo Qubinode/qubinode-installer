@@ -761,6 +761,7 @@ function installer_preflight () {
 
 function setup_kvm_host () {
     prereqs
+    # check for host inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
     then
         echo "Inventory file ${hosts_inventory_dir}/hosts is missing"
@@ -769,6 +770,7 @@ function setup_kvm_host () {
         exit 1
     fi
 
+    # check for inventory directory
     if [ -f "${vars_file}" ]
     then
         if grep '""' "${vars_file}"|grep -q inventory_dir
@@ -785,10 +787,18 @@ function setup_kvm_host () {
         exit 1
      fi
 
-     if [ ! -f /usr/bin/ansible ]
+    # Check for ansible and ansible role
+    ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue.edge_host_setup')
+    if [ ! -f /usr/bin/ansible ]
     then
         echo "Ansible is not installed"
         echo "Please run qubinode-installer -m ansible"
+        echo ""
+        exit 1
+    elif [ "A${ROLE_PRESENT}" == "A" ]
+    then
+        echo "Required role swygue.edge_host_setup is missing."
+        echo "Please run run qubinode-installer -m ansible"
         echo ""
         exit 1
     fi
