@@ -669,6 +669,15 @@ function setup_sudoers () {
     fi
 }
 
+function setup_user_ssh_key () {
+    HOMEDIR=$(eval echo ~${CURRENT_USER})
+    if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
+    then
+        echo "Setting up ssh keys for ${CURRENT_USER"
+        ssh-keygen -b 2048 -t rsa -f "${HOMEDIR}/.ssh/id_rsa.pub" -q -N ""
+    fi
+}
+
 function setup_variables () {
     prereqs
     # copy sample vars file to playbook/vars directory
@@ -929,6 +938,7 @@ function qubinode_deploy_openshift () {
 
 function default_install () {
     setup_sudoers
+    setup_user_ssh_key
     setup_variables
     rhsm_register
     setup_ansible "${vault_vars_file}"
@@ -1021,6 +1031,7 @@ else
         elif [ "${maintenance}" == "setup" ]
         then
             setup_sudoers
+            setup_user_ssh_key
             setup_variables
             ask_user_input
         elif [ "${maintenance}" == "rhsm" ]
