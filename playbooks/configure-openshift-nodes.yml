@@ -1,16 +1,31 @@
 ---
-- hosts: OSEv3:children
+- hosts: nodes
   remote_user: "{{ ansible_ssh_user }}"
   become: yes
+  vars_files:
+  - vars/all.yml
+  - vars/vault.yml
   tasks:
-  - name: Register as auto-subscribe to red hat subscription.
-    redhat_subscription:
-      state: present
-      username: "{{ oreg_auth_user }}"
-      password: "{{ oreg_auth_password }}"
-      auto_attach: true
+  - name: update resolve.conf to point to idm
+    blockinfile:
+      path: /etc/resolv.conf
+      block: |
+        nameserver {{ idm_public_ip }}
+        nameserver 8.8.8.8
+  - name: refresh subscription-manager
+    command: subscription-manager refresh
     when:
       - ansible_distribution == "RedHat"
+
+  - name: auto attach to  subscription-manager
+    command: subscription-manager attach --auto
+    when:
+      - ansible_distribution == "RedHat"
+
+  - name: ensure system is registered to Red Hat
+    include_role:
+      name: swygue-redhat-subscription
+
   - name: Attach a specific subscription through the Customer Portal
     command: subscription-manager refresh
     when:

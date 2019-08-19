@@ -7,7 +7,7 @@
     - vars/vault.yml
 
   tasks:
-    - name: loop through vm types
+    - name: include create vm tasks
       include_tasks: vms_inc.yml
       loop: "{{ instances }}"
       loop_control:

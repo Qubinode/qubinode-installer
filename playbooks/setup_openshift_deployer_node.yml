@@ -38,13 +38,6 @@
       name: rhel-7-server-optional-rpms
       state: enabled
     when: openshift_deployment_type == 'openshift-enterprise'
-  - name: Save Openshift PoolID
-    set_fact:
-      openshift_pool_id: "{{ openshift_poolid.stdout }}"
-    when: openshift_deployment_type == 'openshift-enterprise'
-  - name: Attach to the OpenShift subscription Pool
-    command: subscription-manager attach --pool={{ openshift_pool_id }}
-    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Enable rhel-7-server-ose-3.11-rpms repository
     rhsm_repository:
       name: rhel-7-server-ose-3.11-rpms

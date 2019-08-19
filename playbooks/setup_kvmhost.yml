@@ -4,8 +4,25 @@
   become: yes
   vars_files:
     - vars/all.yml
+    - vars/vault.yml
 
   tasks:
-     - name: running KVM host setup
-       include_role:
+    - name: ensure RHSM subscription
+      vars:
+        rhsm_user: "{{ rhsm_username | default('') }}"
+        rhsm_pass: "{{ rhsm_password | default('') }}"
+        rhsm_pool_ids: "{{ openshift_pool_id | default('') }}"
+      include_role:
+        name: swygue-redhat-subscription
+      
+    - name: create libvirt logical volume
+      include_role:
+         name: swygue-lvm
+
+    - name: running KVM host setup
+      include_role:
          name: swygue.edge_host_setup
+
+    - name: validate KVM host setup
+      include_role:
+         name: edge_hosts_validate

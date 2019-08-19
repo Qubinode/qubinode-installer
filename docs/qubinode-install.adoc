@@ -1,0 +1,37 @@
+Basic usage: qubinode-installer [options]
+
+Main Options:
+    -p      Deploy one of the following container platforms:
+                okd - deploy upstream openshift
+                ocp - deploy Red Hat OpenShift Platform <subscription required>
+
+            Example: qubinode-installer -c ocp
+
+    -m      Run project maintenance tasks with one of the following options:
+                clean    - remove all files created in the project folder
+                setup    - setup playbooks vars and user sudoers
+                rhsm     - register system to Red Hat
+                ansible  - setup ansible
+                host     - setup KVM host
+                deploy   - deploy VMS
+                undeploy - undeploy VMS
+                dns      - deploy DNS server
+                records  - populate DNS with with forward, reverse and the wildcard domain
+
+            Example: qubinode-installer -m clean
+
+    -h      Display this help menu
+
+Optional sub arguments for -p :
+
+    -b      Run health checks, options are:
+                cluster - runs a helath check of the cluster
+                diag    - runs a adv health check
+
+    -k      Uninstall the OpenShift cluster
+
+            Example running a health check on the cluster:
+
+               quibinode-installer -c ocp -b cluster
+
+Optional sub arguments for -m :

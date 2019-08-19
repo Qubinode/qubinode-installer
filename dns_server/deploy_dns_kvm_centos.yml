@@ -1,5 +1,0 @@
----
-- hosts: dns_server
-  gather_facts: false
-  roles:
-    - tosin2013.kvm_cloud_init_vm

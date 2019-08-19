@@ -32,7 +32,7 @@ instances:
   - name: node
     enable: true
     vm_cpu: 4
-    vm_memory: 16384
+    vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: nodes
@@ -42,11 +42,11 @@ instances:
       - size: 160G
         enable: true
     vm_recreate: false
-    qty: 2
+    qty: 1
   - name: infra
     enable: true
     vm_cpu: 4
-    vm_memory: 16384
+    vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: nodes
@@ -160,8 +160,8 @@ glusterfs: True
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_pool_id: ""
 openshift_release: "3.11"
-openshift_image_tag: v3.11.135
-openshift_pkg_version: -3.11.135
+openshift_image_tag: v3.11.104
+openshift_pkg_version: 3.11.104
 openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
 #rhsm_username: "example@redhat.com"
 ##rhsm_password: "asdfdasfds"
@@ -177,15 +177,3 @@ enable_prometheous_operator: False
 
 search_domains:
   - "{{ vm_domain }}"
-
-# DNS SERVER
-dns_server_vm:
-    dns_name: "ocp-dns01.{{ domain }}"
-    dns_vcpu: 2
-    dns_memory: 2048
-    dns_root_disk_size: 20G
-    dns_teardown: false
-    dns_recreate: false
-    dns_group: dns
-    dns_extra_storage: []
-    dns_enable: true

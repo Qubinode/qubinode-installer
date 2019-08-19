@@ -1,0 +1,16 @@
+No available subscription pools were found matching the expression:
+
+ Red Hat OpenShift Container Platform
+
+Please make sure you have a subscription to Red Hat OpenShift Container Platform
+before trying the installation again.
+
+You can also try delete the subscription from the system via the customer portal, then
+run qubinode-installer -m rhsm again. This can be done by:
+
+Log into the portal here: https://access.redhat.com/management/systems
+Find your system, and click on it
+Click the subscriptions tab
+Click remove
+
+Otherwise you may want to try deploying okd instead
