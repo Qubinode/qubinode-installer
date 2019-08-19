@@ -266,7 +266,7 @@ function set_openshift_rhsm_pool_id () {
             check_for_openshift_subscription
         fi
     fi
-    
+
     #TODO: this should be change once we start deploy OKD
     if [ "${maintenance}" == "rhsm" ]
     then
@@ -552,11 +552,12 @@ function ask_for_vault_values () {
     # root user password to be set for virtual instances created
     if grep '""' "${vaultfile}"|grep -q root_user_pass
     then
-        unset root_user_pass
-        echo -n 'Enter a password for the root user and press [ENTER]: '
+        unset admin_user_password
+        echo -n "Your username ${CURRENT_USER} will be used to ssh into all the VMs created."
+        echo -n "Enter a password for ${CURRENT_USER} [ENTER]: "
         read_sensitive_data
-        root_user_pass="${sensitive_data}"
-        sed -i "s/root_user_pass: \"\"/root_user_pass: "$root_user_pass"/g" "${vaultfile}"
+        admin_user_password="${sensitive_data}"
+        sed -i "s/admin_user_password: \"\"/admin_user_password: "$admin_user_password"/g" "${vaultfile}"
         echo ""
     fi
 
@@ -745,6 +746,19 @@ function ask_user_input () {
     ask_for_vault_values "${vault_vars_file}"
 }
 
+function installer_preflight () {
+    setup_sudoers
+    setup_user_ssh_key
+    setup_variables
+    ask_user_input
+
+    if grep '""' "${vars_file}"|grep -q admin_user
+    then
+        echo "Updating ${vars_file} admin_user variable"
+        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
+    fi
+}
+
 function setup_kvm_host () {
     prereqs
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
@@ -800,14 +814,14 @@ function openshift-setup() {
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
   CHECKFORLB=$(sudo virsh list | grep lb | awk '{print $2}')
-  if [[ ! -z $CHECKFORLB ]]; then 
+  if [[ ! -z $CHECKFORLB ]]; then
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_lb_config.yml" || exit $?
-  fi 
+  fi
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
-  if [[ ! -f ${HTPASSFILE} ]]; then 
+  if [[ ! -f ${HTPASSFILE} ]]; then
     htpasswd -c ${HTPASSFILE} $OCUSER
-  fi  
+  fi
 
   echo "Running Qubi node openshift deployment checks."
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
@@ -1037,10 +1051,7 @@ else
             qubinode_project_cleanup
         elif [ "${maintenance}" == "setup" ]
         then
-            setup_sudoers
-            setup_user_ssh_key
-            setup_variables
-            ask_user_input
+            installer_preflight
         elif [ "${maintenance}" == "rhsm" ]
         then
             rhsm_register
