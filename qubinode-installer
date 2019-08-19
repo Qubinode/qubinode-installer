@@ -862,7 +862,14 @@ function qubinode_vm_manager () {
        echo ""
        exit 1
    fi
-   if [ "A${deploy_vm_opt}" == "Adeploy" ]
+   if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
+   then
+       if grep dns_teardown_dns "${vars_file}"|grep -q true
+       then
+           sed -i "s/^dns_teardown_dns: true/dns_teardown_dns: false/g" "${vars_file}"
+       fi
+       ansible-playbook "${project_dir}/playbooks/deploy-dns-server.yml" || exit $?
+   elif [ "A${deploy_vm_opt}" == "Adeploy" ]
    then
        if grep vm_teardown "${vars_file}"|grep -q true
        then
@@ -1051,6 +1058,9 @@ else
             #rhsm_register
             #setup_ansible
             setup_kvm_host
+        elif [ "${maintenance}" == "deploy_dns" ]
+        then
+            qubinode_vm_manager deploy_dns
         elif [ "${maintenance}" == "deploy" ]
         then
             #setup_sudoers
