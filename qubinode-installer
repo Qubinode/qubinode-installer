@@ -372,6 +372,7 @@ function setup_ansible () {
     if [ ! -f /usr/bin/python ];
     then
        echo "installing python"
+       sudo yum clean all > /dev/null 2>&1
        sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
     else
        echo "python is installed"
@@ -388,6 +389,7 @@ function setup_ansible () {
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
            sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
        fi
+       sudo yum clean all > /dev/null 2>&1
        sudo yum install -y -q -e 0 ansible git
     else
        echo "ansible is installed"

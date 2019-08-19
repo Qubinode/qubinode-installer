@@ -177,3 +177,15 @@ enable_prometheous_operator: False
 
 search_domains:
   - "{{ vm_domain }}"
+
+# DNS SERVER
+dns_server_vm:
+    dns_name: "ocp-dns01.{{ domain }}"
+    dns_vcpu: 2
+    dns_memory: 2048
+    dns_root_disk_size: 20G
+    dns_teardown: false
+    dns_recreate: false
+    dns_group: dns
+    dns_extra_storage: []
+    dns_enable: true
