@@ -139,6 +139,7 @@ kvm_host_gw: ""
 kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
 kvm_host_interface: ""
+kvm_host_libvirt_dir: /var/lib/libvirt/images
 
 # KVM host packages
 qubi_required_pkgs: |
