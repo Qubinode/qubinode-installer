@@ -550,7 +550,7 @@ function ask_for_vault_values () {
     fi
 
     # root user password to be set for virtual instances created
-    if grep '""' "${vaultfile}"|grep -q root_user_pass
+    if grep '""' "${vaultfile}"|grep -q admin_user_password
     then
         unset admin_user_password
         echo -n "Your username ${CURRENT_USER} will be used to ssh into all the VMs created."
