@@ -80,9 +80,16 @@ Installer maintenance mode
 ```
 
 2. Register system to Red Hat.
+*For  Red Hat OpenShift use the  ocp flag*
 ```
-./qubinode-installer -m rhsm
+./qubinode-installer -m rhsm -c ocp
 ```
+
+*For the Origin Community Distribution of Kubernetes use the  okd flag*
+```
+./qubinode-installer -m rhsm -c okd
+```
+
 3. Configure system to use ansible
 ```
 ./qubinode-installer -m ansible
