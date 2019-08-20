@@ -98,3 +98,12 @@ Installer maintenance mode
 ```
 ./qubinode-installer -m host
 ```
+5. Deploy DNS Server
+```
+./qubinode-installer -m host
+```
+
+6. Configure DNS Server
+```
+./qubinode-installer -m dns
+```
