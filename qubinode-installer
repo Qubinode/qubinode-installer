@@ -55,7 +55,7 @@ function elevate_cmd () {
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
-    if [[ $OPTARG =~ ^-[h/p/u/s]$ ]]
+    if [[ $OPTARG =~ ^-[h/p/u/s/mc]$ ]]
     then
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
@@ -259,20 +259,29 @@ function check_for_openshift_subscription () {
 # this function sets the openshift repo id
 function set_openshift_rhsm_pool_id () {
     # set subscription pool id
-    if [ "A${product_opt}" != "A" ]
-    then
-        if [ "A${product_opt}" == "Aocp" ]
-        then
-            check_for_openshift_subscription
-        fi
-    fi
-    
+
+      if [ "A${product_opt}" != "A" ]
+      then
+          if [ "A${product_opt}" == "Aocp" ]
+          then
+              check_for_openshift_subscription
+          fi
+      fi
+
+    echo "LINE: 271 -> ${cluster_opt} check_for_openshift_subscription"
     #TODO: this should be change once we start deploy OKD
     if [ "${maintenance}" == "rhsm" ]
     then
-        check_for_openshift_subscription
-    else
-        echo "OpenShift Subscription not required"
+      if [ "A${cluster_opt}" == "Aocp" ]
+      then
+          check_for_openshift_subscription
+      elif [ "A${cluster_opt}" == "Aokd" ]
+      then
+          echo "OpenShift Subscription not required"
+      else
+        echo "Please pass -c flag for ocp/okd."
+        exit 1
+      fi
     fi
 
 }
@@ -800,14 +809,14 @@ function openshift-setup() {
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
   CHECKFORLB=$(sudo virsh list | grep lb | awk '{print $2}')
-  if [[ ! -z $CHECKFORLB ]]; then 
+  if [[ ! -z $CHECKFORLB ]]; then
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_lb_config.yml" || exit $?
-  fi 
+  fi
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
-  if [[ ! -f ${HTPASSFILE} ]]; then 
+  if [[ ! -f ${HTPASSFILE} ]]; then
     htpasswd -c ${HTPASSFILE} $OCUSER
-  fi  
+  fi
 
   echo "Running Qubi node openshift deployment checks."
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
@@ -972,14 +981,14 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":hk:p:d:b:m:" opt;
+while getopts ":hk:p:d:b:m:mc:" opt;
 do
     case $opt in
         h) display_help
            exit 1
            ;;
-        m) check_args
-           maintenance=$OPTARG
+        m) check_args;
+           maintenance=$OPTARG;
            ;;
         k) check_args;
            check=true
@@ -1000,6 +1009,11 @@ do
            check=true
            product=true
            product_opt=$OPTARG
+           ;;
+        c) check_args
+           check=true
+           cluster=true
+           cluster_opt=$OPTARG
            ;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2

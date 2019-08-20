@@ -36,14 +36,14 @@ To get pool-id
 1. log in here https://access.redhat.com/management/subscriptions
 2. Locate your subscription and click on the subscription name
 3. Then click on the Subscriptions tab
-4. Click on the Subscription Number of the active subscription 
+4. Click on the Subscription Number of the active subscription
 
 From here you should see *Pool IDs*, copy the master pool-id
 
 
 :numbered:
 
-Prepare the system 
+Prepare the system
 -------------------
 
  - Connect to the system as the user admin
@@ -77,4 +77,17 @@ Installer maintenance mode
 
 ```
 ./qubinode-installer -m setup
+```
+
+2. Register system to Red Hat.
+```
+./qubinode-installer -m rhsm
+```
+3. Configure system to use ansible
+```
+./qubinode-installer -m ansible
+```
+4. Setup your KVM host
+```
+./qubinode-installer -m host
 ```
