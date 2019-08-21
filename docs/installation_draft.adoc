@@ -32,12 +32,12 @@ Get the subscription pool for OpenShift
 ---------------------------------------
 
 To get pool-id
-
-1. log in here https://access.redhat.com/management/subscriptions
-2. Locate your subscription and click on the subscription name
-3. Then click on the Subscriptions tab
-4. Click on the Subscription Number of the active subscription
-
+==
+. Log in here https://access.redhat.com/management/subscriptions
+. Locate your subscription and click on the subscription name
+. Click on the Subscriptions tab
+. Click on the Subscription Number of the active subscription
+==
 From here you should see *Pool IDs*, copy the master pool-id
 
 
@@ -46,7 +46,7 @@ From here you should see *Pool IDs*, copy the master pool-id
 Prepare the system
 -------------------
 
- - Connect to the system as the user admin
+ - Connect to the system as the qubinode admin user
 
 ```
 ssh admin@ip-address
@@ -73,7 +73,10 @@ From your web browser:
 Installer maintenance mode
 --------------------------
 
-1. Run setup to satisfy all perquisites
+.  Ensure that the admin user for the qubinode is setup for password less sudo access
+```
+
+Run setup to satisfy all perquisites
 
 ```
 ./qubinode-installer -m setup
