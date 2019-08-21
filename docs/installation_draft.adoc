@@ -58,7 +58,7 @@ ssh admin@ip-address
 wget https://github.com/tosin2013/openshift-home-lab/archive/qubinode_installer_cleanup.zip
 unzip qubinode_installer_cleanup.zip
 rm -f qubinode_installer_cleanup.zip
-mv openshift-home-lab-qubinode_installer_cleanup openshift-home-lab
+mv qubinode-installer-qubinode_installer_cleanup openshift-home-lab
 cd openshift-home-lab
 ```
 
