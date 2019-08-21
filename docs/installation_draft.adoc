@@ -84,14 +84,14 @@ Installer maintenance mode
  *For  Red Hat OpenShift use the  ocp flag*
  
 ```
-  ./qubinode-installer -m rhsm -c ocp
+  ./qubinode-installer -m rhsm -p ocp
   
 ```
 
 *For the Origin Community Distribution of Kubernetes use the  okd flag*
 
 ```
-  ./qubinode-installer -m rhsm -c okd
+  ./qubinode-installer -m rhsm -p okd
   
 ```
 
