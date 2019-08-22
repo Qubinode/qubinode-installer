@@ -181,7 +181,7 @@ search_domains:
 
 # DNS SERVER
 dns_server_vm:
-    dns_name: "ocp-dns01.{{ domain }}"
+    dns_name: "ocp-dns01"
     dns_vcpu: 2
     dns_memory: 2048
     dns_root_disk_size: 20G
