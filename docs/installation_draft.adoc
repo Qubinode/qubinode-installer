@@ -26,84 +26,99 @@ Installing Red Hat Enterprise Linux
 * If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configrue paritioning" to have control over this.
 * Configure NETWORK & HOSTNAME
 * Begin installation
-* set root password and create a regular user
+* set root password and create admin user with password-less sudo priviledge
 
 Get the subscription pool for OpenShift
 ---------------------------------------
 
 To get pool-id
+           
+. Log in here https://access.redhat.com/management/subscriptions
+. Locate your subscription and click on the subscription name
+. Click on the Subscriptions tab
+. Click on the Subscription Number of the active subscription
+. From here you should see *Pool IDs*, copy the master pool-id
 
-1. log in here https://access.redhat.com/management/subscriptions
-2. Locate your subscription and click on the subscription name
-3. Then click on the Subscriptions tab
-4. Click on the Subscription Number of the active subscription
-
-From here you should see *Pool IDs*, copy the master pool-id
-
-
-:numbered:
 
 Prepare the system
 -------------------
 
- - Connect to the system as the user admin
+
+. Login remotely to the Qubinode box as  as the qubinode admin user
 
 ```
 ssh admin@ip-address
 ```
 
- - Download the qubinode-installer project
+. Download the qubinode-installer project
 
 ```
 wget https://github.com/tosin2013/openshift-home-lab/archive/qubinode_installer_cleanup.zip
 unzip qubinode_installer_cleanup.zip
 rm -f qubinode_installer_cleanup.zip
-mv openshift-home-lab-qubinode_installer_cleanup openshift-home-lab
+mv qubinode-installer-qubinode_installer_cleanup openshift-home-lab
 cd openshift-home-lab
 ```
 
- - Download the qcow image
+. Download the qcow image
+ From your web browser:
 
-From your web browser:
+. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
+. Find "Red Hat Enterprise Linux 7.6 KVM Guest Image" and right click on the *Download Now" box
+. wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
 
-1. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
-2. Find "Red Hat Enterprise Linux 7.6 KVM Guest Image" and right click on the *Download Now" box
-3. wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
-
+:numbered:
 Installer maintenance mode
 --------------------------
 
-1. Run setup to satisfy all perquisites
+. Ensure that the admin user for the qubinode is setup for password less sudo access
+
+. Run setup to satisfy all perquisites*
 
 ```
-./qubinode-installer -m setup
+  ./qubinode-installer -m setup
+   
 ```
 
-2. Register system to Red Hat.
-*For  Red Hat OpenShift use the  ocp flag*
+. Register system to Red Hat.
+ *For  Red Hat OpenShift use the  ocp flag*
+ 
 ```
-./qubinode-installer -m rhsm -c ocp
+  ./qubinode-installer -m rhsm -p ocp
+  
 ```
 
 *For the Origin Community Distribution of Kubernetes use the  okd flag*
+
 ```
-./qubinode-installer -m rhsm -c okd
+  ./qubinode-installer -m rhsm -p okd
+  
 ```
 
-3. Configure system to use ansible
+. Configure system to use ansible
+
 ```
-./qubinode-installer -m ansible
-```
-4. Setup your KVM host
-```
-./qubinode-installer -m host
-```
-5. Deploy DNS Server
-```
-./qubinode-installer -m host
+  ./qubinode-installer -m ansible
+ 
 ```
 
-6. Configure DNS Server
+. Setup your KVM host
+
 ```
-./qubinode-installer -m dns
+  ./qubinode-installer -m host
+  
+```
+
+. Deploy DNS Server
+
+```
+  ./qubinode-installer -m host
+  
+```
+
+. Configure DNS Server
+
+```
+  ./qubinode-installer -m dns
+
 ```
