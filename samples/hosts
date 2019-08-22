@@ -2,17 +2,12 @@ localhost               ansible_connection=local ansible_user=root
 
 [ocp]
 
-
 [masters]
-
 
 [nodes]
 
-
 [infra]
 
-
 [lb]
-
 
 [dns]
