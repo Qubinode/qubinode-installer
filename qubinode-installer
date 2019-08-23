@@ -880,8 +880,13 @@ function qubinode_vm_manager () {
        echo "Please run qubinode-installer -m ansible"
        echo ""
        exit 1
-   elif [ "A${ROLE_PRESENT}" ==]
-   fi
+    elif [ "A${ROLE_PRESENT}" == "A" ]
+    then
+        echo "Required role swygue.edge_host_setup is missing."
+        echo "Please run run qubinode-installer -m ansible"
+        echo ""
+        exit 1
+    fi
 
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
