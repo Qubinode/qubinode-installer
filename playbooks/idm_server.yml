@@ -38,3 +38,34 @@
       include_role:
         name: ansible-idm
       tags: [install,preinstall,installer,firewall,always,result]
+
+    - name: post IDM server install check if IDM is answering
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+      uri:
+        url: "https://{{ vm_name  }}.{{ domain }}/ipa/ui"
+        user: "{{ idm_admin_user }}"
+        password: "{{ idm_admin_password }}"
+        force_basic_auth: yes
+      register: idm_is_installed
+      ignore_errors: yes
+      tags: [always]
+
+    - set_fact:
+        idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
+      tags: [always]
+
+    - fail:
+        msg: |
+          The IDM server does not appear to have been installed.
+          Please re-run qubinode-installer or undeploy and start again.
+      when: not idm_is_installed|bool
+
+    - name: update KVM host /etc/resolv.conf
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: "nameserver {{ idm_public_ip }}"
+        regexp: "^nameserver {{ idm_public_ip }}"
+        insertafter: '^domain'
+        state: present
+      delegate_to: localhost
