@@ -40,6 +40,8 @@ You can remove the IdM server with.
 ansible-playbook playbooks/deploy-dns-server.yml --extra-vars "vm_teardown=true"
 ```
 
+This deletes the IdM server from the inventory/hosts file, /etc/resolv.conf on the KVM host and /etc/host on the KVM host.
+
 Access the IdM Server
 ---------------------
 
@@ -51,7 +53,7 @@ Your ssh-key was copied to IdM vm if you didn't have one it was generated for yo
 ssh ocp-dns01
 ```
 
-* The web console
+The web console
 
  * First step is to make sure your desktop points to the IdM server as a DNS server or by setting up /etc/hosts.
  * Navigate to https://ocp-dns01.lunchnet.example
