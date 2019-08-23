@@ -30,7 +30,8 @@
         regexp: '^idm_public_ip:'
         line: "idm_public_ip: {{ dns_srv_ip }}"
         state: present
-     
+      when: not vm_teardown|bool
+
     - set_fact:
         etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
