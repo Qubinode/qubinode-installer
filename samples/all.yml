@@ -78,26 +78,7 @@ instances:
     vm_recreate: false
     qty: 1
 
-# DNS Server
-dns_wildcard: "*.apps"
-domain: ""
-dns_server_public: ""
-idm_reverse_zone:
-  - changeme.in-addr.arpa
-idm_public_ip: ""    # IP address of the IDM server
-idm_hostname: "ocp-dns01"
-idm_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-server-optional-rpms
-idm_packages:
-  - ipa-server
-  - ipa-server-dns
-idm_realm: "{{ domain | upper }}"
-idm_forward_ip: "{{ dns_server_public }}"
-idm_admin_user: admin
-idm_ssh_pwd: "{{ admin_user_password }}"
-idm_ssh_user: "{{ admin_user }}"
+# This is for /etc/resolv.conf
 dns_servers:
   - "{{ idm_public_ip | default('1.1.1.1') }}"
   - 8.8.8.8
@@ -179,7 +160,39 @@ enable_prometheous_operator: False
 search_domains:
   - "{{ vm_domain }}"
 
-# DNS SERVER
+# Use to create VM
+os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
+
+# This is for the swygue-redhat-subscription role
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
+
+
+
+###################
+# IDM DNS Server  #
+###################
+
+# IDM server attributes
+idm_admin_user: admin
+idm_hostname: "ocp-dns01"
+dns_server_public: ""
+idm_reverse_zone:
+  - changeme.in-addr.arpa
+idm_public_ip: ""                       # IP address of the IDM server
+idm_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-optional-rpms
+idm_packages:
+  - ipa-server
+  - ipa-server-dns
+idm_realm: "{{ domain | upper }}"
+idm_forward_ip: "{{ dns_server_public }}"
+idm_ssh_pwd: "{{ admin_user_password }}"
+idm_ssh_user: "{{ admin_user }}"
+
+# Dns server VM attributes
 dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
@@ -191,12 +204,16 @@ dns_server_vm:
     dns_extra_storage: []
     dns_enable: true
 
-# Use to create VM
-os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
-
-# This is for the swygue-redhat-subscription role
-rhsm_user: "{{ rhsm_username }}"
-rhsm_pass: "{{ rhsm_password }}"
-
 # This is required ansible-idm role
 idm_admin_password: "{{ idm_admin_pwd }}"
+
+
+##################
+# OpenShift/OKD #
+#################
+dns_wildcard: "*.apps"
+
+###########################
+# General Networking Info #
+###########################
+domain: ""

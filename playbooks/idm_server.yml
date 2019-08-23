@@ -7,25 +7,9 @@
     - vars/vault.yml
 
   tasks:
-#    - name: ensure /etc/resolv is setup correctly
-#      vars:
-#        resolv_nameservers:
-#          - "{{ dns_server_public }}"
-#          - "127.0.0.1"
-#        resolv_domain: "{{ domain }}"
-#        resolv_search:
-#          - "{{ domain }}"
-#        resolv_options:
-#          - "timeout:2"
-#      include_role:
-#        name: ansible-resolv
-    - name: refresh subscription-manager 
-      command: subscription-manager refresh
-
-    - name: auto attach to  subscription-manager 
-      command: subscription-manager attach --auto
-
     - name: ensure system is registered to Red Hat
+      vars:
+        rhsm_repos: "{{ idm_repos }}"
       include_role:
         name: swygue-redhat-subscription
 
