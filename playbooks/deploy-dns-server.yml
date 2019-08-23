@@ -1,26 +1,12 @@
 - name: Deploy IDM VM
   hosts: localhost
   become: yes
-  gather_facts: no
+  gather_facts: yes
   vars_files:
     - vars/all.yml
     - vars/vault.yml
 
-  tasks:
-    - name: Create KVM VM
-      debug:
-        msg:
-          - vm_name: "{{ dns_server_vm.dns_name }}"
-          - vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
-          - vm_memory: "{{ dns_server_vm.dns_memory }}"
-          - vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
-          - vm_teardown: "{{ dns_server_vm.dns_teardown }}"
-          - vm_recreate: "{{ dns_server_vm.dns_recreate }}"
-          - inventory_group: "{{ dns_server_vm.dns_group }}"
-          - extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
-          - enable: "{{ dns_server_vm.dns_enable }}"
-
-    - name: Create KVM VM
+    - name: Create KVM VM for DNS Server
       vars:
         vm_name: "{{ dns_server_vm.dns_name }}"
         vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
@@ -33,3 +19,37 @@
         enable: "{{ dns_server_vm.dns_enable }}"
       include_role:
         name: ansible-role-rhel7-kvm-cloud-init
+
+    - name: update idm_public_ip with current IDM server IP
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+        dns_srv_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
+      lineinfile:
+        dest: "{{ project_dir }}/playbooks/vars/all.yml"
+        regexp: '^idm_public_ip:'
+        line: "idm_public_ip: {{ dns_srv_ip }}"
+        state: present
+     
+    - set_fact:
+        etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
+
+    - name: Add/Remove DNS server from inventory into /etc/hosts
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[item]['ansible_host'] }} {{ item }}.{{ domain }} {{ item }}"
+        state: "{{ etc_host_status }}"
+      when: hostvars[item]['ansible_host'] is defined and hostvars[item]['inventory_hostname_short'] == vm_name
+      with_items:
+        - "{{ groups['dns'] }}"
+
+    - name: REMOVE|ensure host is removed from inventory
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      when: vm_teardown|bool
