@@ -55,7 +55,7 @@ function elevate_cmd () {
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
-    if [[ $OPTARG =~ ^-[h/p/u/s/mc]$ ]]
+    if [[ $OPTARG =~ ^-[h/p/u/s]$ ]]
     then
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
@@ -270,16 +270,9 @@ function set_openshift_rhsm_pool_id () {
     #TODO: this should be change once we start deploy OKD
     if [ "${maintenance}" == "rhsm" ]
     then
-      if [ "A${cluster_opt}" == "Aocp" ]
-      then
-          check_for_openshift_subscription
-      elif [ "A${cluster_opt}" == "Aokd" ]
-      then
-          echo "OpenShift Subscription not required"
-      else
-        echo "Please pass -c flag for ocp/okd."
-        exit 1
-      fi
+        check_for_openshift_subscription
+    else
+        echo "OpenShift Subscription not required"
     fi
 
 }
@@ -600,9 +593,7 @@ function ask_for_vault_values () {
         if [ "A${rhsm_reg_method}" == "AUsername" ];
         then
             echo ""
-            decrypt_ansible_vault "${vault_vars_file}"
             get_rhsm_user_and_pass
-            encrypt_ansible_vault "${vault_vars_file}"
         elif [ "A${rhsm_reg_method}" == "AActivation" ];
         then
             if grep '""' "${vault_vars_file}"|grep -q rhsm_username
@@ -611,9 +602,7 @@ function ask_for_vault_values () {
                 echo "We still need to get your RHSM username and password."
                 echo "We need this to pull containers for OpenShift Platform Installation."
                 echo ""
-                decrypt_ansible_vault "${vault_vars_file}"
                 get_rhsm_user_and_pass
-                encrypt_ansible_vault "${vault_vars_file}"
                 echo ""
             fi
 
@@ -636,9 +625,7 @@ function ask_for_vault_values () {
     elif grep '""' "${vaultfile}"|grep -q rhsm_username
     then
         echo ""
-        decrypt_ansible_vault "${vault_vars_file}"
         get_rhsm_user_and_pass
-        encrypt_ansible_vault "${vault_vars_file}"
     else
         echo "Credentials for RHSM is already collected."
     fi
@@ -688,7 +675,7 @@ function setup_user_ssh_key () {
     if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
     then
         echo "Setting up ssh keys for ${CURRENT_USER}"
-        ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
+        ssh-keygen -b 2048 -t rsa -f "${HOMEDIR}/.ssh/id_rsa.pub" -q -N ''
     fi
 }
 
@@ -759,33 +746,12 @@ function ask_user_input () {
     ask_for_vault_values "${vault_vars_file}"
 }
 
-function check_for_rhel_qcow_image () {
-    # check for required OS qcow image and copy it to right location
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
-    os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
-    if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
-    then
-        if [ -f "${project_dir}/${os_qcow_image}" ]
-        then
-            sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
-        else
-            echo "Could not find ${project_dir}/${os_qcow_image}, please download the ${os_qcow_image} to ${project_dir}."
-            echo "Please refer the documentation for additional information."
-            exit 1
-        fi
-    else
-        echo "The require OS image ${libvirt_dir}/${os_qcow_image} was found."
-    fi
-}
-
 function installer_preflight () {
     setup_sudoers
     setup_user_ssh_key
     setup_variables
     ask_user_input
-    check_for_rhel_qcow_image
 
-    # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
     then
         echo "Updating ${vars_file} admin_user variable"
@@ -795,7 +761,6 @@ function installer_preflight () {
 
 function setup_kvm_host () {
     prereqs
-    # check for host inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
     then
         echo "Inventory file ${hosts_inventory_dir}/hosts is missing"
@@ -804,7 +769,6 @@ function setup_kvm_host () {
         exit 1
     fi
 
-    # check for inventory directory
     if [ -f "${vars_file}" ]
     then
         if grep '""' "${vars_file}"|grep -q inventory_dir
@@ -821,18 +785,10 @@ function setup_kvm_host () {
         exit 1
      fi
 
-    # Check for ansible and ansible role
-    ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue.edge_host_setup')
-    if [ ! -f /usr/bin/ansible ]
+     if [ ! -f /usr/bin/ansible ]
     then
         echo "Ansible is not installed"
         echo "Please run qubinode-installer -m ansible"
-        echo ""
-        exit 1
-    elif [ "A${ROLE_PRESENT}" == "A" ]
-    then
-        echo "Required role swygue.edge_host_setup is missing."
-        echo "Please run run qubinode-installer -m ansible"
         echo ""
         exit 1
     fi
@@ -924,31 +880,17 @@ function qubinode_vm_manager () {
        echo "Please run qubinode-installer -m ansible"
        echo ""
        exit 1
-   elif [ "A${ROLE_PRESENT}" == "A" ]
-   then
-       echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
-       echo "Please run run qubinode-installer -m ansible"
-       echo ""
-       exit 1
+   elif [ "A${ROLE_PRESENT}" ==]
    fi
-
-   # Check for required Qcow image
-   check_for_rhel_qcow_image
 
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
-       if grep dns_teardown_dns "${vars_file}"|grep -q true
-       then
-           sed -i "s/^dns_teardown_dns: true/dns_teardown_dns: false/g" "${vars_file}"
-       fi
+#       if grep dns_teardown_dns "${vars_file}"|grep -q true
+#       then
+#           sed -i "s/^dns_teardown_dns: true/dns_teardown_dns: false/g" "${vars_file}"
+#       fi
        ansible-playbook "${project_dir}/playbooks/deploy-dns-server.yml" || exit $?
-   elif [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
-   then
-       if grep dns_teardown_dns "${vars_file}"|grep -q true
-       then
-           sed -i "s/^dns_teardown_dns: true/dns_teardown_dns: false/g" "${vars_file}"
-       fi
-       ansible-playbook "${project_dir}/playbooks/deploy-dns-server.yml" || exit $?
+       ansible-playbook "${project_dir}/playbooks/idm_server.yml" || exit $?
    elif [ "A${deploy_vm_opt}" == "Adeploy" ]
    then
        if grep vm_teardown "${vars_file}"|grep -q true
@@ -958,10 +900,10 @@ function qubinode_vm_manager () {
        ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" || exit $?
     elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
     then
-        if grep vm_teardown "${vars_file}"|grep -q false
-        then
-            sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
-        fi
+#        if grep vm_teardown "${vars_file}"|grep -q false
+#        then
+#            sed -i "s/^vm_teardown: false/vm_teardown: true/g" "${vars_file}"
+#        fi
         ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true" || exit $?
     elif [ "A${deploy_vm_opt}" == "Askip" ]
     then
@@ -991,16 +933,16 @@ function qubi_dns_manager () {
     fi
 
     # Deploy IDM server
-    if [ "A${option}" == "Aserver" ]
-    then
-        SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
-        #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-        echo "Updating idm_public_ip to $SRV_IP"
-        #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-        sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
-        echo "Configuring DNS server"
-        ansible-playbook "${project_dir}/playbooks/idm_server.yml" || exit $?
-    elif [ "A${option}" == "Arecords" ]
+#    if [ "A${option}" == "Aserver" ]
+#    then
+#        SRV_IP=$(awk -F'=' '/dns01/ {print $2}' "${project_dir}/inventory/hosts"|awk '{print $1}' |sed 's/[[:blank:]]//g')
+#        #sed -i "s/idm_public_ip: \"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+#        echo "Updating idm_public_ip to $SRV_IP"
+#        #sed -i "s/^idm_public_ip:.*\"\"/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+#        sed -i "s/^idm_public_ip:.*/idm_public_ip: "$SRV_IP"/g" "${vars_file}"
+#        echo "Configuring DNS server"
+#        ansible-playbook "${project_dir}/playbooks/idm_server.yml" || exit $?
+    if [ "A${option}" == "Arecords" ]
     then
         ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
     else
@@ -1052,14 +994,14 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":hk:p:d:b:m:mc:" opt;
+while getopts ":hk:p:d:b:m:" opt;
 do
     case $opt in
         h) display_help
            exit 1
            ;;
-        m) check_args;
-           maintenance=$OPTARG;
+        m) check_args
+           maintenance=$OPTARG
            ;;
         k) check_args;
            check=true
@@ -1080,11 +1022,6 @@ do
            check=true
            product=true
            product_opt=$OPTARG
-           ;;
-        c) check_args
-           check=true
-           cluster=true
-           cluster_opt=$OPTARG
            ;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2
@@ -1128,40 +1065,21 @@ else
             rhsm_register
         elif [ "${maintenance}" == "ansible" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #ask_user_input
-            #rhsm_register
             setup_ansible
         elif [ "${maintenance}" == "host" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #rhsm_register
-            #setup_ansible
             setup_kvm_host
         elif [ "${maintenance}" == "deploy_dns" ]
         then
             qubinode_vm_manager deploy_dns
         elif [ "${maintenance}" == "deploy" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #rhsm_register
-            #setup_ansible "${vault_vars_file}"
-            #setup_kvm_host
             qubinode_vm_manager deploy
         elif [ "${maintenance}" == "undeploy" ]
         then
             qubinode_vm_manager undeploy
         elif [ "${maintenance}" == "dns" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #rhsm_register
-            #setup_ansible "${vault_vars_file}"
-            #setup_kvm_host
-            #qubinode_vm_manager deploy
             qubi_dns_manager server
             qubi_dns_manager records
         elif [ "${maintenance}" == "dns" ]

@@ -85,7 +85,7 @@ dns_server_public: ""
 idm_reverse_zone:
   - changeme.in-addr.arpa
 idm_public_ip: ""    # IP address of the IDM server
-idm_hostname: "ocp-idm01"
+idm_hostname: "ocp-dns01"
 idm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms
@@ -181,7 +181,7 @@ search_domains:
 
 # DNS SERVER
 dns_server_vm:
-    dns_name: "ocp-dns01"
+    dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
     dns_memory: 2048
     dns_root_disk_size: 20G
@@ -194,3 +194,9 @@ dns_server_vm:
 # Use to create VM
 os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
 
+# This is for the swygue-redhat-subscription role
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
+
+# This is required ansible-idm role
+idm_admin_password: "{{ idm_admin_pwd }}"
