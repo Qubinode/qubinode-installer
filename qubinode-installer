@@ -55,7 +55,7 @@ function elevate_cmd () {
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
-    if [[ $OPTARG =~ ^-[h/p/u/s]$ ]]
+    if [[ $OPTARG =~ ^-[h/p/u/s/m/c]$ ]]
     then
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
@@ -269,12 +269,17 @@ function set_openshift_rhsm_pool_id () {
 
     #TODO: this should be change once we start deploy OKD
     if [ "${maintenance}" == "rhsm" ]
-    then
-        check_for_openshift_subscription
-    else
-        echo "OpenShift Subscription not required"
+      if [ "A${product_opt}" == "Aocp" ]
+      then
+          check_for_openshift_subscription
+      elif [ "A${product_opt}" == "Aokd" ]
+      then
+          echo "OpenShift Subscription not required"
+      else
+        echo "Please pass -c flag for ocp/okd."
+        exit 1
+      fi
     fi
-
 }
 
 # this function checks if the system is registered to RHSM
@@ -593,7 +598,9 @@ function ask_for_vault_values () {
         if [ "A${rhsm_reg_method}" == "AUsername" ];
         then
             echo ""
+            decrypt_ansible_vault "${vault_vars_file}"
             get_rhsm_user_and_pass
+            encrypt_ansible_vault "${vault_vars_file}"
         elif [ "A${rhsm_reg_method}" == "AActivation" ];
         then
             if grep '""' "${vault_vars_file}"|grep -q rhsm_username
@@ -602,7 +609,9 @@ function ask_for_vault_values () {
                 echo "We still need to get your RHSM username and password."
                 echo "We need this to pull containers for OpenShift Platform Installation."
                 echo ""
+                decrypt_ansible_vault "${vault_vars_file}"
                 get_rhsm_user_and_pass
+                encrypt_ansible_vault "${vault_vars_file}"
                 echo ""
             fi
 
@@ -625,7 +634,9 @@ function ask_for_vault_values () {
     elif grep '""' "${vaultfile}"|grep -q rhsm_username
     then
         echo ""
+        decrypt_ansible_vault "${vault_vars_file}"
         get_rhsm_user_and_pass
+        encrypt_ansible_vault "${vault_vars_file}"
     else
         echo "Credentials for RHSM is already collected."
     fi
@@ -633,6 +644,8 @@ function ask_for_vault_values () {
     # encrypt ansible vault
     encrypt_ansible_vault "${vaultfile}"
 }
+
+
 
 function prereqs () {
     # setup required paths
@@ -999,7 +1012,7 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":hk:p:d:b:m:" opt;
+while getopts ":hk:p:d:b:m:c:" opt;
 do
     case $opt in
         h) display_help
@@ -1012,6 +1025,11 @@ do
            check=true
            kvm_host=true
            kvm_host_opt=$OPTARG
+           ;;
+        c) check_args;
+           check=true
+           cluster=true
+           cluster_opt=$OPTARG
            ;;
         d) check_args;
            check=true
