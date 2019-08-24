@@ -23,7 +23,7 @@ Product Options:
                 ansible      - setup ansible
                 host         - setup KVM host
                 deploy_dns   - deploy VM for dns server, supports -d
-                deploy_nodes - deploy all VMS for the ocp/okd install, supports -d
+                deploy_nodes - deploy all VMS to install ocp/okd, supports -d
                 records      - populate DNS with with forward, reverse and the wildcard domain
 
 Examples: 

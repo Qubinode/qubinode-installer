@@ -1,5 +1,6 @@
 ---
 # all non sensitive variables are defined here
+product: ocp
 update_inventory: true
 inventory_dir: ""
 project_dir: ""
