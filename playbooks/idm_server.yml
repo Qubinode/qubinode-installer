@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: dns
   remote_user: admin
   become: true
   vars_files:
@@ -7,32 +7,21 @@
     - vars/vault.yml
 
   tasks:
-    - name: check if DNS server is reachable
-      command: ping -c1 "{{ dns_server_vm.dns_name }}"
-      register: dns_server_ping
-      ignore_errors: yes
-
     - name: ensure system is registered to Red Hat
       vars:
         rhsm_repos: "{{ idm_repos }}"
       include_role:
         name: swygue-redhat-subscription
-      delegate_to: ocp-dns01
-      when: dns_server_ping.rc == 0
 
     - name: update system
       yum:
         name: '*'
         state: latest
-      delegate_to: ocp-dns01
-      when: dns_server_ping.rc == 0
 
     - name: Install IDM server
       include_role:
         name: ansible-idm
       tags: [install,preinstall,installer,firewall,always,result]
-      delegate_to: ocp-dns01
-      when: dns_server_ping.rc == 0
 
     - name: post IDM server install check if IDM is answering
       vars:
@@ -45,19 +34,15 @@
       register: idm_is_installed
       ignore_errors: yes
       tags: [always]
-      delegate_to: ocp-dns01
-      when: dns_server_ping.rc == 0
 
     - set_fact:
         idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
       tags: [always]
-      when: dns_server_ping.rc == 0
 
     - fail:
         msg: |
           The IDM server does not appear to have been installed.
           Please re-run qubinode-installer or undeploy and start again.
-      when: dns_server_ping.rc == 0 and not idm_is_installed|bool
 
     - set_fact:
         etc_resolv_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
@@ -69,3 +54,14 @@
         regexp: "^nameserver {{ idm_public_ip }}"
         insertafter: '^domain'
         state: "{{  etc_resolv_status }}"
+      delegate_to: localhost
+
+    - name: REMOVE|ensure host is removed from inventory
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      when: vm_teardown|bool
+      delegate_to: localhost

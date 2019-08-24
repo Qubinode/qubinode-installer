@@ -47,11 +47,4 @@
       with_items:
         - "{{ groups['dns'] }}"
 
-    - name: REMOVE|ensure host is removed from inventory
-      vars:
-        vm_name: "{{ dns_server_vm.dns_name }}"
-      lineinfile:
-        path: "{{ inventory_file }}"
-        regexp: "^{{ vm_name }}"
-        state: absent
-      when: vm_teardown|bool
+
