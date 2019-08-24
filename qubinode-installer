@@ -55,7 +55,7 @@ function elevate_cmd () {
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
-    if [[ $OPTARG =~ ^-[h/p/u/s/m/c]$ ]]
+    if [[ $OPTARG =~ ^-[p/c/h/d/a/m]$ ]]
     then
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
@@ -67,6 +67,14 @@ function validate_product_by_user () {
     if [ "A${product_opt}" == "Aocp" ]
     then
         product="${product_opt}"
+        if grep '""' "${varsfile}"|grep -q openshift_pool_id
+        then
+            echo "The OpenShift Pool ID is required."
+            echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
+            echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+            echo "with the pool ID"
+            exit 1
+        fi
     elif [ "A${product_opt}" == "Aokd" ]
     then
         product="${product_opt}"
