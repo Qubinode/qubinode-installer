@@ -1,38 +1,35 @@
 Basic usage: qubinode-installer [options]
 
 Main Options:
-    -p      Deploy one of the following container platforms:
-                okd - deploy upstream openshift
+    -p      Required option, deploys one of the following container platforms:
+                okd - deploy upstream OpenShift
                 ocp - deploy Red Hat OpenShift Platform <subscription required>
 
-            Example: qubinode-installer -c ocp
-
-    -m      Run project maintenance tasks with one of the following options:
-                clean      - remove all files created in the project folder
-                setup      - setup playbooks vars and user sudoers
-                rhsm       - register system to Red Hat
-                ansible    - setup ansible
-                host       - setup KVM host
-                deploy_dns - deploy VM for dns server
-                deploy     - deploy VMS
-                undeploy   - undeploy VMS
-                dns        - deploy DNS server
-                records    - populate DNS with with forward, reverse and the wildcard domain
-
-            Example: qubinode-installer -m clean
+    -c      Cluster operations:
+                cluster - runs a health check of the cluster
+                diag    - runs a adv health check
 
     -h      Display this help menu
 
-Optional sub arguments for -p :
+Product Options:
+    -d      Set the delete option for supported product maintenance tasks
 
-    -b      Run health checks, options are:
-                cluster - runs a helath check of the cluster
-                diag    - runs a adv health check
+    -a      Deploy the entire platform which includes all the -m steps
 
-    -k      Uninstall the OpenShift cluster
+    -m      Run product maintenance tasks with one of the following options:
+                clean           - remove all files created in the project folder
+                setup           - setup playbooks vars and user sudoers
+                rhsm            - register system to Red Hat
+                ansible         - setup ansible
+                host            - setup KVM host
+                deploy_dns      - deploy VM for dns server, supports -d
+                deploy_cluster  - deploy VMS, supports -d
+                records         - populate DNS with with forward, reverse and the wildcard domain
 
-            Example running a health check on the cluster:
+Examples: 
 
-               quibinode-installer -c ocp -b cluster
+Delete the DNS server: qubinode-installer -p ocp -m deploy_dns -d
+Deploy OCP cluster: qubinode-installer -p ocp -m deploy_cluster
+Deploy OCP: qubinode-installer -p ocp -a
 
-Optional sub arguments for -m :
+
