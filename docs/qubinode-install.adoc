@@ -28,8 +28,10 @@ Product Options:
 
 Examples: 
 
-Delete the DNS server: qubinode-installer -p ocp -m deploy_dns -d
-Deploy OCP cluster: qubinode-installer -p ocp -m deploy_cluster
-Deploy OCP: qubinode-installer -p ocp -a
+  * Delete the DNS server: qubinode-installer -p ocp -m deploy_dns -d
+
+  * Deploy OCP cluster: qubinode-installer -p ocp -m deploy_cluster
+
+  * Deploy OCP: qubinode-installer -p ocp -a
 
 
