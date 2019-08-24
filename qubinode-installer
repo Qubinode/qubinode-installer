@@ -955,7 +955,7 @@ function qubinode_vm_manager () {
            echo "Deploy DNS VM"
            ansible-playbook "${DNS_PLAY}" || exit $?
        fi
-   elif [ "A${deploy_vm_opt}" == "Adeploy" ]
+   elif [ "A${deploy_vm_opt}" == "Adeploy_nodes" ]
    then
        if [ "A${teardown}" == "Atrue" ]
        then
@@ -1061,7 +1061,7 @@ function default_install () {
     rhsm_register
     setup_ansible "${vault_vars_file}"
     setup_kvm_host
-    qubinode_vm_manager deploy
+    qubinode_vm_manager deploy_nodes
     qubi_dns_manager server
     qubi_dns_manager records
     qubinode_deploy_openshift
@@ -1160,24 +1160,14 @@ else
         then
             qubinode_vm_manager deploy_dns
             qubi_dns_manager server
-        elif [ "${maintenance}" == "deploy" ]
+        elif [ "${maintenance}" == "deploy_nodes" ]
         then
-            qubinode_vm_manager deploy
+            qubinode_vm_manager deploy_nodes
         elif [ "${maintenance}" == "undeploy" ]
         then
             qubinode_vm_manager undeploy
         elif [ "${maintenance}" == "dns" ]
         then
-            qubi_dns_manager server
-            qubi_dns_manager records
-        elif [ "${maintenance}" == "dns" ]
-        then
-            setup_sudoers
-            setup_variables
-            rhsm_register
-            setup_ansible "${vault_vars_file}"
-            setup_kvm_host
-            qubinode_vm_manager deploy
             qubi_dns_manager server
             qubi_dns_manager records
         else
