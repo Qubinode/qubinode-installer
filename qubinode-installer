@@ -67,14 +67,19 @@ function validate_product_by_user () {
     prereqs
     if [ "A${product_opt}" == "Aocp" ]
     then
-        product="${product_opt}"
-        if grep '""' "${vars_file}"|grep -q openshift_pool_id
+        if [ "A${maintenance}" != "Arhsm" ]
         then
-            echo "The OpenShift Pool ID is required."
-            echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
-            echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
-            echo "with the pool ID"
-            exit 1
+            product="${product_opt}"
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "The OpenShift Pool ID is required."
+                echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
+                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+                echo "with the pool ID"
+                exit 1
+            else
+                product="${product_opt}"
+            fi
         fi
     elif [ "A${product_opt}" == "Aokd" ]
     then
