@@ -64,16 +64,16 @@ function check_args () {
 
 # validate the product the user wants to install
 function validate_product_by_user () {
-    for item in $(echo "$VALID_PRODUCTS")
-    do
-        if [ "A${product}" == "A${item}" ];
-        then
-            product="${product}"
-            break
-        else
-            product="${DEFAULT_PRODUCT}"
-        fi
-    done
+    if [ "A${product_opt}" == "Aocp" ]
+    then
+        product="${product_opt}"
+    elif [ "A${product_opt}" == "Aokd" ]
+    then
+        product="${product_opt}"
+    else
+      echo "Please pass -p flag for ocp/okd."
+      exit 1
+    fi
 }
 
 # just shows the below error message
@@ -935,15 +935,28 @@ function qubinode_vm_manager () {
    # Check for required Qcow image
    check_for_rhel_qcow_image
 
+   DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
+   PRODUCT_VM_PLAY="${project_dir}/playbooks/deploy_vms.yml"
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
-       ansible-playbook "${project_dir}/playbooks/deploy-dns-server.yml" || exit $?
+       if [ "A${teardown}" == "Atrue" ]
+       then
+           echo "Remove DNS VM"
+           ansible-playbook "${DNS_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+       else
+           echo "Deploy DNS VM"
+           ansible-playbook "${DNS_PLAY}" || exit $?
+       fi
    elif [ "A${deploy_vm_opt}" == "Adeploy" ]
    then
-       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" || exit $?
-   elif [ "A${deploy_vm_opt}" == "Aundeploy" ]
-   then
-       ansible-playbook "${project_dir}/playbooks/deploy_vms.yml" --extra-vars "vm_teardown=true" || exit $?
+       if [ "A${teardown}" == "Atrue" ]
+       then
+           echo "Remove ${product} VMs"
+           ansible-playbook "${PRODUCT_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+       else
+           echo "Deploy ${product} VMs"
+           ansible-playbook "${PRODUCT_VM_PLAY}" || exit $?
+       fi
    elif [ "A${deploy_vm_opt}" == "Askip" ]
    then
        echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml" || exit $?
@@ -953,8 +966,8 @@ function qubinode_vm_manager () {
 }
 
 function display_idmsrv_unavailable () {
-        echo "The IdM server variable is not set."
-        echo "This is the ip address of the IdM server."
+        echo "Eithr the IdM server variable idm_public_ip is not set."
+        echo "Or the IdM server is not reachable."
         echo "Ensire the IdM server is running, update the variable and try again."
         exit 1
 }
@@ -978,25 +991,33 @@ function qubi_dns_manager () {
         exit 1
     fi
 
-    # Make sure IdM server is available
-    IDM_SRV_IP=$(awk -F: '/idm_public_ip/ {print $2}' playbooks/vars/all.yml |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-    if [ "A${IDM_SRV_IP}" == "A" ]
-    then
-        display_idmsrv_unavailable
-    elif [ "A${IDM_SRV_IP}" != "A" ]
-    then
-        if ping -c "${IDM_SRV_IP}" &> /dev/null
-        then
-            echo "IdM server is appears to be up"
-        else
-            display_idmsrv_unavailable
-        fi
-    fi
-    
+   
     # Deploy IDM server
+    IDM_PLAY="${project_dir}/playbooks/idm_server.yml"
     if [ "A${option}" == "Aserver" ]
     then
-        ansible-playbook "${project_dir}/playbooks/idm_server.yml" || exit $?
+        if [ "A${teardown}" == "Atrue" ]
+        then
+            echo "Removing IdM server"
+            ansible-playbook "${IDM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+        else
+            # Make sure IdM server is available
+            IDM_SRV_IP=$(awk -F: '/idm_public_ip/ {print $2}' playbooks/vars/all.yml |        grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+            if [ "A${IDM_SRV_IP}" == "A" ]
+            then
+                display_idmsrv_unavailable
+            elif [ "A${IDM_SRV_IP}" != "A" ]
+            then
+                if ping -c "${IDM_SRV_IP}" &> /dev/null
+                then
+                    echo "IdM server is appears to be up"
+                else
+                    display_idmsrv_unavailable
+                fi
+            fi
+            echo "Install IdM server"
+            ansible-playbook "${IDM_PLAY}" || exit $?
+        fi
     fi
 
     # Add DNS records to IdM
@@ -1052,39 +1073,30 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":hk:p:d:b:m:c:" opt;
+while getopts ":c:dh:m:p:a:" opt;
 do
     case $opt in
+        a) check_args;
+           full_deploy=true
+           ;;
+        c) check_args
+           check=true
+           cluster=true
+           cluster_opt=$OPTARG
+           ;;
+        d) check_args;
+           teardown=true
+           ;;
         h) display_help
            exit 1
            ;;
         m) check_args;
            maintenance=$OPTARG;
            ;;
-        k) check_args;
-           check=true
-           kvm_host=true
-           kvm_host_opt=$OPTARG
-           ;;
-        d) check_args;
-           check=true
-           deploy_vm_opt=$OPTARG
-           deploy_vm="true"
-           ;;
-        b) check_args;
-           check=true
-           dns=true
-           dns_opt=$OPTARG
-           ;;
         p) check_args
            check=true
            product=true
            product_opt=$OPTARG
-           ;;
-        c) check_args
-           check=true
-           cluster=true
-           cluster_opt=$OPTARG
            ;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2
@@ -1117,6 +1129,8 @@ if (( $OPTIND == 1 )); then
 else
     if [ "A${maintenance}" != "A" ]
     then
+        # Check for product
+        validate_product_by_user 
         if [ "${maintenance}" == "clean" ]
         then
             qubinode_project_cleanup
@@ -1128,17 +1142,9 @@ else
             rhsm_register
         elif [ "${maintenance}" == "ansible" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #ask_user_input
-            #rhsm_register
             setup_ansible
         elif [ "${maintenance}" == "host" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #rhsm_register
-            #setup_ansible
             setup_kvm_host
         elif [ "${maintenance}" == "deploy_dns" ]
         then
@@ -1146,23 +1152,12 @@ else
             qubi_dns_manager server
         elif [ "${maintenance}" == "deploy" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #rhsm_register
-            #setup_ansible "${vault_vars_file}"
-            #setup_kvm_host
             qubinode_vm_manager deploy
         elif [ "${maintenance}" == "undeploy" ]
         then
             qubinode_vm_manager undeploy
         elif [ "${maintenance}" == "dns" ]
         then
-            #setup_sudoers
-            #setup_variables
-            #rhsm_register
-            #setup_ansible "${vault_vars_file}"
-            #setup_kvm_host
-            #qubinode_vm_manager deploy
             qubi_dns_manager server
             qubi_dns_manager records
         elif [ "${maintenance}" == "dns" ]
