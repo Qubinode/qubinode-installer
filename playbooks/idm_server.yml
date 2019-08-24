@@ -45,11 +45,14 @@
           Please re-run qubinode-installer or undeploy and start again.
       when: not idm_is_installed|bool
 
+    - set_fact:
+        etc_resolv_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
+
     - name: update KVM host /etc/resolv.conf
       lineinfile:
         dest: /etc/resolv.conf
         line: "nameserver {{ idm_public_ip }}"
         regexp: "^nameserver {{ idm_public_ip }}"
         insertafter: '^domain'
-        state: present
+        state: "{{  etc_resolv_status }}"
       delegate_to: localhost
