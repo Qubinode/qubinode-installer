@@ -17,14 +17,14 @@ Product Options:
     -a      Deploy the entire platform which includes all the -m steps
 
     -m      Run product maintenance tasks with one of the following options:
-                clean           - remove all files created in the project folder
-                setup           - setup playbooks vars and user sudoers
-                rhsm            - register system to Red Hat
-                ansible         - setup ansible
-                host            - setup KVM host
-                deploy_dns      - deploy VM for dns server, supports -d
-                deploy_cluster  - deploy VMS, supports -d
-                records         - populate DNS with with forward, reverse and the wildcard domain
+                clean        - remove all files created in the project folder
+                setup        - setup playbooks vars and user sudoers
+                rhsm         - register system to Red Hat
+                ansible      - setup ansible
+                host         - setup KVM host
+                deploy_dns   - deploy VM for dns server, supports -d
+                deploy_nodes - deploy all VMS for the ocp/okd install, supports -d
+                records      - populate DNS with with forward, reverse and the wildcard domain
 
 Examples: 
 
