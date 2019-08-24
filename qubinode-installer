@@ -68,7 +68,7 @@ function validate_product_by_user () {
     if [ "A${product_opt}" == "Aocp" ]
     then
         product="${product_opt}"
-        if grep '""' "${varsfile}"|grep -q openshift_pool_id
+        if grep '""' "${vars_file}"|grep -q openshift_pool_id
         then
             echo "The OpenShift Pool ID is required."
             echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
