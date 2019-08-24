@@ -966,6 +966,9 @@ function qubinode_vm_manager () {
 }
 
 function display_idmsrv_unavailable () {
+        echo ""
+        echo ""
+        echo ""
         echo "Eithr the IdM server variable idm_public_ip is not set."
         echo "Or the IdM server is not reachable."
         echo "Ensire the IdM server is running, update the variable and try again."
@@ -1008,10 +1011,11 @@ function qubi_dns_manager () {
                 display_idmsrv_unavailable
             elif [ "A${IDM_SRV_IP}" != "A" ]
             then
-                if ping -c "${IDM_SRV_IP}" &> /dev/null
+                if ping -c1 "${IDM_SRV_IP}" &> /dev/null
                 then
                     echo "IdM server is appears to be up"
                 else
+                    echo "ping -c ${IDM_SRV_IP} FAILED"
                     display_idmsrv_unavailable
                 fi
             fi
@@ -1024,8 +1028,6 @@ function qubi_dns_manager () {
     if [ "A${option}" == "Arecords" ]
     then
         ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
-    else
-       display_help
     fi
 }
 
