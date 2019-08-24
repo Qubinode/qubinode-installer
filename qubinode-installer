@@ -270,10 +270,10 @@ function set_openshift_rhsm_pool_id () {
     #TODO: this should be change once we start deploy OKD
     if [ "${maintenance}" == "rhsm" ]
     then
-      if [ "A${cluster_opt}" == "Aocp" ]
+      if [ "A${product_opt}" == "Aocp" ]
       then
           check_for_openshift_subscription
-      elif [ "A${cluster_opt}" == "Aokd" ]
+      elif [ "A${product_opt}" == "Aokd" ]
       then
           echo "OpenShift Subscription not required"
       else
