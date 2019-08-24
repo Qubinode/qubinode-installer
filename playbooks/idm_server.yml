@@ -23,6 +23,13 @@
         name: ansible-idm
       tags: [install,preinstall,installer,firewall,always,result]
 
+    - name: ensure firewalld rules are loaded
+      command: systemctl restart firewalld
+      args:
+        warn: no
+      changed_when: False
+      failed_when: False
+      
     - name: post IDM server install check if IDM is answering
       vars:
         vm_name: "{{ dns_server_vm.dns_name }}"
