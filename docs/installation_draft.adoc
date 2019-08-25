@@ -118,48 +118,15 @@ If your user is already setup for sudo, you will be prompted for the users passw
 . Collects your RHSM credentials. This is used to register RHEL to the Red Hat Customer Portal and also OpenShift if you have an OpenShift subscription.
   - Prompts you to choose between using a Activation Key or Username and Password. If doing an OpenShift install your RHSM username and password is required and you will be prompted for it if you choose option *(1)*. Unless you understand activation keys, the best option is *(2)*.
 
-. Checks that the RHEL qcow2 image is in the current directory and copies it to your libvirt images folder which defaults to /var/lib/libvirt/images.
+==== Register the system to Red Hat
+The qubinode-installer leverage Red Hat Enterprise Linux as the foundation. In order to get updates and install additional software all RHEL systems must be registered to the Red Hat Customer Portal (RHSM).
 
-
-. Register system to Red Hat.
- *For  Red Hat OpenShift use the  ocp flag*
- 
+Execute the RHSM stage: 
 ```
   ./qubinode-installer -m rhsm -p ocp
   
 ```
 
-*For the Origin Community Distribution of Kubernetes use the  okd flag*
+- Registers your system to RHSM.
+- Gets the pool id if installing OpenShift.
 
-```
-  ./qubinode-installer -m rhsm -p okd
-  
-```
-
-. Configure system to use ansible
-
-```
-  ./qubinode-installer -m ansible
- 
-```
-
-. Setup your KVM host
-
-```
-  ./qubinode-installer -m host
-  
-```
-
-. Deploy DNS Server
-
-```
-  ./qubinode-installer -m host
-  
-```
-
-. Configure DNS Server
-
-```
-  ./qubinode-installer -m dns
-
-```
