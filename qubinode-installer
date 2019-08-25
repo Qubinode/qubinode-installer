@@ -950,7 +950,7 @@ function qubinode_vm_manager () {
    check_for_rhel_qcow_image
 
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
-   NODES_PLAY="${project_dir}/playbooks/deploy_vms.yml"
+   NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
