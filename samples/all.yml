@@ -50,7 +50,7 @@ instances:
     vm_memory: 16384
     vm_root_disk_size: 20G
     vm_teardown: false
-    inventory_group: nodes
+    inventory_group: infra
     extra_storage:
       - size: 60G
         enable: true
