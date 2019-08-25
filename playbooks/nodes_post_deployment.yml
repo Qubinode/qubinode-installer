@@ -107,7 +107,7 @@
 
     - name: install all required packages
       vars:
-        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,openshift-ansible,docker-1.13.1"
+        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,docker-1.13.1"
       yum:
         name: "{{ pkgs }}"
 
