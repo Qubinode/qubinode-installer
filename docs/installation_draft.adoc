@@ -130,3 +130,16 @@ Execute the RHSM stage:
 - Registers your system to RHSM.
 - Gets the pool id if installing OpenShift.
 
+==== Setup Ansible Engine
+The qubinode-installer leverages ansible automation as do the OCP/OKD's own installer.
+
+Execute the Ansible stage: 
+```
+  ./qubinode-installer -m ansible -p ocp
+  
+```
+
+- Installs all Ansible dependencies.
+- Ensure the support ansible repository is enabled.
+- Generates an ansible vault file *~/.vaultkey* and encrypts the playbooks/vars/vault.yml file.
+- Downloads all the roles specified in playbooks/requirements.yml
