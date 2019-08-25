@@ -950,7 +950,8 @@ function qubinode_vm_manager () {
    check_for_rhel_qcow_image
 
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
-   PRODUCT_VM_PLAY="${project_dir}/playbooks/deploy_vms.yml"
+   NODES_PLAY="${project_dir}/playbooks/deploy_vms.yml"
+   NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
        if [ "A${teardown}" == "Atrue" ]
@@ -966,10 +967,11 @@ function qubinode_vm_manager () {
        if [ "A${teardown}" == "Atrue" ]
        then
            echo "Remove ${product} VMs"
-           ansible-playbook "${PRODUCT_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+           ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
        else
            echo "Deploy ${product} VMs"
-           ansible-playbook "${PRODUCT_VM_PLAY}" || exit $?
+           ansible-playbook "${NODES_PLAY}" || exit $?
+           ansible-playbook "${NODES_POST_PLAY}" || exit $?
        fi
    elif [ "A${deploy_vm_opt}" == "Askip" ]
    then
