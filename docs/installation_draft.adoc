@@ -1,35 +1,35 @@
 // NOTE: this is a draft installation doc
-Installing The Qubinode
-=======================
-Author's Name <rheron@rodhouse.org>
-v0.0, 2019-08
+= Installing The Qubinode
+Rodrique Heron <rheron@rodhouse.org>
+v0.0, 2019-08-25
 :imagesdir: images
 :toc: preamble
+:homepage: https://github.com/tosin2013/qubinode-installer
 
 This guide should get you up and running with qubinode.
 
 :numbered!:
 [abstract]
-Introduction
-------------
+= Introduction
+
 
 The qubinode is a prescriptive installation of either Red Hat OpenShift Platform or The Origin Community Distribution of Kubernetes.
 
 :numbered:
 
-Installing Red Hat Enterprise Linux
------------------------------------
+== Installing Red Hat Enterprise Linux
+
 
 * Get your developer subscription of RHEL
 * Download the RHEL 7.6 iso
 * From the software selection choose: Virtualization Host > Virtualization Platform
-* If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configrue paritioning" to have control over this.
+* If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
 * Configure NETWORK & HOSTNAME
 * Begin installation
-* set root password and create admin user with password-less sudo priviledge
+* set root password and create admin user with sudo privilege
 
-Get the subscription pool for OpenShift
----------------------------------------
+== Get the subscription pool for OpenShift
+This step is not required for OKD installation.
 
 To get pool-id
            
@@ -40,24 +40,26 @@ To get pool-id
 . From here you should see *Pool IDs*, copy the master pool-id
 
 
-Prepare the system
--------------------
+== Prepare the system
+One RHEL has been installed on your system, ensure the system has internet connection. The qubinode-installer expects that your already have DHCP running in your environment for the purpose of supplying IP addresses for the VM nodes.
 
+[NOTE]
+The current working branch for the qubinode-installer is the developer branch.
 
 . Login remotely to the Qubinode box as  as the qubinode admin user
 
 ```
-ssh admin@ip-address
+ssh <your-user>@<your-system-ip-address>
 ```
 
 . Download the qubinode-installer project
 
 ```
-wget https://github.com/tosin2013/openshift-home-lab/archive/qubinode_installer_cleanup.zip
-unzip qubinode_installer_cleanup.zip
-rm -f qubinode_installer_cleanup.zip
-mv qubinode-installer-qubinode_installer_cleanup openshift-home-lab
-cd openshift-home-lab
+wget https://github.com/tosin2013/qubinode-installer/archive/developer.zip
+unzip developer.zip
+mv qubinode-installer-developer qubinode-installer
+rm -f developer.zip
+cd qubinode-installer/
 ```
 
 . Download the qcow image
@@ -68,15 +70,26 @@ cd openshift-home-lab
 . wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
 
 :numbered:
-Installer maintenance mode
---------------------------
 
-. Ensure that the admin user for the qubinode is setup for password less sudo access
+== Installing the container platform
+
+The installer supports installing either Red Hat OpenShift (OCP) or The Origin Community Distribution of Kubernetes (OKD).
+
+Executing the qubinode-installer without any arguments will prompt to inform you about the default installation choice and give you the option to continue or to display the help menu.
+
+[NOTE]
+The continue with the default installation has not been implemented yet.
+
+The installer accepts arguments to either to change the behavior of the installation. The *-p* argument is always required. The options for *-p* are: *ocp* for OpenShift or *okd* for The Origin Community.. .
+
+=== Installing OpenShift in stages
+
+In this example we will walk through each stage of the installer to get OpenShift installed.
 
 . Run setup to satisfy all perquisites*
 
 ```
-  ./qubinode-installer -m setup
+ ./qubinode-installer -p ocp -m setup
    
 ```
 

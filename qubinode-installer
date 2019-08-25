@@ -67,7 +67,7 @@ function validate_product_by_user () {
     prereqs
     if [ "A${product_opt}" == "Aocp" ]
     then
-        if [ "A${maintenance}" != "Arhsm" ]
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ]
         then
             product="${product_opt}"
             if grep '""' "${vars_file}"|grep -q openshift_pool_id
@@ -726,44 +726,47 @@ function setup_variables () {
         cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
     fi
 
+    echo ""
+    echo "Populating ${vars_file}"
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
     then
-        echo "${vars_file} inventory_dir variable"
+        echo "Adding inventory_dir variable"
         sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
 
     # Set KVM project dir
     if grep '""' "${vars_file}"|grep -q project_dir
     then
-        echo "${vars_file} project_dir variable"
+        echo "Adding project_dir variable"
         sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
     fi
 
     # Set KVM host ip info
     if grep '""' "${vars_file}"|grep -q kvm_host_ip
     then
-        echo "${vars_file} kvm_host_ip variable"
+        echo "Adding kvm_host_ip variable"
         sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
     fi
 
     if grep '""' "${vars_file}"|grep -q kvm_host_gw
     then
-        echo "${vars_file} kvm_host_gw variable"
+        echo "Adding kvm_host_gw variable"
         sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
     fi
 
     if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
     then
-        echo "${vars_file} kvm_host_mask_prefix variable"
+        echo "Adding kvm_host_mask_prefix variable"
         sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
     fi
 
     if grep '""' "${vars_file}"|grep -q kvm_host_interface
     then
-        echo "${vars_file} kvm_host_interface variable"
+        echo "Adding kvm_host_interface variable"
         sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
     fi
+    echo ""
 }
 
 function ask_user_input () {
