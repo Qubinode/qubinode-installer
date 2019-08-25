@@ -143,3 +143,17 @@ Execute the Ansible stage:
 - Ensure the support ansible repository is enabled.
 - Generates an ansible vault file *~/.vaultkey* and encrypts the playbooks/vars/vault.yml file.
 - Downloads all the roles specified in playbooks/requirements.yml
+
+==== Setup your system as a KVM host
+The qubinode-installer leverages linux virtualization hypervisor KVM and the Libvirt management tools. This stage configures your system to function as a KVM host.
+
+[NOTE]
+In our setup we leverage a 1TB NVME for the storage of the VMs. This is highly recommend and the installer by default expects to setup /var/lib/libvirt/images on a dedicated storage device.
+
+Execute the KVM host stage: 
+```
+  ./qubinode-installer -m host -p ocp
+  
+```
+- Ensure the system is registered to RHSM and installs all required packages
+- Creates a 
