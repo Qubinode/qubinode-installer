@@ -1,28 +1,160 @@
 - name: vm post deployment
-  hosts: localhost
+  hosts: qbnodes
   become: yes
-  gather_facts: no
+  gather_facts: yes
   vars_files:
     - vars/all.yml
     - vars/vault.yml
 
   tasks:
-    - name: include update inventory
-      include_tasks: vms_inventory.yml
-      loop: "{{ instances }}"
-      loop_control:
-        loop_var: outer_item
-        label: outer_item.name
+    - name: Generate IPA Session Cookie
+      vars:
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/login_password"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Accept: "text/plain"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
+      register: ipa_session
+      delegate_to: localhost
 
-    - name: run subscription role
+    - name: build a list of all groups
+      set_fact:
+         all_nodes: "{{ groups['masters'] }} + groups['nodes'] }} + groups['infra'] }} + groups['lbs'] }}"
+
+    - name: Create A/PTR Records
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ hostvars[item].inventory_hostname }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: true
+        body_format: json
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+    - name: declare which RHSM repos to enable for product {{ product }}
+      set_fact:
+        product_repos: "{{ ocp_repos if product == 'ocp' else okd_repos }}"
+
+    - set_fact:
+        gluster_srv_repo: []
+      when: 
+        - product == 'ocp'
+        - glusterfs
+
+    - set_fact:
+        gluster_srv_repo: "{{ gluster_server_repo }}"
+      when: 
+        - product == 'ocp'
+        - glusterfs
+
+    - name: add gluster server repo to list of RHSM repos
+      set_fact:
+        rhsm_repos_glustersrv: "{{ product_repos + [ gluster_srv_repo ] }}"
+      when: 
+        - product == 'ocp'
+        - glusterfs
+
+
+    - name: register to RHSM and enable gluster server repos on nodes that need it
+      vars: 
+        - rhsm_repos: "{{ rhsm_repos_glustersrv }}"
       include_role:
         name: swygue-redhat-subscription
+      when:
+        - groups['infra']
+        - groups['nodes']
+        - groups['masters']
+        - glusterfs
 
-    - name: install packages
+    - name: register to RHSM nodes without gluster server
+      vars: 
+        - rhsm_repos: "{{ product_repos }}"
+      include_role:
+        name: swygue-redhat-subscription
+      when:
+        - groups['lbs']
+        - glusterfs
+    
+    - name: register all systems to RHSM when not using gluster storage
+      vars: 
+        - rhsm_repos: "{{ product_repos }}"
+      include_role:
+        name: swygue-redhat-subscription
+      when: not glusterfs|bool
+
+    - name: update system
+      yum:
+        name: '*'
+        state: latest
+
+    - name: install all required packages
       vars:
         - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,openshift-ansible,docker-1.13.1"
       yum:
         name: "{{ pkgs }}"
+
+    - name: install glusterfs-fuse when using gluster storage
+      yum:
+        name: glusterfs-fuse
+
+    - meta: end_play
+
+#########################
+# MASTERS, NODES, INFRA #
+#########################
+#- name: vm post deployment
+#  hosts: masters:nodes:infra
+#  become: yes
+#  gather_facts: yes
+#  vars_files:
+#    - vars/all.yml
+#    - vars/vault.yml
+#
+#  tasks:
+    - set_fact:
+        rhsm_repos: []
+      when: product == 'ocp'
+
+    - set_fact:
+        gluster: "{{ gluster_server_repo }}"
+      when: product == 'ocp'
+
+    - name: declare which RHSM repos to enable for product {{ product }}
+      set_fact:
+        repos: "{{ ocp_repos if product == 'ocp' else okd_repos }}"
+      when: product == 'ocp'
+
+    - name: add gluster repo to list of RHSM repos
+      set_fact:
+        rhsm_repos: "{{ repos + [ gluster ] }}"
+      when: product == 'ocp'
+
+    - name: run subscription role
+      include_role:
+        name: swygue-redhat-subscription
+      when:
+        - groups['infra']
+        - groups['nodes']
+        - groups['masters']
+        - glusterfs
 
     - name: create docker-storage-setup file
       copy:
@@ -31,47 +163,28 @@
           STORAGE_DRIVER=overlay2
           DEVS=/dev/vdb
           VG=docker-vg
+      when:
+        - groups['infra']
+        - groups['nodes']
+        - groups['masters']
+        - glusterfs
 
     - name: Run  docker-storage-setup
       command: docker-storage-setup
+      when:
+        - groups['infra']
+        - groups['nodes']
+        - groups['masters']
+        - glusterfs
 
-      - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
-        rhsm_repository:
-          name: rh-gluster-3-client-for-rhel-7-server-rpms
-          state: enabled
-        when:
-          - ansible_distribution == "RedHat"
-          - glusterfs
+    - name: install glusterfs-server packages
+      yum:
+        name:
+          - glusterfs-server
+        state: present
+      when:
+        - groups['infra']
+        - groups['nodes']
+        - groups['masters']
+        - glusterfs
 
-      - name: Install glusterfs-fuse
-        yum:
-          name:
-            - glusterfs-fuse
-        when:
-          - ansible_distribution == "RedHat"
-          - glusterfs
-      - name: install glusterfs-server packages
-        yum:
-          name:
-            - glusterfs-server
-          state: present
-        when:
-          - vm_group == 'infra' || vm_group == 'nodes'
-          - glusterfs
-
-- name: setup repos
-  hosts:
-    - masters
-    - nodes
-    - lb
-  become: yes
-  gather_facts: yes
-  vars_files:
-    - vars/all.yml
-    - vars/vault.yml
-
-  tasks:
-    - name: run subscription role
-      include_role:
-        name: swygue-redhat-subscription
-      when: openshift_deployment_type == 'openshift-enterprise'
