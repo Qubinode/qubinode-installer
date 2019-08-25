@@ -92,6 +92,34 @@ In this example we will walk through each stage of the installer to get OpenShif
  ./qubinode-installer -p ocp -m setup
    
 ```
+==== The setup run down
+
+. Setup password-less sudoers
+
+If your user login isn't already setup for sudo, you will be prompted twice for the *root* users password. This is used to setup your user for password-less sudoers. 
+If your user is already setup for sudo, you will be prompted for the users password to setup password-less sudoers.
+
+. Copy the required files from samples to their respective paths.
+  - all.yml > playbooks/vars/all.yml
+  - vault.yml > playbooks/vars/vault.yml
+  - hosts > inventory/hosts
+
+. Collect networking information, the defaults are acceptable for most users.
+  - prompts you for the domain you would like to use
+  - prompts you for upstream DNS server, this is a DNS server that can return results not known the local DNS server deployed by the qubinode-installer.
+  - prompts you for you IP network, aka subnet
+  - your gateway and systems ip address are also collected automatically, this is use to setup your bridge network that will allow incoming traffic to your qubinode
+
+. Takes your current username and use it as the admin user for all VMs to be created. You will be prompted to enter a password for this user. You can use the current password or enter a new one for this purpose. 
+
+. The qubinode-installer deploys Red Hat Identity Management as the DNS server.
+  - Prompts you to enter a password that has to be 8 or more characters long, the user *admin* will be created with this password. You will be able to log into the IdM console here: https://ocp-dns01.<yourdomain>.
+
+. Collects your RHSM credentials. This is used to register RHEL to the Red Hat Customer Portal and also OpenShift if you have an OpenShift subscription.
+  - Prompts you to choose between using a Activation Key or Username and Password. If doing an OpenShift install your RHSM username and password is required and you will be prompted for it if you choose option *(1)*. Unless you understand activation keys, the best option is *(2)*.
+
+. Checks that the RHEL qcow2 image is in the current directory and copies it to your libvirt images folder which defaults to /var/lib/libvirt/images.
+
 
 . Register system to Red Hat.
  *For  Red Hat OpenShift use the  ocp flag*

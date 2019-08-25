@@ -800,7 +800,7 @@ function installer_preflight () {
     setup_user_ssh_key
     setup_variables
     ask_user_input
-    check_for_rhel_qcow_image
+    #check_for_rhel_qcow_image
 
     # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
