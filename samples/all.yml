@@ -90,14 +90,18 @@ ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
+gluster_client_repo: rh-gluster-3-client-for-rhel-7-server-rpms
+gluster_server_repo: rh-gluster-3-for-rhel-7-server-rpms
 rhel_release: 7.6
-rhsm_repos:
+okd_repos: ""
+ocp_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
   - rhel-7-server-supplementary-rpms
   - rhel-7-server-extras-rpms
   - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
+  - "{{ gluster_client_repo }}"
 valid_products: "okd,ocp"
 
  # LVM
