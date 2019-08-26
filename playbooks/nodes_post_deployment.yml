@@ -22,10 +22,6 @@
       register: ipa_session
       delegate_to: localhost
 
-    - name: build a list of all groups
-      set_fact:
-         all_nodes: "{{ groups['masters'] }} + groups['nodes'] }} + groups['infra'] }} + groups['lbs'] }}"
-
     - name: Create A/PTR Records
       uri:
         url: "https://{{ ipa_host }}/ipa/session/json"
@@ -114,47 +110,6 @@
     - name: install glusterfs-fuse when using gluster storage
       yum:
         name: glusterfs-fuse
-
-    - meta: end_play
-
-#########################
-# MASTERS, NODES, INFRA #
-#########################
-#- name: vm post deployment
-#  hosts: masters:nodes:infra
-#  become: yes
-#  gather_facts: yes
-#  vars_files:
-#    - vars/all.yml
-#    - vars/vault.yml
-#
-#  tasks:
-    - set_fact:
-        rhsm_repos: []
-      when: product == 'ocp'
-
-    - set_fact:
-        gluster: "{{ gluster_server_repo }}"
-      when: product == 'ocp'
-
-    - name: declare which RHSM repos to enable for product {{ product }}
-      set_fact:
-        repos: "{{ ocp_repos if product == 'ocp' else okd_repos }}"
-      when: product == 'ocp'
-
-    - name: add gluster repo to list of RHSM repos
-      set_fact:
-        rhsm_repos: "{{ repos + [ gluster ] }}"
-      when: product == 'ocp'
-
-    - name: run subscription role
-      include_role:
-        name: swygue-redhat-subscription
-      when:
-        - groups['infra']
-        - groups['nodes']
-        - groups['masters']
-        - glusterfs
 
     - name: create docker-storage-setup file
       copy:
