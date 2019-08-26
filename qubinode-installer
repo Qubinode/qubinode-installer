@@ -1013,7 +1013,7 @@ function qubi_dns_manager () {
         exit 1
     fi
 
-   
+
     # Deploy IDM server
     IDM_PLAY="${project_dir}/playbooks/idm_server.yml"
     if [ "A${option}" == "Aserver" ]
@@ -1151,7 +1151,7 @@ else
     if [ "A${maintenance}" != "A" ]
     then
         # Check for product
-        validate_product_by_user 
+        validate_product_by_user
         if [ "${maintenance}" == "clean" ]
         then
             qubinode_project_cleanup

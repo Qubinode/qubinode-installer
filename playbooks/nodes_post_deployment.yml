@@ -51,46 +51,46 @@
 
     - set_fact:
         gluster_srv_repo: []
-      when: 
+      when:
         - product == 'ocp'
         - glusterfs
 
     - set_fact:
         gluster_srv_repo: "{{ gluster_server_repo }}"
-      when: 
+      when:
         - product == 'ocp'
         - glusterfs
 
     - name: add gluster server repo to list of RHSM repos
       set_fact:
         rhsm_repos_glustersrv: "{{ product_repos + [ gluster_srv_repo ] }}"
-      when: 
+      when:
         - product == 'ocp'
         - glusterfs
 
 
     - name: register to RHSM and enable gluster server repos on nodes that need it
-      vars: 
+      vars:
         - rhsm_repos: "{{ rhsm_repos_glustersrv }}"
       include_role:
         name: swygue-redhat-subscription
       when:
         - groups['infra']
         - groups['nodes']
-        - groups['masters']
         - glusterfs
 
     - name: register to RHSM nodes without gluster server
-      vars: 
+      vars:
         - rhsm_repos: "{{ product_repos }}"
       include_role:
         name: swygue-redhat-subscription
       when:
         - groups['lbs']
+        - groups['masters']
         - glusterfs
-    
+
     - name: register all systems to RHSM when not using gluster storage
-      vars: 
+      vars:
         - rhsm_repos: "{{ product_repos }}"
       include_role:
         name: swygue-redhat-subscription
@@ -103,7 +103,7 @@
 
     - name: install all required packages
       vars:
-        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,openshift-ansible,docker-1.13.1"
+        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,docker-1.13.1"
       yum:
         name: "{{ pkgs }}"
 
@@ -140,6 +140,4 @@
       when:
         - groups['infra']
         - groups['nodes']
-        - groups['masters']
         - glusterfs
-
