@@ -1,0 +1,32 @@
+---
+- name: declare RHSM repos to use
+  set_fact:
+    product_repos: "{{ ocp_repos }}"
+
+- name: delcare RHSM repos to use when using gluster server mpdes
+  set_fact:
+    product_repos: "{{ ocp_repos_with_glus_server }}"
+  when: glusterfs and (ansible_hostname in groups['infra'] or
+                       ansible_hostname in groups['nodes']) 
+
+- name: declare RHSM repos for gluster client nodes
+  set_fact:
+    product_repos: "{{ ocp_repos_with_glus_client }}"
+  when: glusterfs and (ansible_hostname in groups['masters'] or
+                       ansible_hostname in groups['lbs'])
+
+- name: register nodes to RHSM
+  vars:
+    - rhsm_repos: "{{ product_repos }}"
+  include_role:
+    name: swygue-redhat-subscription
+
+- name: install glusterfs-fuse when using gluster storage
+  yum:
+    name: glusterfs-fuse
+  when: glusterfs
+
+- name: install required node packages
+  yum:
+    name: "{{ ocp_nodes_pkgs }}"
+  register: node_pkgs_install
