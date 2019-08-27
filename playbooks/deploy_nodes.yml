@@ -14,3 +14,16 @@
         loop_var: outer_item
         label: outer_item.name
       when: outer_item.name != 'dns'
+
+    - name: Cleanup hosts file
+      vars:
+        vm_name: "{{ product }}-{{ outer_item.name }}"
+      lineinfile:
+        path: "{{ inventory_dir }}/hosts"
+        state: absent
+        regexp: "({{ vm_name }})"
+      loop: "{{ instances }}"
+      loop_control:
+        loop_var: outer_item
+        label: outer_item.name
+      when: outer_item.name != 'dns'
