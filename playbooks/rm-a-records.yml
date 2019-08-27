@@ -1,0 +1,45 @@
+- name: Generate IPA Session Cookie
+  vars:
+  uri:
+    url: "https://{{ ipa_host }}/ipa/session/login_password"
+    validate_certs: no
+    method: POST
+    status_code: 200
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+      Accept: "text/plain"
+      Referer: "https://{{ ipa_host }}/ipa"
+    body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
+  register: ipa_session
+
+- name: Debug ipa_session
+  debug:
+    var: ipa_session
+    verbosity: 2
+
+- name: Delete A/PTR Records
+  vars:
+    vm_name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
+  uri:
+    url: "https://{{ ipa_host }}/ipa/session/json"
+    validate_certs: no
+    method: POST
+    status_code: 200
+    headers:
+      Cookie: "{{ ipa_session.set_cookie }}"
+      Accept: "application/json"
+      Referer: "https://{{ ipa_host }}/ipa"
+    body:
+      method: dnsrecord_del
+      params:
+      - - "{{ domain }}."
+        - "{{ vm_name }}"
+      - {"del_all":true}
+    body_format: json
+  loop: "{{ range(1, outer_item.qty|int +1)|list }}"
+  loop_control:
+    loop_var: inner_item
+    label: "{{ vm_name }}"
+  when:
+    - outer_item.name != 'dns'
+    - vm_teardown

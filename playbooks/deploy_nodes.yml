@@ -26,4 +26,6 @@
       loop_control:
         loop_var: outer_item
         label: outer_item.name
-      when: outer_item.name != 'dns'
+      when:
+        - outer_item.name != 'dns'
+        - vm_teardown

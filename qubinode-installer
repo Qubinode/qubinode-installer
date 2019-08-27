@@ -955,6 +955,7 @@ function qubinode_vm_manager () {
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
+   REMOVE_NODE_ARECORD="${project_dir}/playbooks/remove-idm-records.yml"
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
        if [ "A${teardown}" == "Atrue" ]
@@ -971,6 +972,7 @@ function qubinode_vm_manager () {
        then
            echo "Remove ${product} VMs"
            ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+           ansible-playbook "${REMOVE_NODE_ARECORD}" --extra-vars "vm_teardown=true" || exit $?
        else
            echo "Deploy ${product} VMs"
            ansible-playbook "${NODES_PLAY}" || exit $?
