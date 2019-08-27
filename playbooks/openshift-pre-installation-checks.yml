@@ -11,7 +11,18 @@
     label: "{{ vm_name }}"
   ignore_errors: no
 
+- name: Check if registry.redhat.io resolves
+  shell: |
+      dig -x registry.redhat.io
+  register: result
+  ignore_errors: no
+
+
 - name: test connectivity to registry.redhat.io
   shell: |
       ping  registry.redhat.io -c 1
-  ignore_errors: no
+  register: result
+  until: ('0% packet loss' in result.stdout)
+  failed_when: ('100.0% packet loss' in result.stdout)
+  retries: 10
+  delay: 3
