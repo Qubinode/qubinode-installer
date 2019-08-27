@@ -45,71 +45,31 @@
         label: "{{ hostvars[item].inventory_hostname }}"
       delegate_to: localhost
 
-    - name: declare which RHSM repos to enable for product {{ product }}
+    - name: declare post install file for {{ product }}
       set_fact:
-        product_repos: "{{ ocp_repos if product == 'ocp' else okd_repos }}"
+        product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp' else 'okd_nodes_postinstall.yml' }}"
 
-    - set_fact:
-        gluster_srv_repo: []
-      when:
-        - product == 'ocp'
-        - glusterfs
-
-    - set_fact:
-        gluster_srv_repo: "{{ gluster_server_repo }}"
-      when:
-        - product == 'ocp'
-        - glusterfs
-
-    - name: add gluster server repo to list of RHSM repos
-      set_fact:
-        rhsm_repos_glustersrv: "{{ product_repos + [ gluster_srv_repo ] }}"
-      when:
-        - product == 'ocp'
-        - glusterfs
-
-
-    - name: register to RHSM and enable gluster server repos on nodes that need it
-      vars:
-        - rhsm_repos: "{{ rhsm_repos_glustersrv }}"
-      include_role:
-        name: swygue-redhat-subscription
-      when:
-        - groups['infra']
-        - groups['nodes']
-        - glusterfs
-
-    - name: register to RHSM nodes without gluster server
-      vars:
-        - rhsm_repos: "{{ product_repos }}"
-      include_role:
-        name: swygue-redhat-subscription
-      when:
-        - groups['lbs']
-        - groups['masters']
-        - glusterfs
-
-    - name: register all systems to RHSM when not using gluster storage
-      vars:
-        - rhsm_repos: "{{ product_repos }}"
-      include_role:
-        name: swygue-redhat-subscription
-      when: not glusterfs|bool
-
-    - name: update system
-      yum:
-        name: '*'
-        state: latest
-
-    - name: install all required packages
-      vars:
-        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,docker-1.13.1"
-      yum:
-        name: "{{ pkgs }}"
+    - name: include post install for product {{ product }}
+      include_tasks: "{{ product_postinstall }}"
 
     - name: install glusterfs-fuse when using gluster storage
       yum:
         name: glusterfs-fuse
+      when: glusterfs
+
+    - name: install glusterfs-server packages
+      yum:
+        name:
+          - glusterfs-server
+        state: present
+      when: glusterfs and (ansible_hostname in groups['infra'] or 
+                           ansible_hostname in groups['nodes']
+
+    - name: update system when required packages are first installed
+      yum:
+        name: '*'
+        state: latest
+      when: node_pkgs_install.changed
 
     - name: create docker-storage-setup file
       copy:
@@ -118,26 +78,15 @@
           STORAGE_DRIVER=overlay2
           DEVS=/dev/vdb
           VG=docker-vg
-      when:
-        - groups['infra']
-        - groups['nodes']
-        - groups['masters']
-        - glusterfs
+      when: glusterfs and (ansible_hostname in groups['infra'] or 
+                           ansible_hostname in groups['nodes'] or
+                           ansible_hostname in groups['masters'])
 
-    - name: Run  docker-storage-setup
+    - name: Run docker-storage-setup
       command: docker-storage-setup
-      when:
-        - groups['infra']
-        - groups['nodes']
-        - groups['masters']
-        - glusterfs
+      when: glusterfs and (ansible_hostname in groups['infra'] or 
+                           ansible_hostname in groups['nodes'] or
+                           ansible_hostname in groups['masters'])
+      tags: 
+        - docker-storage
 
-    - name: install glusterfs-server packages
-      yum:
-        name:
-          - glusterfs-server
-        state: present
-      when:
-        - groups['infra']
-        - groups['nodes']
-        - glusterfs
