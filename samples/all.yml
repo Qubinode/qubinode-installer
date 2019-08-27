@@ -90,8 +90,10 @@ ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
-gluster_client_repo: rh-gluster-3-client-for-rhel-7-server-rpms
-gluster_server_repo: rh-gluster-3-for-rhel-7-server-rpms
+ocp_gluster_client_repo: 
+  - rh-gluster-3-client-for-rhel-7-server-rpms
+ocp_gluster_server_repo: 
+  - rh-gluster-3-for-rhel-7-server-rpms
 rhel_release: 7.6
 okd_repos: ""
 ocp_repos:
@@ -101,7 +103,17 @@ ocp_repos:
   - rhel-7-server-extras-rpms
   - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
-  - "{{ gluster_client_repo }}"
+
+ocp_gluster_client_repo:
+  - rh-gluster-3-client-for-rhel-7-server-rpms
+ocp_gluster_server_repo:
+  - rh-gluster-3-for-rhel-7-server-rpms
+
+ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
+ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
+
+ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct,docker-1.13.1"
+
 valid_products: "okd,ocp"
 
  # LVM
