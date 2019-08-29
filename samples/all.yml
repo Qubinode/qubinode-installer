@@ -22,7 +22,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_recreate: false
     vm_teardown: false
     inventory_group: masters
@@ -34,7 +34,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: nodes
     extra_storage:
@@ -48,7 +48,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: infra
     extra_storage:
@@ -202,7 +202,7 @@ dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
     dns_memory: 2048
-    dns_root_disk_size: 20G
+    dns_root_disk_size: 40G
     dns_teardown: false
     dns_recreate: false
     dns_group: dns
