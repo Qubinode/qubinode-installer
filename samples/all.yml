@@ -102,7 +102,6 @@ ocp_repos:
   - rhel-7-fast-datapath-rpms
   - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
-  - "{{ gluster_client_repo }}"
 valid_products: "okd,ocp"
 
  # LVM
