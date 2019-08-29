@@ -7,11 +7,6 @@
     - vars/vault.yml
 
   tasks:
-    - name: get ocp-master01 ip
-      set_fact:
-        wild_card_domain_ip: "{{ hostvars['ocp-master01'].ansible_host }}"
-      with_items: "{{ groups['ocp'] }}"
-
     - name: add idm server to /etc/hosts
       lineinfile:
         path: /etc/hosts
@@ -59,15 +54,24 @@
       loop_control:
         label: "{{ hostvars[item].inventory_hostname }}"
 
-    - name: Create Wildcard for Applications
-      ipa_dnsrecord:
-        name: "{{ dns_wildcard }}"
-        zone_name: "{{ domain }}"
-        record_type: A
-        record_value: "{{ wild_card_domain_ip }}"
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ idm_admin_user }}"
-        ipa_pass: "{{ idm_admin_pwd }}"
+    - name:  Create Wildcard for Applications
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
         validate_certs: no
-        record_ttl: 300
-        state: present
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ dns_wildcard }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: false
+        body_format: json
+      loop: "{{ groups['infra'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
