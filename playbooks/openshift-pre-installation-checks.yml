@@ -17,7 +17,6 @@
   register: result
   ignore_errors: no
 
-
 - name: test connectivity to registry.redhat.io
   shell: |
       ping  registry.redhat.io -c 1
