@@ -67,7 +67,7 @@ instances:
     inventory_group: lbs
     extra_storage: []
     vm_recreate: false
-    qty: 1
+    qty: 0
   - name: dns
     enable: true
     vm_cpu: 2
