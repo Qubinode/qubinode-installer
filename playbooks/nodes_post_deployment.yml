@@ -22,11 +22,7 @@
       register: ipa_session
       delegate_to: localhost
 
-    - name: build a list of all groups
-      set_fact:
-         all_nodes: "{{ groups['masters'] }} + groups['nodes'] }} + groups['infra'] }} + groups['lbs'] }}"
-
-    - name: Create A/PTR Records
+    - name: Create A/PTR Records for Master Node
       uri:
         url: "https://{{ ipa_host }}/ipa/session/json"
         validate_certs: no
@@ -44,10 +40,96 @@
           - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
             a_extra_create_reverse: true
         body_format: json
+      when:
+        -  "'master'  in hostvars[item].inventory_hostname"
       loop: "{{ groups ['qbnodes'] }}"
       loop_control:
         label: "{{ hostvars[item].inventory_hostname }}"
       delegate_to: localhost
+
+
+    - pause:
+        seconds: 5
+
+    - name: Create A/PTR Records for Infra Nodes
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ hostvars[item].inventory_hostname }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: true
+        body_format: json
+      when:
+        -  "'infra'  in hostvars[item].inventory_hostname"
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+    - pause:
+        seconds: 5
+
+    - name: Create A/PTR Records for App Nodes
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ hostvars[item].inventory_hostname }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: true
+        body_format: json
+      when:
+        -  "'node'  in hostvars[item].inventory_hostname"
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+    - pause:
+        seconds: 5
+
+    - name:  Create Wildcard for Applications
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ dns_wildcard }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: false
+        body_format: json
+      when:
+        -  "'infra'  in hostvars[item].inventory_hostname"
+      loop: "{{ groups['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
 
     - name: declare which RHSM repos to enable for product {{ product }}
       set_fact:
@@ -141,13 +223,9 @@
           STORAGE_DRIVER=overlay2
           DEVS=/dev/vdb
           VG=docker-vg
-      when:
-        -  "'lb' not in inventory_hostname"
 
     - name: Run  docker-storage-setup
       command: docker-storage-setup
-      when:
-        -  "'lb' not in inventory_hostname"
 
     - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
       rhsm_repository:
@@ -155,7 +233,6 @@
         state: enabled
       when:
         - "'master' not in inventory_hostname"
-        - "'lb' not in inventory_hostname"
         - glusterfs
 
     - name: Install glusterfs-fuse
@@ -164,7 +241,6 @@
           - glusterfs-fuse
       when:
         - "'master' not in inventory_hostname"
-        - "'lb' not in inventory_hostname"
         - glusterfs
 
     - name: update hosts file with node ip
