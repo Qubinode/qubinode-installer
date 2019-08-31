@@ -21,6 +21,8 @@
         body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
       register: ipa_session
       delegate_to: localhost
+      tags:
+        - dns
 
     - name: Create A/PTR Records
       uri:
@@ -44,26 +46,34 @@
       loop_control:
         label: "{{ hostvars[item].inventory_hostname }}"
       delegate_to: localhost
+      tags:
+        - dns
 
     - name: declare post install file for {{ product }}
       set_fact:
         product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp' else 'okd_nodes_postinstall.yml' }}"
+      tags:
+        - always
 
     - name: include post install for product {{ product }}
       include_tasks: "{{ product_postinstall }}"
+      tags:
+        - always
 
     - name: install glusterfs-fuse when using gluster storage
       yum:
         name: glusterfs-fuse
       when: glusterfs
+      tags: gluster
 
     - name: install glusterfs-server packages
       yum:
         name:
           - glusterfs-server
         state: present
-      when: glusterfs and (ansible_hostname in groups['infra'] or 
-                           ansible_hostname in groups['nodes']
+      tags: gluster
+      when: glusterfs and (ansible_hostname in groups['infra'] or
+                           ansible_hostname in groups['nodes'])
 
     - name: update system when required packages are first installed
       yum:
@@ -78,6 +88,7 @@
           STORAGE_DRIVER=overlay2
           DEVS=/dev/vdb
           VG=docker-vg
+      tags: gluster
       when: glusterfs and (ansible_hostname in groups['infra'] or 
                            ansible_hostname in groups['nodes'] or
                            ansible_hostname in groups['masters'])
@@ -89,4 +100,4 @@
                            ansible_hostname in groups['masters'])
       tags: 
         - docker-storage
-
+        - gluster
