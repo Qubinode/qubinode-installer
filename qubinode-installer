@@ -867,17 +867,15 @@ function openshift-setup() {
   elif [[ ${product_opt} == "okd" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
   fi
-  ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
+
+  if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
+      ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
+  fi
+
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   cat $INVENTORYDIR/inventory.3.11.rhel.gluster
   HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/configure-openshift-nodes.yml" || exit $?
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_gluster_config.yml" || exit $?
-  CHECKFORLB=$(sudo virsh list | grep lb | awk '{print $2}')
-  if [[ ! -z $CHECKFORLB ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/openshift_lb_config.yml" || exit $?
-  fi
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
@@ -955,6 +953,8 @@ function qubinode_vm_manager () {
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
+   REMOVE_NODE_ARECORD="${project_dir}/playbooks/remove-idm-records.yml"
+   CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
        if [ "A${teardown}" == "Atrue" ]
@@ -971,6 +971,10 @@ function qubinode_vm_manager () {
        then
            echo "Remove ${product} VMs"
            ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+           ansible-playbook "${REMOVE_NODE_ARECORD}" --extra-vars "vm_teardown=true" || exit $?
+           if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
+              rm -rf ${CHECK_OCP_INVENTORY}
+           fi
        else
            echo "Deploy ${product} VMs"
            ansible-playbook "${NODES_PLAY}" || exit $?
@@ -1197,6 +1201,13 @@ else
         else
             display_help
         fi
+    elif [ "A${cluster_opt}" != "A" ]
+    then
+      if [[ ${cluster_opt} ==  "diag" ]]; then
+        echo "Perparing to run full Diagnostics"
+        MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
+        ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE "sudo oadm diagnostics"
+      fi
      else
          display_help
     fi

@@ -24,7 +24,7 @@
       tags:
         - dns
 
-    - name: Create A/PTR Records
+    - name: Create A/PTR Records for Master Node
       uri:
         url: "https://{{ ipa_host }}/ipa/session/json"
         validate_certs: no
@@ -42,6 +42,65 @@
           - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
             a_extra_create_reverse: true
         body_format: json
+      when:
+        -  "'master'  in hostvars[item].inventory_hostname"
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+
+    - pause:
+        seconds: 5
+
+    - name: Create A/PTR Records for Infra Nodes
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ hostvars[item].inventory_hostname }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: true
+        body_format: json
+      when:
+        -  "'infra'  in hostvars[item].inventory_hostname"
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+    - pause:
+        seconds: 5
+
+    - name: Create A/PTR Records for App Nodes
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ hostvars[item].inventory_hostname }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: true
+        body_format: json
+      when:
+        -  "'node'  in hostvars[item].inventory_hostname"
       loop: "{{ groups ['qbnodes'] }}"
       loop_control:
         label: "{{ hostvars[item].inventory_hostname }}"
@@ -60,33 +119,46 @@
       tags:
         - always
 
-    - name: install glusterfs-fuse when using gluster storage
-      yum:
-        name: glusterfs-fuse
-      when: glusterfs
-      tags: gluster
+    - pause:
+        seconds: 5
 
-    - name: install glusterfs-server packages
-      yum:
-        name:
-          - glusterfs-server
-        state: present
-      tags: gluster
-      when: glusterfs and (ansible_hostname in groups['infra'] or
-                           ansible_hostname in groups['nodes'])
+    - name:  Create Wildcard for Applications
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ dns_wildcard }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: false
+        body_format: json
+      when:
+        -  "'infra'  in hostvars[item].inventory_hostname"
+      loop: "{{ groups['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
 
-    - name: update system when required packages are first installed
+    - name: declare which RHSM repos to enable for product {{ product }}
+      set_fact:
+        product_repos: "{{ ocp_repos if product == 'ocp' else okd_repos }}"
+
+    - name: update system
       yum:
         name: '*'
         state: latest
-      when: node_pkgs_install.changed
 
-    - name: create docker-storage-setup file
-      copy:
-        dest: "/etc/sysconfig/docker-storage-setup"
-        content: |
-          STORAGE_DRIVER=overlay2
-          DEVS=/dev/vdb
+    - name: install all required packages
+      yum:
+        name: "{{ pkgs }}"
+
           VG=docker-vg
       tags: gluster
       when: glusterfs and (ansible_hostname in groups['infra'] or 
@@ -101,3 +173,27 @@
       tags: 
         - docker-storage
         - gluster
+
+    - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
+      rhsm_repository:
+        name: rh-gluster-3-client-for-rhel-7-server-rpms
+        state: enabled
+      when:
+        - "'master' not in inventory_hostname"
+        - glusterfs
+
+    - name: Install glusterfs-fuse
+      yum:
+        name:
+          - glusterfs-fuse
+      when:
+        - "'master' not in inventory_hostname"
+        - glusterfs
+
+    - name: update hosts file with node ip
+      shell: |
+          CHECKFORENTRY=$(cat /etc/hosts | grep $HOSTNAME)
+          if [[ -z $CHECKFORENTRY ]]; then
+            echo "{{ ansible_default_ipv4.address }} $HOSTNAME" >> /etc/hosts
+          fi
+

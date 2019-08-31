@@ -22,7 +22,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_recreate: false
     vm_teardown: false
     inventory_group: masters
@@ -34,7 +34,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: nodes
     extra_storage:
@@ -48,7 +48,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: infra
     extra_storage:
@@ -61,13 +61,13 @@ instances:
   - name: lb
     enable: true
     vm_cpu: 2
-    vm_memory: 2048
+    vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: lbs
     extra_storage: []
     vm_recreate: false
-    qty: 1
+    qty: 0
   - name: dns
     enable: true
     vm_cpu: 2
@@ -101,9 +101,9 @@ ocp_repos:
   - rhel-7-server-optional-rpms
   - rhel-7-server-supplementary-rpms
   - rhel-7-server-extras-rpms
+  - rhel-7-fast-datapath-rpms
   - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
-
 ocp_gluster_client_repo:
   - rh-gluster-3-client-for-rhel-7-server-rpms
 ocp_gluster_server_repo:
@@ -168,7 +168,8 @@ ssh_username: "{{ admin_user }}"
 glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
 metrics_storage_volume_size: 10Gi
 
-# Features
+# Feature
+enable_firewalld: False
 enable_openshift_operators: True
 enable_metrics: True
 enable_logging: False
@@ -214,7 +215,7 @@ dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
     dns_memory: 2048
-    dns_root_disk_size: 20G
+    dns_root_disk_size: 40G
     dns_teardown: false
     dns_recreate: false
     dns_group: dns
