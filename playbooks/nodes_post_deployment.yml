@@ -1,3 +1,7 @@
+---
+- name: create nodes dns records
+  import_playbook: nodes_dns_records.yml
+
 - name: vm post deployment
   hosts: qbnodes
   become: yes
@@ -7,48 +11,6 @@
     - vars/vault.yml
 
   tasks:
-    - name: Generate IPA Session Cookie
-      vars:
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/login_password"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Content-Type: "application/x-www-form-urlencoded"
-          Accept: "text/plain"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
-      register: ipa_session
-      delegate_to: localhost
-      tags:
-        - dns
-
-    - name: Create A/PTR Records
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/json"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Cookie: "{{ ipa_session.set_cookie }}"
-          Accept: "application/json"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body:
-          method: dnsrecord_add
-          params:
-          - - "{{ domain }}."
-            - "{{ hostvars[item].inventory_hostname }}"
-          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
-            a_extra_create_reverse: true
-        body_format: json
-      loop: "{{ groups ['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
-      delegate_to: localhost
-      tags:
-        - dns
-
     - name: declare post install file for {{ product }}
       set_fact:
         product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp' else 'okd_nodes_postinstall.yml' }}"

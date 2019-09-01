@@ -149,7 +149,7 @@ qubi_required_pkgs: |
    wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
    bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
-   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible"
+   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
 
 libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, python-dns"
 
@@ -194,8 +194,9 @@ rhsm_pass: "{{ rhsm_password }}"
 idm_admin_user: admin
 idm_hostname: "ocp-dns01"
 dns_server_public: ""
+qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
-  - changeme.in-addr.arpa
+  - "{{ qubinode_ptr }}"
 idm_public_ip: ""                       # IP address of the IDM server
 idm_repos:
   - rhel-7-server-rpms
