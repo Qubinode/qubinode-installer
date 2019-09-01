@@ -1,0 +1,84 @@
+- name: create nodes dns records on IDM server
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+  environment:
+    IPA_HOST: "{{ ipa_host }}"
+    IPA_USER: "{{ idm_admin_user }}"
+    IPA_PASS: "{{ idm_admin_pwd }}"
+
+  tasks:
+    - name: set dns record state
+      set_fact:
+        record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
+
+    - name: Create/Delete A Records for {{ item }}
+      ipa_dnsrecord:
+        zone_name: "{{ domain }}"
+        record_name: "{{ hostvars[item].inventory_hostname }}"
+        record_type: A
+        record_value: "{{ hostvars[item].ansible_host }}"
+        state: "{{ record_state }}"
+        validate_certs: no
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+    - name: Create/Delete PTR Records for {{ item }}
+      ipa_dnsrecord:
+        zone_name: "{{ qubinode_ptr }}"
+        record_name: "{{ hostvars[item].ansible_host.split('.')[3:4] | join('.') }}"
+        record_type: PTR
+        record_value: "{{ hostvars[item].inventory_hostname }}.{{ domain }}."
+        state: "{{ record_state }}"
+        validate_certs: no
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+
+    - name: Generate IPA Session Cookie
+      vars:
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/login_password"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Accept: "text/plain"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
+      register: ipa_session
+      delegate_to: localhost
+      tags:
+        - dns
+
+    - name:  Create Wildcard for Applications
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ dns_wildcard }}"
+          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+            a_extra_create_reverse: false
+        body_format: json
+      loop: "{{ groups['infra'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+      tags:
+        - dns
