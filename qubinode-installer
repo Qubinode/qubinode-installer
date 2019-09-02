@@ -923,39 +923,43 @@ function qubinode_vm_manager () {
    prereqs
    deploy_vm_opt="$1"
 
-   # Ensure the setup function as was executed
-   if [ ! -f "${vars_file}" ]
+   if [ "A${teardown}" != "Atrue" ]
    then
-       echo "${vars_file} is missing"
-       echo "Please run qubinode-installer -m setup"
-       echo ""
-       exit 1
-   fi
-
-   # Ensure the ansible function has bee executed
-   ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
-   if [ ! -f /usr/bin/ansible ]
-   then
-       echo "Ansible is not installed"
-       echo "Please run qubinode-installer -m ansible"
-       echo ""
-       exit 1
-   elif [ "A${ROLE_PRESENT}" == "A" ]
-   then
-       echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
-       echo "Please run run qubinode-installer -m ansible"
-       echo ""
-       exit 1
-   fi
-
-   # Check for required Qcow image
-   check_for_rhel_qcow_image
+       # Ensure the setup function as was executed
+       if [ ! -f "${vars_file}" ]
+       then
+           echo "${vars_file} is missing"
+           echo "Please run qubinode-installer -m setup"
+           echo ""
+           exit 1
+       fi
+    
+       # Ensure the ansible function has bee executed
+       ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
+       if [ ! -f /usr/bin/ansible ]
+       then
+           echo "Ansible is not installed"
+           echo "Please run qubinode-installer -m ansible"
+           echo ""
+           exit 1
+       elif [ "A${ROLE_PRESENT}" == "A" ]
+       then
+           echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
+           echo "Please run run qubinode-installer -m ansible"
+           echo ""
+           exit 1
+       fi
+    
+       # Check for required Qcow image
+       check_for_rhel_qcow_image
+    fi
 
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
    CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
    NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
+
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
        if [ "A${teardown}" == "Atrue" ]
@@ -1056,9 +1060,43 @@ function qubi_dns_manager () {
     #fi
 }
 
+function confirm () {
+    continue=""
+    while [[ "${continue}" != "yes" ]];
+    do
+        read -r -p "${1:-Are you sure Yes or no?} " response
+        if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]
+        then
+            echo "You chose yes"
+            response="yes"
+            continue="yes"
+        elif [[ $response =~ ^([nN][oO])$ ]]
+        then
+            echo "You chose no"
+            response="no"
+            continue="yes"
+        else
+            echo "Try again"
+        fi
+    done
+}
+
+
 function qubinode_deploy_openshift () {
-    # OpenShift Deployment
-    if [ "A${product}" == "Atrue" ]
+    # Teardown the openshift deployment
+    if [ "A${teardown}" == "Atrue" ]
+    then
+        echo "This will delete all nodes and remove all DNS entries"
+        confirm "Are you sure you want to undeploy the entire ${product_opt} cluster?"
+        if [ "A${response}" == "Ayes" ]
+        then
+            qubinode_vm_manager deploy_nodes
+        else
+            echo "No changes will be made"
+            exit
+        fi
+        # OpenShift Deployment
+    elif [ "A${product}" == "Atrue" ]
     then
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
@@ -1067,6 +1105,8 @@ function qubinode_deploy_openshift () {
         else
            display_help
         fi
+    else
+        display_help
     fi
 }
 
