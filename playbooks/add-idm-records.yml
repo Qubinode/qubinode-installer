@@ -58,16 +58,3 @@
       loop: "{{ groups['ocp'] }}"
       loop_control:
         label: "{{ hostvars[item].inventory_hostname }}"
-
-    - name: Create Wildcard for Applications
-      ipa_dnsrecord:
-        name: "{{ dns_wildcard }}"
-        zone_name: "{{ domain }}"
-        record_type: A
-        record_value: "{{ wild_card_domain_ip }}"
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ idm_admin_user }}"
-        ipa_pass: "{{ idm_admin_pwd }}"
-        validate_certs: no
-        record_ttl: 300
-        state: present

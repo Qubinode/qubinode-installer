@@ -22,7 +22,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_recreate: false
     vm_teardown: false
     inventory_group: masters
@@ -34,7 +34,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: nodes
     extra_storage:
@@ -48,7 +48,7 @@ instances:
     enable: true
     vm_cpu: 4
     vm_memory: 16384
-    vm_root_disk_size: 20G
+    vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: infra
     extra_storage:
@@ -61,13 +61,13 @@ instances:
   - name: lb
     enable: true
     vm_cpu: 2
-    vm_memory: 2048
+    vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: lbs
     extra_storage: []
     vm_recreate: false
-    qty: 1
+    qty: 0
   - name: dns
     enable: true
     vm_cpu: 2
@@ -90,8 +90,10 @@ ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
-gluster_client_repo: rh-gluster-3-client-for-rhel-7-server-rpms
-gluster_server_repo: rh-gluster-3-for-rhel-7-server-rpms
+ocp_gluster_client_repo: 
+  - rh-gluster-3-client-for-rhel-7-server-rpms
+ocp_gluster_server_repo: 
+  - rh-gluster-3-for-rhel-7-server-rpms
 rhel_release: 7.6
 okd_repos: ""
 ocp_repos:
@@ -99,9 +101,21 @@ ocp_repos:
   - rhel-7-server-optional-rpms
   - rhel-7-server-supplementary-rpms
   - rhel-7-server-extras-rpms
+  - rhel-7-fast-datapath-rpms
   - "{{ openshift_repo }}"
   - "{{ ansible_repo }}"
-  - "{{ gluster_client_repo }}"
+ocp_gluster_client_repo:
+  - rh-gluster-3-client-for-rhel-7-server-rpms
+ocp_gluster_server_repo:
+  - rh-gluster-3-for-rhel-7-server-rpms
+
+ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
+ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
+
+ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
+
+ocp_gluster_pkg: docker-1.13.1
+
 valid_products: "okd,ocp"
 
  # LVM
@@ -137,7 +151,7 @@ qubi_required_pkgs: |
    wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
    bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
-   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible"
+   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
 
 libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, python-dns"
 
@@ -156,7 +170,8 @@ ssh_username: "{{ admin_user }}"
 glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
 metrics_storage_volume_size: 10Gi
 
-# Features
+# Feature
+enable_firewalld: False
 enable_openshift_operators: True
 enable_metrics: True
 enable_logging: False
@@ -182,8 +197,9 @@ rhsm_pass: "{{ rhsm_password }}"
 idm_admin_user: admin
 idm_hostname: "ocp-dns01"
 dns_server_public: ""
+qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
-  - changeme.in-addr.arpa
+  - "{{ qubinode_ptr }}"
 idm_public_ip: ""                       # IP address of the IDM server
 idm_repos:
   - rhel-7-server-rpms
@@ -202,7 +218,7 @@ dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
     dns_memory: 2048
-    dns_root_disk_size: 20G
+    dns_root_disk_size: 40G
     dns_teardown: false
     dns_recreate: false
     dns_group: dns

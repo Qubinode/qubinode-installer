@@ -1,0 +1,16 @@
+- name: remove dns entries to IDM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+    - name: include create vm tasks
+      include_tasks: rm-a-records.yml
+      loop: "{{ instances }}"
+      loop_control:
+        loop_var: outer_item
+        label: outer_item.name
+      when: outer_item.name != 'dns'

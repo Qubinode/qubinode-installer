@@ -32,7 +32,7 @@ The qubinode is a prescriptive installation of either Red Hat OpenShift Platform
 This step is not required for OKD installation.
 
 To get pool-id
-           
+
 . Log in here https://access.redhat.com/management/subscriptions
 . Locate your subscription and click on the subscription name
 . Click on the Subscriptions tab
@@ -90,13 +90,13 @@ In this example we will walk through each stage of the installer to get OpenShif
 
 ```
  ./qubinode-installer -p ocp -m setup
-   
+
 ```
 ==== The setup run down
 
 . Setup password-less sudoers
 
-If your user login isn't already setup for sudo, you will be prompted twice for the *root* users password. This is used to setup your user for password-less sudoers. 
+If your user login isn't already setup for sudo, you will be prompted twice for the *root* users password. This is used to setup your user for password-less sudoers.
 If your user is already setup for sudo, you will be prompted for the users password to setup password-less sudoers.
 
 . Copy the required files from samples to their respective paths.
@@ -110,7 +110,7 @@ If your user is already setup for sudo, you will be prompted for the users passw
   - prompts you for you IP network, aka subnet
   - your gateway and systems ip address are also collected automatically, this is use to setup your bridge network that will allow incoming traffic to your qubinode
 
-. Takes your current username and use it as the admin user for all VMs to be created. You will be prompted to enter a password for this user. You can use the current password or enter a new one for this purpose. 
+. Takes your current username and use it as the admin user for all VMs to be created. You will be prompted to enter a password for this user. You can use the current password or enter a new one for this purpose.
 
 . The qubinode-installer deploys Red Hat Identity Management as the DNS server.
   - Prompts you to enter a password that has to be 8 or more characters long, the user *admin* will be created with this password. You will be able to log into the IdM console here: https://ocp-dns01.<yourdomain>.
@@ -121,10 +121,10 @@ If your user is already setup for sudo, you will be prompted for the users passw
 ==== Register the system to Red Hat
 The qubinode-installer leverage Red Hat Enterprise Linux as the foundation. In order to get updates and install additional software all RHEL systems must be registered to the Red Hat Customer Portal (RHSM).
 
-Execute the RHSM stage: 
+Execute the RHSM stage:
 ```
   ./qubinode-installer -m rhsm -p ocp
-  
+
 ```
 
 - Registers your system to RHSM.
@@ -133,10 +133,10 @@ Execute the RHSM stage:
 ==== Setup Ansible Engine
 The qubinode-installer leverages ansible automation as do the OCP/OKD's own installer.
 
-Execute the Ansible stage: 
+Execute the Ansible stage:
 ```
   ./qubinode-installer -m ansible -p ocp
-  
+
 ```
 
 - Installs all Ansible dependencies.
@@ -150,10 +150,16 @@ The qubinode-installer leverages linux virtualization hypervisor KVM and the Lib
 [NOTE]
 In our setup we leverage a 1TB NVME for the storage of the VMs. This is highly recommend and the installer by default expects to setup /var/lib/libvirt/images on a dedicated storage device.
 
-Execute the KVM host stage: 
+Execute the KVM host stage:
 ```
   ./qubinode-installer -m host -p ocp
-  
+
 ```
 - Ensure the system is registered to RHSM and installs all required packages
-- Creates a 
+- Creates a
+
+
+==== Deployment Post Steps
+*optional steps to reach cluster*
+- Option 1: add dns server to /etc/resolv.conf on your computer
+- Option 2: add dns server to router so all machines can access the OpenShift Cluster
