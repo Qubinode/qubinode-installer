@@ -1131,45 +1131,46 @@ function verbose() {
 
 function default_install () {
     product_opt="ocp"
+    product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-    verbose qubinode_installer_preflight 
+    qubinode_installer_preflight 
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
-    verbose qubinode_rhsm_register
+    qubinode_rhsm_register
     
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
-    verbose qubinode_setup_ansible
+    qubinode_setup_ansible
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    verbose qubinode_setup_kvm_host
+    qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-    verbose qubinode_vm_manager deploy_dns
+    qubinode_vm_manager deploy_dns
     
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
-    verbose qubinode_dns_manager server
+    qubinode_dns_manager server
 
     printf "\n\n******************************\n"
     printf     "* Deploy DNS for ${product_opt} cluster *\n"
     printf     "******************************\n"
-    verbose qubinode_vm_manager deploy_nodes
+    qubinode_vm_manager deploy_nodes
 
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_opt} cluster *\n"
     printf     "*********************\n"
-    verbose qubinode_deploy_openshift
+    qubinode_deploy_openshift
 
     printf "\n\n*******************************************************\n"
     printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
