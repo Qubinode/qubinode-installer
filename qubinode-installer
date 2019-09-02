@@ -6,7 +6,7 @@
 #set -x
 
 # Turn verbose off
-_V=0
+_V=1
 
 function display_help() {
     setup_required_paths
@@ -70,7 +70,7 @@ function validate_product_by_user () {
     prereqs
     if [ "A${product_opt}" == "Aocp" ]
     then
-        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ]
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
         then
             product="${product_opt}"
             if grep '""' "${vars_file}"|grep -q openshift_pool_id
