@@ -218,7 +218,7 @@ dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
     dns_memory: 2048
-    dns_root_disk_size: 40G
+    dns_root_disk_size: 20G
     dns_teardown: false
     dns_recreate: false
     dns_group: dns

@@ -29,3 +29,24 @@
       when:
         - outer_item.name != 'dns'
         - vm_teardown
+
+    - name: collect all nodes hostnames and ip address
+      vars:
+        - hnames: []
+        - short_name: "{{ hostvars[item].inventory_hostname_short }}"
+        - hostname: "{{ hostvars[item].inventory_hostname }}"
+        - host_ip: "{{ hostvars[short_name].ansible_host }}"
+      set_fact:
+        hnames: "{{ hnames }} + [ '{{ short_name }}' ] + [ '{{ hostname }}' ] + [ '{{ host_ip }}' ]"
+      loop: "{{ groups ['qbnodes'] }}"
+      loop_control:
+        label: "{{ hostvars[item].inventory_hostname }}"
+      delegate_to: localhost
+      when: vm_teardown|bool and hostvars[short_name]
+      become: no
+
+    - name: remove node ssh keys
+      command: "/usr/bin/ssh-keygen -R {{ item }}"
+      with_items: "{{ hnames }}"
+      when: vm_teardown|bool
+      become: no
