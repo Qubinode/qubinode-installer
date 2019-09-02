@@ -5,6 +5,9 @@
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+# Turn verbose off
+_V=0
+
 function display_help() {
     setup_required_paths
     SCRIPT="$0"
@@ -55,7 +58,7 @@ function elevate_cmd () {
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
-    if [[ $OPTARG =~ ^-[p/c/h/d/a/m]$ ]]
+    if [[ $OPTARG =~ ^-[p/c/h/d/a/v/m]$ ]]
     then
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
@@ -796,11 +799,11 @@ function check_for_rhel_qcow_image () {
 }
 
 function installer_preflight () {
+    prereqs
     setup_sudoers
     setup_user_ssh_key
     setup_variables
     ask_user_input
-    #check_for_rhel_qcow_image
 
     # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
@@ -808,6 +811,9 @@ function installer_preflight () {
         echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
+  
+    # Pull variables from all.yml needed for the install
+    domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 }
 
 function setup_kvm_host () {
@@ -923,39 +929,43 @@ function qubinode_vm_manager () {
    prereqs
    deploy_vm_opt="$1"
 
-   # Ensure the setup function as was executed
-   if [ ! -f "${vars_file}" ]
+   if [ "A${teardown}" != "Atrue" ]
    then
-       echo "${vars_file} is missing"
-       echo "Please run qubinode-installer -m setup"
-       echo ""
-       exit 1
-   fi
-
-   # Ensure the ansible function has bee executed
-   ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
-   if [ ! -f /usr/bin/ansible ]
-   then
-       echo "Ansible is not installed"
-       echo "Please run qubinode-installer -m ansible"
-       echo ""
-       exit 1
-   elif [ "A${ROLE_PRESENT}" == "A" ]
-   then
-       echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
-       echo "Please run run qubinode-installer -m ansible"
-       echo ""
-       exit 1
-   fi
-
-   # Check for required Qcow image
-   check_for_rhel_qcow_image
+       # Ensure the setup function as was executed
+       if [ ! -f "${vars_file}" ]
+       then
+           echo "${vars_file} is missing"
+           echo "Please run qubinode-installer -m setup"
+           echo ""
+           exit 1
+       fi
+    
+       # Ensure the ansible function has bee executed
+       ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
+       if [ ! -f /usr/bin/ansible ]
+       then
+           echo "Ansible is not installed"
+           echo "Please run qubinode-installer -m ansible"
+           echo ""
+           exit 1
+       elif [ "A${ROLE_PRESENT}" == "A" ]
+       then
+           echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
+           echo "Please run run qubinode-installer -m ansible"
+           echo ""
+           exit 1
+       fi
+    
+       # Check for required Qcow image
+       check_for_rhel_qcow_image
+    fi
 
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
-   REMOVE_NODE_ARECORD="${project_dir}/playbooks/remove-idm-records.yml"
    CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
+   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
+
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
        if [ "A${teardown}" == "Atrue" ]
@@ -971,8 +981,8 @@ function qubinode_vm_manager () {
        if [ "A${teardown}" == "Atrue" ]
        then
            echo "Remove ${product} VMs"
+           ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true" || exit $?
            ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-           ansible-playbook "${REMOVE_NODE_ARECORD}" --extra-vars "vm_teardown=true" || exit $?
            if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
               rm -rf ${CHECK_OCP_INVENTORY}
            fi
@@ -1048,41 +1058,127 @@ function qubi_dns_manager () {
         fi
     fi
 
+    #TODO: this block of code should be deleted
     # Add DNS records to IdM
-    if [ "A${option}" == "Arecords" ]
-    then
-        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
-    fi
+    #if [ "A${option}" == "Arecords" ]
+    #then
+    #    ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
+    #fi
+}
+
+function confirm () {
+    continue=""
+    while [[ "${continue}" != "yes" ]];
+    do
+        read -r -p "${1:-Are you sure Yes or no?} " response
+        if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]
+        then
+            echo "You chose yes"
+            response="yes"
+            continue="yes"
+        elif [[ $response =~ ^([nN][oO])$ ]]
+        then
+            echo "You chose no"
+            response="no"
+            continue="yes"
+        else
+            echo "Try again"
+        fi
+    done
 }
 
 function qubinode_deploy_openshift () {
-    # OpenShift Deployment
-    if [ "A${product}" == "Atrue" ]
+    # Teardown the openshift deployment
+    if [ "A${teardown}" == "Atrue" ]
+    then
+        echo "This will delete all nodes and remove all DNS entries"
+        confirm "Are you sure you want to undeploy the entire ${product_opt} cluster?"
+        if [ "A${response}" == "Ayes" ]
+        then
+            qubinode_vm_manager deploy_nodes
+            if [[ -f ${HTPASSFILE} ]]; then
+                rm -f ${HTPASSFILE}
+            fi
+        else
+            echo "No changes will be made"
+            exit
+        fi
+        # OpenShift Deployment
+    elif [ "A${product}" == "Atrue" ]
     then
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
-            echo "Deploying OpenShift ${product_opt}"
+            echo "Deploying ${product_opt} cluster"
             openshift-setup
         else
            display_help
         fi
+    else
+        display_help
+    fi
+}
+
+function verbose() {
+    if [[ $_V -eq 1 ]]; then
+        "$@"
+    else
+        "$@" >/dev/null 2>&1
     fi
 }
 
 function default_install () {
-    setup_sudoers
-    setup_user_ssh_key
-    setup_variables
-    rhsm_register
-    setup_ansible "${vault_vars_file}"
-    setup_kvm_host
-    qubinode_vm_manager deploy_nodes
-    qubi_dns_manager server
-    qubi_dns_manager records
-    qubinode_deploy_openshift
+    product_opt="ocp"
+    printf "\n\n***********************\n"
+    printf "* Running perquisites *\n"
+    printf "***********************\n\n"
+    verbose installer_preflight 
+
+    printf "\n\n********************************************\n"
+    printf "* Ensure host system is registered to RHSM *\n"
+    printf "*********************************************\n\n"
+    verbose rhsm_register
+    
+    printf "\n\n*******************************************************\n"
+    printf "* Ensure host system is setup as a ansible controller *\n"
+    printf "*******************************************************\n\n"
+    verbose setup_ansible
+
+    printf "\n\n*********************************************\n"
+    printf     "* Ensure host system is setup as a KVM host *\n"
+    printf     "*********************************************\n"
+    verbose setup_kvm_host
+
+    printf "\n\n****************************\n"
+    printf     "* Deploy VM for DNS server *\n"
+    printf     "****************************\n"
+    verbose qubinode_vm_manager deploy_dns
+    
+    printf "\n\n*****************************\n"
+    printf     "* Install IDM on DNS server *\n"
+    printf     "*****************************\n"
+    verbose qubi_dns_manager server
+
+    printf "\n\n******************************\n"
+    printf     "* Deploy DNS for ${product_opt} cluster *\n"
+    printf     "******************************\n"
+    verbose qubinode_vm_manager deploy_nodes
+
+    printf "\n\n*********************\n"
+    printf     "*Deploy ${product_opt} cluster *\n"
+    printf     "*********************\n"
+    verbose qubinode_deploy_openshift
+
+    printf "\n\n*******************************************************\n"
+    printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
+    printf "\nCluster login: https://ocp-master01.${domain}:8443\n"
+    printf "     Username: changeme\n"
+    printf "     Password: <yourpassword>\n"
+    printf "\n\nIDM DNS Server login: https://ocp-dns01.${domain}\n"
+    printf "     Username: admin\n"
+    printf "     Password: <yourpassword>\n"
+    printf "*******************************************************\n"
 }
 
-##############################
 ##       MAIN               ##
 ##############################
 
@@ -1098,7 +1194,7 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":c:dh:m:p:a:" opt;
+while getopts ":c:dvh:m:p:a:" opt;
 do
     case $opt in
         a) check_args;
@@ -1123,6 +1219,9 @@ do
            product=true
            product_opt=$OPTARG
            ;;
+        v) check_args;
+           _V=1
+           ;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2
            display_help
@@ -1136,6 +1235,7 @@ do
 done
 shift "$((OPTIND-1))"
 
+# TODO: add verbose option for default install
 if (( $OPTIND == 1 )); then
    cat < docs/default_message
    default_message=("Continue with the default installation" "Display the help menu")
@@ -1180,11 +1280,8 @@ else
             qubinode_vm_manager deploy_nodes
         elif [ "${maintenance}" == "undeploy" ]
         then
+            #TODO: this should remove all VMs and clean up the project folder
             qubinode_vm_manager undeploy
-        elif [ "${maintenance}" == "dns" ]
-        then
-            qubi_dns_manager server
-            qubi_dns_manager records
         else
             display_help
         fi
@@ -1192,11 +1289,6 @@ else
     then
         if [ "${product_opt}" == "ocp" ]
         then
-          echo "Install OpenShift Cluster"
-          ##default_install
-          #setup_sudoers
-          #setup_variables
-          #setup_ansible "${vault_vars_file}"
           qubinode_deploy_openshift
         else
             display_help

@@ -10,6 +10,8 @@ Main Options:
                 diag    - runs a adv health check
 
     -h      Display this help menu
+   
+    -v      Verbose output
 
 Product Options:
     -d      Set the delete option for supported product maintenance tasks
@@ -24,13 +26,14 @@ Product Options:
                 host         - setup KVM host
                 deploy_dns   - deploy VM for dns server, supports -d
                 deploy_nodes - deploy all VMS to install ocp/okd, supports -d
-                records      - populate DNS with with forward, reverse and the wildcard domain
 
 Examples: 
 
   * Delete the DNS server: qubinode-installer -p ocp -m deploy_dns -d
 
   * Deploy OCP cluster: qubinode-installer -p ocp -m deploy_cluster
+
+  * Delete the cluster: qubinode-installer -p ocp -d
 
   * Deploy OCP: qubinode-installer -p ocp -a
 
