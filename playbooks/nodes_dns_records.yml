@@ -1,5 +1,5 @@
 - name: create nodes dns records on IDM server
-  hosts: localhost
+  hosts: qbnodes:!*.{{domain}}
   become: yes
   gather_facts: yes
   vars_files:
@@ -15,31 +15,26 @@
       set_fact:
         record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
-    - name: Create/Delete A Records for {{ item }}
+    - name: Create/Delete A Records
       ipa_dnsrecord:
         zone_name: "{{ domain }}"
-        record_name: "{{ hostvars[item].inventory_hostname }}"
+        record_name: "{{ hostvars[ansible_hostname].inventory_hostname }}"
         record_type: A
-        record_value: "{{ hostvars[item].ansible_host }}"
+        record_value: "{{ hostvars[ansible_hostname].ansible_host }}"
         state: "{{ record_state }}"
         validate_certs: no
-      loop: "{{ groups ['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
       delegate_to: localhost
 
-    - name: Create/Delete PTR Records for {{ item }}
+    - name: Create/Delete PTR Records
       ipa_dnsrecord:
         zone_name: "{{ qubinode_ptr }}"
-        record_name: "{{ hostvars[item].ansible_host.split('.')[3:4] | join('.') }}"
+        record_name: "{{ hostvars[ansible_hostname].ansible_host.split('.')[3:4] | join('.') }}"
         record_type: PTR
-        record_value: "{{ hostvars[item].inventory_hostname }}.{{ domain }}."
+        record_value: "{{ hostvars[ansible_hostname].inventory_hostname }}.{{ domain }}."
         state: "{{ record_state }}"
         validate_certs: no
-      loop: "{{ groups ['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
       delegate_to: localhost
+
 
     - name: Generate IPA Session Cookie
       vars:
@@ -54,6 +49,7 @@
           Referer: "https://{{ ipa_host }}/ipa"
         body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
       register: ipa_session
+      run_once: true
       delegate_to: localhost
       tags:
         - dns
@@ -73,12 +69,13 @@
           params:
           - - "{{ domain }}."
             - "{{ dns_wildcard }}"
-          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
+          - a_part_ip_address: "{{ hostvars[ansible_hostname].ansible_host }}"
             a_extra_create_reverse: false
         body_format: json
-      loop: "{{ groups['infra'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
+      when: ansible_hostname in groups['infra']
+      #loop: "{{ groups['infra'] }}"
+      #loop_control:
+      #  label: "{{ hostvars[ansible_hostname].inventory_hostname }}"
       delegate_to: localhost
       tags:
         - dns

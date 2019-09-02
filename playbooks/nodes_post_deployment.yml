@@ -2,8 +2,8 @@
 - name: create nodes dns records
   import_playbook: nodes_dns_records.yml
 
-- name: vm post deployment
-  hosts: qbnodes
+- name: qbnodes post installation
+  hosts: qbnodes:!*.{{domain}}
   become: yes
   gather_facts: yes
   vars_files:
@@ -22,26 +22,15 @@
       tags:
         - always
 
-    - name: install glusterfs-fuse when using gluster storage
-      yum:
-        name: glusterfs-fuse
-      when: glusterfs
-      tags: gluster
-
-    - name: install glusterfs-server packages
-      yum:
-        name:
-          - glusterfs-server
-        state: present
-      tags: gluster
-      when: glusterfs and (ansible_hostname in groups['infra'] or
-                           ansible_hostname in groups['nodes'])
-
-    - name: update system when required packages are first installed
+    - name: update system
       yum:
         name: '*'
         state: latest
-      when: node_pkgs_install.changed
+
+    - name: install docker on all noded except the lbs
+      yum:
+        name: "{{ ocp_gluster_pkg }}"
+      when: inventory_hostname not in groups['lbs']
 
     - name: create docker-storage-setup file
       copy:
@@ -50,16 +39,16 @@
           STORAGE_DRIVER=overlay2
           DEVS=/dev/vdb
           VG=docker-vg
-      tags: gluster
-      when: glusterfs and (ansible_hostname in groups['infra'] or 
-                           ansible_hostname in groups['nodes'] or
-                           ansible_hostname in groups['masters'])
+
+    - name: check docker-storage-setup vg
+      command: vgdisplay docker-vg
+      register: docker_vg
+      changed_when: False
+      ignore_errors: True
 
     - name: Run docker-storage-setup
       command: docker-storage-setup
-      when: glusterfs and (ansible_hostname in groups['infra'] or 
-                           ansible_hostname in groups['nodes'] or
-                           ansible_hostname in groups['masters'])
+      when: docker_vg.rc == 0
       tags: 
         - docker-storage
         - gluster

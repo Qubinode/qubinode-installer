@@ -34,7 +34,7 @@
 - name: install glusterfs-fuse when using gluster storage
   yum:
     name: glusterfs-fuse
-  when: glusterfs
+  when: glusterfs and inventory_hostname not in groups['masters']
   tags:
     - pkgs
 
