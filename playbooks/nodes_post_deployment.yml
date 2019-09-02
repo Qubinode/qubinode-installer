@@ -49,7 +49,7 @@
 
     - name: Run docker-storage-setup
       command: docker-storage-setup
-      when: docker_vg.rc != 0 and inventory_hostname not in groups['lbs']
+      when: inventory_hostname not in groups['lbs'] and docker_vg.rc != 0
       tags: 
         - docker-storage
         - gluster
