@@ -1280,6 +1280,7 @@ else
             qubinode_vm_manager deploy_nodes
         elif [ "${maintenance}" == "undeploy" ]
         then
+            #TODO: this should remove all VMs and clean up the project folder
             qubinode_vm_manager undeploy
         else
             display_help
