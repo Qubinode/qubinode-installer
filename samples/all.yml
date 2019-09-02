@@ -16,7 +16,7 @@ org_id: "{{ rhsm_org }}"
 rhsm_reg_method: ""
 vm_teardown: false
 admin_user: ""
-openshift_user: changeme
+openshift_user: qubinode
 instances:
   - name: master
     enable: true
