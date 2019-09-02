@@ -886,6 +886,9 @@ function openshift-setup() {
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
+    echo "***************************************"
+    echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
+    echo "***************************************"
     htpasswd -c ${HTPASSFILE} $OCUSER
   fi
 
