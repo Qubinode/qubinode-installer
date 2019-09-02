@@ -5,6 +5,9 @@
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+# Turn verbose off
+_V=0
+
 function display_help() {
     setup_required_paths
     SCRIPT="$0"
@@ -55,7 +58,7 @@ function elevate_cmd () {
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
 function check_args () {
-    if [[ $OPTARG =~ ^-[p/c/h/d/a/m]$ ]]
+    if [[ $OPTARG =~ ^-[p/c/h/d/a/v/m]$ ]]
     then
       echo "Invalid option argument $OPTARG, check that each argument has a value." >&2
       exit 1
@@ -796,11 +799,11 @@ function check_for_rhel_qcow_image () {
 }
 
 function installer_preflight () {
+    prereqs
     setup_sudoers
     setup_user_ssh_key
     setup_variables
     ask_user_input
-    #check_for_rhel_qcow_image
 
     # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
@@ -808,6 +811,9 @@ function installer_preflight () {
         echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
+  
+    # Pull variables from all.yml needed for the install
+    domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 }
 
 function setup_kvm_host () {
@@ -1112,15 +1118,65 @@ function qubinode_deploy_openshift () {
     fi
 }
 
+function verbose() {
+    if [[ $_V -eq 1 ]]; then
+        "$@"
+    else
+        "$@" >/dev/null 2>&1
+    fi
+}
+
 function default_install () {
-    installer_preflight
-    rhsm_register
-    setup_ansible
-    setup_kvm_host
-    qubinode_vm_manager deploy_dns
-    qubi_dns_manager server
-    qubinode_vm_manager deploy_nodes
-    qubinode_deploy_openshift
+    product_opt="ocp"
+    printf "\n\n***********************\n"
+    printf "* Running perquisites *\n"
+    printf "***********************\n\n"
+    verbose installer_preflight 
+
+    printf "\n\n********************************************\n"
+    printf "* Ensure host system is registered to RHSM *\n"
+    printf "*********************************************\n\n"
+    verbose rhsm_register
+    
+    printf "\n\n*******************************************************\n"
+    printf "* Ensure host system is setup as a ansible controller *\n"
+    printf "*******************************************************\n\n"
+    verbose setup_ansible
+
+    printf "\n\n*********************************************\n"
+    printf     "* Ensure host system is setup as a KVM host *\n"
+    printf     "*********************************************\n"
+    verbose setup_kvm_host
+
+    printf "\n\n****************************\n"
+    printf     "* Deploy VM for DNS server *\n"
+    printf     "****************************\n"
+    verbose qubinode_vm_manager deploy_dns
+    
+    printf "\n\n*****************************\n"
+    printf     "* Install IDM on DNS server *\n"
+    printf     "*****************************\n"
+    verbose qubi_dns_manager server
+
+    printf "\n\n******************************\n"
+    printf     "* Deploy DNS for ${product_opt} cluster *\n"
+    printf     "******************************\n"
+    verbose qubinode_vm_manager deploy_nodes
+
+    printf "\n\n*********************\n"
+    printf     "*Deploy ${product_opt} cluster *\n"
+    printf     "*********************\n"
+    verbose qubinode_deploy_openshift
+
+    printf "\n\n*******************************************************\n"
+    printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
+    printf "\nCluster login: https://ocp-master01.${domain}:8443\n"
+    printf "     Username: changeme\n"
+    printf "     Password: <yourpassword>\n"
+    printf "\n\nIDM DNS Server login: https://ocp-dns01.${domain}\n"
+    printf "     Username: admin\n"
+    printf "     Password: <yourpassword>\n"
+    printf "*******************************************************\n"
 }
 
 ##       MAIN               ##
@@ -1138,7 +1194,7 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":c:dh:m:p:a:" opt;
+while getopts ":c:dvh:m:p:a:" opt;
 do
     case $opt in
         a) check_args;
@@ -1163,6 +1219,9 @@ do
            product=true
            product_opt=$OPTARG
            ;;
+        v) check_args;
+           _V=1
+           ;;
        --) shift; break;;
        -*) echo Unrecognized flag : "$1" >&2
            display_help
@@ -1176,6 +1235,7 @@ do
 done
 shift "$((OPTIND-1))"
 
+# TODO: add verbose option for default install
 if (( $OPTIND == 1 )); then
    cat < docs/default_message
    default_message=("Continue with the default installation" "Display the help menu")

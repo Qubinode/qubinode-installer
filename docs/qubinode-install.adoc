@@ -10,6 +10,8 @@ Main Options:
                 diag    - runs a adv health check
 
     -h      Display this help menu
+   
+    -v      Verbose output
 
 Product Options:
     -d      Set the delete option for supported product maintenance tasks
