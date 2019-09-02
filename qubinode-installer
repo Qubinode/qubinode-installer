@@ -304,7 +304,7 @@ function set_openshift_rhsm_pool_id () {
 # this function checks if the system is registered to RHSM
 # validate the registration or register the system
 # if it's not registered
-function rhsm_register () {
+function qubinode_rhsm_register () {
     prereqs
     vaultfile="${vault_vars_file}"
     varsfile="${vars_file}"
@@ -380,7 +380,7 @@ function rhsm_register () {
 # this function make sure Ansible is installed
 # along with any other dependancy the project
 # depends on
-function setup_ansible () {
+function qubinode_setup_ansible () {
     prereqs
     vaultfile="${vault_vars_file}"
     HAS_SUDO=$(has_sudo)
@@ -798,7 +798,7 @@ function check_for_rhel_qcow_image () {
     fi
 }
 
-function installer_preflight () {
+function qubinode_installer_preflight () {
     prereqs
     setup_sudoers
     setup_user_ssh_key
@@ -816,7 +816,7 @@ function installer_preflight () {
     domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 }
 
-function setup_kvm_host () {
+function qubinode_setup_kvm_host () {
     prereqs
     # check for host inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
@@ -1012,7 +1012,7 @@ function display_idmsrv_unavailable () {
         exit 1
 }
 
-function qubi_dns_manager () {
+function qubinode_dns_manager () {
     prereqs
     option="$1"
     if [ ! -f "${project_dir}/inventory/hosts" ]
@@ -1134,22 +1134,22 @@ function default_install () {
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-    verbose installer_preflight 
+    verbose qubinode_installer_preflight 
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
-    verbose rhsm_register
+    verbose qubinode_rhsm_register
     
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
-    verbose setup_ansible
+    verbose qubinode_setup_ansible
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    verbose setup_kvm_host
+    verbose qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
@@ -1159,7 +1159,7 @@ function default_install () {
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
-    verbose qubi_dns_manager server
+    verbose qubinode_dns_manager server
 
     printf "\n\n******************************\n"
     printf     "* Deploy DNS for ${product_opt} cluster *\n"
@@ -1264,20 +1264,20 @@ else
             qubinode_project_cleanup
         elif [ "${maintenance}" == "setup" ]
         then
-            installer_preflight
+            qubinode_installer_preflight
         elif [ "${maintenance}" == "rhsm" ]
         then
-            rhsm_register
+            qubinode_rhsm_register
         elif [ "${maintenance}" == "ansible" ]
         then
-            setup_ansible
+            qubinode_setup_ansible
         elif [ "${maintenance}" == "host" ]
         then
-            setup_kvm_host
-        elif [ "${maintenance}" == "deploy_dns" ]
-        then
-            qubinode_vm_manager deploy_dns
-            qubi_dns_manager server
+            qubinode_setup_kvm_host
+        #elif [ "${maintenance}" == "deploy_dns" ]
+        #then
+        #    qubinode_vm_manager deploy_dns
+        #    qubinode_dns_manager server
         elif [ "${maintenance}" == "deploy_nodes" ]
         then
             qubinode_vm_manager deploy_nodes
@@ -1293,6 +1293,9 @@ else
         if [ "${product_opt}" == "ocp" ]
         then
           qubinode_deploy_openshift
+        elif [ "${product_opt}" == "idm" ]
+            qubinode_vm_manager deploy_dns
+            qubinode_dns_manager server
         else
             display_help
         fi
