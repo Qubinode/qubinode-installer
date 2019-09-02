@@ -45,10 +45,11 @@
       register: docker_vg
       changed_when: False
       ignore_errors: True
+      when: inventory_hostname not in groups['lbs']
 
     - name: Run docker-storage-setup
       command: docker-storage-setup
-      when: docker_vg.rc == 0
+      when: inventory_hostname not in groups['lbs'] and docker_vg.rc != 0
       tags: 
         - docker-storage
         - gluster
