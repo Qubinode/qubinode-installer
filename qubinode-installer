@@ -1081,7 +1081,6 @@ function confirm () {
     done
 }
 
-
 function qubinode_deploy_openshift () {
     # Teardown the openshift deployment
     if [ "A${teardown}" == "Atrue" ]
@@ -1091,6 +1090,9 @@ function qubinode_deploy_openshift () {
         if [ "A${response}" == "Ayes" ]
         then
             qubinode_vm_manager deploy_nodes
+            if [[ -f ${HTPASSFILE} ]]; then
+                rm -f ${HTPASSFILE}
+            fi
         else
             echo "No changes will be made"
             exit
