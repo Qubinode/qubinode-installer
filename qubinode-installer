@@ -862,6 +862,7 @@ function setup_kvm_host () {
 
 function openshift-setup() {
 
+  setup_variables
   if [[ ${product_opt} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
   elif [[ ${product_opt} == "okd" ]]; then
@@ -1063,7 +1064,6 @@ function qubinode_deploy_openshift () {
     then
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
-            always_run
             echo "Deploying OpenShift ${product_opt}"
             openshift-setup
         else
@@ -1196,9 +1196,9 @@ else
         if [ "${product_opt}" == "ocp" ]
         then
           echo "Install OpenShift Cluster"
-          #default_install
-          setup_sudoers
-          setup_variables
+          ##default_install
+          #setup_sudoers
+          #setup_variables
           #setup_ansible "${vault_vars_file}"
           qubinode_deploy_openshift
         else

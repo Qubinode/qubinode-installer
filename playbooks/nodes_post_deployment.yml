@@ -1,5 +1,9 @@
-- name: vm post deployment
-  hosts: qbnodes
+---
+- name: create nodes dns records
+  import_playbook: nodes_dns_records.yml
+
+- name: qbnodes post installation
+  hosts: qbnodes:!*.{{domain}}
   become: yes
   gather_facts: yes
   vars_files:
@@ -7,214 +11,26 @@
     - vars/vault.yml
 
   tasks:
-    - name: Generate IPA Session Cookie
-      vars:
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/login_password"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Content-Type: "application/x-www-form-urlencoded"
-          Accept: "text/plain"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
-      register: ipa_session
-      delegate_to: localhost
-
-    - name: Create A/PTR Records for Master Node
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/json"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Cookie: "{{ ipa_session.set_cookie }}"
-          Accept: "application/json"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body:
-          method: dnsrecord_add
-          params:
-          - - "{{ domain }}."
-            - "{{ hostvars[item].inventory_hostname }}"
-          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
-            a_extra_create_reverse: true
-        body_format: json
-      when:
-        -  "'master'  in hostvars[item].inventory_hostname"
-      loop: "{{ groups ['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
-      delegate_to: localhost
-
-
-    - pause:
-        seconds: 5
-
-    - name: Create A/PTR Records for Infra Nodes
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/json"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Cookie: "{{ ipa_session.set_cookie }}"
-          Accept: "application/json"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body:
-          method: dnsrecord_add
-          params:
-          - - "{{ domain }}."
-            - "{{ hostvars[item].inventory_hostname }}"
-          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
-            a_extra_create_reverse: true
-        body_format: json
-      when:
-        -  "'infra'  in hostvars[item].inventory_hostname"
-      loop: "{{ groups ['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
-      delegate_to: localhost
-
-    - pause:
-        seconds: 5
-
-    - name: Create A/PTR Records for App Nodes
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/json"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Cookie: "{{ ipa_session.set_cookie }}"
-          Accept: "application/json"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body:
-          method: dnsrecord_add
-          params:
-          - - "{{ domain }}."
-            - "{{ hostvars[item].inventory_hostname }}"
-          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
-            a_extra_create_reverse: true
-        body_format: json
-      when:
-        -  "'node'  in hostvars[item].inventory_hostname"
-      loop: "{{ groups ['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
-      delegate_to: localhost
-
-    - pause:
-        seconds: 5
-
-    - name:  Create Wildcard for Applications
-      uri:
-        url: "https://{{ ipa_host }}/ipa/session/json"
-        validate_certs: no
-        method: POST
-        status_code: 200
-        headers:
-          Cookie: "{{ ipa_session.set_cookie }}"
-          Accept: "application/json"
-          Referer: "https://{{ ipa_host }}/ipa"
-        body:
-          method: dnsrecord_add
-          params:
-          - - "{{ domain }}."
-            - "{{ dns_wildcard }}"
-          - a_part_ip_address: "{{ hostvars[item].ansible_host }}"
-            a_extra_create_reverse: false
-        body_format: json
-      when:
-        -  "'infra'  in hostvars[item].inventory_hostname"
-      loop: "{{ groups['qbnodes'] }}"
-      loop_control:
-        label: "{{ hostvars[item].inventory_hostname }}"
-
-    - name: declare which RHSM repos to enable for product {{ product }}
+    - name: declare post install file for {{ product }}
       set_fact:
-        product_repos: "{{ ocp_repos if product == 'ocp' else okd_repos }}"
+        product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp' else 'okd_nodes_postinstall.yml' }}"
+      tags:
+        - always
 
-    - name: register all RHSM nodes
-      vars:
-        - rhsm_repos: "{{ product_repos }}"
-      include_role:
-        name: swygue-redhat-subscription
-
-    - name: refresh subscription-manager
-      command: subscription-manager refresh
-      when:
-        - product == 'ocp'
-
-    - name: auto attach to  subscription-manager
-      command: subscription-manager attach --auto
-      when:
-        - product == 'ocp'
-
-    - name: Attach a specific subscription through the Customer Portal
-      command: subscription-manager refresh
-      when:
-        - product == 'ocp'
-
-    - name: Enable rhel-7-server-rpms repository
-      rhsm_repository:
-        name: rhel-7-server-rpms
-        state: enabled
-      when:
-        - product == 'ocp'
-
-    - name: Enable rhel-7-server-extras-rpms repository
-      rhsm_repository:
-        name: rhel-7-server-extras-rpms
-        state: enabled
-      when:
-        - product == 'ocp'
-
-    - name: Enable rhel-7-server-ose-3.11-rpms repository
-      rhsm_repository:
-        name: rhel-7-server-ose-3.11-rpms
-        state: enabled
-      when:
-        - product == 'ocp'
-
-    - name: Enable rhel-7-fast-datapath-rpms repository
-      rhsm_repository:
-        name: rhel-7-fast-datapath-rpms
-        state: enabled
-      when:
-        - product == 'ocp'
-
-    - name: Enable rhel-7-server-ansible-2.6-rpms repository
-      rhsm_repository:
-        name: rhel-7-server-ansible-2.6-rpms
-        state: enabled
-      when:
-        - product == 'ocp'
-
-    - name: Enable rhel-7-server-optional-rpms repository
-      rhsm_repository:
-        name: rhel-7-server-optional-rpms
-        state: enabled
-      when:
-        - product == 'ocp'
+    - name: include post install for product {{ product }}
+      include_tasks: "{{ product_postinstall }}"
+      tags:
+        - always
 
     - name: update system
       yum:
         name: '*'
         state: latest
 
-    - name: install all required packages
-      vars:
-        - pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
+    - name: install docker on all noded except the lbs
       yum:
-        name: "{{ pkgs }}"
-
-    - name: Install docker-1.13.1
-      yum:
-        name:
-          - docker-1.13.1
-      when:
-        -  "'lb' not in inventory_hostname"
+        name: "{{ ocp_gluster_pkg }}"
+      when: inventory_hostname not in groups['lbs']
 
     - name: create docker-storage-setup file
       copy:
@@ -224,30 +40,15 @@
           DEVS=/dev/vdb
           VG=docker-vg
 
-    - name: Run  docker-storage-setup
+    - name: check docker-storage-setup vg
+      command: vgdisplay docker-vg
+      register: docker_vg
+      changed_when: False
+      ignore_errors: True
+
+    - name: Run docker-storage-setup
       command: docker-storage-setup
-
-    - name: Enable rh-gluster-3-client-for-rhel-7-server-rpms repository
-      rhsm_repository:
-        name: rh-gluster-3-client-for-rhel-7-server-rpms
-        state: enabled
-      when:
-        - "'master' not in inventory_hostname"
-        - glusterfs
-
-    - name: Install glusterfs-fuse
-      yum:
-        name:
-          - glusterfs-fuse
-      when:
-        - "'master' not in inventory_hostname"
-        - glusterfs
-
-    - name: update hosts file with node ip
-      shell: |
-          CHECKFORENTRY=$(cat /etc/hosts | grep $HOSTNAME)
-          if [[ -z $CHECKFORENTRY ]]; then
-            echo "{{ ansible_default_ipv4.address }} $HOSTNAME" >> /etc/hosts
-          fi
-
-    - meta: end_play
+      when: docker_vg.rc == 0
+      tags: 
+        - docker-storage
+        - gluster
