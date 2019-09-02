@@ -1100,7 +1100,7 @@ function qubinode_deploy_openshift () {
     then
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
-            echo "Deploying OpenShift ${product_opt}"
+            echo "Deploying ${product_opt} cluster"
             openshift-setup
         else
            display_help
@@ -1226,7 +1226,6 @@ else
     then
         if [ "${product_opt}" == "ocp" ]
         then
-          echo "Install OpenShift Cluster"
           qubinode_deploy_openshift
         else
             display_help
