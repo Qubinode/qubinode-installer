@@ -954,8 +954,8 @@ function qubinode_vm_manager () {
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
-   REMOVE_NODE_ARECORD="${project_dir}/playbooks/remove-idm-records.yml"
    CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
+   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
        if [ "A${teardown}" == "Atrue" ]
@@ -971,8 +971,8 @@ function qubinode_vm_manager () {
        if [ "A${teardown}" == "Atrue" ]
        then
            echo "Remove ${product} VMs"
+           ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true" || exit $?
            ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-           ansible-playbook "${REMOVE_NODE_ARECORD}" --extra-vars "vm_teardown=true" || exit $?
            if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
               rm -rf ${CHECK_OCP_INVENTORY}
            fi
@@ -1048,11 +1048,12 @@ function qubi_dns_manager () {
         fi
     fi
 
+    #TODO: this block of code should be deleted
     # Add DNS records to IdM
-    if [ "A${option}" == "Arecords" ]
-    then
-        ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
-    fi
+    #if [ "A${option}" == "Arecords" ]
+    #then
+    #    ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
+    #fi
 }
 
 function qubinode_deploy_openshift () {
