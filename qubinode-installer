@@ -1071,19 +1071,16 @@ function qubinode_deploy_openshift () {
 }
 
 function default_install () {
-    setup_sudoers
-    setup_user_ssh_key
-    setup_variables
+    installer_preflight
     rhsm_register
-    setup_ansible "${vault_vars_file}"
+    setup_ansible
     setup_kvm_host
-    qubinode_vm_manager deploy_nodes
+    qubinode_vm_manager deploy_dns
     qubi_dns_manager server
-    qubi_dns_manager records
+    qubinode_vm_manager deploy_nodes
     qubinode_deploy_openshift
 }
 
-##############################
 ##       MAIN               ##
 ##############################
 
@@ -1182,10 +1179,6 @@ else
         elif [ "${maintenance}" == "undeploy" ]
         then
             qubinode_vm_manager undeploy
-        elif [ "${maintenance}" == "dns" ]
-        then
-            qubi_dns_manager server
-            qubi_dns_manager records
         else
             display_help
         fi
@@ -1194,10 +1187,6 @@ else
         if [ "${product_opt}" == "ocp" ]
         then
           echo "Install OpenShift Cluster"
-          ##default_install
-          #setup_sudoers
-          #setup_variables
-          #setup_ansible "${vault_vars_file}"
           qubinode_deploy_openshift
         else
             display_help
