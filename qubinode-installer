@@ -1295,6 +1295,7 @@ else
         then
           qubinode_deploy_openshift
         elif [ "${product_opt}" == "idm" ]
+        then
             qubinode_vm_manager deploy_dns
             qubinode_dns_manager server
         else
