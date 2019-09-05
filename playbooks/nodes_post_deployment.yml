@@ -67,12 +67,41 @@
         - docker-storage
         - gluster
 
-    - name: update ifcfg-eth0 with  loopback for dns
+    - name: update ifcfg-eth0 with loopback for dns
       blockinfile:
         path:  /etc/sysconfig/network-scripts/ifcfg-eth0
         block: |
           PEERDNS=yes
           NM_CONTROLLED=yes
+    # This was added to address issue #62
+    - name: check for cluster.local
+      command: grep -o cluster.local /etc/resolv.conf
+      ignore_errors: yes
+      failed_when: false
+      changed_when: cluster_local.stdout == ""
+      register: cluster_local
+
+    - name: remove search domain line from /etc/resolv.conf for openshift install
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^search {{ domain }}'
+        state: absent
+      when: cluster_local.stdout != 'cluster.local'
+
+    - name: remove domain line from /etc/resolv.conf for openshift install
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^domain {{ domain }}'
+        state: absent
+      when: cluster_local.stdout != 'cluster.local'
+
+    - name: update /etc/resolv.conf options
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^options rotate timeout:1'
+        line: options ndots:5
+        state: present
+    # end issue #62
 
     - name: Reboot immediately if there was a change.
       shell: "sleep 5 && reboot"
