@@ -4,6 +4,7 @@ Main Options:
     -p      Required option, deploys one of the following container platforms:
                 okd - deploy upstream OpenShift
                 ocp - deploy Red Hat OpenShift Platform <subscription required>
+                idm - deploy IDM as a DNS Server
 
     -c      Cluster operations:
                 cluster - runs a health check of the cluster
@@ -21,10 +22,9 @@ Product Options:
     -m      Run product maintenance tasks with one of the following options:
                 clean        - remove all files created in the project folder
                 setup        - setup playbooks vars and user sudoers
-                rhsm         - register system to Red Hat
-                ansible      - setup ansible
-                host         - setup KVM host
-                deploy_dns   - deploy VM for dns server, supports -d
+                rhsm         - register host system to Red Hat
+                ansible      - setup host system as an ansible controller
+                host         - setup the host system as an KVM host
                 deploy_nodes - deploy all VMS to install ocp/okd, supports -d
 
 Examples: 

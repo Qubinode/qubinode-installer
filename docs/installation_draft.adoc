@@ -19,6 +19,7 @@ The qubinode is a prescriptive installation of either Red Hat OpenShift Platform
 
 == Installing Red Hat Enterprise Linux
 
+ - [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel)
 
 * Get your developer subscription of RHEL
 * Download the RHEL 7.6 iso

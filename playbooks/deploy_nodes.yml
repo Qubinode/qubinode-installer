@@ -50,3 +50,9 @@
       with_items: "{{ hnames }}"
       when: vm_teardown|bool
       become: no
+
+    - name: remove openshift password file
+      file:
+        state: absent
+        path: "{{ htpasswd_file_path }}"
+      when: vm_teardown|bool
