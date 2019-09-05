@@ -1163,7 +1163,7 @@ function default_install () {
     qubinode_dns_manager server
 
     printf "\n\n******************************\n"
-    printf     "* Deploy DNS for ${product_opt} cluster *\n"
+    printf     "* Deploy Nodes for ${product_opt} cluster *\n"
     printf     "******************************\n"
     qubinode_vm_manager deploy_nodes
 
@@ -1293,8 +1293,18 @@ else
     then
         if [ "${product_opt}" == "ocp" ]
         then
-          qubinode_vm_manager deploy_nodes
-          qubinode_deploy_openshift
+            if [ "A${teardown}" == "Atrue" ]
+            then
+                qubinode_vm_manager deploy_nodes
+            else
+               if sudo virsh list|grep -E 'master|node|infra'
+               then
+                   qubinode_deploy_openshift
+               else
+                   qubinode_vm_manager deploy_nodes
+                   qubinode_deploy_openshift
+               fi
+            fi
         elif [ "${product_opt}" == "idm" ]
         then
             qubinode_vm_manager deploy_dns

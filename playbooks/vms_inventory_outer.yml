@@ -1,6 +1,6 @@
 - name: update masters inventory
   vars:
-    inventory_group: "{{ outer_item.inventory_group }}"
+    role_group: "{{ outer_item.role_group }}"
     name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
   lineinfile:
     path: "{{ inventory_dir }}/{{ group }}"
@@ -14,5 +14,5 @@
   loop: "{{ range(1, outer_item.qty|int +1)|list }}"
   loop_control:
     loop_var: inner_item
-    label: "adding {{ name }} to {{ inventory_group }} group"
-  when: group == inventory_group
+    label: "adding {{ name }} to {{ role_group }} group"
+  when: group == role_group
