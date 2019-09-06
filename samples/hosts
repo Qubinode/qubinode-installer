@@ -2,16 +2,16 @@ localhost               ansible_connection=local ansible_user=root
 
 [masters]
 
-[nodes]
-
 [infra]
+
+[computes]
 
 [lbs]
 
 [dns]
 
 [qbnodes:children]
-lbs
-infra
-nodes
 masters
+infra
+computes
+lbs
