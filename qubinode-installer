@@ -1142,22 +1142,13 @@ function default_install () {
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-<<<<<<< HEAD
-    verbose installer_preflight
-=======
-    qubinode_installer_preflight 
->>>>>>> 4939bb8dcd12f04eddf3e91f34ff16806914a55e
+    qubinode_installer_preflight
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
-<<<<<<< HEAD
-    verbose rhsm_register
-
-=======
     qubinode_rhsm_register
-    
->>>>>>> 4939bb8dcd12f04eddf3e91f34ff16806914a55e
+
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
@@ -1171,13 +1162,8 @@ function default_install () {
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-<<<<<<< HEAD
-    verbose qubinode_vm_manager deploy_dns
-
-=======
     qubinode_vm_manager deploy_dns
-    
->>>>>>> 4939bb8dcd12f04eddf3e91f34ff16806914a55e
+
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
