@@ -16,7 +16,7 @@ org_id: "{{ rhsm_org }}"
 rhsm_reg_method: ""
 vm_teardown: false
 admin_user: ""
-openshift_user: changeme
+openshift_user: qubinode
 instances:
   - name: master
     enable: true
@@ -26,6 +26,7 @@ instances:
     vm_recreate: false
     vm_teardown: false
     inventory_group: masters
+    role_group: masters
     extra_storage:
       - size: 60G
         enable: true
@@ -37,6 +38,7 @@ instances:
     vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: nodes
+    role_group: computes
     extra_storage:
       - size: 60G
         enable: true
@@ -51,6 +53,7 @@ instances:
     vm_root_disk_size: 40G
     vm_teardown: false
     inventory_group: infra
+    role_group: computes
     extra_storage:
       - size: 60G
         enable: true
@@ -65,19 +68,10 @@ instances:
     vm_root_disk_size: 20G
     vm_teardown: false
     inventory_group: lbs
+    role_group: lbs
     extra_storage: []
     vm_recreate: false
     qty: 0
-  - name: dns
-    enable: true
-    vm_cpu: 2
-    vm_memory: 2048
-    vm_root_disk_size: 20G
-    vm_teardown: false
-    inventory_group: dns
-    extra_storage: []
-    vm_recreate: false
-    qty: 1
 
 # This is for /etc/resolv.conf
 dns_servers:
@@ -90,10 +84,6 @@ ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
-ocp_gluster_client_repo: 
-  - rh-gluster-3-client-for-rhel-7-server-rpms
-ocp_gluster_server_repo: 
-  - rh-gluster-3-for-rhel-7-server-rpms
 rhel_release: 7.6
 okd_repos: ""
 ocp_repos:
@@ -187,6 +177,7 @@ os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
 rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
 
+qubinode_brdige_name: qubibr0
 
 
 ###################

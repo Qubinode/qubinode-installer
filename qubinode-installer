@@ -811,7 +811,7 @@ function installer_preflight () {
         echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
-  
+
     # Pull variables from all.yml needed for the install
     domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 }
@@ -886,6 +886,9 @@ function openshift-setup() {
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
+    echo "***************************************"
+    echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
+    echo "***************************************"
     htpasswd -c ${HTPASSFILE} $OCUSER
   fi
 
@@ -939,7 +942,7 @@ function qubinode_vm_manager () {
            echo ""
            exit 1
        fi
-    
+
        # Ensure the ansible function has bee executed
        ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
        if [ ! -f /usr/bin/ansible ]
@@ -955,7 +958,7 @@ function qubinode_vm_manager () {
            echo ""
            exit 1
        fi
-    
+
        # Check for required Qcow image
        check_for_rhel_qcow_image
     fi
@@ -1131,13 +1134,13 @@ function default_install () {
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-    verbose installer_preflight 
+    verbose installer_preflight
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
     verbose rhsm_register
-    
+
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
@@ -1152,7 +1155,7 @@ function default_install () {
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
     verbose qubinode_vm_manager deploy_dns
-    
+
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
