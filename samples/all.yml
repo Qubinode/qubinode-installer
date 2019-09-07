@@ -185,6 +185,7 @@ libvirt_pkgs:
    - httpd-tools
    - java-1.8.0-openjdk-devel.x86_64
    - tmux
+   - python-dns
 
 # Required for OpenShift/OKD
 inventory_destination: "{{ inventory_dir }}"
