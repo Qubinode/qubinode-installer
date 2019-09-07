@@ -680,7 +680,14 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-    DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+    DEFINED_BRIDGE=$(awk '/qubinode_brdige_name/ {print $2;exit 1 }' playbooks/vars/all.yml)
+    CURRENT_DEFAULT_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
+    if [ "A${CURRENT_DEFAULT_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
+    then
+      DEFAULT_INTERFACE=$(sudo brctl show qubibr0 | awk '/qubibr0/ {print $4}')
+    else
+      DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+    fi
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
 }
 
