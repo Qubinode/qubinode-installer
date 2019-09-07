@@ -173,7 +173,6 @@ To remove IDM run the following
 
 ```
 
-
 ==== Deploy the  vms used for the OpenShift Development
 This commannd will deploy the VMs that OpenShift will run on. Running the command below will prepare your hosts for OpenShift deployment. Write a-records to the IDM server to be used by OpenShift. 
 
@@ -221,9 +220,7 @@ To uninstall Openshift
 
 ```
 
-
-
 == Deployment Post Steps
-*optional steps to reach cluster*
-- Option 1: add dns server to /etc/resolv.conf on your computer
-- Option 2: add dns server to router so all machines can access the OpenShift Cluster
+.optional steps to reach cluster
+- Option 1: add dns server to /etc/resolv.conf on your computer 
+- Option 2: add dns server to router so all machines can access the OpenShift Cluster 
