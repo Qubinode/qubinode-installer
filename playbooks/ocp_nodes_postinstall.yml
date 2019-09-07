@@ -1,10 +1,5 @@
 ---
 
-- debug:
-    var: ocp_repos_with_glus_client
-  tags: repos
-  when: ansible_hostname == 'ocp-master01'
-
 - name: register master and lb nodes with gluster client repos to RHSM
   vars:
     - rhsm_repos: "{{ ocp_repos_with_glus_client }}"
@@ -20,7 +15,7 @@
   include_role:
     name: swygue-redhat-subscription
   tags: repos
-  when: glusterfs and (ansible_hostname in groups['nodes'] or
+  when: glusterfs and (ansible_hostname in groups['computes'] or
                        ansible_hostname in groups['infra'])
 
 - name: register nodes to RHSM

@@ -79,3 +79,13 @@
       delegate_to: localhost
       tags:
         - dns
+
+    - name: Delete wildcard domain
+      ipa_dnsrecord:
+        zone_name: "{{ domain }}"
+        record_name: "{{ dns_wildcard }}"
+        record_value: "{{ hostvars[ansible_hostname].ansible_host }}"
+        state: absent
+        validate_certs: no
+      delegate_to: localhost
+      when: vm_teardown|bool and ansible_hostname in groups['infra']
