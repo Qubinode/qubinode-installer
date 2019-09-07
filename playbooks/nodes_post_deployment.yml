@@ -17,6 +17,19 @@
       tags:
         - always
 
+    - name: check if nameserver is configured in /etc/resolv.conf
+      shell: awk '/nameserver/ {print $2; exit}' /etc/resolv.conf
+      register: etc_resolv_conf
+      changed_when: etc_resolv_conf.stdout == ""
+
+    - name: update node /etc/resolv.conf
+      blockinfile:
+        path:  /etc/resolv.conf
+        block: |
+          domain {{ domain }}
+          nameserver {{ idm_public_ip }}
+      when: etc_resolv_conf.stdout == ""
+
     - name: include post install for product {{ product }}
       include_tasks: "{{ product_postinstall }}"
       tags:
@@ -50,6 +63,59 @@
     - name: Run docker-storage-setup
       command: docker-storage-setup
       when: inventory_hostname not in groups['lbs'] and docker_vg.rc != 0
-      tags: 
+      tags:
         - docker-storage
         - gluster
+
+    - name: update ifcfg-eth0 with loopback for dns
+      blockinfile:
+        path:  /etc/sysconfig/network-scripts/ifcfg-eth0
+        block: |
+          PEERDNS=yes
+          NM_CONTROLLED=yes
+    # This was added to address issue #62
+    - name: check for cluster.local
+      command: grep -o cluster.local /etc/resolv.conf
+      ignore_errors: yes
+      failed_when: false
+      changed_when: cluster_local.stdout == ""
+      register: cluster_local
+
+    - name: remove search domain line from /etc/resolv.conf for openshift install
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^search {{ domain }}'
+        state: absent
+      when: cluster_local.stdout != 'cluster.local'
+
+    - name: remove domain line from /etc/resolv.conf for openshift install
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^domain {{ domain }}'
+        state: absent
+      when: cluster_local.stdout != 'cluster.local'
+
+    - name: update /etc/resolv.conf options
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^options rotate timeout:1'
+        line: options ndots:5
+        state: present
+    # end issue #62
+
+    - name: Reboot immediately if there was a change.
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+
+    - name: Wait 60 seconds, but only start checking after 30 seconds
+      wait_for_connection:
+        delay: 30
+        timeout: 60
+
+    - name: Wait for the reboot to complete if there was a change.
+      wait_for_connection:
+        connect_timeout: 20
+        sleep: 5
+        delay: 5
+        timeout: 300
