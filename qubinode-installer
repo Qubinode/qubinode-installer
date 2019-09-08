@@ -680,7 +680,14 @@ function prereqs () {
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-    DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+    DEFINED_BRIDGE=$(awk '/qubinode_brdige_name/ {print $2;exit 1 }' playbooks/vars/all.yml)
+    CURRENT_DEFAULT_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
+    if [ "A${CURRENT_DEFAULT_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
+    then
+      DEFAULT_INTERFACE=$(sudo brctl show qubibr0 | awk '/qubibr0/ {print $4}')
+    else
+      DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+    fi
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
 }
 
@@ -811,7 +818,7 @@ function qubinode_installer_preflight () {
         echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
-  
+
     # Pull variables from all.yml needed for the install
     domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 }
@@ -927,6 +934,18 @@ function qubinode_project_cleanup () {
     fi
 }
 
+
+function qubinode_uninstall_openshift() {
+  INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+
+  if [[ ${product_opt} == "ocp" ]]; then
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
+  elif [[ ${product_opt} == "okd" ]]; then
+    echo "Work in Progress"
+    exit 1
+  fi
+}
+
 function qubinode_vm_manager () {
    # Deploy VMS
    prereqs
@@ -942,7 +961,7 @@ function qubinode_vm_manager () {
            echo ""
            exit 1
        fi
-    
+
        # Ensure the ansible function has bee executed
        ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
        if [ ! -f /usr/bin/ansible ]
@@ -958,7 +977,7 @@ function qubinode_vm_manager () {
            echo ""
            exit 1
        fi
-    
+
        # Check for required Qcow image
        check_for_rhel_qcow_image
     fi
@@ -1135,13 +1154,13 @@ function default_install () {
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-    qubinode_installer_preflight 
+    qubinode_installer_preflight
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
     qubinode_rhsm_register
-    
+
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
@@ -1156,7 +1175,7 @@ function default_install () {
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
     qubinode_vm_manager deploy_dns
-    
+
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
@@ -1286,6 +1305,10 @@ else
         then
             #TODO: this should remove all VMs and clean up the project folder
             qubinode_vm_manager undeploy
+        elif [ "${maintenance}" == "uninstall_openshift" ]
+        then
+            #TODO: this should remove all VMs and clean up the project folder
+            qubinode_uninstall_openshift
         else
             display_help
         fi

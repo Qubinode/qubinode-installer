@@ -159,8 +159,70 @@ Execute the KVM host stage:
 - Ensure the system is registered to RHSM and installs all required packages
 - Creates a
 
+==== Setup idm for dns server
+The OpenShift nodes will use this as the external server to the cluster. End users will also point to this dns server to access the OpenShift cluster.
+Execute the IDM stage:
+```
+  ./qubinode-installer -p idm
 
-==== Deployment Post Steps
-*optional steps to reach cluster*
+```
+
+To remove IDM run the following
+```
+  ./qubinode-installer -p idm -d
+
+```
+
+==== Deploy the  vms used for the OpenShift Development
+This commannd will deploy the VMs that OpenShift will run on. Running the command below will prepare your hosts for OpenShift deployment. Write a-records to the IDM server to be used by OpenShift.
+
+.Summary of actions
+- Register hosts with Red Hat Subscription Manager (RHSM)
+- Install base packages required for OpenShift
+- Install docker
+- Configure Docker Storage
+- Configure OverlayFS
+- Configure thin pool storage
+- Configure Red Hat Gluster Storage
+
+Execute the following command to deploy the nodes using  OpenShift Enterprise use the command below:
+```
+  ./qubinode-installer -p ocp -m deploy_nodes
+
+```
+
+To remove the nodes run the following
+```
+  ./qubinode-installer -p ocp -d
+
+```
+
+==== Deploy OpenShift
+This command will deploy OpenShift on the vms that where deployed on the previous step.
+
+.Summary of Actions
+- Configure the host to deploy OpenShift
+- Auto generate the openshift-ansible inventory file.
+- Configure the .htpasswd file with qubinode as default user.
+- Run a Qubimode OpenShift deployment check to ensure the environment is ready to deploy OpenShift.
+- Run the offical  playbooks/prerequisites.yml This playbook installs required software packages, if any, and modifies the container runtimes.
+- Run the offical playbooks/deploy_cluster.yml
+
+Execute the following command to deploy OpenShift Enterprise use the command below:
+```
+  ./qubinode-installer -p ocp
+
+```
+
+To uninstall Openshift across all hosts in the cluster. 
+```
+  ./qubinode-installer -p ocp -m uninstall_openshift
+
+```
+
+== Deployment Post Steps
+==== How to access OpenShift Cluster
 - Option 1: add dns server to /etc/resolv.conf on your computer
 - Option 2: add dns server to router so all machines can access the OpenShift Cluster
+
+==== Testing the Deployment

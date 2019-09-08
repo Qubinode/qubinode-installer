@@ -8,11 +8,8 @@
       - 1 Master node
       - 2 App nodes
       - 2 Infra nodes
-      - 1 Load balancer node
 
     Gluster is deployed as the container storage running on the infra and app nodes.
 
     If you wish to continue with this install choose the **continue** option otherwise
     display the help menu to see the available options.
-
-

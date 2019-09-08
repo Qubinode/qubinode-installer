@@ -11,7 +11,7 @@ Main Options:
                 diag    - runs a adv health check
 
     -h      Display this help menu
-   
+
     -v      Verbose output
 
 Product Options:
@@ -26,8 +26,9 @@ Product Options:
                 ansible      - setup host system as an ansible controller
                 host         - setup the host system as an KVM host
                 deploy_nodes - deploy all VMS to install ocp/okd, supports -d
+                uninstall_openshift - uninstall OpenShift Container Platform across all hosts in your cluster
 
-Examples: 
+Examples:
 
   * Delete the DNS server: qubinode-installer -p ocp -m deploy_dns -d
 
@@ -37,4 +38,4 @@ Examples:
 
   * Deploy OCP: qubinode-installer -p ocp -a
 
-
+  * Uninstall OpenShift Nodes: qubinode-installer -p ocp -m uninstall_openshift

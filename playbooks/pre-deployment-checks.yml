@@ -1,4 +1,6 @@
 - hosts: all
+  become: yes
+  gather_facts: yes
   vars_files:
     - vars/all.yml
     - vars/vault.yml

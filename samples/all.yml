@@ -52,6 +52,7 @@ instances:
     vm_memory: 16384
     vm_root_disk_size: 40G
     vm_teardown: false
+
     cluster_group: nodes
     role_group: infra
     extra_storage:
@@ -130,6 +131,7 @@ kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
 kvm_host_interface: ""
 kvm_host_libvirt_dir: /var/lib/libvirt/images
+qubinode_brdige_name: qubibr0
 
 # KVM host packages
 qubi_required_pkgs: |
@@ -143,7 +145,38 @@ qubi_required_pkgs: |
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
 
-libvirt_pkgs: "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm, libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon, libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard, cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport, cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server, python-dns"
+libvirt_pkgs:
+   - virt-install
+   - libvirt-daemon-config-network
+   - libvirt-daemon-kvm
+   - libguestfs-tools
+   - libvirt-client
+   - qemu-kvm
+   - nfs-utils
+   - libvirt-daemon
+   - libvirt-client
+   - virt-top
+   - tuned
+   - openssh-server
+   - wget
+   - git
+   - net-tools
+   - bind-utils
+   - yum-utils
+   - iptables-services
+   - bridge-utils
+   - bash-completion
+   - kexec-tools
+   - sos
+   - psacct
+   - vim
+   - pyOpenSSL
+   - device-mapper-event-libs
+   - device-mapper-libs
+   - httpd-tools
+   - java-1.8.0-openjdk-devel.x86_64
+   - tmux
+   - python-dns
 
 # Required for OpenShift/OKD
 inventory_destination: "{{ inventory_dir }}"
