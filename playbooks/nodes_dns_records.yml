@@ -72,13 +72,16 @@
           - a_part_ip_address: "{{ hostvars[ansible_hostname].ansible_host }}"
             a_extra_create_reverse: false
         body_format: json
-      when: ansible_hostname in groups['infra']
+      when: "'infra' in ansible_hostname"
       #loop: "{{ groups['infra'] }}"
       #loop_control:
       #  label: "{{ hostvars[ansible_hostname].inventory_hostname }}"
       delegate_to: localhost
       tags:
         - dns
+
+    - name: debug inventory
+      debug: var=ansible_hostname
 
     - name: Delete wildcard domain
       ipa_dnsrecord:
@@ -88,4 +91,4 @@
         state: absent
         validate_certs: no
       delegate_to: localhost
-      when: vm_teardown|bool and ansible_hostname in groups['infra']
+      when: vm_teardown|bool and 'infra' in ansible_hostname 

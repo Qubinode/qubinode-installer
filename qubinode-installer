@@ -934,6 +934,18 @@ function qubinode_project_cleanup () {
     fi
 }
 
+
+function qubinode_uninstall_openshift() {
+  INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+
+  if [[ ${product_opt} == "ocp" ]]; then
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
+  elif [[ ${product_opt} == "okd" ]]; then
+    echo "Work in Progress"
+    exit 1
+  fi
+}
+
 function qubinode_vm_manager () {
    # Deploy VMS
    prereqs
@@ -1293,6 +1305,10 @@ else
         then
             #TODO: this should remove all VMs and clean up the project folder
             qubinode_vm_manager undeploy
+        elif [ "${maintenance}" == "uninstall_openshift" ]
+        then
+            #TODO: this should remove all VMs and clean up the project folder
+            qubinode_uninstall_openshift
         else
             display_help
         fi
