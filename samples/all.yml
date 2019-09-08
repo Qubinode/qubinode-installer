@@ -25,7 +25,7 @@ instances:
     vm_root_disk_size: 40G
     vm_recreate: false
     vm_teardown: false
-    inventory_group: masters
+    cluster_group: masters
     role_group: masters
     extra_storage:
       - size: 60G
@@ -37,7 +37,7 @@ instances:
     vm_memory: 16384
     vm_root_disk_size: 40G
     vm_teardown: false
-    inventory_group: nodes
+    cluster_group: nodes
     role_group: computes
     extra_storage:
       - size: 60G
@@ -52,7 +52,7 @@ instances:
     vm_memory: 16384
     vm_root_disk_size: 40G
     vm_teardown: false
-    inventory_group: infra
+    cluster_group: infra
     role_group: computes
     extra_storage:
       - size: 60G
@@ -67,7 +67,7 @@ instances:
     vm_memory: 8192
     vm_root_disk_size: 20G
     vm_teardown: false
-    inventory_group: lbs
+    cluster_group: lbs
     role_group: lbs
     extra_storage: []
     vm_recreate: false
