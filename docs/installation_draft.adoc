@@ -226,5 +226,11 @@ To uninstall Openshift across all hosts in the cluster.
 - Option 2: add dns server to router so all machines can access the OpenShift Cluster
 
 ==== Testing the Deployment
-- Run Smoke test on enviornment 
+- Run Smoke test on environment
+```
 ./qubinode-installer  -c smoketest
+```
+- Optional: Run Advanced Health Check
+```
+./qubinode-installer  -c diag
+```
