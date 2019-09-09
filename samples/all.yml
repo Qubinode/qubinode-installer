@@ -52,7 +52,6 @@ instances:
     vm_memory: 16384
     vm_root_disk_size: 40G
     vm_teardown: false
-
     cluster_group: nodes
     role_group: infra
     extra_storage:
