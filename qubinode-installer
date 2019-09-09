@@ -1337,11 +1337,21 @@ else
         fi
     elif [ "A${cluster_opt}" != "A" ]
     then
-      if [[ ${cluster_opt} ==  "diag" ]]; then
-        echo "Perparing to run full Diagnostics"
-        MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
-        ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE "sudo oadm diagnostics"
-      fi
+
+    case ${cluster_opt} in
+    diag)
+    echo "Perparing to run full Diagnostics"
+    MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
+    ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE "sudo oadm diagnostics"
+    ;;
+    smoketest)
+    echo  "Running smoke test on environment."
+    bash lib/openshift-smoke-test.sh || exit $?
+    ;;
+    *)
+    echo "No arguement was passed"
+    ;;
+    esac
      else
          display_help
     fi

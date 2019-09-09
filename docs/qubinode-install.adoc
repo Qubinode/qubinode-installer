@@ -9,6 +9,7 @@ Main Options:
     -c      Cluster operations:
                 cluster - runs a health check of the cluster
                 diag    - runs a adv health check
+                smoketest - runs a smoke test on cluster
 
     -h      Display this help menu
 
