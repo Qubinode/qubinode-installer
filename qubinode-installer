@@ -108,6 +108,10 @@ EOH
 function setup_required_paths () {
     project_dir="`dirname \"$0\"`"
     project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [[ ! -f ${project_dir}/playbooks/vars/all.yml ]]; then
+      vars_file="${project_dir}/playbooks/vars/all.yml"
+      cp ${project_dir}/samples/all.yml $vars_file
+    fi
     if [ -z "$project_dir" ] ; then
         config_err_msg; exit 1
     fi
@@ -806,8 +810,8 @@ function check_for_rhel_qcow_image () {
 }
 
 function qubinode_installer_preflight () {
-    prereqs
     setup_sudoers
+    prereqs
     setup_user_ssh_key
     setup_variables
     ask_user_input
