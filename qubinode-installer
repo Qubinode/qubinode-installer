@@ -1168,27 +1168,34 @@ function default_install () {
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
-    qubinode_setup_ansible
+    [ -x "$(ansible --version | grep 2.6)" ] && qubinode_setup_ansible
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    qubinode_setup_kvm_host
+    [ -x "$(virsh --help)" ] && qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-    qubinode_vm_manager deploy_dns
+    DNSEXISTS=$(cat ${project_dir}/playbooks/vars/all.yml | grep idm_public_ip: | awk '{print $2}' | tr -d '"')
+    [ -z $DNSEXISTS ] && qubinode_vm_manager deploy_dns
 
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
-    qubinode_dns_manager server
+    productname=$(cat ${project_dir}/playbooks/vars/all.yml | grep product: | awk '{print $2}' | tr -d '"')
+    [ -x "$(dig @${DNSEXISTS} ${productname}-dns01.$domain)" ] && qubinode_dns_manager server
 
     printf "\n\n******************************\n"
     printf     "* Deploy Nodes for ${product_opt} cluster *\n"
     printf     "******************************\n"
-    qubinode_vm_manager deploy_nodes
+    if sudo virsh list|grep -E 'master|node|infra'
+    then
+        echo "Skipping VM Deployment"
+    else
+        qubinode_vm_manager deploy_nodes
+    fi
 
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_opt} cluster *\n"
