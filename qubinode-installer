@@ -68,12 +68,19 @@ function check_args () {
 # validate the product the user wants to install
 function validate_product_by_user () {
     prereqs
-    available_products="ocp,okd,idm,qubinode"
-    if [ "A${product_opt}" == "Aocp" ]
+    available_products="ocp okd idm qubinode"
+    product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
+    if [ "A${product_in_use}" == "Ainvalid" ]
+    then
+        echo "The ${product_in_use} is not a supported."
+        echo "Supported products are: $available_products"
+        exit 1
+    fi
+    # For product Openshift
+    if [ "A${product_in_use}" == "Aocp" ]
     then
         if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
         then
-            product="${product_opt}"
             if grep '""' "${vars_file}"|grep -q openshift_pool_id
             then
                 echo "The OpenShift Pool ID is required."
@@ -81,19 +88,8 @@ function validate_product_by_user () {
                 echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
                 echo "with the pool ID"
                 exit 1
-            else
-                product="${product_opt}"
             fi
         fi
-    elif [ "A${product_opt}" == "Aokd" ]
-    then
-        product="${product_opt}"
-    elif [ "A${product_opt}" == "Aqubinode" ]
-    then
-        product="${product_opt}"
-    else
-      echo "Please pass -p flag for ${available_products}"
-      exit 1
     fi
 }
 
@@ -288,9 +284,9 @@ function check_for_openshift_subscription () {
 # this function sets the openshift repo id
 function set_openshift_rhsm_pool_id () {
     # set subscription pool id
-    if [ "A${product_opt}" != "A" ]
+    if [ "A${product_in_use}" != "A" ]
     then
-        if [ "A${product_opt}" == "Aocp" ]
+        if [ "A${product_in_use}" == "Aocp" ]
         then
             check_for_openshift_subscription
         fi
@@ -299,10 +295,10 @@ function set_openshift_rhsm_pool_id () {
     #TODO: this should be change once we start deploy OKD
     if [ "${maintenance}" == "rhsm" ]
     then
-      if [ "A${product_opt}" == "Aocp" ]
+      if [ "A${product_in_use}" == "Aocp" ]
       then
           check_for_openshift_subscription
-      elif [ "A${product_opt}" == "Aokd" ]
+      elif [ "A${product_in_use}" == "Aokd" ]
       then
           echo "OpenShift Subscription not required"
       else
@@ -687,6 +683,9 @@ function prereqs () {
     vars_file="${project_dir}/playbooks/vars/all.yml"
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
+}
+
+function qubinode_networking () {
     IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -701,6 +700,22 @@ function prereqs () {
       DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+
+    # Get static IP address for IDM
+    if [ "${product_in_use}" == "idm" ]
+    then
+        confirm "Would you like to set a static IP for for the IdM server? Default choice is no. ${product_in_use} cluster?"
+        if [ "A${response}" == "Ayes" ]
+        then
+            if grep '""' "${varsfile}"|grep -q dns_server_public
+            then
+                read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_server_public
+                dns_server_public=${dns_server_public:-1.1.1.1}
+                sed -i "s/dns_server_public: \"\"/dns_server_public: "$dns_server_public"/g" "${varsfile}"
+            fi
+       fi
+    fi
+    exit
 }
 
 function setup_sudoers () {
@@ -889,9 +904,9 @@ function qubinode_setup_kvm_host () {
 function openshift-setup() {
 
   setup_variables
-  if [[ ${product_opt} == "ocp" ]]; then
+  if [[ ${product_in_use} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
-  elif [[ ${product_opt} == "okd" ]]; then
+  elif [[ ${product_in_use} == "okd" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
   fi
 
@@ -915,11 +930,11 @@ function openshift-setup() {
   echo "Running Qubi node openshift deployment checks."
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
 
-  if [[ ${product_opt} == "ocp" ]]; then
+  if [[ ${product_in_use} == "ocp" ]]; then
     cd /usr/share/ansible/openshift-ansible
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
-  elif [[ ${product_opt} == "okd" ]]; then
+  elif [[ ${product_in_use} == "okd" ]]; then
     echo "Work in Progress"
     exit 1
   fi
@@ -951,9 +966,9 @@ function qubinode_project_cleanup () {
 function qubinode_uninstall_openshift() {
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
 
-  if [[ ${product_opt} == "ocp" ]]; then
+  if [[ ${product_in_use} == "ocp" ]]; then
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
-  elif [[ ${product_opt} == "okd" ]]; then
+  elif [[ ${product_in_use} == "okd" ]]; then
     echo "Work in Progress"
     exit 1
   fi
@@ -969,24 +984,28 @@ function qubinode_vm_manager () {
        # Ensure the setup function as was executed
        if [ ! -f "${vars_file}" ]
        then
-           echo "${vars_file} is missing"
-           echo "Please run qubinode-installer -m setup"
-           echo ""
-           exit 1
+           qubinode_installer_preflight
+           #echo "${vars_file} is missing"
+           #echo "Please run qubinode-installer -m setup"
+           #echo ""
+           #exit 1
        fi
 
        # Ensure the ansible function has bee executed
        ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
        if [ ! -f /usr/bin/ansible ]
        then
-           echo "Ansible is not installed"
-           echo "Please run qubinode-installer -m ansible"
-           echo ""
-           exit 1
+           qubinode_setup_ansible
        elif [ "A${ROLE_PRESENT}" == "A" ]
        then
-           echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
-           echo "Please run run qubinode-installer -m ansible"
+           #echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
+           #echo "Please run run qubinode-installer -m ansible"
+           #echo ""
+           #exit 1
+           qubinode_setup_ansible
+       else
+           echo "Ansible is not installed"
+           echo "Please run qubinode-installer -m ansible"
            echo ""
            exit 1
        fi
@@ -1122,12 +1141,16 @@ function confirm () {
     done
 }
 
+function contains_string () {
+    [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo "$2" || echo 'invalid'
+}
+
 function qubinode_deploy_openshift () {
     # Teardown the openshift deployment
     if [ "A${teardown}" == "Atrue" ]
     then
         echo "This will delete all nodes and remove all DNS entries"
-        confirm "Are you sure you want to undeploy the entire ${product_opt} cluster?"
+        confirm "Are you sure you want to undeploy the entire ${product_in_use} cluster?"
         if [ "A${response}" == "Ayes" ]
         then
             qubinode_vm_manager deploy_nodes
@@ -1141,9 +1164,9 @@ function qubinode_deploy_openshift () {
         # OpenShift Deployment
     elif [ "A${qubinode_product}" == "Atrue" ]
     then
-        if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
+        if [ "A${product_in_use}" == "Aocp" ] || [ "A${product_in_use}" == "Aokd" ]
         then
-            echo "Deploying ${product_opt} cluster"
+            echo "Deploying ${product_in_use} cluster"
             openshift-setup
         else
            display_help
@@ -1162,8 +1185,8 @@ function verbose() {
 }
 
 function default_install () {
-    product_opt="ocp"
-    product=true
+    product_in_use="ocp"
+    qubinode_product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
@@ -1197,7 +1220,7 @@ function default_install () {
     [ -x "$(dig @${DNSEXISTS} ${productname}-dns01.$domain)" ] && qubinode_dns_manager server
 
     printf "\n\n******************************\n"
-    printf     "* Deploy Nodes for ${product_opt} cluster *\n"
+    printf     "* Deploy Nodes for ${product_in_use} cluster *\n"
     printf     "******************************\n"
     if sudo virsh list|grep -E 'master|node|infra'
     then
@@ -1207,12 +1230,12 @@ function default_install () {
     fi
 
     printf "\n\n*********************\n"
-    printf     "*Deploy ${product_opt} cluster *\n"
+    printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
     qubinode_deploy_openshift
 
     printf "\n\n*******************************************************\n"
-    printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
+    printf   "\nDeployment steps for ${product_in_use} cluster is complete.\n"
     printf "\nCluster login: https://ocp-master01.${domain}:8443\n"
     printf "     Username: changeme\n"
     printf "     Password: <yourpassword>\n"
@@ -1260,7 +1283,7 @@ do
         p) check_args
            check=true
            qubinode_product=true
-           product_opt=$OPTARG
+           qubinode_product_opt=$OPTARG
            ;;
         v) check_args;
            _V=1
@@ -1332,9 +1355,9 @@ else
         else
             display_help
         fi
-    elif [ "A${product_opt}" != "A" ]
+    elif [ "A${product_in_use}" != "A" ]
     then
-        if [ "${product_opt}" == "ocp" ]
+        if [ "${product_in_use}" == "ocp" ]
         then
             if [ "A${teardown}" == "Atrue" ]
             then
@@ -1348,7 +1371,7 @@ else
                    qubinode_deploy_openshift
                fi
             fi
-        elif [ "${product_opt}" == "idm" ]
+        elif [ "${product_in_use}" == "idm" ]
         then
             qubinode_vm_manager deploy_dns
             qubinode_dns_manager server
