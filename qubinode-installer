@@ -68,6 +68,7 @@ function check_args () {
 # validate the product the user wants to install
 function validate_product_by_user () {
     prereqs
+    available_products="ocp,okd,idm,qubinode"
     if [ "A${product_opt}" == "Aocp" ]
     then
         if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
@@ -87,8 +88,11 @@ function validate_product_by_user () {
     elif [ "A${product_opt}" == "Aokd" ]
     then
         product="${product_opt}"
+    elif [ "A${product_opt}" == "Aqubinode" ]
+    then
+        product="${product_opt}"
     else
-      echo "Please pass -p flag for ocp/okd."
+      echo "Please pass -p flag for ${available_products}"
       exit 1
     fi
 }
@@ -200,38 +204,42 @@ function does_file_exist () {
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-
-    sudo subscription-manager identity > /dev/null 2>&1
-    RESULT="$?"
-    if [ "A${RESULT}" == "A1" ]
+    if grep Fedora /etc/redhat-release
     then
-        echo "This system is not yet registered"
-        echo "Please run qubinode-installer -m rhsm"
-        echo ""
-        exit 1
-    fi
+        echo "Skipping setting up RHSM"
+    else
+        sudo subscription-manager identity > /dev/null 2>&1
+        RESULT="$?"
+        if [ "A${RESULT}" == "A1" ]
+        then
+            echo "This system is not yet registered"
+            echo "Please run qubinode-installer -m rhsm"
+            echo ""
+            exit 1
+        fi
 
-    status_result=$(mktemp)
-    sudo subscription-manager status > "${status_result}" 2>&1
-    status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
-    if [ "A${status}" != "ACurrent" ]
-    then
-        sudo subscription-manager refresh
-        sudo subscription-manager attach --auto
-    fi
+        status_result=$(mktemp)
+        sudo subscription-manager status > "${status_result}" 2>&1
+        status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
+        if [ "A${status}" != "ACurrent" ]
+        then
+            sudo subscription-manager refresh
+            sudo subscription-manager attach --auto
+        fi
 
-    #check again
-    sudo subscription-manager status > "${status_result}" 2>&1
-    status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
-    if [ "A${status}" != "ACurrent" ]
-    then
-        echo "Cannot resolved $(hostname) subscription status"
-        echo "Error details are: "
-        cat "${status_result}"
-        echo ""
-        echo "Please resolved and try again"
-        echo ""
-        exit 1
+        #check again
+        sudo subscription-manager status > "${status_result}" 2>&1
+        status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
+        if [ "A${status}" != "ACurrent" ]
+        then
+            echo "Cannot resolved $(hostname) subscription status"
+            echo "Error details are: "
+            cat "${status_result}"
+            echo ""
+            echo "Please resolved and try again"
+            echo ""
+            exit 1
+        fi
     fi
 }
 
@@ -812,6 +820,7 @@ function check_for_rhel_qcow_image () {
 function qubinode_installer_preflight () {
     setup_sudoers
     prereqs
+    qubinode_networking
     setup_user_ssh_key
     setup_variables
     ask_user_input
@@ -1006,14 +1015,14 @@ function qubinode_vm_manager () {
    then
        if [ "A${teardown}" == "Atrue" ]
        then
-           echo "Remove ${product} VMs"
+           echo "Remove ${qubinode_product} VMs"
            ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true" || exit $?
            ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
            if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
               rm -rf ${CHECK_OCP_INVENTORY}
            fi
        else
-           echo "Deploy ${product} VMs"
+           echo "Deploy ${qubinode_product} VMs"
            ansible-playbook "${NODES_PLAY}" || exit $?
            ansible-playbook "${NODES_POST_PLAY}" || exit $?
        fi
@@ -1130,7 +1139,7 @@ function qubinode_deploy_openshift () {
             exit
         fi
         # OpenShift Deployment
-    elif [ "A${product}" == "Atrue" ]
+    elif [ "A${qubinode_product}" == "Atrue" ]
     then
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
@@ -1250,7 +1259,7 @@ do
            ;;
         p) check_args
            check=true
-           product=true
+           qubinode_product=true
            product_opt=$OPTARG
            ;;
         v) check_args;
