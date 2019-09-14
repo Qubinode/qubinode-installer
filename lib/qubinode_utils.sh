@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function display_help() {
     setup_required_paths
     SCRIPT="$0"
@@ -43,7 +45,6 @@ function elevate_cmd () {
     esac
 }
 
-
 # validates that the argument options are valid
 # e.g. if script -s-p pass, it won't use '-' as
 # an argument for -s
@@ -55,6 +56,18 @@ function check_args () {
     fi
 }
 
+function prereqs () {
+    # setup required paths
+    setup_required_paths
+    #
+    # set subscription pool dsetup MAIN variables
+    CURRENT_USER=$(whoami)
+    vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+    vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
+    vars_file="${project_dir}/playbooks/vars/all.yml"
+    hosts_inventory_dir="${project_dir}/inventory"
+    inventory_file="${hosts_inventory_dir}/hosts"
+}
 
 # just shows the below error message
 function config_err_msg () {
@@ -157,207 +170,12 @@ function does_file_exist () {
     fi
 }
 
-# This function checks the status of RHSM registration
-function check_rhsm_status () {
-
-    sudo subscription-manager identity > /dev/null 2>&1
-    RESULT="$?"
-    if [ "A${RESULT}" == "A1" ]
-    then
-        echo "This system is not yet registered"
-        echo "Please run qubinode-installer -m rhsm"
-        echo ""
-        exit 1
-    fi
-
-    status_result=$(mktemp)
-    sudo subscription-manager status > "${status_result}" 2>&1
-    status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
-    if [ "A${status}" != "ACurrent" ]
-    then
-        sudo subscription-manager refresh
-        sudo subscription-manager attach --auto
-    fi
-
-    #check again
-    sudo subscription-manager status > "${status_result}" 2>&1
-    status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
-    if [ "A${status}" != "ACurrent" ]
-    then
-        echo "Cannot resolved $(hostname) subscription status"
-        echo "Error details are: "
-        cat "${status_result}"
-        echo ""
-        echo "Please resolved and try again"
-        echo ""
-        exit 1
-    fi
-}
-
 function check_for_hash () {
     if [ -n $string ] && [ `expr "$string" : '[0-9a-fA-F]\{32\}\|[0-9a-fA-F]\{40\}'` -eq ${#string} ]
     then
         echo "valid"
     else
         echo "invalid"
-    fi
-}
-
-# this function checks if the system is registered to RHSM
-# validate the registration or register the system
-# if it's not registered
-function qubinode_rhsm_register () {
-    prereqs
-    vaultfile="${vault_vars_file}"
-    varsfile="${vars_file}"
-    does_exist=$(does_file_exist "${vault_vars_file} ${vars_file}")
-    if [ "A${does_exist}" == "Ano" ]
-    then
-        echo "The file ${vars_file} and ${vault_vars_file} does not exist"
-        echo ""
-        echo "Try running: qubinode-installer -m setup"
-        echo ""
-        exit 1
-    fi
-
-    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
-    IS_REGISTERED_tmp=$(mktemp)
-    sudo subscription-manager identity > "${IS_REGISTERED_tmp}" 2>&1
-
-    # decrypt ansible vault
-    decrypt_ansible_vault "${vault_vars_file}"
-
-    # Gather subscription infomration
-    rhsm_reg_method=$(awk '/rhsm_reg_method/ {print $2}' "${vars_file}")
-    if [ "A${rhsm_reg_method}" == "AUsername" ]
-    then
-        rhsm_msg="Registering system to rhsm using your username/password"
-        rhsm_username=$(awk '/rhsm_username/ {print $2}' "${vaultfile}")
-        rhsm_password=$(awk '/rhsm_password/ {print $2}' "${vaultfile}")
-        rhsm_cmd_opts="--username='${rhsm_username}' --password='${rhsm_password}'"
-    elif [ "A${rhsm_reg_method}" == "AActivation" ]
-    then
-        rhsm_msg="Registering system to rhsm using your activaiton key"
-        rhsm_org=$(awk '/rhsm_org/ {print $2}' "${vaultfile}")
-        rhsm_activationkey=$(awk '/rhsm_activationkey/ {print $2}' "${vaultfile}")
-        rhsm_cmd_opts="--org='${rhsm_org}' --activationkey='${rhsm_activationkey}'"
-    else
-        echo "The value of rhsm_reg_method in "${vars_file}" is not a valid value."
-        echo "Valid options are 'Activation' or 'Username'."
-        echo ""
-        echo "Try running: qubinode-installer -m setup"
-        echo ""
-        exit 1
-    fi
-
-    #encrupt vault file
-    encrypt_ansible_vault "${vault_vars_file}"
-
-    IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")
-    if [ "A${IS_REGISTERED}" == "AThis system is not yet registered" ]
-    then
-        check_for_dns subscription.rhsm.redhat.com
-        echo "${rhsm_msg}"
-        rhsm_reg_result=$(mktemp)
-        echo sudo subscription-manager register "${rhsm_cmd_opts}" --force --release="'${RHEL_RELEASE}'"|sh > "${rhsm_reg_result}" 2>&1
-        RESULT="$?"
-        if [ "A${RESULT}" == "A${RESULT}" ]
-        then
-            echo "Successfully registered $(hostname) to RHSM"
-            cat "${rhsm_reg_result}"
-            check_rhsm_status
-            set_openshift_rhsm_pool_id
-        else
-            echo "$(hostname) registration to RHSM was unsuccessfull"
-            cat "${rhsm_reg_result}"
-        fi
-    else
-        echo "$(hostname) is already registered"
-        check_rhsm_status
-        set_openshift_rhsm_pool_id
-    fi
-
-}
-
-# this function make sure Ansible is installed
-# along with any other dependancy the project
-# depends on
-function qubinode_setup_ansible () {
-    prereqs
-    vaultfile="${vault_vars_file}"
-    HAS_SUDO=$(has_sudo)
-    if [ "A${HAS_SUDO}" == "Ano_sudo" ]
-    then
-        echo "You do not have sudo access"
-        echo "Please run qubinode-installer -m setup"
-        exit 1
-    fi
-    check_rhsm_status
-
-    # install python
-    if [ ! -f /usr/bin/python ];
-    then
-       echo "installing python"
-       sudo yum clean all > /dev/null 2>&1
-       sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
-    else
-       echo "python is installed"
-    fi
-
-    # install ansible
-    if [ ! -f /usr/bin/ansible ];
-    then
-       ANSIBLE_REPO=$(awk '/ansible_repo:/ {print $2}' "${vars_file}")
-       CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
-       # check to make sure the support ansible repo is enabled
-       if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
-       then
-           sudo subscription-manager repos --disable="${CURRENT_REPO}"
-           sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
-       fi
-       sudo yum clean all > /dev/null 2>&1
-       sudo yum install -y -q -e 0 ansible git
-    else
-       echo "ansible is installed"
-    fi
-
-    # setup vault
-    if [ -f /usr/bin/ansible ];
-    then
-        if [ ! -f "${vault_key_file}" ]
-        then
-            echo "Create ansible-vault password file ${vault_key_file}"
-            openssl rand -base64 512|xargs > "${vault_key_file}"
-        fi
-
-        if cat "${vaultfile}" | grep -q VAULT
-        then
-            echo "${vaultfile} is encrypted"
-        else
-            echo "Encrypting ${vaultfile}"
-            ansible-vault encrypt "${vaultfile}"
-        fi
-
-        # Ensure roles are downloaded
-        echo ""
-        echo "Downloading required roles"
-        #ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
-        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
-        echo ""
-        echo ""
-
-        # Ensure required modules are downloaded
-        if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
-        then
-            test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
-            CURRENT_DIR=$(pwd)
-            cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
-            cd "${CURRENT_DIR}"
-        fi
-    else
-        echo "Ansible not found, please install and retry."
-        exit 1
     fi
 }
 
@@ -419,44 +237,6 @@ function ask_for_values () {
     #     network=($(echo "${selected_option}"))
     #     sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
     # fi
-}
-
-function get_rhsm_user_and_pass () {
-    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-    then
-        echo -n "Enter your RHSM username and press [ENTER]: "
-        read rhsm_username
-        sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaulted_file}"
-    fi
-    if grep '""' "${vault_vars_file}"|grep -q rhsm_password
-    then
-        unset rhsm_password
-        echo -n 'Enter your RHSM password and press [ENTER]: '
-        read_sensitive_data
-        rhsm_password="${sensitive_data}"
-        sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaulted_file}"
-    fi
-}
-
-function decrypt_ansible_vault () {
-    vaulted_file="$1"
-    grep -q VAULT "${vaulted_file}"
-    if [ "A$?" == "A1" ]
-    then
-        #echo "${vaulted_file} is not encrypted"
-        :
-    else
-        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
-        ansible_encrypt=yes
-    fi
-}
-
-function encrypt_ansible_vault () {
-    vaulted_file="$1"
-    if [ "A${ansible_encrypt}" == "Ayes" ]
-    then
-        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaulted_file}"
-    fi
 }
 
 function ask_for_vault_values () {
@@ -767,7 +547,6 @@ function qubinode_setup_kvm_host () {
     ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
 }
 
-
 function qubinode_project_cleanup () {
     prereqs
     FILES=()
@@ -789,7 +568,6 @@ function qubinode_project_cleanup () {
         done
     fi
 }
-
 
 function confirm () {
     continue=""
@@ -820,56 +598,34 @@ function verbose() {
     fi
 }
 
-function default_install () {
-    product_opt="ocp"
-    product=true
-    printf "\n\n***********************\n"
-    printf "* Running perquisites *\n"
-    printf "***********************\n\n"
-    qubinode_installer_preflight 
+function contains_string () {
+    [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo "$2" || echo 'invalid'
+}
 
-    printf "\n\n********************************************\n"
-    printf "* Ensure host system is registered to RHSM *\n"
-    printf "*********************************************\n\n"
-    qubinode_rhsm_register
-    
-    printf "\n\n*******************************************************\n"
-    printf "* Ensure host system is setup as a ansible controller *\n"
-    printf "*******************************************************\n\n"
-    qubinode_setup_ansible
-
-    printf "\n\n*********************************************\n"
-    printf     "* Ensure host system is setup as a KVM host *\n"
-    printf     "*********************************************\n"
-    qubinode_setup_kvm_host
-
-    printf "\n\n****************************\n"
-    printf     "* Deploy VM for DNS server *\n"
-    printf     "****************************\n"
-    qubinode_vm_manager deploy_dns
-    
-    printf "\n\n*****************************\n"
-    printf     "* Install IDM on DNS server *\n"
-    printf     "*****************************\n"
-    qubinode_dns_manager server
-
-    printf "\n\n******************************\n"
-    printf     "* Deploy DNS for ${product_opt} cluster *\n"
-    printf     "******************************\n"
-    qubinode_vm_manager deploy_nodes
-
-    printf "\n\n*********************\n"
-    printf     "*Deploy ${product_opt} cluster *\n"
-    printf     "*********************\n"
-    qubinode_deploy_openshift
-
-    printf "\n\n*******************************************************\n"
-    printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
-    printf "\nCluster login: https://ocp-master01.${domain}:8443\n"
-    printf "     Username: changeme\n"
-    printf "     Password: <yourpassword>\n"
-    printf "\n\nIDM DNS Server login: https://ocp-dns01.${domain}\n"
-    printf "     Username: admin\n"
-    printf "     Password: <yourpassword>\n"
-    printf "*******************************************************\n"
+# validate the product the user wants to install
+function validate_product_by_user () {
+    prereqs
+    available_products="ocp okd idm qubinode"
+    product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
+    if [ "A${product_in_use}" == "Ainvalid" ]
+    then
+        echo "The ${product_in_use} is not a supported."
+        echo "Supported products are: $available_products"
+        exit 1
+    fi
+    # For product Openshift
+    if [ "A${product_in_use}" == "Aocp" ]
+    then
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        then
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "The OpenShift Pool ID is required."
+                echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
+                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+                echo "with the pool ID"
+                exit 1
+            fi
+        fi
+    fi
 }
