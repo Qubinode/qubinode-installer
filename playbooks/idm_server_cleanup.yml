@@ -1,0 +1,27 @@
+---
+- name: IdM server VM post removal cleanup
+  hosts: localhost
+  become: yes
+  gather_facts: no
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+
+  tasks:
+    - name: update KVM host /etc/resolv.conf
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: "nameserver {{ idm_public_ip }}"
+        regexp: "^nameserver {{ idm_public_ip }}"
+        insertafter: '^domain'
+        state: absent
+      delegate_to: localhost
+
+    - name: REMOVE|ensure host is removed from inventory
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      delegate_to: localhost

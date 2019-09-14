@@ -1057,13 +1057,15 @@ function qubinode_dns_manager () {
 
     # Deploy IDM server
     IDM_PLAY="${project_dir}/playbooks/idm_server.yml"
+    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
     if [ "A${option}" == "Aserver" ]
     then
         if [ "A${teardown}" == "Atrue" ]
         then
-            echo "Removing IdM server"
-            ansible-playbook "${IDM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-        else
+            echo "Cleanup IDM Server"
+            ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+        elif [ "A${teardown}" != "Atrue" ]
+        then
             # Make sure IdM server is available
             IDM_SRV_IP=$(awk -F: '/idm_public_ip/ {print $2}' playbooks/vars/all.yml |        grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
             if [ "A${IDM_SRV_IP}" == "A" ]
@@ -1081,6 +1083,9 @@ function qubinode_dns_manager () {
             fi
             echo "Install IdM server"
             ansible-playbook "${IDM_PLAY}" || exit $?
+        else
+          echo "Unable to deploy IDM please check flags."
+          exit $?
         fi
     fi
 
@@ -1168,24 +1173,24 @@ function default_install () {
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
-    test ! -f /usr/bin/ansible || qubinode_setup_ansible
+    test ! -f /usr/bin/ansible && qubinode_setup_ansible
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    test ! -f /usr/bin/virsh || qubinode_setup_kvm_host
+    test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-    DNSEXISTS=$(cat ${project_dir}/playbooks/vars/all.yml | grep idm_public_ip: | awk '{print $2}' | tr -d '"')
-    [ -z $DNSEXISTS ] && qubinode_vm_manager deploy_dns
+    productname=$(cat playbooks/vars/all.yml | grep product: | awk '{print $2}' | tr -d '"')
+    CHECKFOR_DNS=$(sudo virsh list | grep running | grep ${productname}-dns  | wc -l)
+    [[ $CHECKFOR_DNS -eq 0 ]] && qubinode_vm_manager deploy_dns
 
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
-    productname=$(cat ${project_dir}/playbooks/vars/all.yml | grep product: | awk '{print $2}' | tr -d '"')
-    [ -x "$(dig @${DNSEXISTS} ${productname}-dns01.$domain)" ] && qubinode_dns_manager server
+    qubinode_dns_manager server
 
     printf "\n\n******************************\n"
     printf     "* Deploy Nodes for ${product_opt} cluster *\n"
@@ -1197,6 +1202,8 @@ function default_install () {
         qubinode_vm_manager deploy_nodes
     fi
 
+    OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
+
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_opt} cluster *\n"
     printf     "*********************\n"
@@ -1204,10 +1211,10 @@ function default_install () {
 
     printf "\n\n*******************************************************\n"
     printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
-    printf "\nCluster login: https://ocp-master01.${domain}:8443\n"
-    printf "     Username: changeme\n"
+    printf "\nCluster login: https://${productname}-master01.${domain}:8443\n"
+    printf "     Username: ${OCUSER}\n"
     printf "     Password: <yourpassword>\n"
-    printf "\n\nIDM DNS Server login: https://ocp-dns01.${domain}\n"
+    printf "\n\nIDM DNS Server login: https://${productname}-dns01.${domain}\n"
     printf "     Username: admin\n"
     printf "     Password: <yourpassword>\n"
     printf "*******************************************************\n"
