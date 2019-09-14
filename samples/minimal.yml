@@ -1,6 +1,7 @@
 ---
 # all non sensitive variables are defined here
 product: ocp
+deployment_type: minimal-cns
 update_inventory: true
 inventory_dir: ""
 project_dir: ""

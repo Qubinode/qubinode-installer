@@ -1168,12 +1168,12 @@ function default_install () {
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
-    [ -x "$(ansible --version | grep 2.6)" ] && qubinode_setup_ansible
+    test ! -f /usr/bin/ansible || qubinode_setup_ansible
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    [ -x "$(virsh --help)" ] && qubinode_setup_kvm_host
+    test ! -f /usr/bin/virsh || qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
