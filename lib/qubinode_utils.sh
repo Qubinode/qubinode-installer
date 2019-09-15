@@ -346,7 +346,7 @@ function confirm () {
             continue="yes"
         elif [[ $response =~ ^([nN][oO])$ ]]
         then
-            echo "You chose no"
+            echo "You choose $response"
             response="no"
             continue="yes"
         else
@@ -389,5 +389,15 @@ function setup_user_ssh_key () {
     then
         echo "Setting up ssh keys for ${CURRENT_USER}"
         ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
+    fi
+}
+
+function isRPMinstalled() {
+    if rpm -q $1 &> /dev/null; then
+        echo '$1 is installed'
+        return 0
+    else
+        echo '$1 is not installed'
+        return 1
     fi
 }

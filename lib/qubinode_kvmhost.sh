@@ -43,10 +43,6 @@ function qubinode_networking () {
 }
 
 
-function qubinode_installer_preflight () {
-    prereqs
-}
-
 function qubinode_check_libvirt_pool () {
     DEFINED_LIBVIRT_POOL=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}"| tr -d '"')
     
@@ -87,6 +83,7 @@ function qubinode_check_libvirt_pool () {
 
 
 function qubinode_setup_kvm_host () {
+    echo "Running qubinode_setup_kvm_host setup."
     prereqs
     setup_variables
     setup_sudoers
@@ -154,5 +151,56 @@ function qubinode_setup_kvm_host () {
     else
         qubinode_setup_ansible
         qubinode_check_libvirt_pool
+        echo "Installing required packages"
+        sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
     fi
+}
+
+
+function qubinode_check_kvmhost () {
+    echo "Validating the KVMHOST setup"
+    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
+    DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
+    
+    if [ ! -f /usr/bin/virsh ]
+    then
+        qubinode_setup_kvm_host
+    elif ! sudo virsh net-list --all --name | grep -q $DEFINED_LIBVIRT_NETWORK
+    then
+        qubinode_setup_kvm_host
+    elif ! isRPMinstalled libvirt-python
+    then
+        qubinode_setup_kvm_host
+    else
+        KVM_HOST_MSG="KVM host is setup"
+    fi
+
+    if grep Fedora /etc/redhat-release
+    then
+        if ! isRPMinstalled python3-dns
+        then
+            qubinode_setup_kvm_host
+        fi
+    else
+        if ! isRPMinstalled python-dns
+        then
+            qubinode_setup_kvm_host
+        fi
+    fi
+    
+    if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
+    then
+        if ! sudo brctl show $DEFINED_BRIDGE > /dev/null 2>&1
+        then
+            qubinode_setup_kvm_host
+        elif ! sudo vgs | grep -q $DEFINED_VG
+        then
+            qubinode_setup_kvm_host
+        else
+            KVM_HOST_MSG="KVM host is setup"
+        fi
+    fi
+    
+    echo $KVM_HOST_MSG
 }

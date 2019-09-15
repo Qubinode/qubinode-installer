@@ -8,6 +8,7 @@ function display_idmsrv_unavailable () {
         exit 1
 }
 
+
 function qubinode_dns_manager () {
     prereqs
     option="$1"
@@ -56,43 +57,62 @@ function qubinode_dns_manager () {
             ansible-playbook "${IDM_PLAY}" || exit $?
         fi
     fi
-
-    #TODO: this block of code should be deleted
-    # Add DNS records to IdM
-    #if [ "A${option}" == "Arecords" ]
-    #then
-    #    ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
-    #fi
 }
 
 function qubinode_idm_user_input () {
     # Get static IP address for IDM
     if [ "${product_in_use}" == "idm" ]
     then
-        confirm "Would you like to set a static IP for for the IdM server? Default choice is no. Yes/No"
-        if [ "A${response}" == "Ayes" ]
+        IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${vars_file}"| tr -d '"')
+        if [ "A${IDM_STATIC}" == "Ayes" ]
         then
-            if grep -q idm_server_ip "${vars_file}"
+            confirm "Would you like to set a static IP for for the IdM server? Default choice is no. Yes/No"
+            if [ "A${response}" == "Ayes" ]
             then
-                if grep idm_server_ip "${vars_file}"| grep -q '""'
+                sed -i "s/idm_check_static_ip: yes/idm_check_static_ip: no/g" "${vars_file}"
+                if grep -q idm_server_ip "${vars_file}"
                 then
-                    read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
-                    idm_server_ip="${USER_IDM_SERVER_IP}"
-                    sed -i "s/idm_server_ip: \"\"/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${vars_file}"
+                    if grep idm_server_ip "${vars_file}"| grep -q '""'
+                    then
+                        read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
+                        idm_server_ip="${USER_IDM_SERVER_IP}"
+                        sed -i "s/idm_server_ip: \"\"/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${vars_file}"
+                    fi
+                else
+                    echo "The variable idm_server_ip is not defined in ${vars_file}."
                 fi
-            else
-                echo "The variable idm_server_ip is not defined in ${vars_file}."
-            fi
-
-            if grep -q idm_server_ip "${vars_file}"
-            then            
-                if grep '""' "${vars_file}"|grep -q dns_server_public
-                then
-                    sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "${vars_file}"
+    
+                if grep -q idm_server_ip "${vars_file}"
+                then            
+                    if grep '""' "${vars_file}"|grep -q dns_server_public
+                    then
+                        sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "$    {vars_file}"
+                    fi
+                else
+                    echo "The variable idm_server_ip is not defined in ${vars_file}."
                 fi
+            elif [ "A${response}" == "Ano" ]
+            then
+                sed -i "s/idm_check_static_ip: yes/idm_check_static_ip: no/g" "${vars_file}"
             else
-                echo "The variable idm_server_ip is not defined in ${vars_file}."
+                echo "IdM static ip check not required"
             fi
-       fi
+        fi
     fi
+}
+
+
+function qubinode_deploy_idm () {
+   qubinode_vm_deployment_precheck
+   DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
+
+   if [ "A${teardown}" == "Atrue" ]
+   then
+       echo "Remove DNS VM"
+       ansible-playbook "${DNS_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+   else
+       echo "Deploy DNS VM"
+       ansible-playbook "${DNS_PLAY}" || exit $?
+       qubinode_dns_manager server
+   fi
 }

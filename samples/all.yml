@@ -216,6 +216,7 @@ rhsm_pass: "{{ rhsm_password }}"
 
 # IDM server attributes
 idm_server_ip: ""
+idm_check_static_ip: yes
 idm_admin_user: admin
 idm_hostname: "ocp-dns01"
 dns_server_public: ""
