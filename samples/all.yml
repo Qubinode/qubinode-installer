@@ -1,6 +1,7 @@
 ---
 # all non sensitive variables are defined here
 product: ocp3
+instance_prefix: qbn
 deployment_type: standard
 update_inventory: true
 inventory_dir: ""
@@ -218,7 +219,7 @@ rhsm_pass: "{{ rhsm_password }}"
 idm_server_ip: ""
 idm_check_static_ip: yes
 idm_admin_user: admin
-idm_hostname: "ocp-dns01"
+idm_hostname: "{{ instance_prefix }}-dns01"
 dns_server_public: ""
 qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
