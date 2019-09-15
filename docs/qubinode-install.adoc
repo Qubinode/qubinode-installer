@@ -7,9 +7,11 @@ Main Options:
                 idm - deploy IDM as a DNS Server
 
     -c      Cluster operations:
-                cluster - runs a health check of the cluster
+                checkcluster - runs a health check of the cluster
                 diag    - runs a adv health check
                 smoketest - runs a smoke test on cluster
+                startup - start up OpenShift cluster after shutdown
+                shutdown - safely shutdown OpenShift cluster
 
     -h      Display this help menu
 
