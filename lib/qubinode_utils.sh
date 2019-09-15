@@ -102,22 +102,6 @@ function read_sensitive_data () {
     done
 }
 
-# Ensure RHEL is set to the supported release
-function set_rhel_release () {
-    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' samples/all.yml |grep [0-9])
-    RELEASE="Release: ${RHEL_RELEASE}"
-    CURRENT_RELEASE=$(sudo subscription-manager release --show)
-
-    if [ "A${RELEASE}" != "A${CURRENT_RELEASE}" ]
-    then
-        echo "Setting RHEL to the supported release: ${RHEL_RELEASE}"
-        sudo subscription-manager release --unset
-        sudo subscription-manager release --set="${RHEL_RELEASE}"
-    else
-       echo "RHEL release is set to the supported release: ${CURRENT_RELEASE}"
-    fi
-}
-
 function check_for_dns () {
     record=$1
     if [ -f /usr/bin/dig ]
