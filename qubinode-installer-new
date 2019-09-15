@@ -1,0 +1,366 @@
+#!/usr/bin/env bash
+# This script will start the automated depoyment of openshift home lab
+
+# Uncomment for debugging
+#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+#set -x
+
+# Turn verbose off
+_V=1
+
+# Load all functions
+PROJECT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+FUNCTIONS="qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_openshift.sh qubinode_rhsm.sh"
+for item in $(echo "${FUNCTIONS}")
+do
+    if [ -f "${PROJECT_DIR}/lib/${item}" ]
+    then
+        source "${PROJECT_DIR}/lib/${item}"
+    else
+        echo "Could not find function ${item}"
+        echo "${PROJECT_DIR}/lib/${item}"
+        exit 1
+    fi
+done
+
+# Ensure the product is valid and setup the product for the rest of the run
+# validate the product the user wants to install
+function validate_product_by_user () {
+    prereqs
+    available_products="ocp okd idm qubinode"
+    product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
+    if [ "A${product_in_use}" == "Ainvalid" ]
+    then
+        echo "The ${product_in_use} is not a supported."
+        echo "Supported products are: $available_products"
+        exit 1
+    fi
+    # For product Openshift
+    if [ "A${product_in_use}" == "Aocp" ]
+    then
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        then
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "The OpenShift Pool ID is required."
+                echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
+                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+                echo "with the pool ID"
+                exit 1
+            fi
+        fi
+    fi
+}
+
+#source "${PROJECT_DIR}/qubinode_utils.sh"
+#source "${PROJECT_DIR}/qubinode.sh"
+#source "${PROJECT_DIR}/qubinode_userinput.sh"
+#source "${PROJECT_DIR}/qubinode_ansible.sh"
+#source "${PROJECT_DIR}/qubinode_kvmhost.sh"
+#source "${PROJECT_DIR}/qubinode_idm.sh"
+#source "${PROJECT_DIR}/qubinode_openshift.sh"
+
+function qubinode_vm_manager () {
+   # Deploy VMS
+   prereqs
+   deploy_vm_opt="$1"
+
+   if [ "A${teardown}" != "Atrue" ]
+   then
+       # Ensure the setup function as was executed
+       if [ ! -f "${vars_file}" ]
+       then
+           qubinode_installer_preflight
+           #echo "${vars_file} is missing"
+           #echo "Please run qubinode-installer -m setup"
+           #echo ""
+           #exit 1
+       fi
+
+       # Ensure the ansible function has bee executed
+       ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
+       if [ ! -f /usr/bin/ansible ]
+       then
+           qubinode_setup_ansible
+       elif [ "A${ROLE_PRESENT}" == "A" ]
+       then
+           #echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
+           #echo "Please run run qubinode-installer -m ansible"
+           #echo ""
+           #exit 1
+           qubinode_setup_ansible
+       else
+           echo "Ansible is not installed"
+           echo "Please run qubinode-installer -m ansible"
+           echo ""
+           exit 1
+       fi
+
+       # Check for required Qcow image
+       check_for_rhel_qcow_image
+    fi
+
+   DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
+   NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
+   NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
+   CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
+   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
+
+   if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
+   then
+       if [ "A${teardown}" == "Atrue" ]
+       then
+           echo "Remove DNS VM"
+           ansible-playbook "${DNS_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+       else
+           echo "Deploy DNS VM"
+           ansible-playbook "${DNS_PLAY}" || exit $?
+       fi
+   elif [ "A${deploy_vm_opt}" == "Adeploy_nodes" ]
+   then
+       if [ "A${teardown}" == "Atrue" ]
+       then
+           echo "Remove ${qubinode_product} VMs"
+           ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true" || exit $?
+           ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+           if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
+              rm -rf ${CHECK_OCP_INVENTORY}
+           fi
+       else
+           echo "Deploy ${qubinode_product} VMs"
+           ansible-playbook "${NODES_PLAY}" || exit $?
+           ansible-playbook "${NODES_POST_PLAY}" || exit $?
+       fi
+   elif [ "A${deploy_vm_opt}" == "Askip" ]
+   then
+       echo "Skipping running ${project_dir}/playbooks/deploy_vms.yml" || exit $?
+   else
+        display_help
+   fi
+}
+
+function display_idmsrv_unavailable () {
+        echo ""
+        echo ""
+        echo ""
+        echo "Eithr the IdM server variable idm_public_ip is not set."
+        echo "Or the IdM server is not reachable."
+        echo "Ensire the IdM server is running, update the variable and try again."
+        exit 1
+}
+
+function qubinode_dns_manager () {
+    prereqs
+    option="$1"
+    if [ ! -f "${project_dir}/inventory/hosts" ]
+    then
+        echo "${project_dir}/inventory/hosts is missing"
+        echo "Please run quibinode-installer -m setup"
+        echo ""
+        exit 1
+    fi
+
+    if [ ! -f /usr/bin/ansible ]
+    then
+        echo "Ansible is not installed"
+        echo "Please run qubinode-installer -m ansible"
+        echo ""
+        exit 1
+    fi
+
+
+    # Deploy IDM server
+    IDM_PLAY="${project_dir}/playbooks/idm_server.yml"
+    if [ "A${option}" == "Aserver" ]
+    then
+        if [ "A${teardown}" == "Atrue" ]
+        then
+            echo "Removing IdM server"
+            ansible-playbook "${IDM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+        else
+            # Make sure IdM server is available
+            IDM_SRV_IP=$(awk -F: '/idm_public_ip/ {print $2}' playbooks/vars/all.yml |        grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+            if [ "A${IDM_SRV_IP}" == "A" ]
+            then
+                display_idmsrv_unavailable
+            elif [ "A${IDM_SRV_IP}" != "A" ]
+            then
+                if ping -c1 "${IDM_SRV_IP}" &> /dev/null
+                then
+                    echo "IdM server is appears to be up"
+                else
+                    echo "ping -c ${IDM_SRV_IP} FAILED"
+                    display_idmsrv_unavailable
+                fi
+            fi
+            echo "Install IdM server"
+            ansible-playbook "${IDM_PLAY}" || exit $?
+        fi
+    fi
+
+    #TODO: this block of code should be deleted
+    # Add DNS records to IdM
+    #if [ "A${option}" == "Arecords" ]
+    #then
+    #    ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
+    #fi
+}
+
+
+
+##       MAIN               ##
+##############################
+
+# Exit if this is executed as the root user
+if is_root; then
+    echo "Error: qubi-installer should be run as a normal user, not as root!"
+    exit 1
+fi
+
+echo ""
+echo ""
+OPTIND=1
+NUM_ARGS="$#"
+ALL_ARGS="$@"
+
+while getopts ":c:dvh:m:p:a:" opt;
+do
+    case $opt in
+        a) check_args;
+           full_deploy=true
+           ;;
+        c) check_args
+           check=true
+           cluster=true
+           cluster_opt=$OPTARG
+           ;;
+        d) check_args;
+           teardown=true
+           ;;
+        h) display_help
+           exit 1
+           ;;
+        m) check_args;
+           maintenance=$OPTARG;
+           ;;
+        p) check_args
+           check=true
+           qubinode_product=true
+           qubinode_product_opt=$OPTARG
+           ;;
+        v) check_args;
+           _V=1
+           ;;
+       --) shift; break;;
+       -*) echo Unrecognized flag : "$1" >&2
+           display_help
+           exit 1
+           ;;
+       \?) echo Unrecognized flag : "$1" >&2
+           display_help
+           exit 1
+           ;;
+    esac
+done
+shift "$((OPTIND-1))"
+
+# TODO: add verbose option for default install
+if (( $OPTIND == 1 )); then
+   cat < docs/default_message
+   default_message=("Continue with the default installation" "Display the help menu")
+   createmenu "${default_message[@]}"
+   result=($(echo "${selected_option}"))
+   if [ "A${result}" == "ADisplay" ]
+   then
+       display_help
+   elif [ "A${result}" == "AContinue" ]
+   then
+       default_install
+   else
+       echo $result
+      echo "Unknown issue, please run the installer again"
+   fi
+else
+    if [ "A${maintenance}" != "A" ]
+    then
+        # Check for product
+        validate_product_by_user
+        if [ "${maintenance}" == "clean" ]
+        then
+            qubinode_project_cleanup
+        elif [ "${maintenance}" == "setup" ]
+        then
+            qubinode_installer_preflight
+        elif [ "${maintenance}" == "rhsm" ]
+        then
+            qubinode_rhsm_register
+        elif [ "${maintenance}" == "ansible" ]
+        then
+            qubinode_setup_ansible
+        elif [ "${maintenance}" == "host" ]
+        then
+            qubinode_setup_kvm_host
+        #elif [ "${maintenance}" == "deploy_dns" ]
+        #then
+        #    qubinode_vm_manager deploy_dns
+        #    qubinode_dns_manager server
+        elif [ "${maintenance}" == "deploy_nodes" ]
+        then
+            qubinode_vm_manager deploy_nodes
+        elif [ "${maintenance}" == "undeploy" ]
+        then
+            #TODO: this should remove all VMs and clean up the project folder
+            qubinode_vm_manager undeploy
+        elif [ "${maintenance}" == "uninstall_openshift" ]
+        then
+            #TODO: this should remove all VMs and clean up the project folder
+            qubinode_uninstall_openshift
+        else
+            display_help
+        fi
+    elif [ "A${product_in_use}" != "A" ]
+    then
+        if [ "${product_in_use}" == "ocp" ]
+        then
+            if [ "A${teardown}" == "Atrue" ]
+            then
+                qubinode_vm_manager deploy_nodes
+            else
+               if sudo virsh list|grep -E 'master|node|infra'
+               then
+                   qubinode_deploy_openshift
+               else
+                   qubinode_vm_manager deploy_nodes
+                   qubinode_deploy_openshift
+               fi
+            fi
+        elif [ "${product_in_use}" == "idm" ]
+        then
+            qubinode_vm_manager deploy_dns
+            qubinode_dns_manager server
+        else
+            display_help
+        fi
+    elif [ "A${cluster_opt}" != "A" ]
+    then
+
+    case ${cluster_opt} in
+    diag)
+    echo "Perparing to run full Diagnostics"
+    MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
+    ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE "sudo oadm diagnostics"
+    ;;
+    smoketest)
+    echo  "Running smoke test on environment."
+    bash lib/openshift-smoke-test.sh || exit $?
+    ;;
+    *)
+    echo "No arguement was passed"
+    ;;
+    esac
+     else
+         display_help
+    fi
+fi
+
+exit 0
