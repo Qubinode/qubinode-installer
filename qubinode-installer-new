@@ -30,7 +30,7 @@ OS=$(awk '{print $1}' /etc/redhat-release)
 # validate the product the user wants to install
 function validate_product_by_user () {
     prereqs
-    available_products="ocp okd idm kvmhost"
+    available_products="ocp3 okd3 idm kvmhost"
     product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
     if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
     then
@@ -285,7 +285,7 @@ else
         fi
     elif [ "A${product_in_use}" != "A" ]
     then
-        if [ "${product_in_use}" == "ocp" ]
+        if [ "${product_in_use}" == "ocp3" ]
         then
             if [ "A${teardown}" == "Atrue" ]
             then

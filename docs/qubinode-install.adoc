@@ -2,8 +2,8 @@ Basic usage: qubinode-installer [options]
 
 Main Options:
     -p      Required option, deploys one of the following container platforms:
-                okd     - deploy upstream OpenShift
-                ocp     - deploy Red Hat OpenShift Platform <subscription required>
+                okd3    - deploy upstream OpenShift 3.11
+                ocp3    - deploy Red Hat OpenShift Platform <subscription required>
                 idm     - deploy IDM as a DNS Server
                 kvmhost - configure host to run KVM vms
 
@@ -29,17 +29,17 @@ Product Options:
                 rhsm         - register host system to Red Hat
                 ansible      - setup host system as an ansible controller
                 host         - setup the host system as an KVM host
-                deploy_nodes - deploy all VMS to install ocp/okd, supports -d
+                deploy_nodes - deploy all VMS to install ocp3/okd3, supports -d
                 uninstall_openshift - uninstall OpenShift Container Platform across all hosts in your cluster
 
 Examples:
 
-  * Delete the DNS server: qubinode-installer -p ocp -m deploy_dns -d
+  * Delete the DNS server: qubinode-installer -p ocp3 -m deploy_dns -d
 
-  * Deploy OCP cluster: qubinode-installer -p ocp -m deploy_cluster
+  * Deploy OCP cluster: qubinode-installer -p ocp3 -m deploy_cluster
 
-  * Delete the cluster: qubinode-installer -p ocp -d
+  * Delete the cluster: qubinode-installer -p ocp3 -d
 
-  * Deploy OCP: qubinode-installer -p ocp -a
+  * Deploy OCP: qubinode-installer -p ocp3 -a
 
-  * Uninstall OpenShift Nodes: qubinode-installer -p ocp -m uninstall_openshift
+  * Uninstall OpenShift Nodes: qubinode-installer -p ocp3 -m uninstall_openshift
