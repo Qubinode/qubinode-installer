@@ -213,6 +213,7 @@ function setup_sudoers () {
     fi
 }
 
+
 function setup_user_ssh_key () {
     HOMEDIR=$(eval echo ~${CURRENT_USER})
     if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
@@ -221,6 +222,7 @@ function setup_user_ssh_key () {
         ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
     fi
 }
+
 
 function setup_variables () {
     prereqs
@@ -351,30 +353,6 @@ function contains_string () {
     [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo "$2" || echo 'invalid'
 }
 
-function setup_sudoers () {
-    prereqs
-    echo "Checking if ${CURRENT_USER} is setup for password-less sudo: "
-    elevate_cmd test -f "/etc/sudoers.d/${CURRENT_USER}"
-    if [ "A$?" != "A0" ]
-    then
-        SUDOERS_TMP=$(mktemp)
-        echo "Setting up /etc/sudoers.d/${CURRENT_USER}"
-	echo "${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL" > "${SUDOERS_TMP}"
-        elevate_cmd cp "${SUDOERS_TMP}" "/etc/sudoers.d/${CURRENT_USER}"
-        sudo chmod 0440 "/etc/sudoers.d/${CURRENT_USER}"
-    else
-        echo "${CURRENT_USER} is setup for password-less sudo"
-    fi
-}
-
-function setup_user_ssh_key () {
-    HOMEDIR=$(eval echo ~${CURRENT_USER})
-    if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
-    then
-        echo "Setting up ssh keys for ${CURRENT_USER}"
-        ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
-    fi
-}
 
 function isRPMinstalled() {
     if rpm -q $1 &> /dev/null; then
