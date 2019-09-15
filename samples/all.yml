@@ -1,6 +1,6 @@
 ---
 # all non sensitive variables are defined here
-product: ocp
+product: ocp3
 deployment_type: standard
 update_inventory: true
 inventory_dir: ""
@@ -107,7 +107,7 @@ ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,ba
 
 ocp_gluster_pkg: docker-1.13.1
 
-valid_products: "okd,ocp"
+valid_products: "okd3,ocp3,idm,kvmhost,satellite,rhhi"
 
  # LVM
 logical_volumes:

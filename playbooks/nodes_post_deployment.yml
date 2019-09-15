@@ -13,7 +13,7 @@
   tasks:
     - name: declare post install file for {{ product }}
       set_fact:
-        product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp' else 'okd_nodes_postinstall.yml' }}"
+        product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp3' else 'okd_nodes_postinstall.yml' }}"
       tags:
         - always
 
