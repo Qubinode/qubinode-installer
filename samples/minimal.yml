@@ -1,6 +1,7 @@
 ---
 # all non sensitive variables are defined here
 product: ocp
+deployment_type: minimal-cns
 update_inventory: true
 inventory_dir: ""
 project_dir: ""
@@ -193,9 +194,9 @@ glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
 metrics_storage_volume_size: 10Gi
 
 # Feature
-enable_firewalld: False
-enable_openshift_operators: True
-enable_metrics: True
+enable_firewalld: True
+enable_openshift_operators: False
+enable_metrics: False
 enable_logging: False
 enable_prometheous_operator: False
 
