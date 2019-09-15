@@ -10,7 +10,7 @@ _V=1
 
 # Load all functions
 PROJECT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-FUNCTIONS="qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_openshift.sh qubinode_rhsm.sh"
+FUNCTIONS="qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_ocp3.sh qubinode_rhsm.sh"
 for item in $(echo "${FUNCTIONS}")
 do
     if [ -f "${PROJECT_DIR}/lib/${item}" ]
@@ -240,7 +240,7 @@ if (( $OPTIND == 1 )); then
        display_help
    elif [ "A${result}" == "AContinue" ]
    then
-       default_install
+       qubinode_install_openshift
    else
        echo $result
       echo "Unknown issue, please run the installer again"
@@ -293,10 +293,10 @@ else
             else
                if sudo virsh list|grep -E 'master|node|infra'
                then
-                   qubinode_deploy_openshift
+                   qubinode_run_openshift_installer
                else
                    qubinode_vm_manager deploy_nodes
-                   qubinode_deploy_openshift
+                   qubinode_run_openshift_installer
                fi
             fi
         elif [ "${product_in_use}" == "idm" ]
