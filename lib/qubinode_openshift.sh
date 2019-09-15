@@ -175,24 +175,24 @@ function qubinode_install_openshift () {
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
-    [ -x "$(ansible --version | grep 2.6)" ] && qubinode_setup_ansible
+    test ! -f /usr/bin/ansible && qubinode_setup_ansible
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    [ -x "$(virsh --help)" ] && qubinode_setup_kvm_host
+    test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-    DNSEXISTS=$(cat ${project_dir}/playbooks/vars/all.yml | grep idm_public_ip: | awk '{print $2}' | tr -d '"')
-    [ -z $DNSEXISTS ] && qubinode_vm_manager deploy_dns
+    productname=$(cat "${vars_file}"| grep product: | awk '{print $2}' | tr -d '"')
+    CHECKFOR_DNS=$(sudo virsh list | grep running | grep ${productname}-dns  | wc -l)
+    [[ $CHECKFOR_DNS -eq 0 ]] && qubinode_vm_manager deploy_dns
 
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
-    productname=$(cat ${project_dir}/playbooks/vars/all.yml | grep product: | awk '{print $2}' | tr -d '"')
-    [ -x "$(dig @${DNSEXISTS} ${productname}-dns01.$domain)" ] && qubinode_dns_manager server
+    qubinode_dns_manager server
 
     printf "\n\n******************************\n"
     printf     "* Deploy Nodes for ${product_in_use} cluster *\n"
@@ -203,6 +203,8 @@ function qubinode_install_openshift () {
     else
         qubinode_vm_manager deploy_nodes
     fi
+
+    OCUSER=$(cat "${vars_file}" | grep openshift_user: | awk '{print $2}')
 
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_in_use} cluster *\n"
