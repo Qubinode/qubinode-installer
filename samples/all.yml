@@ -217,6 +217,7 @@ qubinode_brdige_name: qubibr0
 ###################
 
 # IDM server attributes
+idm_server_ip: ""
 idm_admin_user: admin
 idm_hostname: "ocp-dns01"
 dns_server_public: ""

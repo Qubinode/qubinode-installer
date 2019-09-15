@@ -7,12 +7,58 @@
 
 # Turn verbose off
 _V=1
-PROJECT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-source "${PROJECT_DIR}/qubinode_utils.sh"
-source "${PROJECT_DIR}/qubinode.sh"
-source "${PROJECT_DIR}/qubinode_idm.sh"
-source "${PROJECT_DIR}/qubinode_openshift.sh"
 
+# Load all functions
+PROJECT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+FUNCTIONS="qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_openshift.sh qubinode_rhsm.sh"
+for item in $(echo "${FUNCTIONS}")
+do
+    if [ -f "${PROJECT_DIR}/lib/${item}" ]
+    then
+        source "${PROJECT_DIR}/lib/${item}"
+    else
+        echo "Could not find function ${item}"
+        echo "${PROJECT_DIR}/lib/${item}"
+        exit 1
+    fi
+done
+
+# Ensure the product is valid and setup the product for the rest of the run
+# validate the product the user wants to install
+function validate_product_by_user () {
+    prereqs
+    available_products="ocp okd idm qubinode"
+    product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
+    if [ "A${product_in_use}" == "Ainvalid" ]
+    then
+        echo "The ${product_in_use} is not a supported."
+        echo "Supported products are: $available_products"
+        exit 1
+    fi
+    # For product Openshift
+    if [ "A${product_in_use}" == "Aocp" ]
+    then
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        then
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "The OpenShift Pool ID is required."
+                echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
+                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+                echo "with the pool ID"
+                exit 1
+            fi
+        fi
+    fi
+}
+
+#source "${PROJECT_DIR}/qubinode_utils.sh"
+#source "${PROJECT_DIR}/qubinode.sh"
+#source "${PROJECT_DIR}/qubinode_userinput.sh"
+#source "${PROJECT_DIR}/qubinode_ansible.sh"
+#source "${PROJECT_DIR}/qubinode_kvmhost.sh"
+#source "${PROJECT_DIR}/qubinode_idm.sh"
+#source "${PROJECT_DIR}/qubinode_openshift.sh"
 
 function qubinode_vm_manager () {
    # Deploy VMS

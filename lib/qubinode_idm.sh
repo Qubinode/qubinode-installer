@@ -64,3 +64,36 @@ function qubinode_dns_manager () {
     #    ansible-playbook "${project_dir}/playbooks/add-idm-records.yml" || exit $?
     #fi
 }
+
+function qubinode_idm_user_input () {
+    # Get static IP address for IDM
+    if [ "${product_in_use}" == "idm" ]
+    then
+        confirm "Would you like to set a static IP for for the IdM server? Default choice is no. Yes/No"
+        if [ "A${response}" == "Ayes" ]
+        then
+            if grep -q idm_server_ip "${vars_file}"
+            then
+                if grep idm_server_ip "${vars_file}"| grep -q '""'
+                then
+                    read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
+                    idm_server_ip="${USER_IDM_SERVER_IP}"
+                    sed -i "s/idm_server_ip: \"\"/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${vars_file}"
+                fi
+            else
+                echo "The variable idm_server_ip is not defined in ${vars_file}."
+            fi
+
+            if grep -q idm_server_ip "${vars_file}"
+            then            
+                if grep '""' "${vars_file}"|grep -q dns_server_public
+                then
+                    sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "${vars_file}"
+                fi
+            else
+                echo "The variable idm_server_ip is not defined in ${vars_file}."
+            fi
+       fi
+    fi
+    exit
+}

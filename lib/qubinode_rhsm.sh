@@ -110,7 +110,6 @@ function qubinode_rhsm_register () {
         check_rhsm_status
         set_openshift_rhsm_pool_id
     fi
-
 }
 
 function get_rhsm_user_and_pass () {

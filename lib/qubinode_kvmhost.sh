@@ -31,22 +31,6 @@ function qubinode_networking () {
       DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
-
-    # Get static IP address for IDM
-    if [ "${product_in_use}" == "idm" ]
-    then
-        confirm "Would you like to set a static IP for for the IdM server? Default choice is no. ${product_in_use} cluster?"
-        if [ "A${response}" == "Ayes" ]
-        then
-            if grep '""' "${varsfile}"|grep -q dns_server_public
-            then
-                read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_server_public
-                dns_server_public=${dns_server_public:-1.1.1.1}
-                sed -i "s/dns_server_public: \"\"/dns_server_public: "$dns_server_public"/g" "${varsfile}"
-            fi
-       fi
-    fi
-    exit
 }
 
 function setup_sudoers () {
