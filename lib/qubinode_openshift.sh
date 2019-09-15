@@ -1,5 +1,24 @@
 #!/bin/bash
 
+function validate_openshift_pool_id () {
+    # For product Openshift
+    if [ "A${product_in_use}" == "Aocp" ]
+    then
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        then
+            check_for_openshift_subscription
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "The OpenShift Pool ID is required."
+                echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
+                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+                echo "with the pool ID"
+                exit 1
+            fi
+        fi
+    fi
+}
+
 function check_for_openshift_subscription () {
     AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
     CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
@@ -60,8 +79,8 @@ function set_openshift_rhsm_pool_id () {
 }
 
 function openshift-setup() {
-
   setup_variables
+  validate_openshift_pool_id
   if [[ ${product_in_use} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
   elif [[ ${product_in_use} == "okd" ]]; then

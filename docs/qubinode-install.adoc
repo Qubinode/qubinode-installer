@@ -2,9 +2,10 @@ Basic usage: qubinode-installer [options]
 
 Main Options:
     -p      Required option, deploys one of the following container platforms:
-                okd - deploy upstream OpenShift
-                ocp - deploy Red Hat OpenShift Platform <subscription required>
-                idm - deploy IDM as a DNS Server
+                okd     - deploy upstream OpenShift
+                ocp     - deploy Red Hat OpenShift Platform <subscription required>
+                idm     - deploy IDM as a DNS Server
+                kvmhost - configure host to run KVM vms
 
     -c      Cluster operations:
                 checkcluster - runs a health check of the cluster

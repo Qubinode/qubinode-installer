@@ -56,18 +56,6 @@ function check_args () {
     fi
 }
 
-function prereqs () {
-    # setup required paths
-    setup_required_paths
-    #
-    # set subscription pool dsetup MAIN variables
-    CURRENT_USER=$(whoami)
-    vault_key_file="/home/${CURRENT_USER}/.vaultkey"
-    vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
-    vars_file="${project_dir}/playbooks/vars/all.yml"
-    hosts_inventory_dir="${project_dir}/inventory"
-    inventory_file="${hosts_inventory_dir}/hosts"
-}
 
 # just shows the below error message
 function config_err_msg () {
@@ -200,21 +188,29 @@ function createmenu () {
 function prereqs () {
     # setup required paths
     setup_required_paths
-    #
-    # set subscription pool dsetup MAIN variables
     CURRENT_USER=$(whoami)
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
-    IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
-    # HOST Gateway not currently in use
-    GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
-    NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
-    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-    DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
-    NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+    # copy sample vars file to playbook/vars directory
+    if [ ! -f "${vars_file}" ]
+    then
+      cp "${project_dir}/samples/all.yml" "${vars_file}"
+    fi
+
+    # create vault vars file
+    if [ ! -f "${vault_vars_file}" ]
+    then
+        cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
+    fi
+
+    # create ansible inventory file
+    if [ ! -f "${hosts_inventory_dir}/hosts" ]
+    then
+        cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
+    fi
 }
 
 function setup_sudoers () {
@@ -244,23 +240,6 @@ function setup_user_ssh_key () {
 
 function setup_variables () {
     prereqs
-    # copy sample vars file to playbook/vars directory
-    if [ ! -f "${vars_file}" ]
-    then
-      cp "${project_dir}/samples/all.yml" "${vars_file}"
-    fi
-
-    # create vault vars file
-    if [ ! -f "${vault_vars_file}" ]
-    then
-        cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
-    fi
-
-    # create ansible inventory file
-    if [ ! -f "${hosts_inventory_dir}/hosts" ]
-    then
-        cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
-    fi
 
     echo ""
     echo "Populating ${vars_file}"
@@ -302,6 +281,16 @@ function setup_variables () {
         echo "Adding kvm_host_interface variable"
         sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
     fi
+
+    # Setup admin user variable
+    if grep '""' "${vars_file}"|grep -q admin_user
+    then
+        echo "Updating ${vars_file} admin_user variable"
+        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
+    fi
+
+    # Pull variables from all.yml needed for the install
+    domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     echo ""
 }
 
@@ -376,4 +365,29 @@ function verbose() {
 
 function contains_string () {
     [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo "$2" || echo 'invalid'
+}
+
+function setup_sudoers () {
+    prereqs
+    echo "Checking if ${CURRENT_USER} is setup for password-less sudo: "
+    elevate_cmd test -f "/etc/sudoers.d/${CURRENT_USER}"
+    if [ "A$?" != "A0" ]
+    then
+        SUDOERS_TMP=$(mktemp)
+        echo "Setting up /etc/sudoers.d/${CURRENT_USER}"
+	echo "${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL" > "${SUDOERS_TMP}"
+        elevate_cmd cp "${SUDOERS_TMP}" "/etc/sudoers.d/${CURRENT_USER}"
+        sudo chmod 0440 "/etc/sudoers.d/${CURRENT_USER}"
+    else
+        echo "${CURRENT_USER} is setup for password-less sudo"
+    fi
+}
+
+function setup_user_ssh_key () {
+    HOMEDIR=$(eval echo ~${CURRENT_USER})
+    if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
+    then
+        echo "Setting up ssh keys for ${CURRENT_USER}"
+        ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
+    fi
 }

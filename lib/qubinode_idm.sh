@@ -95,5 +95,4 @@ function qubinode_idm_user_input () {
             fi
        fi
     fi
-    exit
 }

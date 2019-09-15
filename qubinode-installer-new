@@ -23,42 +23,25 @@ do
     fi
 done
 
+HARDWARE_ROLE=$(sudo hostnamectl | awk '/Chassis/ {print $2}')
+OS=$(awk '{print $1}' /etc/redhat-release)
+
 # Ensure the product is valid and setup the product for the rest of the run
 # validate the product the user wants to install
 function validate_product_by_user () {
     prereqs
-    available_products="ocp okd idm qubinode"
+    available_products="ocp okd idm kvmhost"
     product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
-    if [ "A${product_in_use}" == "Ainvalid" ]
+    if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
     then
-        echo "The ${product_in_use} is not a supported."
-        echo "Supported products are: $available_products"
-        exit 1
-    fi
-    # For product Openshift
-    if [ "A${product_in_use}" == "Aocp" ]
-    then
-        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        if [ "A${product_in_use}" == "Ainvalid" ]
         then
-            if grep '""' "${vars_file}"|grep -q openshift_pool_id
-            then
-                echo "The OpenShift Pool ID is required."
-                echo "Please run: 'qubinode-installer -p ocp -m rhsm' or modify"
-                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
-                echo "with the pool ID"
-                exit 1
-            fi
+            echo "The ${product_in_use} is not a supported."
+            echo "Supported products are: $available_products"
+            exit 1
         fi
     fi
 }
-
-#source "${PROJECT_DIR}/qubinode_utils.sh"
-#source "${PROJECT_DIR}/qubinode.sh"
-#source "${PROJECT_DIR}/qubinode_userinput.sh"
-#source "${PROJECT_DIR}/qubinode_ansible.sh"
-#source "${PROJECT_DIR}/qubinode_kvmhost.sh"
-#source "${PROJECT_DIR}/qubinode_idm.sh"
-#source "${PROJECT_DIR}/qubinode_openshift.sh"
 
 function qubinode_vm_manager () {
    # Deploy VMS
@@ -281,10 +264,10 @@ if (( $OPTIND == 1 )); then
       echo "Unknown issue, please run the installer again"
    fi
 else
+    # Check for product
+    validate_product_by_user
     if [ "A${maintenance}" != "A" ]
     then
-        # Check for product
-        validate_product_by_user
         if [ "${maintenance}" == "clean" ]
         then
             qubinode_project_cleanup
@@ -297,7 +280,7 @@ else
         elif [ "${maintenance}" == "ansible" ]
         then
             qubinode_setup_ansible
-        elif [ "${maintenance}" == "host" ]
+        elif [ "${maintenance}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
         then
             qubinode_setup_kvm_host
         #elif [ "${maintenance}" == "deploy_dns" ]
@@ -338,6 +321,9 @@ else
         then
             qubinode_vm_manager deploy_dns
             qubinode_dns_manager server
+        elif [ "${product_in_use}" == "kvmhost" ]
+        then
+            qubinode_setup_kvm_host
         else
             display_help
         fi

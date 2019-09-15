@@ -131,7 +131,7 @@ kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
 kvm_host_interface: ""
 kvm_host_libvirt_dir: /var/lib/libvirt/images
-qubinode_brdige_name: qubibr0
+qubinode_bridge_name: qubibr0
 
 # KVM host packages
 qubi_required_pkgs: |
@@ -210,7 +210,7 @@ os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
 rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
 
-qubinode_brdige_name: qubibr0
+qubinode_bridge_name: qubibr0
 
 
 ###################
