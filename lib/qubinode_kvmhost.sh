@@ -1,5 +1,29 @@
 #!/bin/bash
 
+# Ask if this host should be setup as a qubinode host
+function ask_user_if_qubinode_setup () {
+    setup_variables
+    if [ "A${QUBINODE_SYSTEM}" == "A" ]
+    then
+        echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
+        echo "This is the default setup. Enter no to skip setting up your system as KVM host."
+        echo "If you choose to install OpenShift, your host will be setup as a OpenShift jumpbox."
+        echo ""
+        echo ""
+        confirm "Continue setting up a qubinode host? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            echo "Setting variabel to yes"
+            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+        elif [ "A${response}" == "Ano" ]
+        then
+            echo "Setting variabel to no"
+            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+        else
+            echo "No action taken"
+        fi
+    fi
+}
 # Ensure RHEL is set to the supported release
 function set_rhel_release () {
     prereqs
@@ -143,11 +167,13 @@ function qubinode_setup_kvm_host () {
            exit 1
        fi
    
-       # future check for pool id
-       #if grep '""' "${vars_file}"|grep -q openshift_pool_id
-       #then
-       ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-       qubinode_check_libvirt_pool
+       if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
+       then
+           ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+           qubinode_check_libvirt_pool
+       else
+           qubinode_check_libvirt_pool
+       fi
     else
         qubinode_setup_ansible
         qubinode_check_libvirt_pool

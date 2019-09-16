@@ -153,6 +153,7 @@ function ask_user_input () {
     echo ""
     ask_user_for_networking_info "${vars_file}"
     ask_for_vault_values "${vault_vars_file}"
+    ask_user_if_qubinode_setup
     if [ "A${product_in_use}" == "Aidm" ]
     then
         qubinode_idm_user_input

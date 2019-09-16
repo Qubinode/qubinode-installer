@@ -278,6 +278,9 @@ function setup_variables () {
     # Pull variables from all.yml needed for the install
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     echo ""
+
+    # Check if we should setup qubinode
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
 }
 
 function check_for_rhel_qcow_image () {

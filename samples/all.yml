@@ -1,6 +1,7 @@
 ---
 # all non sensitive variables are defined here
 product: ocp3
+run_qubinode_setup: ""
 instance_prefix: qbn
 deployment_type: standard
 update_inventory: true
