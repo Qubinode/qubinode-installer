@@ -8,6 +8,38 @@ function display_idmsrv_unavailable () {
         exit 1
 }
 
+# Ask if this host should be setup as a qubinode host
+function ask_user_for_custom_idm_server () {
+    echo "asking for custom IdM"
+    setup_variables
+    if [ "A${DNS_SERVER_NAME}" == "Anone" ]
+    then
+        echo "If you are not deploying an IdM server and instead plan on using an existing IdM server."
+        echo "Choose yes to enter the hostname of your IdM server without the domain."
+        echo "Otherwise choose no and the IdM server deployed by this installer will be used."
+        echo ""
+        echo ""
+        confirm "Set custom IdM server hostname? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            read -p "Enter the hostname without the domain of your IdM server: " idm_server_hostname
+            confirm "You entered $idm_server_hostname, is this correct? yes/no"
+            if [ "A${response}" == "Ayes" ]
+            then
+                sed -i "s/idm_hostname:.*/idm_hostname: "$idm_server_hostname"/g" "${vars_file}"
+            else
+                echo "Run the installer again"
+                exit 1
+            fi
+        elif [ "A${response}" == "Ano" ]
+        then
+            echo "Setting default IdM server name"
+            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${vars_file}"
+        else
+            echo "No action taken"
+        fi
+    fi
+}
 
 function qubinode_dns_manager () {
     prereqs

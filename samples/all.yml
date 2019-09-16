@@ -220,7 +220,7 @@ rhsm_pass: "{{ rhsm_password }}"
 idm_server_ip: ""
 idm_check_static_ip: yes
 idm_admin_user: admin
-idm_hostname: "{{ instance_prefix }}-dns01"
+idm_hostname: "{{ instance_prefix }}-none"
 dns_server_public: ""
 qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:

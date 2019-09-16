@@ -281,6 +281,10 @@ function setup_variables () {
 
     # Check if we should setup qubinode
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
+
+    # Check if we should setup qubinode
+    DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+
 }
 
 function check_for_rhel_qcow_image () {
