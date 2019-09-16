@@ -31,14 +31,16 @@ OS=$(awk '{print $1}' /etc/redhat-release)
 function validate_product_by_user () {
     prereqs
     available_products="ocp3 okd3 idm kvmhost satellite"
-    product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
-    if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+    if [ "A${qubinode_product_opt}" != "A" ]
     then
-        if [ "A${product_in_use}" == "Ainvalid" ]
+        product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ] && [ "A${maintenance}" != "Aansible" ]
         then
-            echo "The ${product_in_use} is not a supported."
-            echo "Supported products are: $available_products"
-            exit 1
+            if [ "A${product_in_use}" == "Ainvalid" ]
+            then
+                echo "The ${product_in_use} is not a supported."
+                echo "Supported products are: $available_products"
+            fi
         fi
     fi
 }

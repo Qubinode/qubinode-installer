@@ -6,7 +6,7 @@ function qubinode_deploy_satellite () {
    ACTIVE="${project_dir}/playbooks/vars/satellite_server.yml"
    SAMPLE="${project_dir}/samples/satellite_server.yml"
    test -f "${ACTIVE}" || cp "${SAMPLE}" "${ACTIVE}"
-   SAT_PLAY="${project_dir}/playbooks/satellite_server.yml"
+   SAT_PLAY="${project_dir}/playbooks/deploy_satellite.yml"
 
    if [ "A${teardown}" == "Atrue" ]
    then
