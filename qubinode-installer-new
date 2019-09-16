@@ -10,7 +10,7 @@ _V=1
 
 # Load all functions
 PROJECT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-FUNCTIONS="qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_ocp3.sh qubinode_rhsm.sh"
+FUNCTIONS="qubinode_satellite.sh qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_ocp3.sh qubinode_rhsm.sh"
 for item in $(echo "${FUNCTIONS}")
 do
     if [ -f "${PROJECT_DIR}/lib/${item}" ]
