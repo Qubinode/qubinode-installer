@@ -30,7 +30,7 @@ OS=$(awk '{print $1}' /etc/redhat-release)
 # validate the product the user wants to install
 function validate_product_by_user () {
     prereqs
-    available_products="ocp3 okd3 idm kvmhost"
+    available_products="ocp3 okd3 idm kvmhost satellite"
     product_in_use=$(contains_string "$available_products" "${qubinode_product_opt}")
     if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
     then
@@ -305,6 +305,9 @@ else
         elif [ "${product_in_use}" == "kvmhost" ]
         then
             qubinode_setup_kvm_host
+        elif [ "${product_in_use}" == "satellite" ]
+        then
+            qubinode_deploy_satellite
         else
             display_help
         fi

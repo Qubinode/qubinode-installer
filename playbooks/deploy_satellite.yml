@@ -1,0 +1,27 @@
+- name: Deploy Satellite server VM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/satellite_server.yml
+  environment:
+    IPA_HOST: "{{ ipa_host }}"
+    IPA_USER: "{{ idm_admin_user }}"
+    IPA_PASS: "{{ idm_admin_pwd }}"
+
+  tasks:
+    - name: Create KVM VM for Satellite Server Server
+      vars:
+        vm_name: "{{ sat_server_vm.sat_name }}"
+        vm_cpu: "{{ sat_server_vm.sat_vcpu }}"
+        vm_memory: "{{ sat_server_vm.sat_memory }}"
+        vm_root_disk_size: "{{ sat_server_vm.sat_root_disk_size }}"
+        vm_teardown: "{{ sat_server_vm.sat_teardown }}"
+        vm_recreate: "{{ sat_server_vm.sat_recreate }}"
+        inventory_group: "{{ sat_server_vm.sat_group }}"
+        extra_storage: "{{ sat_server_vm.sat_extra_storage }}"
+        enable: "{{ sat_server_vm.sat_enable }}"
+      include_role:
+        name: ansible-role-rhel7-kvm-cloud-init

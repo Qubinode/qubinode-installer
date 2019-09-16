@@ -1,0 +1,16 @@
+# Dns server VM attributes
+sat_server_hostname: "{{ instance_prefix }}-sat01"
+sat_server_vm:
+    sat_name: "{{ sat_server_hostname }}"
+    sat_vcpu: 4
+    sat_memory: 20480
+    sat_root_disk_size: 60G
+    sat_teardown: false
+    sat_recreate: false
+    sat_group: satellite
+    sat_extra_storage:
+      - size: 300G
+        enable: true
+    sat_enable: true
+
+sat_server_ip: ""
