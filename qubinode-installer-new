@@ -243,7 +243,7 @@ if (( $OPTIND == 1 )); then
        qubinode_install_openshift
    else
        echo $result
-      echo "Unknown issue, please run the installer again"
+       echo "Unknown issue, please run the installer again"
    fi
 else
     # Check for product
@@ -265,10 +265,6 @@ else
         elif [ "${maintenance}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
         then
             qubinode_setup_kvm_host
-        #elif [ "${maintenance}" == "deploy_dns" ]
-        #then
-        #    qubinode_vm_manager deploy_dns
-        #    qubinode_dns_manager server
         elif [ "${maintenance}" == "deploy_nodes" ]
         then
             qubinode_vm_manager deploy_nodes
@@ -324,6 +320,20 @@ else
     smoketest)
     echo  "Running smoke test on environment."
     bash lib/openshift-smoke-test.sh || exit $?
+    ;;
+    shutdown)
+    echo  "Shutting down cluster."
+    bash lib/qubinode_shutdown_cluster.sh || exit $?
+    ;;
+    startup)
+    echo  "Starting up Cluster"
+    bash lib/qubinode_startup_cluster.sh || exit $?
+    ;;
+    checkcluster)
+    echo  "Running Cluster health check"
+    setup_required_paths
+    MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
+    ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE 'bash -s' < ${project_dir}/playbooks/roles/ocp-power-management/files/check_system_state.sh both
     ;;
     *)
     echo "No arguement was passed"
