@@ -31,13 +31,16 @@ function set_rhel_release () {
     RELEASE="Release: ${RHEL_RELEASE}"
     CURRENT_RELEASE=$(sudo subscription-manager release --show)
 
-    if [ "A${RELEASE}" != "A${CURRENT_RELEASE}" ]
+    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
-        echo "Setting RHEL to the supported release: ${RHEL_RELEASE}"
-        sudo subscription-manager release --unset
-        sudo subscription-manager release --set="${RHEL_RELEASE}"
-    else
-       echo "RHEL release is set to the supported release: ${CURRENT_RELEASE}"
+        if [ "A${RELEASE}" != "A${CURRENT_RELEASE}" ]
+        then
+            echo "Setting RHEL to the supported release: ${RHEL_RELEASE}"
+            sudo subscription-manager release --unset
+            sudo subscription-manager release --set="${RHEL_RELEASE}"
+        else
+            echo "RHEL release is set to the supported release: ${CURRENT_RELEASE}"
+        fi
     fi
 }
 
@@ -122,7 +125,10 @@ function qubinode_setup_kvm_host () {
     if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
     then
         qubinode_networking
-        qubinode_rhsm_register
+        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
+        then
+            qubinode_rhsm_register
+        fi
         qubinode_setup_ansible
 
        # check for host inventory file
