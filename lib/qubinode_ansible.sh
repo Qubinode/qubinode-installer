@@ -13,7 +13,11 @@ function qubinode_setup_ansible () {
         echo "Please run qubinode-installer -m setup"
         exit 1
     fi
-    check_rhsm_status
+    
+    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
+    then
+        check_rhsm_status
+    fi
 
     # install python
     if [ ! -f /usr/bin/python ];
