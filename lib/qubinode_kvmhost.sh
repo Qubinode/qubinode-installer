@@ -220,9 +220,9 @@ function qubinode_check_kvmhost () {
     DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}" | tr -d '"')
     DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
     DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
-    BRIDGE_IP=$(sudo awk '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
+    BRIDGE_IP=$(sudo awk -F'=' '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
     BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
-    
+   
     if [ ! -f /usr/bin/virsh ]
     then
         qubinode_setup_kvm_host
@@ -235,6 +235,7 @@ function qubinode_check_kvmhost () {
     else
         KVM_HOST_MSG="KVM host is setup"
     fi
+
 
     if grep Fedora /etc/redhat-release
     then
@@ -253,28 +254,39 @@ function qubinode_check_kvmhost () {
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
         echo "qubinode network checks"
+        BRIDGE_SLAVE=$(sudo egrep -Rl "${DEFINED_BRIDGE}_slave" /etc/sysconfig/network-scripts/ifcfg-*)
+        BRIDGE_SLAVE_NIC=$(sudo awk -F'=' '/DEVICE/ {print $2}' $BRIDGE_SLAVE)
         if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
         then
             echo "Running network checks"
             if ! sudo brctl show $DEFINED_BRIDGE > /dev/null 2>&1
             then
+                echo "The required bridge $DEFINED_BRIDGE is not setup"
                 qubinode_setup_kvm_host
             elif ! sudo vgs | grep -q $DEFINED_VG
             then
+                echo "The required LVM volgume group $DEFINED_VG is not setup"
                 qubinode_setup_kvm_host
             elif ! sudo lvscan | grep -q $DEFINED_VG
             then
+                echo "The required LVM volume is not setup"
                 qubinode_setup_kvm_host
             elif [ "A${BRIDGE_IP}" == "A" ]
             then
+                echo "The require brdige IP $BRIDGE_IP is not defined"
                 qubinode_setup_kvm_host
-            elif [ "A${BRIDGE_INTERFACE}" != "${DEFINED_BRIDGE}" ]
+            elif [ "A${BRIDGE_INTERFACE}" != "A${BRIDGE_SLAVE_NIC}" ]
             then
+                echo "The required bridge interface "${DEFINED_BRIDGE}" is not setup"
                 qubinode_setup_kvm_host
             else
                 KVM_HOST_MSG="KVM host is setup"
             fi
+         else
+            KVM_HOST_MSG="KVM host is setup"
         fi
+    else
+        KVM_HOST_MSG="KVM host is setup"
     fi
     
     echo $KVM_HOST_MSG

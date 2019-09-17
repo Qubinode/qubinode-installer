@@ -152,7 +152,6 @@ function qubinode_vm_deployment_precheck () {
        # Check if KVM HOST is ready
        echo "Verifying KVM host is setup"
        qubinode_check_kvmhost
-       exit 
 
        # Ensure the ansible function has bee executed
        if [ ! -f /usr/bin/ansible ]

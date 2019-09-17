@@ -338,10 +338,8 @@ function contains_string () {
 
 function isRPMinstalled() {
     if rpm -q $1 &> /dev/null; then
-        echo '$1 is installed'
         return 0
     else
-        echo '$1 is not installed'
         return 1
     fi
 }
