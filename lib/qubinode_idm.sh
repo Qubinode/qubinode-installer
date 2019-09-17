@@ -52,13 +52,14 @@ function qubinode_dns_manager () {
         exit 1
     fi
 
-    if [ ! -f /usr/bin/ansible ]
-    then
-        echo "Ansible is not installed"
-        echo "Please run qubinode-installer -m ansible"
-        echo ""
-        exit 1
-    fi
+    test -f /usr/bin/ansible || qubinode_setup_ansible
+#    if [ ! -f /usr/bin/ansible ]
+#    then
+#        echo "Ansible is not installed"
+#        echo "Please run qubinode-installer -m ansible"
+#        echo ""
+#        exit 1
+#    fi
 
 
     # Deploy IDM server

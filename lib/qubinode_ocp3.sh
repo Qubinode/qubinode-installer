@@ -204,6 +204,7 @@ function qubinode_install_openshift () {
         qubinode_dns_manager server
     fi
 
+    exit
     printf "\n\n******************************\n"
     printf     "* Deploy Nodes for ${product_in_use} cluster *\n"
     printf     "******************************\n"

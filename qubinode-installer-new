@@ -81,23 +81,18 @@ function qubinode_vm_manager () {
        fi
 
        # Ensure the ansible function has bee executed
-       ROLE_PRESENT=$(ansible-galaxy list | grep 'ansible-role-rhel7-kvm-cloud-init')
-       if [ ! -f /usr/bin/ansible ]
+      # Check for ansible and ansible role
+       if [ -f /usr/bin/ansible ]
        then
-           qubinode_setup_ansible
-       elif [ "A${ROLE_PRESENT}" == "A" ]
-       then
-           #echo "Required role ansible-role-rhel7-kvm-cloud-init is missing."
-           #echo "Please run run qubinode-installer -m ansible"
-           #echo ""
-           #exit 1
-           qubinode_setup_ansible
+           ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue.edge_host_setup')
+           if [ "A${ROLE_PRESENT}" == "A" ]
+           then
+               qubinode_setup_ansible
+           fi
        else
-           echo "Ansible is not installed"
-           echo "Please run qubinode-installer -m ansible"
-           echo ""
-           exit 1
+           qubinode_setup_ansible
        fi
+
 
        # Check for required Qcow image
        check_for_rhel_qcow_image

@@ -158,19 +158,15 @@ function qubinode_setup_kvm_host () {
         fi
    
        # Check for ansible and ansible role
-       ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue.edge_host_setup')
-       if [ ! -f /usr/bin/ansible ]
+       if [ -f /usr/bin/ansible ]
        then
-           echo "Ansible is not installed"
-           echo "Please run qubinode-installer -m ansible"
-           echo ""
-           exit 1
-       elif [ "A${ROLE_PRESENT}" == "A" ]
-       then
-           echo "Required role swygue.edge_host_setup is missing."
-           echo "Please run run qubinode-installer -m ansible"
-           echo ""
-           exit 1
+           ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue.edge_host_setup')
+           if [ "A${ROLE_PRESENT}" == "A" ]
+           then
+               qubinode_setup_ansible
+           fi
+       else
+           qubinode_setup_ansible
        fi
    
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
