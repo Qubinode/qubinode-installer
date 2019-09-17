@@ -184,19 +184,25 @@ function qubinode_install_openshift () {
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
     qubinode_check_kvmhost
-    exit
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-    productname=$(cat "${vars_file}"| grep product: | awk '{print $2}' | tr -d '"')
-    CHECKFOR_DNS=$(sudo virsh list | grep running | grep ${productname}-dns  | wc -l)
-    [[ $CHECKFOR_DNS -eq 0 ]] && qubinode_vm_manager deploy_dns
+    prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
+    suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${vars_file}" |tr -d '"')
+    idm_srv_hostname="$prefix-$suffix.$domain"
+    if ! curl -k -s "https://${idm_srv_hostname}/ipa/config/ca.crt" > /dev/null
+    then
+        qubinode_vm_manager deploy_dns
+    fi
 
     printf "\n\n*****************************\n"
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
-    qubinode_dns_manager server
+    if ! curl -k -s "https://${idm_srv_hostname}/ipa/config/ca.crt" > /dev/null
+    then
+        qubinode_dns_manager server
+    fi
 
     printf "\n\n******************************\n"
     printf     "* Deploy Nodes for ${product_in_use} cluster *\n"
