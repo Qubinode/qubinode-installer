@@ -67,6 +67,33 @@ function qubinode_networking () {
       DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+
+   # Set KVM host ip info
+    if grep '""' "${vars_file}"|grep -q kvm_host_ip
+    then
+        echo "Adding kvm_host_ip variable"
+        sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
+    fi
+
+    if grep '""' "${vars_file}"|grep -q kvm_host_gw
+    then
+        echo "Adding kvm_host_gw variable"
+        sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
+    fi
+
+    if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
+    then
+        echo "Adding kvm_host_mask_prefix variable"
+        sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
+    fi
+
+    echo "setting kvm_host_interface varaible to $DEFAULT_INTERFACE"
+    isInterface=$(awk '/kvm_host_interface/ { print $2}' "${vars_file}")
+    if [ "A${isInterface}" == "A" ] || [ "A${isInterface}" == 'A""' ]
+    then
+        echo "Adding kvm_host_interface variable"
+        sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
+    fi
 }
 
 
@@ -186,10 +213,13 @@ function qubinode_setup_kvm_host () {
 
 
 function qubinode_check_kvmhost () {
+    qubinode_networking
     echo "Validating the KVMHOST setup"
     DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}" | tr -d '"')
     DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
     DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
+    BRIDGE_IP=$(sudo awk '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
+    BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
     
     if [ ! -f /usr/bin/virsh ]
     then
@@ -217,10 +247,13 @@ function qubinode_check_kvmhost () {
         fi
     fi
 
-    if [ "A${QUBINODE_SYSTEM}" == "yes" ]
+    echo "Running qubinode checks: QUBINODE_SYSTEM=$QUBINODE_SYSTEM"
+    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
+        echo "qubinode network checks"
         if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
         then
+            echo "Running network checks"
             if ! sudo brctl show $DEFINED_BRIDGE > /dev/null 2>&1
             then
                 qubinode_setup_kvm_host
@@ -228,6 +261,12 @@ function qubinode_check_kvmhost () {
             then
                 qubinode_setup_kvm_host
             elif ! sudo lvscan | grep -q $DEFINED_VG
+            then
+                qubinode_setup_kvm_host
+            elif [ "A${BRIDGE_IP}" == "A" ]
+            then
+                qubinode_setup_kvm_host
+            elif [ "A${BRIDGE_INTERFACE}" != "${DEFINED_BRIDGE}" ]
             then
                 qubinode_setup_kvm_host
             else
