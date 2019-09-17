@@ -46,10 +46,10 @@ function set_rhel_release () {
 
 function qubinode_networking () {
     prereqs
-    IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+    KVM_HOST_IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
-    GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
-    NETWORK=$(ip route | awk -F'/' "/$IPADDR/ {print \$1}")
+    KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
+    NETWORK=$(ip route | awk -F'/' "/$KVM_HOST_IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
 
     if [ -f "${vars_file}" ]
@@ -59,43 +59,42 @@ function qubinode_networking () {
         DEFINED_BRIDGE=""
     fi
 
-    CURRENT_DEFAULT_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
-    if [ "A${CURRENT_DEFAULT_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
+    CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
+    if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
-      DEFAULT_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
+      KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
     else
-      DEFAULT_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+      KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
-    NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+    KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
 
    # Set KVM host ip info
     iSkvm_host_ip=$(awk '/kvm_host_ip/ { print $2}' "${vars_file}")
-    if [ "A${iSkvm_host_ip}" == "A" ] || [ "A${iSkvm_host_ip}" == 'A""' ]
+    if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
     then
-        echo "Adding kvm_host_ip variable"
-        sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
+        echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
+        sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${vars_file}"
     fi
 
     iSkvm_host_gw=$(awk '/kvm_host_gw/ { print $2}' "${vars_file}")
-    if [ "A${iSkvm_host_gw}" == "A" ] || [ "A${iSkvm_host_gw}" == 'A""' ]
+    if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
     then
-        echo "Adding kvm_host_gw variable"
-        sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
+        echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
+        sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${vars_file}"
     fi
 
     iSkvm_host_mask_prefix=$(awk '/kvm_host_mask_prefix/ { print $2}' "${vars_file}")
-    if [ "A${iSkvm_host_mask_prefix}" == "A" ] || [ "A${iSkvm_host_mask_prefix}" == 'A""' ]
+    if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
     then
-        echo "Adding kvm_host_mask_prefix variable"
-        sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
+        echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
+        sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${vars_file}"
     fi
 
-    echo "setting kvm_host_interface varaible to $DEFAULT_INTERFACE"
     iSkvm_host_interface=$(awk '/kvm_host_interface/ { print $2}' "${vars_file}")
-    if [ "A${iSkvm_host_interface}" == "A" ] || [ "A${iSkvm_host_interface}" == 'A""' ]
+    if [[ "A${iSkvm_host_interface}" == "A" ]] || [[ "A${iSkvm_host_interface}" == 'A""' ]]
     then
-        echo "Adding kvm_host_interface variable"
-        sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
+        echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
+        sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${vars_file}"
     fi
 }
 
