@@ -243,31 +243,6 @@ function setup_variables () {
         sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
     fi
 
-    # Set KVM host ip info
-    if grep '""' "${vars_file}"|grep -q kvm_host_ip
-    then
-        echo "Adding kvm_host_ip variable"
-        sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
-    fi
-
-    if grep '""' "${vars_file}"|grep -q kvm_host_gw
-    then
-        echo "Adding kvm_host_gw variable"
-        sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
-    fi
-
-    if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
-    then
-        echo "Adding kvm_host_mask_prefix variable"
-        sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
-    fi
-
-    if grep '""' "${vars_file}"|grep -q kvm_host_interface
-    then
-        echo "Adding kvm_host_interface variable"
-        sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
-    fi
-
     # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
     then
