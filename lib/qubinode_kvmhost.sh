@@ -69,27 +69,30 @@ function qubinode_networking () {
     NETMASK_PREFIX=$(ip -o -f inet addr show $DEFAULT_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
 
    # Set KVM host ip info
-    if grep '""' "${vars_file}"|grep -q kvm_host_ip
+    iSkvm_host_ip=$(awk '/kvm_host_ip/ { print $2}' "${vars_file}")
+    if [ "A${iSkvm_host_ip}" == "A" ] || [ "A${iSkvm_host_ip}" == 'A""' ]
     then
         echo "Adding kvm_host_ip variable"
         sed -i "s#kvm_host_ip: \"\"#kvm_host_ip: "$IPADDR"#g" "${vars_file}"
     fi
 
-    if grep '""' "${vars_file}"|grep -q kvm_host_gw
+    iSkvm_host_gw=$(awk '/kvm_host_gw/ { print $2}' "${vars_file}")
+    if [ "A${iSkvm_host_gw}" == "A" ] || [ "A${iSkvm_host_gw}" == 'A""' ]
     then
         echo "Adding kvm_host_gw variable"
         sed -i "s#kvm_host_gw: \"\"#kvm_host_gw: "$GTWAY"#g" "${vars_file}"
     fi
 
-    if grep '""' "${vars_file}"|grep -q kvm_host_mask_prefix
+    iSkvm_host_mask_prefix=$(awk '/kvm_host_mask_prefix/ { print $2}' "${vars_file}")
+    if [ "A${iSkvm_host_mask_prefix}" == "A" ] || [ "A${iSkvm_host_mask_prefix}" == 'A""' ]
     then
         echo "Adding kvm_host_mask_prefix variable"
         sed -i "s#kvm_host_mask_prefix: \"\"#kvm_host_mask_prefix: "$NETMASK_PREFIX"#g" "${vars_file}"
     fi
 
     echo "setting kvm_host_interface varaible to $DEFAULT_INTERFACE"
-    isInterface=$(awk '/kvm_host_interface/ { print $2}' "${vars_file}")
-    if [ "A${isInterface}" == "A" ] || [ "A${isInterface}" == 'A""' ]
+    iSkvm_host_interface=$(awk '/kvm_host_interface/ { print $2}' "${vars_file}")
+    if [ "A${iSkvm_host_interface}" == "A" ] || [ "A${iSkvm_host_interface}" == 'A""' ]
     then
         echo "Adding kvm_host_interface variable"
         sed -i "s#kvm_host_interface: \"\"#kvm_host_interface: "$DEFAULT_INTERFACE"#g" "${vars_file}"
