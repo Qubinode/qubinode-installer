@@ -6,6 +6,7 @@
 function ask_user_for_networking_info () {
     varsfile=$1
 
+    qubinode_networking
     # ask user for DNS domain or use default
     if grep '""' "${varsfile}"|grep -q domain
     then

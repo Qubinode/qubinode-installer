@@ -220,17 +220,23 @@ function qubinode_check_kvmhost () {
             qubinode_setup_kvm_host
         fi
     fi
-    
-    if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
+
+    if [ "A${QUBINODE_SYSTEM}" == "yes" ]
     then
-        if ! sudo brctl show $DEFINED_BRIDGE > /dev/null 2>&1
+        if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
         then
-            qubinode_setup_kvm_host
-        elif ! sudo vgs | grep -q $DEFINED_VG
-        then
-            qubinode_setup_kvm_host
-        else
-            KVM_HOST_MSG="KVM host is setup"
+            if ! sudo brctl show $DEFINED_BRIDGE > /dev/null 2>&1
+            then
+                qubinode_setup_kvm_host
+            elif ! sudo vgs | grep -q $DEFINED_VG
+            then
+                qubinode_setup_kvm_host
+            elif ! sudo lvscan | grep -q $DEFINED_VG
+            then
+                qubinode_setup_kvm_host
+            else
+                KVM_HOST_MSG="KVM host is setup"
+            fi
         fi
     fi
     

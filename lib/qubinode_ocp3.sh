@@ -183,7 +183,8 @@ function qubinode_install_openshift () {
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
+    qubinode_check_kvmhost
+    exit
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
