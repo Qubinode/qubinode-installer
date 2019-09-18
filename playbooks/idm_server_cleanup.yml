@@ -15,7 +15,6 @@
         regexp: "^nameserver {{ idm_public_ip }}"
         insertafter: '^domain'
         state: absent
-      delegate_to: localhost
 
     - name: REMOVE|ensure host is removed from inventory
       vars:
@@ -24,4 +23,3 @@
         path: "{{ inventory_file }}"
         regexp: "^{{ vm_name }}"
         state: absent
-      delegate_to: localhost

@@ -14,3 +14,21 @@ sat_server_vm:
     sat_enable: true
 
 sat_server_ip: ""
+
+# Filesystems
+device: vdb
+vgname: satdata
+
+logical_volumes:
+  - name: pgsql
+    size: 10g
+    mount_dir: /var/lib/pgsql
+    fstype: xfs
+  - name: mongodb
+    size: 50g
+    mount_dir: /var/lib/mongodb
+    fstype: xfs
+  - name: pulp
+    size: 100g
+    mount_dir: /var/lib/pulp
+    fstype: xfs

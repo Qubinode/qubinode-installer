@@ -218,7 +218,7 @@ rhsm_pass: "{{ rhsm_password }}"
 
 # IDM server attributes
 idm_server_ip: ""
-idm_check_static_ip: yes
+idm_check_static_ip: ""
 idm_admin_user: admin
 idm_hostname: "{{ instance_prefix }}-none"
 dns_server_public: ""

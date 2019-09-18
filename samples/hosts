@@ -10,6 +10,12 @@ localhost               ansible_connection=local ansible_user=root
 
 [dns]
 
+[satellite]
+
+[rhhi]
+
+[osp]
+
 [qbnodes:children]
 masters
 infra

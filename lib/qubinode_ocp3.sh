@@ -188,20 +188,14 @@ function qubinode_install_openshift () {
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
-    prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
-    suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${vars_file}" |tr -d '"')
-    idm_srv_hostname="$prefix-$suffix.$domain"
-    if ! curl -k -s "https://${idm_srv_hostname}/ipa/config/ca.crt" > /dev/null
-    then
-        qubinode_vm_manager deploy_dns
-    fi
+    qubinode_deploy_idm_vm
 
     printf "\n\n*****************************\n"
-    printf     "* Install IDM on DNS server *\n"
+    printf     "* Install IDM on DNS VM*\n"
     printf     "*****************************\n"
     if ! curl -k -s "https://${idm_srv_hostname}/ipa/config/ca.crt" > /dev/null
     then
-        qubinode_dns_manager server
+        qubinode_install_idm
     fi
 
     exit

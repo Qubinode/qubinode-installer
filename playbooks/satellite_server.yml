@@ -1,0 +1,23 @@
+- name: PLAY| install satellite server
+  hosts: satellite
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/satellite_server.yml
+
+  tasks:
+  - name: ensure system is registered to Red Hat
+    vars:
+      rhsm_repos: "{{ idm_repos }}"
+    include_role:
+      name: swygue-redhat-subscription
+
+  - name: create satellite paritions
+    include_role:
+      name: swygue-lvm
+
+#  - name: TASK| running swygue-install-satellite role
+#    include_role:
+#      name: swygue-install-satellite
