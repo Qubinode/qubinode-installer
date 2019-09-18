@@ -19,6 +19,7 @@ function validate_openshift_pool_id () {
     fi
 }
 
+# TODO: make this function more generic to take the product as an agrument
 function check_for_openshift_subscription () {
     AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
     CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)

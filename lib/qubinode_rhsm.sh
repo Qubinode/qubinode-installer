@@ -140,3 +140,22 @@ function qubinode_rhsm_register () {
     fi
 }
 
+function get_subscription_pool_id () {
+    PRODUCT=$1
+
+    AVAILABLE=$(sudo subscription-manager list --available --matches "${PRODUCT}" | grep Pool | awk '{print $3}' | head -n 1)
+    CONSUMED=$(sudo subscription-manager list --consumed --matches "${PRODUCT}" --pool-only)
+
+    if [ "A${AVAILABLE}" != "A" ]
+    then
+       echo "Find pool id for ${PRODUCT} using the available search"
+       POOL_ID="${AVAILABLE}"
+    elif [ "A${CONSUMED}" != "A" ]
+    then
+       echo "Found the pool id for {PRODUCT} using the consumed search"
+       POOL_ID="${CONSUMED}"
+    else
+        cat "${project_dir}/docs/subscription_pool_message"
+        exit 1
+    fi
+}

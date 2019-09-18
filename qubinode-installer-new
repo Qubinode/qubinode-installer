@@ -276,10 +276,16 @@ else
         then
             #TODO: this should remove all VMs and clean up the project folder
             qubinode_uninstall_openshift
+        elif [[ "A${maintenance}" != "A" ]] && [[ "A${product_in_use}" != "A" ]]
+        then
+            echo "Setting product maintencne"
+            product_maintenance="${maintenance}"
         else
             display_help
         fi
-    elif [ "A${product_in_use}" != "A" ]
+    fi
+
+    if [ "A${product_in_use}" != "A" ]
     then
         if [ "${product_in_use}" == "ocp3" ]
         then
@@ -307,11 +313,14 @@ else
             qubinode_setup_kvm_host
         elif [ "${product_in_use}" == "satellite" ]
         then
+            echo "Deploy a Red Hat Satellite server"
             qubinode_deploy_satellite
         else
             display_help
         fi
-    elif [ "A${cluster_opt}" != "A" ]
+    fi
+
+    if [ "A${cluster_opt}" != "A" ]
     then
 
     case ${cluster_opt} in
@@ -342,8 +351,8 @@ else
     echo "No arguement was passed"
     ;;
     esac
-     else
-         display_help
+#     else
+#        display_help
     fi
 fi
 

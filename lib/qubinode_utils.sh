@@ -260,6 +260,9 @@ function setup_variables () {
     # Check if we should setup qubinode
     DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${vars_file}" | tr -d '"')
 
+    # Satellite server vars file
+    SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"
+
 }
 
 function check_for_rhel_qcow_image () {
