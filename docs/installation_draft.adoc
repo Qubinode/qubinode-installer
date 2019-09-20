@@ -172,6 +172,7 @@ To remove IDM run the following
   ./qubinode-installer -p idm -d
 
 ```
+*For OKD Deployments please remove the machine from the list of registered systems on https://access.redhat.com/management/systems*
 
 ==== Deploy the  vms used for the OpenShift Development
 This commannd will deploy the VMs that OpenShift will run on. Running the command below will prepare your hosts for OpenShift deployment. Write a-records to the IDM server to be used by OpenShift.
@@ -196,6 +197,7 @@ To remove the nodes run the following
   ./qubinode-installer -p ocp -d
 
 ```
+*For OKD Deployments please remove the machine from the list of registered systems on https://access.redhat.com/management/systems*
 
 ==== Deploy OpenShift
 This command will deploy OpenShift on the vms that where deployed on the previous step.
@@ -216,7 +218,11 @@ Execute the following command to deploy OpenShift Enterprise use the command bel
 
 To uninstall Openshift across all hosts in the cluster.
 ```
+  # OpenShift Enterprise Command
   ./qubinode-installer -p ocp -m uninstall_openshift
+
+  # OpenShift Origin Command
+  ./qubinode-installer -p okd -m uninstall_openshift
 
 ```
 

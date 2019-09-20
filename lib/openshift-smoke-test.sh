@@ -1,6 +1,4 @@
 #!/bin/bash
-set -xe
-
 function sleep_for_a_sec() {
   sleep 5s
 }
@@ -19,8 +17,9 @@ project_dir="`( cd \"$project_dir_path\" && pwd )`"
 
 domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 ocp_user=$(awk '/^openshift_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 
-oc login https://ocp-master01.${domain}:8443  -u ${ocp_user}
+oc login https://${product}-master01.${domain}:8443  -u ${ocp_user}
 
 oc new-project validate
 

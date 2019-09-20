@@ -1,6 +1,6 @@
 - name: confirm that you can reach the each node in cluster
   vars:
-    vm_name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
+    vm_name: "{{ preappend_host_name }}{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
     vm_group: "{{ outer_item.role_group }}"
   shell: |
       echo "Running on $(hostname)"

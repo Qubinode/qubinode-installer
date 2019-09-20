@@ -34,6 +34,15 @@
         rhsm_repos: "{{ idm_repos }}"
       include_role:
         name: swygue-redhat-subscription
+      when: "'ocp' in product"
+
+    - name: Register as auto-subscribe to red hat subscription.
+      redhat_subscription:
+        state: present
+        username: "{{ rhsm_username }}"
+        password: "{{ rhsm_password }}"
+        auto_attach: true
+      when: "'okd' in product"
 
     - name: update system
       command: yum update -y
