@@ -1,0 +1,48 @@
+---
+# all non sensitive variables are defined here
+vm_teardown: false
+ipa_client_principal: "{{ idm_admin_user }}"
+ipa_client_pass: "{{ idm_dm_pwd }}"
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
+
+###################
+# IDM DNS Server  #
+###################
+
+# IDM server attributes
+idm_server_ip: ""
+idm_check_static_ip: yes
+idm_admin_user: admin
+idm_hostname: "{{ instance_prefix }}-none"
+dns_server_public: ""
+qubinode_ptr: changeme.in-addr.arpa
+idm_reverse_zone:
+  - "{{ qubinode_ptr }}"
+idm_public_ip: ""                       # IP address of the IDM server
+idm_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-optional-rpms
+idm_packages:
+  - ipa-server
+  - ipa-server-dns
+idm_realm: "{{ domain | upper }}"
+idm_forward_ip: "{{ dns_server_public }}"
+idm_ssh_pwd: "{{ admin_user_password }}"
+idm_ssh_user: "{{ admin_user }}"
+
+# Dns server VM attributes
+dns_server_vm:
+    dns_name: "{{ idm_hostname }}"
+    dns_vcpu: 2
+    dns_memory: 2048
+    dns_root_disk_size: 20G
+    dns_teardown: false
+    dns_recreate: false
+    dns_group: dns
+    dns_extra_storage: []
+    dns_enable: true
+
+# This is required ansible-idm role
+idm_admin_password: "{{ idm_admin_pwd }}"

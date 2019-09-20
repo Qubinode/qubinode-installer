@@ -5,26 +5,24 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+  vars:
+    vm_name: "{{ dns_server_vm.dns_name }}"
+    vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
+    vm_memory: "{{ dns_server_vm.dns_memory }}"
+    vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
+    vm_teardown: "{{ dns_server_vm.dns_teardown }}"
+    vm_recreate: "{{ dns_server_vm.dns_recreate }}"
+    inventory_group: "{{ dns_server_vm.dns_group }}"
+    extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
+    enable: "{{ dns_server_vm.dns_enable }}"
+    dns_srv_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
 
   tasks:
     - name: Create KVM VM for DNS Server
-      vars:
-        vm_name: "{{ dns_server_vm.dns_name }}"
-        vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
-        vm_memory: "{{ dns_server_vm.dns_memory }}"
-        vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
-        vm_teardown: "{{ dns_server_vm.dns_teardown }}"
-        vm_recreate: "{{ dns_server_vm.dns_recreate }}"
-        inventory_group: "{{ dns_server_vm.dns_group }}"
-        extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
-        enable: "{{ dns_server_vm.dns_enable }}"
       include_role:
         name: ansible-role-rhel7-kvm-cloud-init
 
     - name: update idm_public_ip with current IDM server IP
-      vars:
-        vm_name: "{{ dns_server_vm.dns_name }}"
-        dns_srv_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
       lineinfile:
         dest: "{{ project_dir }}/playbooks/vars/all.yml"
         regexp: '^idm_public_ip:'
@@ -36,8 +34,6 @@
         etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
     - name: Add/Remove DNS server from inventory into /etc/hosts
-      vars:
-        vm_name: "{{ dns_server_vm.dns_name }}"
       lineinfile:
         dest: /etc/hosts
         regexp: '.*{{ item }}$'
@@ -47,4 +43,10 @@
       with_items:
         - "{{ groups['dns'] }}"
 
-
+    - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: "nameserver {{ idm_public_ip }}"
+        regexp: "^nameserver {{ idm_public_ip }}"
+        insertafter: '^domain'
+        state: present

@@ -1,6 +1,6 @@
 - name: create list of masters
   vars:
-    vm_name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
+    vm_name: "{{ instance_prefix }}-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
     vm_group: "{{ outer_item.role_group }}"
   set_fact:
     masters: "{{ masters|default([]) + [ vm_name ] }}"
@@ -12,7 +12,7 @@
 
 - name: create list of nodes
   vars:
-    vm_name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
+    vm_name: "{{ instance_prefix }}-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
     vm_group: "{{ outer_item.role_group }}"
   set_fact:
     nodes: "{{ nodes|default([]) + [ vm_name ] }}"
@@ -24,7 +24,7 @@
 
 - name: create list of all nodes
   vars:
-    vm_name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
+    vm_name: "{{ instance_prefix }}-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
     vm_group: "{{ outer_item.role_group }}"
   set_fact:
     all_nodes: "{{ all_nodes|default([]) + [ vm_name ] }}"

@@ -1,0 +1,63 @@
+- name: Deploy Satellite server VM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/satellite_server.yml
+  vars:
+    vm_name: "{{ sat_server_vm.sat_name }}"
+    vm_cpu: "{{ sat_server_vm.sat_vcpu }}"
+    vm_memory: "{{ sat_server_vm.sat_memory }}"
+    vm_root_disk_size: "{{ sat_server_vm.sat_root_disk_size }}"
+    vm_teardown: "{{ sat_server_vm.sat_teardown }}"
+    vm_recreate: "{{ sat_server_vm.sat_recreate }}"
+    inventory_group: "{{ sat_server_vm.sat_group }}"
+    extra_storage: "{{ sat_server_vm.sat_extra_storage }}"
+    enable: "{{ sat_server_vm.sat_enable }}"
+  environment:
+    IPA_HOST: "{{ ipa_host }}"
+    IPA_USER: "{{ idm_admin_user }}"
+    IPA_PASS: "{{ idm_admin_pwd }}"
+
+  tasks:
+    - name: Create KVM VM for Satellite Server Server
+      include_role:
+        name: ansible-role-rhel7-kvm-cloud-init
+      tags: satellite_vm
+
+    - name: set dns record state
+      set_fact:
+        record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
+      tags: create_dns_records
+
+    - name: Create/Delete A Records
+      ipa_dnsrecord:
+        zone_name: "{{ domain }}"
+        record_name: "{{ hostvars[vm_name].inventory_hostname }}"
+        record_type: A
+        record_value: "{{ hostvars[vm_name].ansible_host }}"
+        state: "{{ record_state }}"
+        validate_certs: no
+      tags: create_dns_records
+
+    - name: Create/Delete PTR Records
+      vars:
+        vm_name: "{{ sat_server_vm.sat_name }}"
+      ipa_dnsrecord:
+        zone_name: "{{ qubinode_ptr }}"
+        record_name: "{{ hostvars[vm_name].ansible_host.split('.')[3:4] | join('.') }}"
+        record_type: PTR
+        record_value: "{{ hostvars[vm_name].inventory_hostname }}.{{ domain }}."
+        state: "{{ record_state }}"
+        validate_certs: no
+      tags: create_dns_records
+
+    - name: REMOVE|ensure {{ vm_name }} is removed from inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      when: vm_teardown|bool
+

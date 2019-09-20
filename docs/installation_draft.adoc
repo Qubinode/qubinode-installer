@@ -90,7 +90,7 @@ In this example we will walk through each stage of the installer to get OpenShif
 . Run setup to satisfy all perquisites*
 
 ```
- ./qubinode-installer -p ocp -m setup
+ ./qubinode-installer -p ocp3 -m setup
 
 ```
 ==== The setup run down
@@ -124,7 +124,7 @@ The qubinode-installer leverage Red Hat Enterprise Linux as the foundation. In o
 
 Execute the RHSM stage:
 ```
-  ./qubinode-installer -m rhsm -p ocp
+  ./qubinode-installer -m rhsm -p ocp3
 
 ```
 
@@ -136,7 +136,7 @@ The qubinode-installer leverages ansible automation as do the OCP/OKD's own inst
 
 Execute the Ansible stage:
 ```
-  ./qubinode-installer -m ansible -p ocp
+  ./qubinode-installer -m ansible -p ocp3
 
 ```
 
@@ -153,7 +153,7 @@ In our setup we leverage a 1TB NVME for the storage of the VMs. This is highly r
 
 Execute the KVM host stage:
 ```
-  ./qubinode-installer -m host -p ocp
+  ./qubinode-installer -m host -p ocp3
 
 ```
 - Ensure the system is registered to RHSM and installs all required packages
@@ -188,13 +188,13 @@ This commannd will deploy the VMs that OpenShift will run on. Running the comman
 
 Execute the following command to deploy the nodes using  OpenShift Enterprise use the command below:
 ```
-  ./qubinode-installer -p ocp -m deploy_nodes
+  ./qubinode-installer -p ocp3 -m deploy_nodes
 
 ```
 
 To remove the nodes run the following
 ```
-  ./qubinode-installer -p ocp -d
+  ./qubinode-installer -p ocp3 -d
 
 ```
 *For OKD Deployments please remove the machine from the list of registered systems on https://access.redhat.com/management/systems*
@@ -212,14 +212,13 @@ This command will deploy OpenShift on the vms that where deployed on the previou
 
 Execute the following command to deploy OpenShift Enterprise use the command below:
 ```
-  ./qubinode-installer -p ocp
+  ./qubinode-installer -p ocp3
 
 ```
 
 To uninstall Openshift across all hosts in the cluster.
 ```
-  # OpenShift Enterprise Command
-  ./qubinode-installer -p ocp -m uninstall_openshift
+  ./qubinode-installer -p ocp3 -m uninstall_openshift
 
   # OpenShift Origin Command
   ./qubinode-installer -p okd -m uninstall_openshift

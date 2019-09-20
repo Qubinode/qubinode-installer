@@ -1,0 +1,56 @@
+# Dns server VM attributes
+sat_server_hostname: "{{ instance_prefix }}-sat01"
+sat_server_vm:
+    sat_name: "{{ sat_server_hostname }}"
+    sat_vcpu: 4
+    sat_memory: 20480
+    sat_root_disk_size: 60G
+    sat_teardown: false
+    sat_recreate: false
+    sat_group: satellite
+    sat_extra_storage:
+      - size: 300G
+        enable: true
+    sat_enable: true
+
+sat_server_ip: ""
+
+# RHSM info
+satellite_pool_id: ""
+rhsm_pool_ids: "{{ satellite_pool_id | default('') }}"
+
+# Filesystems
+device: vdb
+host_device: "{{ device }}"
+vgname: satdata
+
+logical_volumes:
+  - name: pgsql
+    size: 10g
+    mount_dir: /var/lib/pgsql
+    fstype: xfs
+  - name: mongodb
+    size: 50g
+    mount_dir: /var/lib/mongodb
+    fstype: xfs
+  - name: pulp
+    size: 100g
+    mount_dir: /var/lib/pulp
+    fstype: xfs
+
+# For Satellite installation
+satellite_default_location: Orlando
+satellite_default_organization: ACME
+satellite_domain: "{{ domain }}"
+satellite_hostname: "{{ sat_server_vm.sat_name }}"
+satellite_ip_address: "{{ sat_server_ip }}"
+satellite_user: "{{ admin_user }}"
+satellite_pass: "{{ admin_user_password }}"
+satellite_version: 6.5
+
+satellite_repos:
+  - rhel-7-server-rpms
+  - rhel-server-rhscl-7-rpms
+  - "rhel-7-server-satellite-{{ satellite_version }}-rpms"
+  - rhel-7-server-satellite-maintenance-6-rpms
+  - rhel-7-server-ansible-2.6-rpms

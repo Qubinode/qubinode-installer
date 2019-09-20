@@ -1,10 +1,10 @@
 - name: update masters inventory
   vars:
     role_group: "{{ outer_item.role_group }}"
-    name: "ocp-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
+    name: "{{ instance_prefix }}-{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
   lineinfile:
     path: "{{ inventory_dir }}/{{ group }}"
-    #line: "{{ name }}" 
+    #line: "{{ name }}"
     line: "{{ name }}   ansible_host={{ hostvars[name].ansible_host }} ansible_user={{ admin_user }}"
     regexp: "^{{ name }}.*"
     #regexp: "^{{ name }}\\d+"

@@ -45,14 +45,14 @@ https://people.redhat.com/rjones/virt-top/virt-top.txt[virt-top-> more info]
 * cd /var/log/libvirt/qemu
 * tail one of the following based of vm name
 ```
-# ls -lath ocp-*
--rw-------. 1 root root  29K Aug 17 10:10 ocp-dns01.log
--rw-------. 1 root root  29K Aug 17 10:08 ocp-lb01.log
--rw-------. 1 root root  49K Aug 17 10:07 ocp-infra02.log
--rw-------. 1 root root  54K Aug 17 10:05 ocp-infra01.log
--rw-------. 1 root root  44K Aug 17 10:04 ocp-node02.log
--rw-------. 1 root root  50K Aug 17 10:03 ocp-node01.log
--rw-------. 1 root root 104K Aug 17 10:01 ocp-master01.log
+# ls -lath qbn-*
+-rw-------. 1 root root  29K Aug 17 10:10 qbn-dns01.log
+-rw-------. 1 root root  29K Aug 17 10:08 qbn-lb01.log
+-rw-------. 1 root root  49K Aug 17 10:07 qbn-infra02.log
+-rw-------. 1 root root  54K Aug 17 10:05 qbn-infra01.log
+-rw-------. 1 root root  44K Aug 17 10:04 qbn-node02.log
+-rw-------. 1 root root  50K Aug 17 10:03 qbn-node01.log
+-rw-------. 1 root root 104K Aug 17 10:01 qbn-master01.log
 ```
 
 === From Cockpit

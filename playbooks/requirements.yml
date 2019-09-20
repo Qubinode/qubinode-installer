@@ -24,3 +24,6 @@
 
 - src: https://github.com/tosin2013/ocp-power-management.git
   version: master
+
+- src: https://github.com/flyemsafe/swygue-install-satellite.git
+  version: master
