@@ -3,10 +3,12 @@
 product: ocp3
 run_qubinode_setup: ""
 instance_prefix: qbn
+preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 deployment_type: standard
 update_inventory: true
 inventory_dir: ""
 project_dir: ""
+vm_data_dir: "/var/lib/vmdata"
 inventory_file: "{{ inventory_dir }}/hosts"
 vm_libvirt_net: "qubinet"
 admin_user_password: "{{ admin_user_password }}"

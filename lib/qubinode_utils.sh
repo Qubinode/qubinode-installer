@@ -170,6 +170,10 @@ function createmenu () {
 }
 
 function prereqs () {
+    # This function copies over the required variables files
+    # Setup of the required paths
+    # Sets up the inventory file
+
     # setup required paths
     setup_required_paths
     CURRENT_USER=$(whoami)
@@ -178,6 +182,7 @@ function prereqs () {
     vars_file="${project_dir}/playbooks/vars/all.yml"
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
+    ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
     then
@@ -188,6 +193,12 @@ function prereqs () {
     if [ ! -f "${vault_vars_file}" ]
     then
         cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
+    fi
+
+    # create ocp3 vars file
+    if [ ! -f "${ocp3_vars_file}" ]
+    then
+        cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
     fi
 
     # create ansible inventory file
@@ -262,6 +273,9 @@ function setup_variables () {
 
     # Satellite server vars file
     SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"
+
+    VM_DATA_DIR=$(awk '/^vm_data_dir:/ {print $2}' ${vars_file}|tr -d '"')
+    ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
 
 }
 
