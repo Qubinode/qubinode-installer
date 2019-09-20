@@ -1,26 +1,9 @@
 #!/bin/bash
 
-function validate_openshift_pool_id () {
-    # For product Openshift
-    if [ "A${product_in_use}" == "Aocp3" ]
-    then
-        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
-        then
-            check_for_openshift_subscription
-            if grep '""' "${vars_file}"|grep -q openshift_pool_id
-            then
-                echo "The OpenShift Pool ID is required."
-                echo "Please run: 'qubinode-installer -p ocp3 -m rhsm' or modify"
-                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
-                echo "with the pool ID"
-                exit 1
-            fi
-        fi
-    fi
-}
 
-# TODO: make this function more generic to take the product as an agrument
 function check_for_openshift_subscription () {
+    # This function trys to find a subscription that mataches the OpenShift product
+    # then saves the pool id for that function and updates the varaibles file.
     AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
     CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
 
@@ -51,7 +34,28 @@ function check_for_openshift_subscription () {
     fi
 }
 
-# this function sets the openshift repo id
+function validate_openshift_pool_id () {
+    # This function ensures that when installing OCP
+    # There exist an OpenShift subscription and an avialable pool id
+    # it calls the function check_for_openshift_subscription
+    if [ "A${product_in_use}" == "Aocp3" ]
+    then
+        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        then
+            check_for_openshift_subscription
+            if grep '""' "${vars_file}"|grep -q openshift_pool_id
+            then
+                echo "The OpenShift Pool ID is required."
+                echo "Please run: 'qubinode-installer -p ocp3 -m rhsm' or modify"
+                echo "${project_dir}/playbooks/vault/all.yml 'openshift_pool_id'"
+                echo "with the pool ID"
+                exit 1
+            fi
+        fi
+    fi
+}
+
+# NOTE: This function may be redudant and probable should be removed
 function set_openshift_rhsm_pool_id () {
     # set subscription pool id
     if [ "A${product_in_use}" != "A" ]
@@ -78,6 +82,7 @@ function set_openshift_rhsm_pool_id () {
     fi
 
 }
+
 
 function openshift-setup() {
   # Does some prep work then runs the official OpenShift ansible playbooks
@@ -163,6 +168,112 @@ function qubinode_run_openshift_installer () {
     fi
 }
 
+function cleanStaleKnownHost () {
+    user=$1
+    host=$2
+    alt_host_name=$3
+    isKnownHostStale=$(ssh -o connecttimeout=2 -o stricthostkeychecking=no ${user}@${host} true 2>&1|grep -c "Offending")
+    if [ "A${isKnownHostStale}" == "A1" ]
+    then
+        ssh-keygen -R ${host}
+        if [ "A${alt_host_name}" != "A" ]
+        then
+            ssh-keygen -R ${alt_host_name} >/dev/null 2>&1
+        fi
+    fi
+}
+
+function canSSH () {
+    user=$1
+    host=$2
+    RESULT=$(ssh -q -o StrictHostKeyChecking=no -o "BatchMode=yes" -i /home/${user}/.ssh/id_rsa "${user}@${host}" "echo 2>&1" && echo SSH_OK || echo SSH_NOK)
+    echo $RESULT
+}
+
+function qubinode_ocp3_nodes_postdeployment () {
+   # This functions does post deployment on nodes
+   # And it also create DNS records
+   # This function is called by are_nodes_deployed
+   NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
+   CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
+   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
+
+   if [ "A${teardown}" == "Atrue" ]
+   then
+       if sudo virsh list |grep -q "${idm_srv_hostname}"
+       then
+           echo "Remove ${qubinode_product} will be removed"
+       fi
+   else
+       echo "Post configure ${qubinode_product} VMs"
+       ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
+       ansible-playbook "${NODES_POST_PLAY}" || exit $?
+   fi
+}
+
+
+function qubinode_ocp3_nodes () {
+   # This functions deploys OpenShift nodes or undeploys them
+   # This function is called by are_nodes_deployed
+   qubinode_vm_deployment_precheck  #Ensure the host is setup correctly
+   NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
+   NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
+   CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
+   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
+   
+   if [ "A${teardown}" == "Atrue" ]
+   then
+       if sudo virsh list |grep -q "${idm_srv_hostname}"
+       then
+           echo "Remove ${qubinode_product} VMs"
+           ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true" || exit $?
+           ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+           if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
+              rm -rf ${CHECK_OCP_INVENTORY}
+           fi
+       fi
+   else
+       echo "Deploy ${qubinode_product} VMs"
+       ansible-playbook "${NODES_PLAY}" || exit $?
+       ansible-playbook "${NODES_POST_PLAY}" || exit $?
+   fi
+}
+
+function are_nodes_deployed () {
+    nodes_list="${VM_DATA_DIR}/nodes_list.txt"
+    if [ -f "${nodes_list}" ]
+    then
+        for node in $(cat "${nodes_list}")
+        do
+            if sudo virsh list |grep running |grep -q $node
+            then
+                IP=$(awk -v var="${node}" '$0 ~ var {print $0}' "${project_dir}/inventory/hosts"|grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+                cleanStaleKnownHost "${ADMIN_USER}" "${IP}" "${node}"
+                ssh_status=$(canSSH "${ADMIN_USER}" "${IP}")
+                if [ "A${ssh_status}" == "ASSH_OK" ]
+                then
+                    echo "node $node VM is already deployed and ssh accessible"
+                else
+                    echo "Run deploy code"
+                    break
+                fi
+
+            else
+                echo "node $node VM is not running"
+                run_node_deploy=yes
+                break
+            fi
+        done
+ 
+   fi
+
+   if [ "A${run_nodes_deploy}" == "Ayes" ]
+   then
+       qubinode_deploy_ocp3
+   fi
+   qubinode_ocp3_nodes_postdeployment
+}
+
 function qubinode_install_openshift () {
     product_in_use="ocp3"
     qubinode_product=true
@@ -196,19 +307,13 @@ function qubinode_install_openshift () {
     printf     "*****************************\n"
     if ! curl -k -s "https://${idm_srv_hostname}/ipa/config/ca.crt" > /dev/null
     then
-        qubinode_install_idm
+        qubinode_deploy_idm
     fi
 
-    exit
     printf "\n\n******************************\n"
     printf     "* Deploy Nodes for ${product_in_use} cluster *\n"
     printf     "******************************\n"
-    if sudo virsh list|grep -E 'master|node|infra'
-    then
-        echo "Skipping VM Deployment"
-    else
-        qubinode_vm_manager deploy_nodes
-    fi
+    are_nodes_deployed
 
     OCUSER=$(cat "${vars_file}" | grep openshift_user: | awk '{print $2}')
 
@@ -216,6 +321,7 @@ function qubinode_install_openshift () {
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
     qubinode_run_openshift_installer
+    exit
 
     printf "\n\n*******************************************************\n"
     printf   "\nDeployment steps for ${product_in_use} cluster is complete.\n"
@@ -227,3 +333,4 @@ function qubinode_install_openshift () {
     printf "     Password: <yourpassword>\n"
     printf "*******************************************************\n"
 }
+

@@ -1,9 +1,6 @@
 #!/bin/bash
 
-setup_variables
 SATELLITE_SERVER_NAME="qbn-sat01"
-#SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"
-
 function satellite_server_maintenance () {
    STATUS=$(sudo virsh list --all|awk -v var="${SATELLITE_SERVER_NAME}" '$0 ~ var {print $3}')
    if [ "${product_maintenance}" == "shutdown" ]
@@ -60,7 +57,6 @@ function qubinode_deploy_satellite () {
    test -f "${ACTIVE_VARS_FILE}" || cp "${SAMPLE_VARS_FILE}" "${ACTIVE_VARS_FILE}"
    SATELLITE_VM_PLAYBOOK="${project_dir}/playbooks/deploy_satellite_vm.yml"
    SATELLITE_SERVER_IP=$(awk '/qbn-sat/ {print $2}' "${project_dir}/inventory/hosts" |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-   ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
    SATELLITE_SERVER_DNS=$(dig +short -x "${SATELLITE_SERVER_IP}")
    SATELLITE_SERVER_PLAYBOOK="${project_dir}/playbooks/satellite_server.yml"
 

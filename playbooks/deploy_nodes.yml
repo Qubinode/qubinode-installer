@@ -1,34 +1,44 @@
-- name: deploy all VMs required
+- name: deploying nodes for ocp or okd installation
   hosts: localhost
   become: yes
   gather_facts: no
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    #- vars/ocp3.yml
 
   tasks:
+    - set_fact:
+        nodes_list_status: "{{ 'absent' if vm_teardown|bool else 'touch' }}"
+
+    - name: create list to store each node VM name
+      file:
+        path: "{{ vm_data_dir }}/nodes_list.txt"
+        state: "{{ nodes_list_status }}"
+
     - name: include create vm tasks
-      include_tasks: vms_inc.yml
+      include_tasks: deploy_ocpokd_nodes_outer_loop.yml
       loop: "{{ instances }}"
       loop_control:
         loop_var: outer_item
         label: outer_item.name
       when: outer_item.name != 'dns'
 
-    - name: Cleanup hosts file
-      vars:
-        vm_name: "{{ product }}-{{ outer_item.name }}"
-      lineinfile:
-        path: "{{ inventory_dir }}/hosts"
-        state: absent
-        regexp: "({{ vm_name }})"
-      loop: "{{ instances }}"
-      loop_control:
-        loop_var: outer_item
-        label: outer_item.name
-      when:
-        - outer_item.name != 'dns'
-        - vm_teardown
+
+#    - name: Cleanup hosts file
+#      vars:
+#        vm_name: "{{ product }}-{{ outer_item.name }}"
+#      lineinfile:
+#        path: "{{ inventory_dir }}/hosts"
+#        state: absent
+#        regexp: "({{ vm_name }})"
+#      loop: "{{ instances }}"
+#      loop_control:
+#        loop_var: outer_item
+#        label: outer_item.name
+#      when:
+#        - outer_item.name != 'dns'
+#        - vm_teardown
 
     - name: collect all nodes hostnames and ip address
       vars:

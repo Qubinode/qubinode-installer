@@ -138,8 +138,12 @@ function qubinode_vm_manager () {
 }
 
 function qubinode_vm_deployment_precheck () {
+   # This function ensure that the host is setup as a KVM host.
+   # It ensures the foundation is set to allow ansible playbooks can run
+   # and the products can be deployed.
    prereqs
    setup_variables
+   ask_user_input
    echo "Running VM deployment prechecks"
    if [ "A${teardown}" != "Atrue" ]
    then
