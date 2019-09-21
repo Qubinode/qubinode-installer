@@ -314,6 +314,13 @@ function qubinode_project_cleanup () {
         FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
     fi
 
+    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    if [[ ${product_opt} == "ocp3" ]]; then
+      FILES=("${FILES[@]}" "$ocp3_vars_file")
+    elif [[ ${product_opt} == "okd3" ]]; then
+      FILES=("${FILES[@]}" "$okd3_vars_file")
+    fi
+
     if [ ${#FILES[@]} -eq 0 ]
     then
         echo "Project directory: ${project_dir} state is already clean"
