@@ -305,6 +305,20 @@ else
                    qubinode_run_openshift_installer
                fi
             fi
+        elif [ "${product_in_use}" == "okd3" ]
+        then
+            if [ "A${teardown}" == "Atrue" ]
+            then
+                qubinode_vm_manager deploy_nodes
+            else
+               if sudo virsh list|grep -E 'master|node|infra'
+               then
+                   qubinode_run_openshift_installer
+               else
+                   qubinode_vm_manager deploy_nodes
+                   qubinode_run_openshift_installer
+               fi
+            fi
         elif [ "${product_in_use}" == "idm" ]
         then
             echo "************"
@@ -355,8 +369,8 @@ else
     echo "No arguement was passed"
     ;;
     esac
-#     else
-#        display_help
+     else
+        display_help
     fi
 fi
 

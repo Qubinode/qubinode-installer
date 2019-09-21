@@ -183,6 +183,7 @@ function prereqs () {
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
     ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
+    okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
     then
@@ -199,6 +200,12 @@ function prereqs () {
     if [ ! -f "${ocp3_vars_file}" ]
     then
         cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
+    fi
+
+    # create ocp3 vars file
+    if [ ! -f "${okd3_vars_file}" ]
+    then
+        cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
     fi
 
     # create ansible inventory file
