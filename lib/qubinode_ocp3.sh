@@ -321,14 +321,15 @@ function qubinode_install_openshift () {
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
     qubinode_run_openshift_installer
-    exit
+    OCP3_HOSTNAME=$(awk '/master01/ {print $1}' ${project_dir}/inventory/hosts)
+    DNS_SRV=$(awk '/dns01/ {print $1}' ${project_dir}/inventory/hosts)
 
     printf "\n\n*******************************************************\n"
     printf   "\nDeployment steps for ${product_in_use} cluster is complete.\n"
-    printf "\nCluster login: https://ocp-master01.${domain}:8443\n"
+    printf "\nCluster login: https://${OCP3_HOSTNAME}.${domain}:8443\n"
     printf "     Username: changeme\n"
     printf "     Password: <yourpassword>\n"
-    printf "\n\nIDM DNS Server login: https://ocp-dns01.${domain}\n"
+    printf "\n\nIDM DNS Server login: https://${DNS_SRV}.${domain}\n"
     printf "     Username: admin\n"
     printf "     Password: <yourpassword>\n"
     printf "*******************************************************\n"
