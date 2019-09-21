@@ -14,6 +14,7 @@
         rhsm_pool_ids: "{{ openshift_pool_id | default('') }}"
       include_role:
         name: swygue-redhat-subscription
+      when: "'ocp' in product"
       
     - name: create libvirt logical volume
       include_role:

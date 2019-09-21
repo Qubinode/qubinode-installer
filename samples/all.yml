@@ -14,7 +14,6 @@ vm_libvirt_net: "qubinet"
 admin_user_password: "{{ admin_user_password }}"
 kvm_vm_root_pwd: "{{ admin_user_password }}"
 vm_domain: "{{ domain }}"
-org_id: "{{ rhsm_org }}"
 
 # RHSM and the swygue-redhat-subscription role
 rhsm_org: "{{ rhsm_org }}"
@@ -24,6 +23,7 @@ rhsm_reg_method: ""
 rhsm_setup_insights_client: false
 rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
+org_id: "{{ rhsm_org }}"
 
 vm_teardown: false
 admin_user: ""
@@ -96,7 +96,12 @@ ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' -
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
 rhel_release: 7.6
-okd_repos: ""
+okd_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-optional-rpms
+  - rhel-7-server-supplementary-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-fast-datapath-rpms
 ocp_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
@@ -111,6 +116,7 @@ ocp_gluster_server_repo:
   - rh-gluster-3-for-rhel-7-server-rpms
 
 ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
+okd_repos_with_glus_client: "{{ okd_repos + ocp_gluster_client_repo }}"
 ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
 
 ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
@@ -194,11 +200,9 @@ glusterfs: True
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_pool_id: ""
 openshift_release: "3.11"
-openshift_image_tag: v3.11.135
-openshift_pkg_version: -3.11.135
+openshift_image_tag: v3.11.141
+openshift_pkg_version: -3.11.141
 openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
-#rhsm_username: "example@redhat.com"
-##rhsm_password: "asdfdasfds"
 ssh_username: "{{ admin_user }}"
 glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
 metrics_storage_volume_size: 10Gi
