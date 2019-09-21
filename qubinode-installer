@@ -742,6 +742,22 @@ function setup_variables () {
 
     echo ""
     echo "Populating ${vars_file}"
+    # setting OpenShift Product Type
+    if grep 'ocp' "${vars_file}"|grep -q "product:"
+    then
+        echo "Updating OpenShift Product Type"
+        sed -i "s/product:.*/product: ${product_opt}/" "${vars_file}"
+    fi
+
+    if [[  ${product_opt} == "okd" ]]; then
+      if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "product:"
+      then
+          echo "Disable Red Hat insights on OKD Deploument"
+          sed -i "s/rhsm_setup_insights_client:.*/rhsm_setup_insights_client: false/" "${vars_file}"
+      fi
+    fi
+
+
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
     then
@@ -882,13 +898,17 @@ function openshift-setup() {
   setup_variables
   if [[ ${product_opt} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+    if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
+        ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
+    fi
   elif [[ ${product_opt} == "okd" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+    if [[ ! -d ${HOME}/openshift-ansible ]]; then
+        ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
+    fi
   fi
 
-  if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
-      ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
-  fi
+
 
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
@@ -911,8 +931,9 @@ function openshift-setup() {
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
-    echo "Work in Progress"
-    exit 1
+    cd ${HOME}/openshift-ansible
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
   fi
 }
 
@@ -945,7 +966,7 @@ function qubinode_uninstall_openshift() {
   if [[ ${product_opt} == "ocp" ]]; then
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
-    echo "Work in Progress"
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    ${HOME}/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
     exit 1
   fi
 }
@@ -1350,6 +1371,20 @@ else
         then
             qubinode_vm_manager deploy_dns
             qubinode_dns_manager server
+        elif [ "${product_opt}" == "okd" ]
+        then
+          if [ "A${teardown}" == "Atrue" ]
+          then
+              qubinode_vm_manager deploy_nodes
+          else
+             if sudo virsh list|grep -E 'master|node|infra'
+             then
+                 qubinode_deploy_openshift
+             else
+                 qubinode_vm_manager deploy_nodes
+                 qubinode_deploy_openshift
+             fi
+           fi
         else
             display_help
         fi

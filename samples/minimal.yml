@@ -4,6 +4,7 @@ product: ocp
 instance_prefix: qbn
 deployment_type: minimal-cns
 update_inventory: true
+preappend_host_name: okd-
 inventory_dir: ""
 project_dir: ""
 inventory_file: "{{ inventory_dir }}/hosts"
@@ -16,6 +17,7 @@ rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
 org_id: "{{ rhsm_org }}"
 rhsm_reg_method: ""
+rhsm_setup_insights_client: true
 vm_teardown: false
 admin_user: ""
 openshift_user: qubinode
@@ -87,7 +89,11 @@ ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' -
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
 rhel_release: 7.6
-okd_repos: ""
+okd_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-optional-rpms
+  - rhel-7-server-supplementary-rpms
+  - rhel-7-server-extras-rpms
 ocp_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
@@ -102,6 +108,7 @@ ocp_gluster_server_repo:
   - rh-gluster-3-for-rhel-7-server-rpms
 
 ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
+okd_repos_with_glus_client: "{{ okd_repos + ocp_gluster_client_repo }}"
 ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
 
 ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
@@ -185,8 +192,8 @@ glusterfs: True
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_pool_id: ""
 openshift_release: "3.11"
-openshift_image_tag: v3.11.135
-openshift_pkg_version: -3.11.135
+openshift_image_tag: v3.11.141
+openshift_pkg_version: -3.11.141
 openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
 #rhsm_username: "example@redhat.com"
 ##rhsm_password: "asdfdasfds"
