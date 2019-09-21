@@ -38,12 +38,14 @@ function validate_product_by_user () {
         then
             if [ "A${product_in_use}" == "Ainvalid" ]
             then
-                echo "The ${product_in_use} is not a supported."
+                echo "The ${qubinode_product_opt} is not a supported product"
                 echo "Supported products are: $available_products"
+                exit
             fi
         fi
      else
-        echo "product not there"
+        echo "The product ${qubinode_product_opt} does not exist"
+        exit 1
     fi
 }
 
@@ -177,6 +179,95 @@ function qubinode_vm_deployment_precheck () {
     fi
 }
 
+function qubinode_maintenance_options () {
+    if [ "${qubinode_maintenance_opt}" == "clean" ]
+    then
+        qubinode_project_cleanup
+    elif [ "${qubinode_maintenance_opt}" == "setup" ]
+    then
+        qubinode_installer_preflight
+    elif [ "${qubinode_maintenance_opt}" == "rhsm" ]
+    then
+        qubinode_rhsm_register
+    elif [ "${qubinode_maintenance_opt}" == "ansible" ]
+    then
+        qubinode_setup_ansible
+    elif [ "${qubinode_maintenance_opt}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
+    then
+        qubinode_setup_kvm_host
+    elif [ "${qubinode_maintenance_opt}" == "deploy_nodes" ]
+    then
+        qubinode_vm_manager deploy_nodes
+    elif [ "${qubinode_maintenance_opt}" == "undeploy" ]
+    then
+        #TODO: this should remove all VMs and clean up the project folder
+        qubinode_vm_manager undeploy
+    elif [ "${qubinode_maintenance_opt}" == "uninstall_openshift" ]
+    then
+      #TODO: this should remove all VMs and clean up the project folder
+        qubinode_uninstall_openshift
+    else
+        display_help
+    fi
+}
+
+function qubinode_product_deployment () {
+    if [ "${product_in_use}" == "ocp3" ]
+    then
+        echo "Run OpenShift Install"
+        are_nodes_deployed
+        qubinode_run_openshift_installer
+    elif [ "${product_in_use}" == "idm" ]
+    then
+        echo "*************"
+        echo "Deploying IdM"
+        qubinode_deploy_idm
+        echo "*************"
+    elif [ "${product_in_use}" == "kvmhost" ]
+    then
+        echo "Run KVM host setup"
+        qubinode_setup_kvm_host
+    elif [ "${product_in_use}" == "satellite" ]
+    then
+        echo "Deploy a Red Hat Satellite server"
+        qubinode_deploy_satellite
+    else
+        display_help
+    fi
+}
+
+function qubinode_openshift_clustermanager () {
+    setup_required_paths
+    CHECK_STATE_CMD="${project_dir}/playbooks/roles/ocp-power-management/files/check_system_state.sh"
+    case ${cluster_opt} in
+        diag)
+            echo "Perparing to run full Diagnostics"
+            MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
+            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE "sudo oadm diagnostics"
+            ;;
+        smoketest)
+            echo  "Running smoke test on environment."
+            bash "${project_dir}/lib/openshift-smoke-test.sh" || exit $?
+            ;;
+        shutdown)
+            echo  "Shutting down cluster."
+            bash "${project_dir}/lib/qubinode_shutdown_cluster.sh" || exit $?
+            ;;
+        startup)
+            echo  "Starting up Cluster"
+            bash "${project_dir}/lib/qubinode_startup_cluster.sh" || exit $?
+            ;;
+        checkcluster)
+            echo  "Running Cluster health check"
+            MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
+            ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
+            ;;
+        *)
+            echo "No arguement was passed"
+            ;;
+    esac
+}
+
 
 
 ##       MAIN               ##
@@ -194,7 +285,7 @@ OPTIND=1
 NUM_ARGS="$#"
 ALL_ARGS="$@"
 
-while getopts ":c:dvh:m:p:a:" opt;
+while getopts ":c:dvhm:p:a:" opt;
 do
     case $opt in
         a) check_args;
@@ -212,7 +303,8 @@ do
            exit 1
            ;;
         m) check_args;
-           maintenance=$OPTARG;
+           qubinode_maintenance=true
+           qubinode_maintenance_opt=$OPTARG;
            ;;
         p) check_args
            check=true
@@ -237,129 +329,45 @@ shift "$((OPTIND-1))"
 
 # TODO: add verbose option for default install
 if (( $OPTIND == 1 )); then
-   cat < docs/default_message
-   default_message=("Continue with the default installation" "Display the help menu")
-   createmenu "${default_message[@]}"
-   result=($(echo "${selected_option}"))
-   if [ "A${result}" == "ADisplay" ]
-   then
-       display_help
-   elif [ "A${result}" == "AContinue" ]
-   then
-       qubinode_install_openshift
-   else
-       echo $result
-       echo "Unknown issue, please run the installer again"
-   fi
-else
-    # Check for product
-    validate_product_by_user
-    if [ "A${maintenance}" != "A" ]
+    cat < docs/default_message
+    default_message=("Continue with the default installation" "Display the help menu")
+    createmenu "${default_message[@]}"
+    result=($(echo "${selected_option}"))
+    if [ "A${result}" == "ADisplay" ]
     then
-        if [ "${maintenance}" == "clean" ]
-        then
-            qubinode_project_cleanup
-        elif [ "${maintenance}" == "setup" ]
-        then
-            qubinode_installer_preflight
-        elif [ "${maintenance}" == "rhsm" ]
-        then
-            qubinode_rhsm_register
-        elif [ "${maintenance}" == "ansible" ]
-        then
-            qubinode_setup_ansible
-        elif [ "${maintenance}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
-        then
-            qubinode_setup_kvm_host
-        elif [ "${maintenance}" == "deploy_nodes" ]
-        then
-            qubinode_vm_manager deploy_nodes
-        elif [ "${maintenance}" == "undeploy" ]
-        then
-            #TODO: this should remove all VMs and clean up the project folder
-            qubinode_vm_manager undeploy
-        elif [ "${maintenance}" == "uninstall_openshift" ]
-        then
-            #TODO: this should remove all VMs and clean up the project folder
-            qubinode_uninstall_openshift
-        elif [[ "A${maintenance}" != "A" ]] && [[ "A${product_in_use}" != "A" ]]
-        then
-            echo "Setting product maintencne"
-            product_maintenance="${maintenance}"
-        else
-            display_help
-        fi
+        display_help
+    elif [ "A${result}" == "AContinue" ]
+    then
+        qubinode_install_openshift
+    else
+        echo $result
+        echo "Unknown issue, please run the installer again"
     fi
+fi
 
+if [ "A${qubinode_product}" == "Atrue" ]
+then
+    validate_product_by_user
     if [ "A${product_in_use}" != "A" ]
     then
-        if [ "${product_in_use}" == "ocp3" ]
-        then
-            if [ "A${teardown}" == "Atrue" ]
-            then
-                qubinode_vm_manager deploy_nodes
-            else
-               if sudo virsh list|grep -E 'master|node|infra'
-               then
-                   qubinode_run_openshift_installer
-               else
-                   qubinode_vm_manager deploy_nodes
-                   qubinode_run_openshift_installer
-               fi
-            fi
-        elif [ "${product_in_use}" == "idm" ]
-        then
-            echo "************"
-            echo "Deploying IdM"
-            qubinode_deploy_idm
-            echo "************"
-            echo "Done Deploying IdM"
-        elif [ "${product_in_use}" == "kvmhost" ]
-        then
-            qubinode_setup_kvm_host
-        elif [ "${product_in_use}" == "satellite" ]
-        then
-            echo "Deploy a Red Hat Satellite server"
-            qubinode_deploy_satellite
-        else
-            display_help
-        fi
+        qubinode_product_deployment
     fi
+fi
 
-    if [ "A${cluster_opt}" != "A" ]
-    then
+if [ "A${qubinode_maintenance}" == "Atrue" ]
+then
+    echo "maintenance option"
+    qubinode_maintenance_options
+fi
 
-    case ${cluster_opt} in
-    diag)
-    echo "Perparing to run full Diagnostics"
-    MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
-    ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE "sudo oadm diagnostics"
-    ;;
-    smoketest)
-    echo  "Running smoke test on environment."
-    bash lib/openshift-smoke-test.sh || exit $?
-    ;;
-    shutdown)
-    echo  "Shutting down cluster."
-    bash lib/qubinode_shutdown_cluster.sh || exit $?
-    ;;
-    startup)
-    echo  "Starting up Cluster"
-    bash lib/qubinode_startup_cluster.sh || exit $?
-    ;;
-    checkcluster)
-    echo  "Running Cluster health check"
-    setup_required_paths
-    MASTER_NODE=$(cat inventory/hosts | grep "master01" | awk '{print $1}')
-    ssh -t  -o "StrictHostKeyChecking=no"   $MASTER_NODE 'bash -s' < ${project_dir}/playbooks/roles/ocp-power-management/files/check_system_state.sh both
-    ;;
-    *)
-    echo "No arguement was passed"
-    ;;
-    esac
-#     else
-#        display_help
-    fi
+if [ "A${cluster_opt}" != "A" ]
+then
+    qubinode_openshift_clustermanager
+fi
+
+if (( $OPTIND != 1 ))
+then
+    display_help
 fi
 
 exit 0

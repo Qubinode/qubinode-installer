@@ -350,6 +350,7 @@ function verbose() {
 
 function contains_string () {
     [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo "$2" || echo 'invalid'
+    #echo "${1}" | grep -w "${2}" && echo "$2" || echo 'invalid'
 }
 
 
