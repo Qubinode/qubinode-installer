@@ -42,6 +42,8 @@ function validate_product_by_user () {
                 echo "Supported products are: $available_products"
             fi
         fi
+     else
+        echo "product not there"
     fi
 }
 

@@ -145,7 +145,7 @@ function qubinode_run_openshift_installer () {
         confirm "Are you sure you want to undeploy the entire ${product_in_use} cluster?"
         if [ "A${response}" == "Ayes" ]
         then
-            qubinode_vm_manager deploy_nodes
+            #qubinode_vm_manager deploy_nodes
             if [[ -f ${HTPASSFILE} ]]; then
                 rm -f ${HTPASSFILE}
             fi
