@@ -321,7 +321,6 @@ function qubinode_install_openshift () {
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
     qubinode_run_openshift_installer
-    exit
 
     printf "\n\n*******************************************************\n"
     printf   "\nDeployment steps for ${product_in_use} cluster is complete.\n"
