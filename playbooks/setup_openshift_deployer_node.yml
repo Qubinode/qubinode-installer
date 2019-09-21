@@ -78,17 +78,17 @@
     when: openshift_deployment_type == 'origin'
 
   - name: check for yum updates
-    shell: yum check-update --quiet | grep -v "^$" | wc -l
+    shell: yum check-update --quiet | grep -v "^$\|installed\|running" | wc -l
     args:
       warn: false
     register: yum_updates
-    changed_when: yum_updates > 0
+    changed_when: yum_updates.stdout != "0"
 
   - name: upgrade all packages
     command: yum -y update
     args:
       warn: false
-    when: yum_updates > 0
+    when: yum_updates.stdout != "0"
 
   - name: ensure required packages are installed
     shell: rpm -q "{{ item }}" || yum install -y "{{ item }}" && echo yes
