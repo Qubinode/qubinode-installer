@@ -370,7 +370,8 @@ else
     ;;
     esac
      else
-        display_help
+       echo ""
+        #display_help
     fi
 fi
 

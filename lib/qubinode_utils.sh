@@ -61,7 +61,7 @@ function check_args () {
 function config_err_msg () {
     cat << EOH >&2
   Could not find start_deployment.conf in the current path ${project_dir}.
-  Please make sure you are in the openshift-home-lab-directory."
+  Please make sure you are in the qubinode-installer-directory."
 EOH
 }
 
