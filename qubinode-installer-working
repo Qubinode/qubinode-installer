@@ -352,20 +352,26 @@ then
     then
         qubinode_product_deployment
     fi
+else
+    NOARG=true
 fi
 
 if [ "A${qubinode_maintenance}" == "Atrue" ]
 then
     echo "maintenance option"
     qubinode_maintenance_options
+else
+    NOARG=true
 fi
 
 if [ "A${cluster_opt}" != "A" ]
 then
     qubinode_openshift_clustermanager
+else
+    NOARG=true
 fi
 
-if (( $OPTIND != 1 ))
+if [ "A${NOARG}" == "Atrue" ]
 then
     display_help
 fi
