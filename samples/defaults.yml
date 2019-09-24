@@ -1,0 +1,39 @@
+# all non sensitive variables are defined here
+product: ocp3
+run_qubinode_setup: ""
+instance_prefix: qbn
+preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
+deployment_type: standard
+update_inventory: true
+inventory_dir: ""
+project_dir: ""
+vm_data_dir: "/var/lib/vmdata"
+inventory_file: "{{ inventory_dir }}/hosts"
+vm_libvirt_net: "qubinet"
+admin_user_password: "{{ admin_user_password }}"
+kvm_vm_root_pwd: "{{ admin_user_password }}"
+vm_domain: "{{ domain }}"
+
+# RHSM and the swygue-redhat-subscription role
+rhsm_org: "{{ rhsm_org }}"
+rhsm_activationkey: "{{ rhsm_activationkey }}"
+rhsm_org_id: "{{ rhsm_org }}"
+rhsm_reg_method: ""
+rhsm_setup_insights_client: false
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
+org_id: "{{ rhsm_org }}"
+
+vm_teardown: false
+admin_user: ""
+
+# This is for /etc/resolv.conf
+dns_servers:
+  - "{{ idm_public_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
+
+search_domains:
+  - "{{ vm_domain }}"
+
+# Use to create VM
+os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2

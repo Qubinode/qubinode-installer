@@ -5,3 +5,13 @@ htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_release: "3.11"
 openshift_deployment_type: "{{ openshift_product | default('origin') }}"
 openshift_user: qubinode
+ssh_username: "{{ admin_user }}"
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
+metrics_storage_volume_size: 10Gi
+
+# Feature
+enable_firewalld: False
+enable_openshift_operators: True
+enable_metrics: True
+enable_logging: False
+enable_prometheous_operator: False
