@@ -213,6 +213,23 @@ function prereqs () {
     then
         cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
     fi
+
+    # setting OpenShift Product Type
+    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    echo "${product_opt}" || exit 1
+    if grep 'ocp3' "${vars_file}"|grep -q "product:"
+    then
+        echo "Updating OpenShift Product Type"
+        sed -i "s/product:.*/product: okd3/" "${vars_file}"
+    fi
+
+    if [[  ${product_opt} == "okd" ]]; then
+      if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "product:"
+      then
+          echo "Disable Red Hat insights on OKD Deploument"
+          sed -i "s/rhsm_setup_insights_client:.*/rhsm_setup_insights_client: false/" "${vars_file}"
+      fi
+    fi
 }
 
 function setup_sudoers () {
@@ -247,6 +264,7 @@ function setup_variables () {
 
     echo ""
     echo "Populating ${vars_file}"
+
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
     then

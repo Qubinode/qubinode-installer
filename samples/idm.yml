@@ -1,4 +1,5 @@
----
+
+
 # all non sensitive variables are defined here
 vm_teardown: false
 ipa_client_principal: "{{ idm_admin_user }}"

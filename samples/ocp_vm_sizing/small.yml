@@ -1,3 +1,4 @@
+deployment_type: small
 instances:
   - name: master
     enable: true

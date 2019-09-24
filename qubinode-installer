@@ -106,11 +106,14 @@ EOH
 # and runs the config_err_msg if it can't determine
 # that start_deployment.conf can find the project directory
 function setup_required_paths () {
+    source lib/qubinode_hardware_check.sh
     project_dir="`dirname \"$0\"`"
     project_dir="`( cd \"$project_dir\" && pwd )`"
     if [[ ! -f ${project_dir}/playbooks/vars/all.yml ]]; then
+      cp samples/defaults.yml ${project_dir}/playbooks/vars/
+      bash lib/generate_all_yaml.sh defaults  || exit 1
       vars_file="${project_dir}/playbooks/vars/all.yml"
-      cp ${project_dir}/samples/all.yml $vars_file
+      #check_hardware_resources $project_dir  $vars_file
     fi
     if [ -z "$project_dir" ] ; then
         config_err_msg; exit 1
@@ -743,7 +746,7 @@ function setup_variables () {
     echo ""
     echo "Populating ${vars_file}"
     # setting OpenShift Product Type
-    if grep 'ocp' "${vars_file}"|grep -q "product:"
+    if grep 'ocp3' "${vars_file}"|grep -q "product:"
     then
         echo "Updating OpenShift Product Type"
         sed -i "s/product:.*/product: ${product_opt}/" "${vars_file}"
@@ -845,6 +848,11 @@ function qubinode_installer_preflight () {
 
 function qubinode_setup_kvm_host () {
     prereqs
+    if [[ ! -f ${project_dir}/playbooks/vars/kvm_host.yml ]]; then
+      cp samples/kvm_host.yml ${project_dir}/playbooks/vars/
+      bash lib/generate_all_yaml.sh kvm_host || exit 1
+    fi
+
     # check for host inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
     then
@@ -1015,6 +1023,10 @@ function qubinode_vm_manager () {
 
    if [ "A${deploy_vm_opt}" == "Adeploy_dns" ]
    then
+      if [[ ! -f ${project_dir}/playbooks/vars/idm.yml ]]; then
+        cp samples/idm.yml ${project_dir}/playbooks/vars/
+        bash lib/generate_all_yaml.sh idm  || exit 1
+      fi
        if [ "A${teardown}" == "Atrue" ]
        then
            echo "Remove DNS VM"
@@ -1200,6 +1212,15 @@ function default_install () {
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
     test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
+
+    CHECKKVMIP=$(cat playbooks/vars/all.yml | grep kvm_host_ip)
+    if [[ -z  $CHECKKVMIP ]]; then
+      if [[ -f ${project_dir}/playbooks/vars/kvm_host.yml.bak ]]; then
+        cp ${project_dir}/playbooks/vars/kvm_host.yml.bak ${project_dir}/playbooks/vars/kvm_host.yml
+        bash lib/generate_all_yaml.sh kvm_host || exit 1
+        qubinode_setup_kvm_host
+      fi
+    fi
 
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"

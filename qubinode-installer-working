@@ -10,12 +10,12 @@ _V=1
 
 # Load all functions
 PROJECT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-FUNCTIONS="qubinode_satellite.sh qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_ocp3.sh qubinode_rhsm.sh"
+FUNCTIONS="qubinode_satellite.sh qubinode_utils.sh qubinode_userinput.sh qubinode_ansible.sh qubinode_validation_checks.sh qubinode_kvmhost.sh qubinode_idm.sh qubinode_ocp3.sh qubinode_rhsm.sh"
 for item in $(echo "${FUNCTIONS}")
 do
     if [ -f "${PROJECT_DIR}/lib/${item}" ]
     then
-        source "${PROJECT_DIR}/lib/${item}"
+        source "${PROJECT_DIR}/lib/${item}" || exit 1
     else
         echo "Could not find function ${item}"
         echo "${PROJECT_DIR}/lib/${item}"
@@ -155,6 +155,7 @@ function qubinode_vm_deployment_precheck () {
        if [ ! -f "${vars_file}" ]
        then
            qubinode_installer_preflight
+           exit 0
        fi
 
        # Check if KVM HOST is ready
@@ -183,9 +184,11 @@ function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
         qubinode_project_cleanup
+        exit 0
     elif [ "${qubinode_maintenance_opt}" == "setup" ]
     then
         qubinode_installer_preflight
+        exit 0
     elif [ "${qubinode_maintenance_opt}" == "rhsm" ]
     then
         qubinode_rhsm_register
@@ -207,16 +210,25 @@ function qubinode_maintenance_options () {
       #TODO: this should remove all VMs and clean up the project folder
         qubinode_uninstall_openshift
     else
-        display_help
+        #display_help
+        echo ""
     fi
 }
 
 function qubinode_product_deployment () {
-    if [ "${product_in_use}" == "ocp3" ]
+    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    if [[ "${product_in_use}" == "ocp3"  && ${product_opt} == "ocp3" ]]
     then
-        echo "Run OpenShift Install"
+        echo "Run OpenShift Enterprise Install"
+        list_openshift_nodes || exit 1
         are_nodes_deployed
         qubinode_run_openshift_installer
+    elif [[ "${product_in_use}" == "okd3"   && ${product_opt} == "okd3" ]]
+    then
+      echo "Run OpenShift Origin Install"
+      list_openshift_nodes || exit 1
+      are_nodes_deployed
+      qubinode_run_openshift_installer
     elif [ "${product_in_use}" == "idm" ]
     then
         echo "*************"
@@ -232,7 +244,8 @@ function qubinode_product_deployment () {
         echo "Deploy a Red Hat Satellite server"
         qubinode_deploy_satellite
     else
-        display_help
+        #display_help
+        echo ""
     fi
 }
 

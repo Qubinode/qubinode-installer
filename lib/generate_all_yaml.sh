@@ -5,19 +5,7 @@ echo ${project_dir}
 project_dir="`( cd \"$project_dir_path\" && pwd )`"
 
 function checkyamls() {
-  if [[ -f $project_dir/playbooks/vars/defaults.yml ]]; then
-    echo "Defaults yaml exists"
-  else
-    echo "Cannot continue defaults yaml does not exist!"
-    exit 1
-  fi
 
-  if [[  -f $project_dir/playbooks/vars/kvm_host.yml  ]]; then
-    echo "kvm_host yaml exists"
-  else
-    echo "Cannot continue kvm_host yaml does not exist!"
-    exit 1
-  fi
 
   if [[  -f $project_dir/playbooks/vars/idm.yml  ]]; then
     echo "idm yaml exists"
@@ -32,26 +20,78 @@ function checkyamls() {
   fi
 }
 
-checkyamls
+function generate_defaults() {
+  if [[ -f $project_dir/playbooks/vars/defaults.yml ]]; then
+    echo "Defaults yaml exists"
+  else
+    echo "Cannot continue defaults yaml does not exist!"
+    exit 1
+  fi
 
 cat >${project_dir}/playbooks/vars/all.yml<<YAML
-$(cat $project_dir/playbooks/vars/defaults.yml )
+  $(cat $project_dir/playbooks/vars/defaults.yml )
+YAML
+
+}
+
+function generate_kvm_host() {
+  if [[  -f $project_dir/playbooks/vars/kvm_host.yml  ]]; then
+    echo "kvm_host yaml exists"
+  else
+    echo "Cannot continue kvm_host yaml does not exist!"
+    exit 1
+  fi
+
+  echo  "
 ###
 # KVM HOST Information
-###
-$(cat $project_dir/playbooks/vars/kvm_host.yml )
+###" >> ${project_dir}/playbooks/vars/all.yml
+  cat $project_dir/playbooks/vars/kvm_host.yml >> ${project_dir}/playbooks/vars/all.yml
 
+}
+
+function generate_idm_product() {
+  if [[  -f $project_dir/playbooks/vars/kvm_host.yml  ]]; then
+    echo "idm yaml exists"
+  else
+    echo "Cannot continue idm yaml does not exist!"
+    exit 1
+  fi
+
+  echo  "
 ###
 # IDM PRODUCT
-###
-$(cat $project_dir/playbooks/vars/idm.yml )
+###"
+  cat $project_dir/playbooks/vars/idm.yml >> ${project_dir}/playbooks/vars/all.yml
+}
+
+case ${1} in
+
+  defaults)
+    generate_defaults
+    ;;
+
+  kvm_host)
+    generate_kvm_host
+    ;;
+
+  idm)
+    generate_idm_product
+    ;;
+  *)
+    echo "Incorrect Flag passed"
+    exit 1
+    ;;
+esac
+
+
+
 
 ###
 # Openshift Product
 ###
-$(cat $OPENSHIFTYAML)
+#$(cat $OPENSHIFTYAML)
 
 ###
 # OpenShift VM Sizing
 ###
-YAML

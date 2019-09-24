@@ -220,7 +220,7 @@ function qubinode_ocp3_nodes () {
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
    CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
    NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
-   
+
    if [ "A${teardown}" == "Atrue" ]
    then
        if sudo virsh list |grep -q "${idm_srv_hostname}"
@@ -264,7 +264,7 @@ function are_nodes_deployed () {
                 break
             fi
         done
- 
+
    fi
 
    if [ "A${run_nodes_deploy}" == "Ayes" ]
@@ -275,7 +275,7 @@ function are_nodes_deployed () {
 }
 
 function qubinode_install_openshift () {
-    product_in_use="ocp3"
+    product_in_use=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
     qubinode_product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
@@ -334,4 +334,3 @@ function qubinode_install_openshift () {
     printf "     Password: <yourpassword>\n"
     printf "*******************************************************\n"
 }
-
