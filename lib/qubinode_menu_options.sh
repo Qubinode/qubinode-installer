@@ -63,7 +63,16 @@ function openshift3_install() {
   printf     "******************************\n"
   if sudo virsh list|grep -E 'master|node|infra'
   then
-      echo "Skipping VM Deployment"
+
+    echo "Checking to see if Openshift is online."
+    OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null " https://${productname}-master01.${domain}:8443" --insecure)
+    if [[ $OCP_STATUS -eq 200 ]];  then
+     echo "Openshift Console URL:  https://master.$domain:8443"
+     exit 0
+    else
+      echo  "FAILED to connect to Openshift Console URL:  https://master.$domain:8443"
+      qubinode_deploy_openshift
+    fi
   else
       CHECKDNSVM=$(cat  ${project_dir}/playbooks/vars/all.yml | grep dns_server_vm)
       if [[ -z  $CHECKDNSVM ]]; then

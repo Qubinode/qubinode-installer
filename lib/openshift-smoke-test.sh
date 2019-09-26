@@ -23,7 +23,7 @@ oc login https://${product}-master01.${domain}:8443  -u ${ocp_user}
 
 oc new-project validate
 
- oc new-app nodejs-mongo-persistent
+oc new-app nodejs-mongo-persistent
 
 NODEJS_MONGO_STATUS=$( oc get pods | grep "nodejs-mongo-persistent" | grep -v build | awk '{print $3}')
 MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')

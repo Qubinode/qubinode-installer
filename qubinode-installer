@@ -1208,7 +1208,6 @@ function confirm () {
 }
 
 function qubinode_deploy_openshift () {
-  if [[ ! -f ${project_dir}/playbooks/vars/${product_opt}3.yml ]]; then
     # Teardown the openshift deployment
     if [ "A${teardown}" == "Atrue" ]
     then
@@ -1232,12 +1231,9 @@ function qubinode_deploy_openshift () {
         then
             echo "Deploying ${product_opt} cluster"
         fi
-            openshift-setup
-        else
-           display_help
-        fi
+        openshift-setup
     else
-        display_help
+       display_help
     fi
 }
 
