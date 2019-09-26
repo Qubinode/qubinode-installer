@@ -54,3 +54,10 @@ instances:
     extra_storage: []
     vm_recreate: false
     qty: 1
+
+# Features
+enable_firewalld: True
+enable_openshift_operators: True
+enable_metrics: True
+enable_logging: True
+enable_prometheous_operator: True

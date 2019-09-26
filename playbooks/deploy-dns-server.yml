@@ -42,11 +42,3 @@
       when: hostvars[item]['ansible_host'] is defined and hostvars[item]['inventory_hostname_short'] == vm_name
       with_items:
         - "{{ groups['dns'] }}"
-
-    - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
-      lineinfile:
-        dest: /etc/resolv.conf
-        line: "nameserver {{ idm_public_ip }}"
-        regexp: "^nameserver {{ idm_public_ip }}"
-        insertafter: '^domain'
-        state: present

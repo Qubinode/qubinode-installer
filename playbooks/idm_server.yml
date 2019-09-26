@@ -83,3 +83,26 @@
           The IDM server does not appear to have been installed.
           Please re-run qubinode-installer or undeploy and start again.
       when: not idm_is_installed|bool
+
+    - name: check if resolv.conf backup file exists
+      stat:
+        path: "{{ project_dir }}/backups/resolv.conf"
+      register: resolv_backup
+      delegate_to: 127.0.0.1
+
+    - name: backup original /etc/resolv.conf file
+      copy:
+        src: /etc/resolv.conf
+        dest: "{{ project_dir }}/backups/resolv.conf"
+        follow: yes
+      when: not vm_teardown|bool and not resolv_backup.stat.exists
+      delegate_to: 127.0.0.1
+
+    - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
+      copy:
+        content: |
+          search {{ search_domains  | first }}
+          nameserver {{ idm_public_ip }}
+        dest: /etc/resolv.conf
+      when: not vm_teardown|bool
+      delegate_to: 127.0.0.1

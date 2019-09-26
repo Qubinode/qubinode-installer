@@ -6,7 +6,7 @@
     - vars/all.yml
     - vars/vault.yml
   environment:
-    IPA_HOST: "{{ ipa_host }}"
+    IPA_HOST: "{{idm_hostname}}.{{ domain }}"
     IPA_USER: "{{ idm_admin_user }}"
     IPA_PASS: "{{ idm_admin_pwd }}"
 

@@ -13,7 +13,7 @@
   tasks:
     - name: declare post install file for {{ product }}
       set_fact:
-        product_postinstall: "{{ 'ocp3_nodes_postinstall.yml' if product == 'ocp3' else 'okd_nodes_postinstall.yml' }}"
+        product_postinstall: "{{ 'ocp_nodes_postinstall.yml' if product == 'ocp' else 'okd_nodes_postinstall.yml' }}"
       tags:
         - always
 
@@ -21,10 +21,6 @@
       shell: awk '/nameserver/ {print $2; exit}' /etc/resolv.conf
       register: etc_resolv_conf
       changed_when: etc_resolv_conf.stdout == ""
-
-    - name: check for rhel-7-server-ose-3.11-rpms repos
-      shell: subscription-manager repos --list-enabled | grep rhel-7-server-ose-3.11-rpms
-      register: ose_repo
 
     - name: update node /etc/resolv.conf
       blockinfile:

@@ -8,13 +8,17 @@
     - vars/vault.yml
 
   tasks:
+    - name: check if resolv.conf backup file exists
+      stat:
+        path: "{{ project_dir }}/backups/resolv.conf"
+      register: resolv_backup
+
     - name: update KVM host /etc/resolv.conf
-      lineinfile:
-        dest: /etc/resolv.conf
-        line: "nameserver {{ idm_public_ip }}"
-        regexp: "^nameserver {{ idm_public_ip }}"
-        insertafter: '^domain'
-        state: absent
+      copy:
+        src: "{{ project_dir }}/backups/resolv.conf"
+        dest: /etc/resolv.conf  # link to /path/to/file
+        follow: yes
+      when: resolv_backup.stat.exists == True
 
     - name: REMOVE|ensure host is removed from inventory
       vars:

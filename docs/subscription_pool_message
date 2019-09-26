@@ -7,10 +7,10 @@ before trying the installation again.
 
 $ sudo subscription-manager status
 if subscription-manager status is Current
-$ subscription-manager list --available --matches '*OpenShift*'
+$ sudo subscription-manager list --available --matches '*OpenShift*'
 
 In the output for the previous command, find the pool ID for an OpenShift Container Platform subscription and attach it:
-$ subscription-manager attach --pool=<pool_id>
+$ sudo subscription-manager attach --pool=<pool_id>
 $ ./qubinode-installer  -m rhsm -p ocp
 
 If subscription-manager status is not Current
@@ -23,8 +23,8 @@ Find your system, and click on it
 Click the subscriptions tab
 Click remove
 run the following command
-$ subscription-manager  clean
-$ subscription-manager refresh
-$ `./qubinode-installer  -m rhsm -p ocp` 
+$ sudo subscription-manager  clean
+$ sudo subscription-manager refresh
+$ ./qubinode-installer  -m rhsm -p ocp
 
 Otherwise you may want to try deploying okd instead

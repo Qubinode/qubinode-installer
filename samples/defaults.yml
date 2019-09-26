@@ -2,7 +2,7 @@
 product: ocp3
 run_qubinode_setup: ""
 instance_prefix: qbn
-preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
+preappend_host_name: "{{ product }}-"
 update_inventory: true
 inventory_dir: ""
 project_dir: ""

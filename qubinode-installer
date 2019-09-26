@@ -5,6 +5,10 @@
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+# Source functions
+source lib/qubinode_menu_options.sh
+source lib/qubinode_hardware_check.sh
+
 # Turn verbose off
 _V=1
 
@@ -106,7 +110,6 @@ EOH
 # and runs the config_err_msg if it can't determine
 # that start_deployment.conf can find the project directory
 function setup_required_paths () {
-    source lib/qubinode_hardware_check.sh
     project_dir="`dirname \"$0\"`"
     project_dir="`( cd \"$project_dir\" && pwd )`"
     if [[ ! -f ${project_dir}/playbooks/vars/all.yml ]]; then
@@ -122,6 +125,23 @@ function setup_required_paths () {
     if [ ! -d "${project_dir}/playbooks/vars" ] ; then
         config_err_msg; exit 1
     fi
+}
+
+# Check OpenShift Sizing and variables
+function openshift_config() {
+  project_dir="`dirname \"$0\"`"
+  project_dir="`( cd \"$project_dir\" && pwd )`"
+  if [[ ! -f ${project_dir}/playbooks/vars/${product_opt}3.yml ]]; then
+    cp samples/${product_opt}3.yml ${project_dir}/playbooks/vars/
+    if [[ "A${product_opt}" == "Aocp"  ]]; then
+        bash lib/generate_all_yaml.sh ocp  || exit 1
+    elif [[ "A${product_opt}" == "Aokd"  ]]; then
+        bash lib/generate_all_yaml.sh okd  || exit 1
+    else
+      echo "Unable to install OpenShift"
+      exit $?
+    fi
+  fi
 }
 
 # this configs prints out asterisks when sensitive data
@@ -946,25 +966,61 @@ function openshift-setup() {
 }
 
 function qubinode_project_cleanup () {
-    prereqs
-    FILES=()
-    mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
-    if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
-    then
-        FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
-    fi
+  prereqs
+  FILES=()
+  mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
+  if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
+  then
+      FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+  fi
 
-    if [ ${#FILES[@]} -eq 0 ]
-    then
-        echo "Project directory: ${project_dir} state is already clean"
-    else
-        for f in $(echo "${FILES[@]}")
-        do
-            test -f $f && rm $f
-            echo "purged $f"
+  product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
+  okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
+  if [[ ${product_opt} == "ocp" ]]; then
+    FILES=("${FILES[@]}" "$ocp3_vars_file")
+  elif [[ ${product_opt} == "okd" ]]; then
+    FILES=("${FILES[@]}" "$okd3_vars_file")
+  fi
 
-        done
-    fi
+  # Check for other products
+  defaults_vars_file="${project_dir}/playbooks/vars/defaults.yml"
+  if [[ -f $defaults_vars_file ]]; then
+      FILES=("${FILES[@]}" "$defaults_vars_file")
+  fi
+
+  kvm_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+  if [[ -f $kvm_vars_file ]]; then
+      FILES=("${FILES[@]}" "$kvm_vars_file")
+  fi
+
+  idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
+  if [[ -f $idm_vars_file ]]; then
+      FILES=("${FILES[@]}" "$idm_vars_file")
+  fi
+
+  satellite_server_vars_file="${project_dir}/playbooks/vars/satellite_server.yml"
+  if [[ -f $satellite_server_vars_file ]]; then
+      FILES=("${FILES[@]}" "$satellite_server_vars_file")
+  fi
+
+  vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
+  if [[ -f $vault_vars_file ]]; then
+      FILES=("${FILES[@]}" "$satellite_server_vars_file")
+  fi
+
+  echo "FILES: ${#FILES[@]}"
+  if [ ${#FILES[@]} -eq 0 ]
+  then
+      echo "Project directory: ${project_dir} state is already clean"
+  else
+      for f in $(echo "${FILES[@]}")
+      do
+          test -f $f && rm $f
+          echo "purged $f"
+
+      done
+  fi
 }
 
 
@@ -1062,7 +1118,7 @@ function display_idmsrv_unavailable () {
         echo ""
         echo ""
         echo ""
-        echo "Eithr the IdM server variable idm_public_ip is not set."
+        echo "Either the IdM server variable idm_public_ip is not set."
         echo "Or the IdM server is not reachable."
         echo "Ensire the IdM server is running, update the variable and try again."
         exit 1
@@ -1152,6 +1208,7 @@ function confirm () {
 }
 
 function qubinode_deploy_openshift () {
+  if [[ ! -f ${project_dir}/playbooks/vars/${product_opt}3.yml ]]; then
     # Teardown the openshift deployment
     if [ "A${teardown}" == "Atrue" ]
     then
@@ -1159,6 +1216,7 @@ function qubinode_deploy_openshift () {
         confirm "Are you sure you want to undeploy the entire ${product_opt} cluster?"
         if [ "A${response}" == "Ayes" ]
         then
+            openshift_config
             qubinode_vm_manager deploy_nodes
             if [[ -f ${HTPASSFILE} ]]; then
                 rm -f ${HTPASSFILE}
@@ -1173,6 +1231,7 @@ function qubinode_deploy_openshift () {
         if [ "A${product_opt}" == "Aocp" ] ||  [ "A${product_opt}" == "Aokd" ]
         then
             echo "Deploying ${product_opt} cluster"
+        fi
             openshift-setup
         else
            display_help
@@ -1190,77 +1249,6 @@ function verbose() {
     fi
 }
 
-function default_install () {
-    product_opt="ocp"
-    product=true
-    printf "\n\n***********************\n"
-    printf "* Running perquisites *\n"
-    printf "***********************\n\n"
-    qubinode_installer_preflight
-
-    printf "\n\n********************************************\n"
-    printf "* Ensure host system is registered to RHSM *\n"
-    printf "*********************************************\n\n"
-    qubinode_rhsm_register
-
-    printf "\n\n*******************************************************\n"
-    printf "* Ensure host system is setup as a ansible controller *\n"
-    printf "*******************************************************\n\n"
-    test ! -f /usr/bin/ansible && qubinode_setup_ansible
-
-    printf "\n\n*********************************************\n"
-    printf     "* Ensure host system is setup as a KVM host *\n"
-    printf     "*********************************************\n"
-    test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
-
-    CHECKKVMIP=$(cat playbooks/vars/all.yml | grep kvm_host_ip)
-    if [[ -z  $CHECKKVMIP ]]; then
-      if [[ -f ${project_dir}/playbooks/vars/kvm_host.yml.bak ]]; then
-        cp ${project_dir}/playbooks/vars/kvm_host.yml.bak ${project_dir}/playbooks/vars/kvm_host.yml
-        bash lib/generate_all_yaml.sh kvm_host || exit 1
-        qubinode_setup_kvm_host
-      fi
-    fi
-
-    printf "\n\n****************************\n"
-    printf     "* Deploy VM for DNS server *\n"
-    printf     "****************************\n"
-    productname=$(cat playbooks/vars/all.yml | grep product: | awk '{print $2}' | tr -d '"')
-    CHECKFOR_DNS=$(sudo virsh list | grep running | grep ${productname}-dns  | wc -l)
-    [[ $CHECKFOR_DNS -eq 0 ]] && qubinode_vm_manager deploy_dns
-
-    printf "\n\n*****************************\n"
-    printf     "* Install IDM on DNS server *\n"
-    printf     "*****************************\n"
-    qubinode_dns_manager server
-
-    printf "\n\n******************************\n"
-    printf     "* Deploy Nodes for ${product_opt} cluster *\n"
-    printf     "******************************\n"
-    if sudo virsh list|grep -E 'master|node|infra'
-    then
-        echo "Skipping VM Deployment"
-    else
-        qubinode_vm_manager deploy_nodes
-    fi
-
-    OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
-
-    printf "\n\n*********************\n"
-    printf     "*Deploy ${product_opt} cluster *\n"
-    printf     "*********************\n"
-    qubinode_deploy_openshift
-
-    printf "\n\n*******************************************************\n"
-    printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"
-    printf "\nCluster login: https://${productname}-master01.${domain}:8443\n"
-    printf "     Username: ${OCUSER}\n"
-    printf "     Password: <yourpassword>\n"
-    printf "\n\nIDM DNS Server login: https://${productname}-dns01.${domain}\n"
-    printf "     Username: admin\n"
-    printf "     Password: <yourpassword>\n"
-    printf "*******************************************************\n"
-}
 
 ##       MAIN               ##
 ##############################
@@ -1321,13 +1309,27 @@ shift "$((OPTIND-1))"
 # TODO: add verbose option for default install
 if (( $OPTIND == 1 )); then
    cat < docs/default_message
-   default_message=("Continue with the default installation" "Display the help menu")
+   default_message=("Continue with the default installation - OCP OpenShift Enterprise" "OKD - The Origin Community Distribution of Kubernetes " "IDM - Red Hat Identity Manager Install" "KVM - Configure your machine to run KVM" "Display the help menu")
    createmenu "${default_message[@]}"
    result=($(echo "${selected_option}"))
    if [ "A${result}" == "ADisplay" ]
    then
        display_help
    elif [ "A${result}" == "AContinue" ]
+   then
+       default_install
+       idm_install
+       openshift3_install
+   elif [ "A${result}" == "AOKD" ]
+   then
+       default_install
+       idm_install
+       openshift3_install
+   elif [ "A${result}" == "AIDM" ]
+   then
+       default_install
+       idm_install
+   elif [ "A${result}" == "AKVM" ]
    then
        default_install
    else
@@ -1360,6 +1362,7 @@ else
         #    qubinode_dns_manager server
         elif [ "${maintenance}" == "deploy_nodes" ]
         then
+            openshift_config
             qubinode_vm_manager deploy_nodes
         elif [ "${maintenance}" == "undeploy" ]
         then
@@ -1378,12 +1381,14 @@ else
         then
             if [ "A${teardown}" == "Atrue" ]
             then
+                openshift_config
                 qubinode_vm_manager deploy_nodes
             else
                if sudo virsh list|grep -E 'master|node|infra'
                then
                    qubinode_deploy_openshift
                else
+                   openshift_config
                    qubinode_vm_manager deploy_nodes
                    qubinode_deploy_openshift
                fi
@@ -1402,6 +1407,7 @@ else
              then
                  qubinode_deploy_openshift
              else
+                 openshift_config
                  qubinode_vm_manager deploy_nodes
                  qubinode_deploy_openshift
              fi
