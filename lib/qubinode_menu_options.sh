@@ -17,9 +17,9 @@ function default_install () {
     test ! -f /usr/bin/ansible && qubinode_setup_ansible
 
     ROLES_DIR="${project_dir}/playbooks/roles"
-    TOTAL=$(ls -lsth  $ROLES_DIR | awk '{print $2}'  | head -1)
+    TOTAL=$(ls -lsth  $ROLES_DIR | awk '{print $10}'  | wc -l)
 
-    if [[ ${TOTAL} -eq 0 ]]; then
+    if [[ ${TOTAL} -le 10 ]]; then
       qubinode_setup_ansible
     fi
 

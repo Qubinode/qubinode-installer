@@ -68,4 +68,4 @@ libvirt_pkgs:
   - tmux
   - python-dns
 
-idm_public_ip: "1.1.1.1"                       # IP address of the IDM server
+idm_public_ip: 1.1.1.1                       # IP address of the IDM server
