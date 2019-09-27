@@ -776,7 +776,7 @@ function setup_variables () {
     echo "Populating ${vars_file}"
 
     if [[  ${product_opt} == "okd" ]]; then
-      if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "product:"
+      if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "rhsm_setup_insights_client:"
       then
           echo "Disable Red Hat insights on OKD Deploument"
           sed -i "s/rhsm_setup_insights_client:.*/rhsm_setup_insights_client: false/" "${vars_file}"

@@ -56,10 +56,10 @@ ssh <your-user>@<your-system-ip-address>
 . Download the qubinode-installer project
 
 ```
-wget https://github.com/tosin2013/qubinode-installer/archive/developer.zip
-unzip developer.zip
-mv qubinode-installer-developer qubinode-installer
-rm -f developer.zip
+wget https://github.com/tosin2013/qubinode-installer/archive/releasev2.1.zip
+unzip releasev2.1.zip
+mv qubinode-installer-releasev2.1 qubinode-installer
+rm -f releasev2.1.zip
 cd qubinode-installer/
 ```
 
