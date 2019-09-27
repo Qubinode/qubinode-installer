@@ -2,7 +2,7 @@ function default_install () {
     product_opt=${1}
     product=true
     printf "\n\n***********************\n"
-    printf "* Running perquisites *\n"
+    printf "* Running prerequistes *\n"
     printf "***********************\n\n"
     qubinode_installer_preflight ${product_opt}
 
@@ -23,9 +23,10 @@ function default_install () {
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
     test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
-
-
-    #BRISDEIP=$(fconfig eno1 | grep inet |  grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | head -1)
+    BRIDGEIP=$(ifconfig qubibr0 | grep inet |  grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | head -1)
+    if [[ -z $BRIDGEIP ]]; then
+      qubinode_setup_kvm_host
+    fi
 
     CHECKKVMIP=$(cat  ${project_dir}/playbooks/vars/all.yml | grep kvm_host_ip)
     if [[ -z  $CHECKKVMIP ]]; then

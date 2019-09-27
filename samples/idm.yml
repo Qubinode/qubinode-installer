@@ -9,7 +9,6 @@ dns_server_public: ""
 qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
   - "{{ qubinode_ptr }}"
-idm_public_ip: ""                       # IP address of the IDM server
 idm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms

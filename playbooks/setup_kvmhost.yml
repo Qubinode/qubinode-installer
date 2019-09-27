@@ -15,10 +15,27 @@
       include_role:
         name: swygue-redhat-subscription
       when: "'ocp' in product"
-      
+
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm
+
+    - name: Check whether ifcfg-{{ network_interface_name }} contains "UUID"
+      command: grep -Fxq "UUID" /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }}
+      register: interfacecheck
+      check_mode: no
+      ignore_errors: yes
+
+    - name: check if ifcfg-{{ network_interface_name }} backup file exists
+      stat:
+        path: "{{ project_dir }}/backups/ifcfg-{{ network_interface_name }}"
+      register: interfacecheck
+      delegate_to: 127.0.0.1
+
+    - name: backup  ifcfg-{{ network_interface_name }}
+      shell: "cat /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }} > {{ project_dir }}/backups/ifcfg-{{ network_interface_name }}"
+      when: not interfacecheck.stat.exists
+      delegate_to: 127.0.0.1
 
     - name: running KVM host setup
       include_role:
