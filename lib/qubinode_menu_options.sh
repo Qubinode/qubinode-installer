@@ -15,11 +15,15 @@ function default_install () {
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
     test ! -f /usr/bin/ansible && qubinode_setup_ansible
+    if [ -z "$(ls -A ${project_dir}/playbooks/roles)" ]; then
+      qubinode_setup_ansible
+    fi
 
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
     test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
+
 
     #BRISDEIP=$(fconfig eno1 | grep inet |  grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | head -1)
 
