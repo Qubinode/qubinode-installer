@@ -12,6 +12,7 @@ glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
 metrics_storage_volume_size: 10Gi
 
 # Openshift Repos
+openshift_repo: rhel-7-server-ose-3.11-rpms
 ocp_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
