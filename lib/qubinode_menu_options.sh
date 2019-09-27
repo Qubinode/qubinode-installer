@@ -84,10 +84,23 @@ function openshift3_install() {
      echo "Openshift Console URL:  https://master.$domain:8443"
      exit 0
     else
+      CHECKFOROCP=$(sudo virsh list|grep -E 'ocp-master' | awk '{print $2}')
+      if [[ $CHECKFOROCP == "ocp-master01" ]]; then
+        if [[ ${productname} == "okd" ]]; then
+          echo "Please destroy running OpenShift Enterprise VMs before continuing to install OpenShift Origin."
+          echo "********************************************"
+          echo "1. ./qubinode-installer -p ocp -d or ./qubinode-installer -p ocp -m deploy_nodes -d "
+          echo "2. ./qubinode-installer -p idm -d "
+          echo "3. ./qubinode-installer -p ocp -m clean "
+          echo "restart ./qubinode-installer option 2"
+          exit 1
+        fi
+      fi
       echo  "FAILED to connect to Openshift Console URL:  https://master.$domain:8443"
       printf "\n\n*********************\n"
       printf     "*Deploy ${product_opt} cluster *\n"
       printf     "*********************\n"
+      qubinode_vm_manager deploy_nodes
       qubinode_deploy_openshift
     fi
   else
