@@ -15,7 +15,11 @@ function default_install () {
     printf "* Ensure host system is setup as a ansible controller *\n"
     printf "*******************************************************\n\n"
     test ! -f /usr/bin/ansible && qubinode_setup_ansible
-    if [ -z "$(ls -A ${project_dir}/playbooks/roles)" ]; then
+
+    ROLES_DIR="${project_dir}/playbooks/roles"
+    TOTAL=$(ls -lsth  $ROLES_DIR | awk '{print $2}'  | head -1)
+
+    if [[ ${TOTAL} -eq 0 ]]; then
       qubinode_setup_ansible
     fi
 
