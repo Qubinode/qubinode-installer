@@ -1,10 +1,10 @@
 function default_install () {
-    product_opt="ocp"
+    product_opt=${1}
     product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-    qubinode_installer_preflight
+    qubinode_installer_preflight ${product_opt}
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
@@ -28,7 +28,7 @@ function default_install () {
       if [[ ! -f ${project_dir}/playbooks/vars/kvm_host.yml ]]; then
         cp ${project_dir}/samples/kvm_host.yml ${project_dir}/playbooks/vars/kvm_host.yml
         bash lib/generate_all_yaml.sh kvm_host || exit 1
-        qubinode_installer_preflight
+        qubinode_installer_preflight ${product_opt}
         qubinode_setup_kvm_host
       fi
     fi
@@ -44,11 +44,11 @@ function idm_install() {
       if [[ ! -f ${project_dir}/playbooks/vars/idm.yml ]]; then
         cp ${project_dir}/samples/idm.yml ${project_dir}/playbooks/vars/idm.yml
         bash lib/generate_all_yaml.sh idm || exit 1
-        qubinode_installer_preflight
+        qubinode_installer_preflight ${product_opt}
       fi
     fi
-    productname=$(cat playbooks/vars/all.yml | grep product: | awk '{print $2}' | tr -d '"')
-    CHECKFOR_DNS=$(sudo virsh list | grep running | grep ${productname}-dns  | wc -l)
+
+    CHECKFOR_DNS=$(sudo virsh list | grep running | grep qbn-dns  | wc -l)
     [[ $CHECKFOR_DNS -eq 0 ]] && qubinode_vm_manager deploy_dns
 
     printf "\n\n*****************************\n"
@@ -61,6 +61,11 @@ function openshift3_install() {
   printf "\n\n******************************\n"
   printf     "* Deploy Nodes for ${product_opt} cluster *\n"
   printf     "******************************\n"
+  domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  ssh_username=$(awk '/^admin_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  ocp_user=$(awk '/^openshift_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  productname=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+
   if sudo virsh list|grep -E 'master|node|infra'
   then
 
@@ -71,6 +76,9 @@ function openshift3_install() {
      exit 0
     else
       echo  "FAILED to connect to Openshift Console URL:  https://master.$domain:8443"
+      printf "\n\n*********************\n"
+      printf     "*Deploy ${product_opt} cluster *\n"
+      printf     "*********************\n"
       qubinode_deploy_openshift
     fi
   else
@@ -79,19 +87,21 @@ function openshift3_install() {
         if [[ ! -f ${project_dir}/playbooks/vars/idm.yml ]]; then
           cp ${project_dir}/samples/idm.yml ${project_dir}/playbooks/vars/idm.yml
           bash lib/generate_all_yaml.sh idm || exit 1
-          qubinode_installer_preflight
+          qubinode_installer_preflight ${product_opt}
         fi
       fi
       openshift_config
       qubinode_vm_manager deploy_nodes
+
+      printf "\n\n*********************\n"
+      printf     "*Deploy ${product_opt} cluster *\n"
+      printf     "*********************\n"
+      qubinode_deploy_openshift
   fi
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
 
-  printf "\n\n*********************\n"
-  printf     "*Deploy ${product_opt} cluster *\n"
-  printf     "*********************\n"
-  qubinode_deploy_openshift
+
 
   printf "\n\n*******************************************************\n"
   printf   "\nDeployment steps for ${product_opt} cluster is complete.\n"

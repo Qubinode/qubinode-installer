@@ -744,12 +744,21 @@ function setup_user_ssh_key () {
 }
 
 function setup_variables () {
+    product_opt_v=${1}
+    if [[ -z $product_opt_v ]]; then
+      echo "Invalid Product passed $product_opt_v"
+      exit 1
+    fi
+
     prereqs
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
     then
       cp "${project_dir}/samples/all.yml" "${vars_file}"
     fi
+
+    echo "Updating Product Type"
+    sed -i "s/product:.*/product: ${product_opt_v}/" "${vars_file}"
 
     # create vault vars file
     if [ ! -f "${vault_vars_file}" ]
@@ -765,12 +774,6 @@ function setup_variables () {
 
     echo ""
     echo "Populating ${vars_file}"
-    # setting OpenShift Product Type
-    if grep 'ocp3' "${vars_file}"|grep -q "product:"
-    then
-        echo "Updating OpenShift Product Type"
-        sed -i "s/product:.*/product: ${product_opt}/" "${vars_file}"
-    fi
 
     if [[  ${product_opt} == "okd" ]]; then
       if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "product:"
@@ -852,7 +855,7 @@ function qubinode_installer_preflight () {
     setup_sudoers
     prereqs
     setup_user_ssh_key
-    setup_variables
+    setup_variables  ${1}
     ask_user_input
 
     # Setup admin user variable
@@ -923,16 +926,31 @@ function qubinode_setup_kvm_host () {
 
 function openshift-setup() {
 
-  setup_variables
+  setup_variables  ${product_opt}
   if [[ ${product_opt} == "ocp" ]]; then
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
     if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
         ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
     fi
   elif [[ ${product_opt} == "okd" ]]; then
+    if [[  -f $project_dir/playbooks/vars/ocp3.yml  ]]; then
+        echo "Unable to run OKD on qubinode. Your machine is configured to use OpenShift Enterprise."
+        echo "Option 1: run ./qubinode-installer -p ocp or Menu Option 1 on ./qubinode-installer"
+        echo "Option 2: run ./qubinode-installer -p ocp -d => ./qubinode-installer -p idm -d => ./qubinode-installer -p ocp -m clean"
+        exit 1
+    fi
     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
     if [[ ! -d ${HOME}/openshift-ansible ]]; then
         ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
+    fi
+
+    if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
+        echo "System is configured for OpenShift Enterprise Deployments"
+        echo "To continue install OpenShift Origin"
+        echo "Start OKD installation from fresh install."
+        echo "Uninstall the openshift-ansible rpm from machine."
+        exit 1
+
     fi
   fi
 
@@ -1313,21 +1331,21 @@ if (( $OPTIND == 1 )); then
        display_help
    elif [ "A${result}" == "AContinue" ]
    then
-       default_install
+       default_install ocp
        idm_install
        openshift3_install
    elif [ "A${result}" == "AOKD" ]
    then
-       default_install
+       default_install okd
        idm_install
        openshift3_install
    elif [ "A${result}" == "AIDM" ]
    then
-       default_install
+       default_install idm
        idm_install
    elif [ "A${result}" == "AKVM" ]
    then
-       default_install
+       default_install kvm
    else
        echo $result
       echo "Unknown issue, please run the installer again"
@@ -1342,7 +1360,7 @@ else
             qubinode_project_cleanup
         elif [ "${maintenance}" == "setup" ]
         then
-            qubinode_installer_preflight
+            qubinode_installer_preflight ${product_opt}
         elif [ "${maintenance}" == "rhsm" ]
         then
             qubinode_rhsm_register

@@ -1,5 +1,5 @@
 ---
-- name: ensure host system is setup as a ocp/okd deployer
+- name: setup openshift developer box
   hosts: localhost
   vars_files:
     - vars/all.yml
@@ -7,97 +7,53 @@
   become: yes
 
   tasks:
-  - name: refresh subscription-manager
+  - name:  Attach a specific subscription through the Customer Portal
     command: subscription-manager refresh
     when: openshift_deployment_type == 'openshift-enterprise'
-    changed_when: false
- 
+  - name:  Attach a subscription from any available that match the system
+    command: subscription-manager attach --auto
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Check if system is registered to use OpenShift Enterprise
     shell: subscription-manager attach --auto | grep OpenShift
     register: openshift_status
-    changed_when: false
-    failed_when: false
-
-  - name: register master and lb nodes with gluster client repos to RHSM
-    include_role:
-      name: swygue-redhat-subscription
-    when: openshift_status.rc != 0
-
-  - name: Check if system is registered to use OpenShift Enterprise
-    shell: subscription-manager attach --auto | grep OpenShift
-    register: openshift_status_recheck
-    failed_when: false
-    when: openshift_status.rc != 0
-
-  - name: fail if system is not registered
-    fail:
-      msg: "System is not registered to RHSM. Try to manually register the system and try again."
-    when: openshift_status.rc != 0 and openshift_status_recheck !=0
-
-  - name: check for openshift repo
-    shell: yum repolist | grep rhel-7-server-ose-3.11-rpms
-    args:
-      warn: false
-    register: openshift_repo
-    failed_when: false
-    changed_when: false
-
+    failed_when: "openshift_status.rc == 2"
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Enable rhel-7-server-rpms repository
     rhsm_repository:
       name: rhel-7-server-rpms
-    when: openshift_deployment_type == 'openshift-enterprise' and openshift_repo.rc !=0
-
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Enable rhel-7-server-extras-rpms repository
     rhsm_repository:
       name: rhel-7-server-extras-rpms
       state: enabled
-    when: openshift_deployment_type == 'openshift-enterprise' and openshift_repo.rc !=0
-
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Enable rhel-7-server-optional-rpms repository
     rhsm_repository:
       name: rhel-7-server-optional-rpms
       state: enabled
-    when: openshift_deployment_type == 'openshift-enterprise' and openshift_repo.rc !=0
-
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Enable rhel-7-server-ose-3.11-rpms repository
     rhsm_repository:
       name: rhel-7-server-ose-3.11-rpms
       state: enabled
-    when: openshift_deployment_type == 'openshift-enterprise' and openshift_repo.rc !=0
-
+    when: openshift_deployment_type == 'openshift-enterprise'
   - name: Add EPEL repository for OKD deployment
     yum_repository:
       name: epel
       description: EPEL YUM repo
       baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
     when: openshift_deployment_type == 'origin'
-
   - name: Importing rpm gpg-key for OKD deployment.
     shell: |
        rpm --import http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7 >> /tmp/epelgpgimport.log
     when: openshift_deployment_type == 'origin'
-
-  - name: check for yum updates
-    shell: yum check-update --quiet | grep -v "^$\|installed\|running" | wc -l
-    args:
-      warn: false
-    register: yum_updates
-    changed_when: yum_updates.stdout != "0"
-
   - name: upgrade all packages
-    command: yum -y update
-    args:
-      warn: false
-    when: yum_updates.stdout != "0"
-
-  - name: ensure required packages are installed
-    shell: rpm -q "{{ item }}" || yum install -y "{{ item }}" && echo yes
-    args:
-      warn: false
-    register: pkg_installed
-    failed_when: false
-    changed_when: pkg_installed.stdout == 'yes'
-    loop:
+    yum:
+      name: '*'
+      state: latest
+  - name: install base packages
+    yum:
+      name:
       - wget
       - git
       - net-tools
@@ -110,17 +66,20 @@
       - sos
       - psacct
       - vim
-      - atomic-openshift-clients
-      - ansible
-      - pyOpenSSL
-      - docker
-      - device-mapper-event-libs
-      - device-mapper-libs
-      - httpd-tools
-      - java-1.8.0-openjdk-devel.x86_64
-      - tmux
-      - patch
-    
+      state: present
+  - name: Install a list of packages
+    yum:
+      name:
+        - ansible
+        - pyOpenSSL
+        - docker
+        - device-mapper-event-libs
+        - device-mapper-libs
+        - httpd-tools
+        - java-1.8.0-openjdk-devel.x86_64
+        - tmux
+        - patch
+      state: present
   - name: Installing OpenShift Ansible RPM
     yum:
       name:
@@ -128,14 +87,12 @@
         - atomic-openshift-clients
       state: present
     when: openshift_deployment_type == 'openshift-enterprise'
-
   - name: Cloning OpenShift release-3.11 to machine
     git:
       repo: 'https://github.com/openshift/openshift-ansible.git'
       dest: /home/{{ ssh_username }}/openshift-ansible
       version: release-3.11
     when: openshift_deployment_type == 'origin'
-
   - name: change openshift-ansible owner to {{ ssh_username }}
     file:
       path: /home/{{ ssh_username }}/openshift-ansible
@@ -143,7 +100,6 @@
       group: "{{ ssh_username }}"
       mode: 0775
     when: openshift_deployment_type == 'origin'
-
   - name: Install oc cli while using OKD
     shell: |
       curl -OL https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz

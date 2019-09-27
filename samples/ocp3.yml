@@ -11,6 +11,29 @@ openshift_user: qubinode
 glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
 metrics_storage_volume_size: 10Gi
 
+# Openshift Repos
+ocp_repos:
+  - rhel-7-server-rpms
+  - rhel-7-server-optional-rpms
+  - rhel-7-server-supplementary-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-fast-datapath-rpms
+  - "{{ openshift_repo }}"
+  - "{{ ansible_repo }}"
+ocp_gluster_client_repo:
+  - rh-gluster-3-client-for-rhel-7-server-rpms
+ocp_gluster_server_repo:
+  - rh-gluster-3-for-rhel-7-server-rpms
+
+ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
+ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
+
+ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
+
+ocp_gluster_pkg: docker-1.13.1
+
+valid_products: "okd,ocp"
+
 ##################
 # OpenShift/OKD #
 #################
