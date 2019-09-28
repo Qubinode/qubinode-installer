@@ -3,5 +3,8 @@
 == Social Media
 
 == Discord
+https://discord.gg/9Sj6M8w
 
-== Issues
+.Issues
+* Post any issues with code
+* Join the Discord group to get help with any issues under `# quibinode-issues`.

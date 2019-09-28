@@ -22,7 +22,7 @@ ocp_gluster_server_repo:
 okd_repos_with_glus_client: "{{ okd_repos + ocp_gluster_client_repo }}"
 
 
-ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
+okd_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
 
 ocp_gluster_pkg: docker-1.13.1
 

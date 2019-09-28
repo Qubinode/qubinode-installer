@@ -47,10 +47,6 @@
     shell: |
        rpm --import http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7 >> /tmp/epelgpgimport.log
     when: openshift_deployment_type == 'origin'
-  - name: upgrade all packages
-    yum:
-      name: '*'
-      state: latest
   - name: install base packages
     yum:
       name:
@@ -66,19 +62,6 @@
       - sos
       - psacct
       - vim
-      state: present
-  - name: Install a list of packages
-    yum:
-      name:
-        - ansible
-        - pyOpenSSL
-        - docker
-        - device-mapper-event-libs
-        - device-mapper-libs
-        - httpd-tools
-        - java-1.8.0-openjdk-devel.x86_64
-        - tmux
-        - patch
       state: present
   - name: Installing OpenShift Ansible RPM
     yum:

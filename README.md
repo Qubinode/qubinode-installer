@@ -21,8 +21,44 @@ The installer supports installing Red Hat OpenShift  (OCP) or The Origin Communi
 ## Supported Versions
 The Qubinode installer currently supports OpenShift 3.11.x builds.
 
-## Recommened Hardware
-[Supported Hardware]()
+## Recommended Hardware
+[Supported Hardware](docs/supported_hardware_coniguration.adoc)
+
+## Quick start
+```
+git clone https://github.com/tosin2013/qubinode-installer.git
+cd quibinode-installer
+./quibinode-installer
+```
+
+## Qubinode Installer Menu
+```
+[admin@okd qubinode-installer]$ ./qubinode-installer
+
+
+    The default product option is to install Red Hat Openshift Container Platform (OCP).
+    An subscription for OCP is required. If you do not have an OCP subscription. Please
+    display the menu options for other product installation such as OKD.
+
+    The OCP cluster deployment consist of:
+
+      - 1 IDM server for DNS
+      - 1 Master node
+      - 2 App nodes
+      - 2 Infra nodes
+
+    Gluster is deployed as the container storage running on the infra and app nodes.
+
+    If you wish to continue with this install choose the **continue** option otherwise
+    display the help menu to see the available options.
+1) Continue with the default installation - OCP OpenShift Enterprise
+2) OKD - The Origin Community Distribution of Kubernetes
+3) IDM - Red Hat Identity Manager Install
+4) KVM - Configure your machine to run KVM
+5) Display the help menu
+#?
+
+```
 
 ## Installation
 [Installing The Qubinode](docs/installation_draft.adoc)
@@ -32,11 +68,34 @@ The Qubinode installer currently supports OpenShift 3.11.x builds.
 ## Architecture
 
 ## Contribute
+[Communications]((docs/communication.adoc)
 
 ## Support
 If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
 
 If you have any direct questions, reach out to us [using the guide](docs/communication.adoc).
+
+## Known issues
+* DNS server fails to get IP on first deployment
+```
+# run the following
+./qubinode_installer -p idm -d
+rerun qubinode_installer or ./qubinode_installer -p idm
+```
+
+* OpenShift VM fails to get ip on first depoyment
+```
+# run the following
+# for OpenShift Enterprise
+./qubinode_installer -p ocp -d
+rerun qubinode_installer Option 1 or
+./qubinode_installer -p ocp -m deploy_nodes and ./qubinode_installer -p ocp
+
+# for OpenShift Origin
+./qubinode_installer -p okd -d
+rerun qubinode_installer Option 2 or
+./qubinode_installer -p okd -m deploy_nodes and ./qubinode_installer -p okd
+```
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)

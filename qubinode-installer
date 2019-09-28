@@ -943,18 +943,7 @@ function openshift-setup() {
     if [[ ! -d ${HOME}/openshift-ansible ]]; then
         ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
     fi
-
-    if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
-        echo "System is configured for OpenShift Enterprise Deployments"
-        echo "To continue install OpenShift Origin"
-        echo "Start OKD installation from fresh install."
-        echo "Uninstall the openshift-ansible rpm from machine."
-        exit 1
-
-    fi
   fi
-
-
 
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
