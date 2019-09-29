@@ -64,6 +64,17 @@ function idm_install() {
     printf     "* Install IDM on DNS server *\n"
     printf     "*****************************\n"
     qubinode_dns_manager server
+
+    if [[ $product_opt == "idm" ]]; then
+      domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+      productname=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+      printf "*******************************************************\n"
+      printf "\n\nIDM DNS Server login: https://${productname}-dns01.${domain}\n"
+      printf "     Username: admin\n"
+      printf "     Password: <yourpassword>\n"
+      printf "*******************************************************\n"
+    fi
+
 }
 
 function openshift3_install() {
