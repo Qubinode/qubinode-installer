@@ -947,8 +947,9 @@ function openshift-setup() {
 
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
-  cat $INVENTORYDIR/inventory.3.11.rhel.gluster
-  HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
+  INVENTORYFILE=$(ls i$INVENTORYDIR/inventory.3.11.rhel.*)
+  cat $INVENTORYFILE
+  HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
@@ -959,16 +960,16 @@ function openshift-setup() {
   fi
 
   echo "Running Qubi node openshift deployment checks."
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
+  ansible-playbook -i  $INVENTORYFILE "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
 
   if [[ ${product_opt} == "ocp" ]]; then
     cd /usr/share/ansible/openshift-ansible
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
+    ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
+    ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
     cd ${HOME}/openshift-ansible
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
+    ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
+    ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
   fi
 }
 
@@ -1033,11 +1034,12 @@ function qubinode_project_cleanup () {
 
 function qubinode_uninstall_openshift() {
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+  INVENTORYFILE=$(ls i$INVENTORYDIR/inventory.3.11.rhel.*)
 
   if [[ ${product_opt} == "ocp" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
+    ansible-playbook -i  $INVENTORYFILE    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
   elif [[ ${product_opt} == "okd" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    ${HOME}/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
+    ansible-playbook -i  $INVENTORYFILE    ${HOME}/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
     exit 1
   fi
 }
