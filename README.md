@@ -33,7 +33,7 @@ cd quibinode-installer
 
 ## Qubinode Installer Menu
 ```
-[admin@okd qubinode-installer]$ ./qubinode-installer
+[admin@qubinode qubinode-installer]$ ./qubinode-installer
 
 
     The default product option is to install Red Hat Openshift Container Platform (OCP).
@@ -68,7 +68,7 @@ cd quibinode-installer
 ## Architecture
 
 ## Contribute
-[Communications]((docs/communication.adoc)
+[Communications](docs/communication.adoc)
 
 ## Support
 If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
