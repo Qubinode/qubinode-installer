@@ -948,7 +948,7 @@ function openshift-setup() {
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
   INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   INVENTORYFILE=$(ls i$INVENTORYDIR/inventory.3.11.rhel.*)
-  cat $INVENTORYFILE
+  cat $INVENTORYFILE || exit 1
   HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
   OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
