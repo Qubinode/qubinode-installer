@@ -12,6 +12,8 @@ instances:
     extra_storage:
       - size: 60G
         enable: true
+      - size: 160G
+        enable: true
     qty: 3
   - name: node
     enable: true
