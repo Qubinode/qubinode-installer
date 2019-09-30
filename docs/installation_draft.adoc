@@ -100,6 +100,14 @@ cd qubinode-installer/
 #?
 
 ```
+== Qubinode Menu Installation Steps
+Run ./qubinode-installer
+1) Option 4 to Configure KVM environment
+2) Option 3 to configure idm server to be used for DNS
+3) Option 1 for OpenShift Enterprise Deployments and Option 2 for OpenShift Origin Deployments
+
+== Qubinode Advanced Installation Steps
+...
 
 == Installing the container platform
 
