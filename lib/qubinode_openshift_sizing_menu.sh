@@ -18,13 +18,13 @@ if [[ -z $1 ]]; then
   exit 1
 fi
 
-arr=('minimal', 'medium', 'standard', 'performnance')
+arr=('minimal', 'minimal_cns', 'standard', 'performnance')
 match=$(echo "${arr[@]:0}" | grep -o $1)
 if [[ ! -z $match ]];  then
   echo ""
 else
   echo "Incorrect flag has been passed. "
-  echo "Valid flags are  minimal, medium, standard, performnance"
+  echo "Valid flags are  minimal, minimal_cns, standard, performnance"
   exit 1
 fi
 
@@ -50,10 +50,11 @@ Promethous: False
 EOF
 }
 
-function medium_desc() {
+function minimal_cns_desc() {
 cat << EOF
 ======================
-Deployment Type: Medium
+Deployment Type: Minimal CNS
+Deployment will contain Container Native Storage
 ======================
 1 master
 2 infra
@@ -62,10 +63,10 @@ Deployment Type: Medium
 ========
 Features
 ========
-Openshift Operators: True
-Hawkular Metrics: True
+Openshift Operators: False
+Hawkular Metrics: False
 ELK logging: False
-Promethous: True
+Promethous: False
 
 EOF
 }
@@ -134,12 +135,12 @@ minimal_deployment(){
   cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
 }
 
-medium_deployment(){
-	medium_desc
+minimal_cns_deployment(){
+	minimal_cns_desc
   if [[ -z $1 ]]; then
     confirm
   fi
-  cat ${project_dir}/samples/ocp_vm_sizing/medium.yml >> ${project_dir}/playbooks/vars/all.yml
+  cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
 }
 
 perfomance_deployment(){
@@ -175,7 +176,7 @@ read_options(){
 	read -p "Enter choice [ 1 - 5] " choice
 	case $choice in
 		1) minimal_deployment ;;
-		2) medium_deployment ;;
+		2) minimal_cns_deployment ;;
     3) standard_deployment ;;
     4) perfomance_deployment;;
 		5) exit 0;;
@@ -196,7 +197,7 @@ if [[ ! -z ${1} ]]; then
   echo "This will deploy the following. "
   case $1 in
     minimal) minimal_desc ;;
-    medium) medium_desc ;;
+    minimal_cns) minimal_cns_desc ;;
     standard) standard_desc ;;
     performance) performance_desc ;;
     *) exit 0;;
@@ -216,7 +217,7 @@ if [[ ! -z ${1} ]]; then
   else
     case $1 in
       minimal) minimal_deployment confirm ;;
-      medium) medium_deployment confirm ;;
+      minimal_cns) minimal_cns_deployment confirm ;;
       standard) standard_deployment confirm ;;
       performance) performance_deployment confirm ;;
       *) exit 0;;

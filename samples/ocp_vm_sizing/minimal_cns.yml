@@ -1,4 +1,4 @@
-deployment_type: medium
+deployment_type: minimal-cns
 instances:
   - name: master
     enable: true
@@ -57,7 +57,7 @@ instances:
 
 # Features
 enable_firewalld: True
-enable_openshift_operators: True
-enable_metrics: True
+enable_openshift_operators: False
+enable_metrics: False
 enable_logging: False
-enable_prometheous_operator: True
+enable_prometheous_operator: False
