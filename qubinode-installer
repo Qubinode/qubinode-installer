@@ -1103,6 +1103,7 @@ function qubinode_vm_manager () {
        fi
    elif [ "A${deploy_vm_opt}" == "Adeploy_nodes" ]
    then
+       openshift_config
        if [ "A${teardown}" == "Atrue" ]
        then
            echo "Remove ${product} VMs"

@@ -40,14 +40,14 @@ function check_hardware_resources () {
         lib/qubinode_openshift_sizing_menu.sh standard
     elif [[ ${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY} ]]
     then
-        echo "Do minimal OpenShift Deployment" minimal_cns
+        echo "Do minimal OpenShift Deployment"
         #cat ${PROJECTDIR}/samples/ocp_vm_sizing/small.yml >> ${PROJECTDIR}/playbooks/vars/all.yml
-        lib/qubinode_openshift_sizing_menu.sh
+        lib/qubinode_openshift_sizing_menu.sh minimal_cns
     elif [[ ${AVAILABLE_MEMORY} -ge ${MINIMAL_MEMORY} ]]
     then
-        echo "Do minimal OpenShift Deployment" minimal
+        echo "Do minimal OpenShift Deployment"
         #cat ${PROJECTDIR}/samples/ocp_vm_sizing/minimal.yml >> ${PROJECTDIR}/playbooks/vars/all.yml
-        lib/qubinode_openshift_sizing_menu.sh
+        lib/qubinode_openshift_sizing_menu.sh minimal
     else
         echo "Your available memory of ${AVAILABLE_HUMAN_MEMORY} is not enough to continue"
         exit $?
