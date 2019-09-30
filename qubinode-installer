@@ -719,7 +719,8 @@ function prereqs () {
 }
 
 function setup_sudoers () {
-    prereqs
+    #prereqs
+    CURRENT_USER=$USER
     echo "Checking if ${CURRENT_USER} is setup for password-less sudo: "
     elevate_cmd test -f "/etc/sudoers.d/${CURRENT_USER}"
     if [ "A$?" != "A0" ]
