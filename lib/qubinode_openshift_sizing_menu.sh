@@ -118,45 +118,60 @@ pause(){
   read -p "Press [Enter] key to continue..." fackEnterKey
 }
 
-confirm(){
-  read -p "Are you sure? " -n 1 -r
-  echo    # (optional) move to a new line
-  if [[ $REPLY =~ ^[Yy]$ ]]
-  then
-      exit 0
-  fi
-}
 
 minimal_deployment(){
 	minimal_desc
-  if [[ -z $1 ]]; then
-    confirm
+  read -p "Are you sure? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+    echo ""
+  else
+    cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
+    exit 0
   fi
-  cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
+
 }
 
 minimal_cns_deployment(){
 	minimal_cns_desc
-  if [[ -z $1 ]]; then
-    confirm
+  read -p "Are you sure? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+    echo ""
+  else
+    cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
+    exit 0
   fi
-  cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
 }
 
 perfomance_deployment(){
 	performance_desc
-  if [[ -z $1 ]]; then
-    confirm
+  read -p "Are you sure? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+      echo ""
+  else
+    cat ${project_dir}/samples/ocp_vm_sizing/perfomance.yml >> ${project_dir}/playbooks/vars/all.yml
+    exit 0
   fi
-  cat ${project_dir}/samples/ocp_vm_sizing/perfomance.yml >> ${project_dir}/playbooks/vars/all.yml
+
 }
 
 standard_deployment(){
 	standard_desc
-  if [[ -z $1 ]]; then
-    confirm
+  read -p "Are you sure? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+    echo ""
+  else
+    cat ${project_dir}/samples/ocp_vm_sizing/standard.yml >> ${project_dir}/playbooks/vars/all.yml
+    exit 0
   fi
-  cat ${project_dir}/samples/ocp_vm_sizing/standard.yml >> ${project_dir}/playbooks/vars/all.yml
+
 }
 # function to display menus
 show_menus() {
@@ -192,8 +207,8 @@ trap '' SIGINT SIGQUIT SIGTSTP
 # -----------------------------------
 # Step #4: Main logic - infinite loop
 # ------------------------------------
-if [[ ! -z ${1} ]]; then
-  echo "Your Deployment is ${1}"
+if [[ ! -z ${INSTALLTYPE} ]]; then
+  echo "Your Deployment is ${INSTALLTYPE}"
   echo "This will deploy the following. "
   case $1 in
     minimal) minimal_desc ;;
@@ -205,22 +220,22 @@ if [[ ! -z ${1} ]]; then
 
   read -p "Would you like a customize this deployment? " -n 1 -r
   echo    # (optional) move to a new line
-  if [[ $REPLY =~ ^[Yy]$ ]]
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
+    case $INSTALLTYPE in
+      minimal) minimal_deployment;;
+      minimal_cns) minimal_cns_deployment;;
+      standard) standard_deployment;;
+      performance) performance_deployment;;
+      *) exit 0;;
+    esac
+  else
 
     while true
     do
-    	show_menus
-    	read_options
+      show_menus
+      read_options
     done
 
-  else
-    case $1 in
-      minimal) minimal_deployment confirm ;;
-      minimal_cns) minimal_cns_deployment confirm ;;
-      standard) standard_deployment confirm ;;
-      performance) performance_deployment confirm ;;
-      *) exit 0;;
-    esac
   fi
 fi
