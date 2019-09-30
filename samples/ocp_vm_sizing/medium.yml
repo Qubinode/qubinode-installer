@@ -1,4 +1,4 @@
-deployment_type: small
+deployment_type: medium
 instances:
   - name: master
     enable: true
@@ -27,7 +27,7 @@ instances:
       - size: 160G
         enable: true
     vm_recreate: false
-    qty: 1
+    qty: 2
   - name: infra
     enable: true
     vm_cpu: 4
@@ -42,7 +42,7 @@ instances:
       - size: 160G
         enable: true
     vm_recreate: false
-    qty: 1
+    qty: 2
   - name: lb
     enable: true
     vm_cpu: 2
@@ -57,7 +57,7 @@ instances:
 
 # Features
 enable_firewalld: True
-enable_openshift_operators: False
-enable_metrics: False
+enable_openshift_operators: True
+enable_metrics: True
 enable_logging: False
-enable_prometheous_operator: False
+enable_prometheous_operator: True
