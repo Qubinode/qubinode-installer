@@ -125,7 +125,8 @@ minimal_deployment(){
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
-    echo ""
+    show_menus
+    read_options
   else
     cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
     exit 0
@@ -139,7 +140,8 @@ minimal_cns_deployment(){
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
-    echo ""
+    show_menus
+    read_options
   else
     cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
     exit 0
@@ -152,7 +154,8 @@ perfomance_deployment(){
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
-      echo ""
+    show_menus
+    read_options
   else
     cat ${project_dir}/samples/ocp_vm_sizing/perfomance.yml >> ${project_dir}/playbooks/vars/all.yml
     exit 0
@@ -166,7 +169,8 @@ standard_deployment(){
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
-    echo ""
+    show_menus
+    read_options
   else
     cat ${project_dir}/samples/ocp_vm_sizing/standard.yml >> ${project_dir}/playbooks/vars/all.yml
     exit 0
