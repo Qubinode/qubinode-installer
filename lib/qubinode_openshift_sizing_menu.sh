@@ -123,9 +123,7 @@ confirm(){
   echo    # (optional) move to a new line
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
-    echo ""
-  else
-    exit 0
+      exit 0
   fi
 }
 
@@ -135,7 +133,6 @@ minimal_deployment(){
     confirm
   fi
   cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
-  exit 0
 }
 
 minimal_cns_deployment(){
@@ -144,7 +141,6 @@ minimal_cns_deployment(){
     confirm
   fi
   cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
-  exit 0
 }
 
 perfomance_deployment(){
@@ -153,7 +149,6 @@ perfomance_deployment(){
     confirm
   fi
   cat ${project_dir}/samples/ocp_vm_sizing/perfomance.yml >> ${project_dir}/playbooks/vars/all.yml
-  exit 0
 }
 
 standard_deployment(){
@@ -162,7 +157,6 @@ standard_deployment(){
     confirm
   fi
   cat ${project_dir}/samples/ocp_vm_sizing/standard.yml >> ${project_dir}/playbooks/vars/all.yml
-  exit 0
 }
 # function to display menus
 show_menus() {
