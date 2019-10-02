@@ -184,7 +184,7 @@ show_menus() {
 	echo " Qubinode OpenShift Profiles"
 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 	echo "1. Minimal Deployment"
-  echo "2. Medium Deployment"
+  echo "2. Minimal CNS Deployment"
   echo "3. Standard Deployment"
 	echo "4. Performance Deployment"
 	echo "5. Exit"
