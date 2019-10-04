@@ -43,8 +43,21 @@ function default_install () {
     fi
 }
 
-function idm_install() {
+function rhelinsightscheck() {
+  echo "Checking Red Hat Insights Status"
+  echo "Please enter password"
+  SOFTWARECHECK=$(sudo subscription-manager list | grep -E 'Red Hat Software Collections (for RHEL Server)')
+  if [[ -z $SOFTWARECHECK ]]; then
+    if grep 'rhsm_setup_insights_client: true' "${project_dir}/playbooks/vars/all.yml"|grep -q "rhsm_setup_insights_client:"
+    then
+        echo "Disable Red Hat insights on Deploument"
+        sed -i "s/rhsm_setup_insights_client:.*/rhsm_setup_insights_client: false/" "${project_dir}/playbooks/vars/all.yml"
+    fi
+  fi
 
+}
+function idm_install() {
+    rhelinsightscheck
     printf "\n\n****************************\n"
     printf     "* Deploy VM for DNS server *\n"
     printf     "****************************\n"
