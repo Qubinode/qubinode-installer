@@ -1082,6 +1082,7 @@ function qubinode_vm_manager () {
     fi
 
    DNS_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
+   DHCP_SERVER="${project_dir}/playbooks/deploy-dhcp-server.yml"
    NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
    NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
    CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
@@ -1101,6 +1102,16 @@ function qubinode_vm_manager () {
            echo "Deploy DNS VM"
            ansible-playbook "${DNS_PLAY}" || exit $?
        fi
+   elif [ "A${deploy_vm_opt}" == "Adeploy_dhcpserver" ]
+   then
+     if [ "A${teardown}" == "Atrue" ]
+     then
+         echo "Remove DHCP SERVER VM"
+         ansible-playbook "${DHCP_SERVER}" --extra-vars "vm_teardown=true" || exit $?
+     else
+         echo "Deploy DHCP SERVER VM"
+         ansible-playbook "${DHCP_SERVER}" || exit $?
+     fi
    elif [ "A${deploy_vm_opt}" == "Adeploy_nodes" ]
    then
        openshift_config
@@ -1404,6 +1415,9 @@ else
         then
             qubinode_vm_manager deploy_dns
             qubinode_dns_manager server
+        elif [ "${product_opt}" == "dhcpserver" ]
+        then
+            qubinode_vm_manager deploy_dhcpserver
         elif [ "${product_opt}" == "okd" ]
         then
           if [ "A${teardown}" == "Atrue" ]

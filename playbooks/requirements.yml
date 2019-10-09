@@ -27,3 +27,9 @@
 
 - src: https://github.com/flyemsafe/swygue-install-satellite.git
   version: master
+
+- src: https://github.com/bertvv/ansible-role-dhcp.git
+  version: master
+
+- src: https://github.com/flyemsafe/swygue.coreos-virt-install-iso.git
+  version: master
