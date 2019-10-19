@@ -1,4 +1,4 @@
-# Supported Hardware specs for Qubinode
+# Supported Hardware Specs For Qubinode
 
 Qubinode-installer may support different product types. The table below defines what is need for an OpenShift Deployment.
 
