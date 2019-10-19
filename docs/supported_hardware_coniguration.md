@@ -14,7 +14,13 @@ Below are a set of hardware specs for qubinode-installer to install OpenShift
 
 ## Recommended Systems
 
-Here are some of the systems we recommend. The router is optional. 
+Here are some of the systems we recommend. The router and cables are optional. The router accomplishes two things right now.
+
+1. Allows for keeping the qubinode network separate from yours. You would need to put in a static route from your router to this router if you wanted to get to qubinode from your network.
+2. Makes the qubinode portable. You can plug the router into an existing network or bridge an existing wireless network. That existing wired or wireless network is how you will get internet access. Then you will have a segregated wired and wireless network for the qubinode.
+
+![Example Router Usage](img/QubinodeHardware.jpeg)
+
 
 ### 6 Core Systems (Low)
 
