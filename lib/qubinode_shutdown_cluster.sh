@@ -8,9 +8,11 @@ project_dir="`( cd \"$project_dir_path\" && pwd )`"
 domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 ssh_username=$(awk '/^admin_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 ocp_user=$(awk '/^openshift_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-productname=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+product_name=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+instance_prefix=$(awk '/instance_prefix:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+product_hostname="${instance_prefix}-${product_name}"
 
-infracount=$(cat "${project_dir}/inventory/hosts" | grep $productname-infra | awk '{print $1}')
+infracount=$(cat "${project_dir}/inventory/hosts" | grep $product_hostname-infra | awk '{print $1}')
 fdqn_all_node_names="";
 infra_names="";
 node_names="";
@@ -21,7 +23,7 @@ for item in $infracount; do
   node_names+="'$item',"
 done
 
-nodecount=$(cat "${project_dir}/inventory/hosts" | grep $productname-node | awk '{print $1}')
+nodecount=$(cat "${project_dir}/inventory/hosts" | grep $product_hostname-node | awk '{print $1}')
 fdqn_node_names="";
 for item in $nodecount; do
   echo $item.$domain
@@ -42,15 +44,16 @@ echo $node_names
 compute_node_names=$(echo $compute_node_names | sed 's/,*$//g')
 echo $compute_node_names
 
+
 cat >/tmp/cluster-inventory<<EOF
 [master]
-${productname}-master01.$domain
+${product_hostname}-master01.$domain
 [master:vars]
 #options for power_state reboot, halt, running
 power_state="halt"
 rhel_user="${ssh_username}"
 # use for master node endpoint
-master_node="${productname}-master01.$domain"
+master_node="${product_hostname}-master01.$domain"
 # FQDN names used for power down and power up tasks
 fdqn_node_names=[ $(echo $fdqn_all_node_names) ]
 fqdn_compute_names=[ $(echo $fdqn_node_names) ]
@@ -69,10 +72,18 @@ cat >/tmp/ocp-power-management.yml<<EOF
     - ocp-power-management
 EOF
 
-ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml || exit 1
+#ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml || exit 1
 
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${productname}-master01.$domain  "halt 'Shutting Down Node'"
-virsh shutdown master
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${product_hostname}-master01.$domain "shutdown 'Shutting Down Node'"
+sudo virsh shutdown "${product_hostname}-master01"
+# Wait until all domains are shut down or timeout has reached.
+END_TIME=$(date -d "$TIMEOUT seconds" +%s)
+while [ $(date +%s) -lt $END_TIME ]; do
+    test -z "$(sudo virsh list | grep master01)" && break
+    sleep 1
+done
 
 rm /tmp/ocp-power-management.yml
 rm /tmp/cluster-inventory
+
+exit 0

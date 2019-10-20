@@ -40,7 +40,7 @@ function validate_openshift_pool_id () {
     # it calls the function check_for_openshift_subscription
     if [ "A${product_in_use}" == "Aocp3" ]
     then
-        if [ "A${maintenance}" != "Arhsm" ] && [ "A${maintenance}" != "Asetup" ] && [ "A${maintenance}" != "Aclean" ]
+        if [ "A${qubinode_maintenance_opt}" != "Arhsm" ] && [ "A${qubinode_maintenance_opt}" != "Asetup" ] && [ "A${qubinode_maintenance_opt}" != "Aclean" ]
         then
             check_for_openshift_subscription
             if grep '""' "${vars_file}"|grep -q openshift_pool_id
@@ -67,7 +67,7 @@ function set_openshift_rhsm_pool_id () {
     fi
 
     #TODO: this should be change once we start deploy OKD
-    if [ "${maintenance}" == "rhsm" ]
+    if [ "${qubinode_maintenance_opt}" == "rhsm" ]
     then
       if [ "A${product_in_use}" == "Aocp3" ]
       then
