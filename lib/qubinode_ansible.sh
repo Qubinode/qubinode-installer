@@ -4,7 +4,7 @@
 # along with any other dependancy the project
 # depends on
 function qubinode_setup_ansible () {
-    prereqs
+    product_requirements
     vaultfile="${vault_vars_file}"
     HAS_SUDO=$(has_sudo)
     if [ "A${HAS_SUDO}" == "Ano_sudo" ]

@@ -1,0 +1,191 @@
+#!/bin/bash
+
+function product_requirements () {
+    # This function copies over the required variables files
+    # Setup of the required paths
+    # Sets up the inventory file
+
+    # setup required paths
+    setup_required_paths
+    vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+    vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
+    vars_file="${project_dir}/playbooks/vars/all.yml"
+    hosts_inventory_dir="${project_dir}/inventory"
+    inventory_file="${hosts_inventory_dir}/hosts"
+    ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
+    okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
+
+    # copy sample vars file to playbook/vars directory
+    if [ ! -f "${vars_file}" ]
+    then
+      cp "${project_dir}/samples/all.yml" "${vars_file}"
+    fi
+
+    # create vault vars file
+    if [ ! -f "${vault_vars_file}" ]
+    then
+        cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
+    fi
+
+    # create ocp3 vars file
+    if [ ! -f "${ocp3_vars_file}" ]
+    then
+        cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
+    fi
+
+    # create ocp3 vars file
+    if [ ! -f "${okd3_vars_file}" ]
+    then
+        cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
+    fi
+
+    # create ansible inventory file
+    if [ ! -f "${hosts_inventory_dir}/hosts" ]
+    then
+        cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
+    fi
+
+    # setting OpenShift Product Type
+    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    #echo "${product_opt}" || exit 1
+    if grep 'ocp3' "${vars_file}"|grep -q "product:"
+    then
+        echo "Updating OpenShift Product Type"
+        sed -i "s/product:.*/product: okd3/" "${vars_file}"
+    fi
+
+    if [[  ${product_opt} == "okd" ]]; then
+      if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "product:"
+      then
+          echo "Disable Red Hat insights on OKD Deploument"
+          sed -i "s/rhsm_setup_insights_client:.*/rhsm_setup_insights_client: false/" "${vars_file}"
+      fi
+    fi
+}
+
+function setup_variables () {
+    product_requirements
+
+    echo ""
+    #echo "Populating ${vars_file}"
+
+    # add inventory file to all.yml
+    if grep '""' "${vars_file}"|grep -q inventory_dir
+    then
+        echo "Adding inventory_dir variable"
+        sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
+    fi
+
+    # Set KVM project dir
+    if grep '""' "${vars_file}"|grep -q project_dir
+    then
+        echo "Adding project_dir variable"
+        sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
+    fi
+
+    # Setup admin user variable
+    if grep '""' "${vars_file}"|grep -q admin_user
+    then
+        echo "Updating ${vars_file} admin_user variable"
+        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
+    fi
+
+    # Pull variables from all.yml needed for the install
+    domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
+    echo ""
+
+    # Check if we should setup qubinode
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
+
+    # Check if we should setup qubinode
+    DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+
+    # Satellite server vars file
+    SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"
+
+    VM_DATA_DIR=$(awk '/^vm_data_dir:/ {print $2}' ${vars_file}|tr -d '"')
+    ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
+}
+
+function qubinode_installer_setup () {
+    # Run required functions
+    setup_sudoers
+    product_requirements
+    setup_user_ssh_key
+    setup_variables
+    ask_user_input
+
+    # Setup admin user variable
+    if grep '""' "${vars_file}"|grep -q admin_user
+    then
+        echo "Updating ${vars_file} admin_user variable"
+        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
+    fi
+
+    # Pull variables from all.yml needed for the install
+    domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+}
+
+function qubinode_project_cleanup () {
+    # ensure requirements are in place
+    product_requirements
+
+    FILES=()
+    mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
+    if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
+    then
+        FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+    fi
+
+    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    if [[ ${product_opt} == "ocp3" ]]; then
+      FILES=("${FILES[@]}" "$ocp3_vars_file")
+    elif [[ ${product_opt} == "okd3" ]]; then
+      FILES=("${FILES[@]}" "$okd3_vars_file")
+    fi
+
+    if [ ${#FILES[@]} -eq 0 ]
+    then
+        echo "Project directory: ${project_dir} state is already clean"
+    else
+        for f in $(echo "${FILES[@]}")
+        do
+            test -f $f && rm $f
+            echo "purged $f"
+
+        done
+    fi
+}
+
+function qubinode_maintenance_options () {
+    if [ "${qubinode_maintenance_opt}" == "clean" ]
+    then
+        qubinode_project_cleanup
+    elif [ "${qubinode_maintenance_opt}" == "setup" ]
+    then
+        qubinode_installer_setup
+    elif [ "${qubinode_maintenance_opt}" == "rhsm" ]
+    then
+        qubinode_rhsm_register
+    elif [ "${qubinode_maintenance_opt}" == "ansible" ]
+    then
+        qubinode_setup_ansible
+    elif [ "${qubinode_maintenance_opt}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
+    then
+        qubinode_setup_kvm_host
+    elif [ "${qubinode_maintenance_opt}" == "deploy_nodes" ]
+    then
+        qubinode_vm_manager deploy_nodes
+    elif [ "${qubinode_maintenance_opt}" == "undeploy" ]
+    then
+        #TODO: this should remove all VMs and clean up the project folder
+        qubinode_vm_manager undeploy
+    elif [ "${qubinode_maintenance_opt}" == "uninstall_openshift" ]
+    then
+      #TODO: this should remove all VMs and clean up the project folder
+        qubinode_uninstall_openshift
+    else
+        display_help
+    fi
+}
+

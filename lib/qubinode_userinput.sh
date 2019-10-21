@@ -150,8 +150,9 @@ function ask_for_vault_values () {
 }
 
 function ask_user_input () {
-    echo "Getting user inputs"
-    echo ""
+    printf "\n\n***************************\n"
+    printf "* Getting required inputs *\n"
+    printf "***************************\n\n"
     ask_user_for_networking_info "${vars_file}"
     ask_user_for_custom_idm_server
     ask_for_vault_values "${vault_vars_file}"

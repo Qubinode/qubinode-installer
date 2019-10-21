@@ -139,6 +139,10 @@ function qubinode_run_openshift_installer () {
     # This function calls the openshift-setup which in turns
     # runs the official openshift ansible playbooks
     # Teardown the openshift deployment
+
+    # ensure subscription is setup for ocp3
+    set_openshift_rhsm_pool_id
+ 
     if [ "A${teardown}" == "Atrue" ]
     then
         echo "This will delete all nodes and remove all DNS entries"
@@ -275,6 +279,12 @@ function are_nodes_deployed () {
 }
 
 function qubinode_install_openshift () {
+    echo "Ensure ${CURRENT_USER} is in sudoers"
+    setup_sudo
+
+    # ensure required variables and files are in place
+    product_requirements
+
     product_in_use=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
     qubinode_product=true
     printf "\n\n***********************\n"

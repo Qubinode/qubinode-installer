@@ -10,7 +10,7 @@ function display_idmsrv_unavailable () {
 
 # Ask if this host should be setup as a qubinode host
 function ask_user_for_custom_idm_server () {
-    echo "asking for custom IdM"
+    #echo "asking for custom IdM"
     setup_variables
     if [ "A${DNS_SERVER_NAME}" == "Anone" ]
     then

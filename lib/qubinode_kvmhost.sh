@@ -2,7 +2,9 @@
 
 # Ask if this host should be setup as a qubinode host
 function ask_user_if_qubinode_setup () {
+    # ensure all required variables are setup
     setup_variables
+
     if [ "A${QUBINODE_SYSTEM}" == "A" ]
     then
         echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
@@ -13,11 +15,11 @@ function ask_user_if_qubinode_setup () {
         confirm "Continue setting up a qubinode host? yes/no"
         if [ "A${response}" == "Ayes" ]
         then
-            echo "Setting variabel to yes"
+            #"Setting variabel to yes"
             sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
         elif [ "A${response}" == "Ano" ]
         then
-            echo "Setting variabel to no"
+            #"Setting variabel to no"
             sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
         else
             echo "No action taken"
@@ -26,7 +28,7 @@ function ask_user_if_qubinode_setup () {
 }
 # Ensure RHEL is set to the supported release
 function set_rhel_release () {
-    prereqs
+    product_requirements
     RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
     RELEASE="Release: ${RHEL_RELEASE}"
     CURRENT_RELEASE=$(sudo subscription-manager release --show)
@@ -45,7 +47,7 @@ function set_rhel_release () {
 }
 
 function qubinode_networking () {
-    prereqs
+    product_requirements
     KVM_HOST_IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -99,14 +101,14 @@ function qubinode_networking () {
 }
 
 
-function qubinode_check_libvirt_pool () {
-    DEFINED_LIBVIRT_POOL=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}"| tr -d '"')
+function qubinode_check_libvirt_net () {
+    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}"| tr -d '"')
     
-    if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_POOL}"
+    if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
     then
-        echo "Using the defined libvirt network: ${DEFINED_LIBVIRT_POOL}"
+        echo "Using the defined libvirt network: ${DEFINED_LIBVIRT_NETWORK}"
     else
-        echo "Could not find the defined libvirt network ${DEFINED_LIBVIRT_POOL}"
+        echo "Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
         echo "Will attempt to find and use the first bridge or nat libvirt network"
     
         nets=$(sudo virsh net-list --all --name)
@@ -140,7 +142,7 @@ function qubinode_check_libvirt_pool () {
 
 function qubinode_setup_kvm_host () {
     echo "Running qubinode_setup_kvm_host setup."
-    prereqs
+    product_requirements
     setup_variables
     setup_sudoers
     ask_user_input
@@ -201,13 +203,13 @@ function qubinode_setup_kvm_host () {
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           qubinode_check_libvirt_pool
+           qubinode_check_libvirt_net
        else
-           qubinode_check_libvirt_pool
+           qubinode_check_libvirt_net
        fi
     else
         qubinode_setup_ansible
-        qubinode_check_libvirt_pool
+        qubinode_check_libvirt_net
         echo "Installing required packages"
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
     fi

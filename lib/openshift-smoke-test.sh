@@ -17,7 +17,7 @@ project_dir="`( cd \"$project_dir_path\" && pwd )`"
 
 domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 ocp_user=$(awk '/^openshift_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+product=$(awk '/^qubinode_product_name:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 
 oc login https://${product}-master01.${domain}:8443  -u ${ocp_user}
 
