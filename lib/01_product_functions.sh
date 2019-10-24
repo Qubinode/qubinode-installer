@@ -229,10 +229,22 @@ function qubinode_product_deployment () {
               echo "Installing ocp4"
               ;;
           satellite)
-              echo "Installing Satellite"
-              qubinode_deploy_satellite
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_teardown_satellite
+              else
+                  echo "Installing Satellite"
+                  qubinode_deploy_satellite
+              fi
               ;;
           idm)
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_teardown_idm
+              else
+                  echo "Installing Satellite"
+                  qubinode_deploy_idm
+              fi
               echo "Installing IdM"
               qubinode_deploy_idm
               ;;

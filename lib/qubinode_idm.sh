@@ -102,6 +102,21 @@ function isIdMrunning () {
    fi
 }
 
+qubinode_teardown_idm () {
+    qubinode_vm_deployment_precheck
+    isIdMrunning
+    IDM_VM_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
+    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+
+   if sudo virsh list |grep -q "${idm_srv_hostname}"
+   then
+       echo "Remove IdM VM"
+       ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+   fi
+   echo "Ensure IdM server deployment is cleaned up"
+   ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+}
+
 function qubinode_deploy_idm_vm () {
    qubinode_vm_deployment_precheck
    ask_user_input
@@ -110,31 +125,19 @@ function qubinode_deploy_idm_vm () {
    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
    SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${vars_file}"| tr -d '"')
 
-   if [ "A${teardown}" == "Atrue" ]
+   if [ "A${idm_running}" == "Afalse" ]
    then
-       if sudo virsh list |grep -q "${idm_srv_hostname}"
+       echo "Deploy IdM VM"
+       if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
        then
-           echo "Remove IdM VM"
-           ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-       fi
-       echo "Ensure IdM server deployment is cleaned up"
-       ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
-   else
-       if [ "A${idm_running}" == "Afalse" ]
-       then
-           echo "Deploy IdM VM"
-           if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
-           then
-               idm_server_ip=$(awk '/idm_server_ip/ {print $2}' "${vars_file}")
-               echo "Deploy with custom IP"
-               ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
-           else
-               echo "Deploy without custom IP"
-               ansible-playbook "${IDM_VM_PLAY}" || exit $?
-           fi
-       fi
-
-   fi
+           idm_server_ip=$(awk '/idm_server_ip/ {print $2}' "${vars_file}")
+           echo "Deploy with custom IP"
+           ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
+        else
+            echo "Deploy without custom IP"
+            ansible-playbook "${IDM_VM_PLAY}" || exit $?
+        fi
+    fi
 
 }
 
