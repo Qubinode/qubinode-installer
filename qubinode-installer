@@ -120,29 +120,16 @@ then
         echo $result
         echo "Unknown issue, please run the installer again"
     fi
-elif [ "A${qubinode_product}" == "Atrue" ]
+elif [ "A${qubinode_product}" == "Atrue" ] && [ "A${qubinode_maintenance}" == "Atrue" ]
 then
-    RUN_PRODUCT=true
+    echo "run product maintenance"
 elif [ "A${qubinode_maintenance}" == "Atrue" ]
 then
-    RUN_MAINTENANCE=true
-elif [ "A${cluster_opt}" != "A" ]
-then
-    CLUSTER_OPT=true
-else
-    NOARG=true
-fi
-
-if [ "A${NOARG}" == "Atrue" ]
-then
-    display_help
-fi
-
-if [ "A${RUN_MAINTENANCE}" == "Atrue" ]
-then
     qubinode_maintenance_options
+elif [ "A${qubinode_product}" == "Atrue" ]
+then
+    qubinode_product_deployment $qubinode_product_opt
 fi
-
 
 exit 0
 

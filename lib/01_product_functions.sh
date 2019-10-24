@@ -157,6 +157,98 @@ function qubinode_project_cleanup () {
     fi
 }
 
+function qubinode_vm_deployment_precheck () {
+   # This function ensure that the host is setup as a KVM host.
+   # It ensures the foundation is set to allow ansible playbooks can run
+   # and the products can be deployed.
+   product_requirements
+   setup_variables
+   ask_user_input
+   echo "Running VM deployment prechecks"
+   if [ "A${teardown}" != "Atrue" ]
+   then
+       # Ensure the setup function as was executed
+       if [ ! -f "${vars_file}" ]
+       then
+           qubinode_installer_preflight
+       fi
+
+       # Check if KVM HOST is ready
+       echo "Verifying KVM host is setup"
+       qubinode_check_kvmhost
+
+       # Ensure the ansible function has bee executed
+       if [ ! -f /usr/bin/ansible ]
+       then
+           qubinode_setup_ansible
+       else
+           STATUS=$(ansible-galaxy list | grep ansible-role-rhel7-kvm-cloud-init >/dev/null 2>&1; echo $?)
+           echo "STATUS=A${STATUS}"
+           if [ "A${STATUS}" != "A0" ]
+           then
+               qubinode_setup_ansible
+           fi
+       fi
+
+       # Check for required Qcow image
+       check_for_rhel_qcow_image
+    fi
+}
+
+function check_for_rhel_qcow_image () {
+    # check for required OS qcow image and copy it to right location
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
+    os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
+    if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
+    then
+        if [ -f "${project_dir}/${os_qcow_image}" ]
+        then
+            sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
+        else
+            echo "Could not find ${project_dir}/${os_qcow_image}, please download the ${os_qcow_image} to ${project_dir}."
+            echo "Please refer the documentation for additional information."
+            exit 1
+        fi
+    else
+        echo "The require OS image ${libvirt_dir}/${os_qcow_image} was found."
+    fi
+}
+
+
+function qubinode_product_deployment () {
+    # this function deploys a supported product
+    PRODUCT_OPTION=$1
+    AVAIL_PRODUCTS="ocp3 ocp4 satellite idm kvmhost"
+    case $PRODUCT_OPTION in
+          ocp3)
+              echo "Installing ocp3"
+              are_nodes_deployed
+              qubinode_run_openshift_installer
+              ;;
+          ocp4)
+              echo "Installing ocp4"
+              ;;
+          satellite)
+              echo "Installing Satellite"
+              qubinode_deploy_satellite
+              ;;
+          idm)
+              echo "Installing IdM"
+              qubinode_deploy_idm
+              ;;
+          kvmhost)
+              echo "Setting up KVM host"
+              qubinode_setup_kvm_host
+              ;;
+          *)
+              echo "Product ${PRODUCT_OPTION} is not supported."
+              echo "Supported products are: ${AVAIL_PRODUCTS}"
+              exit 1
+              ;;
+    esac
+           
+}
+
 function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
