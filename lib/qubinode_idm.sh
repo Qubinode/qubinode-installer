@@ -1,3 +1,5 @@
+product_in_use=idm
+
 function display_idmsrv_unavailable () {
         echo ""
         echo ""
@@ -42,7 +44,7 @@ function ask_user_for_custom_idm_server () {
 }
 
 
-function qubinode_idm_user_input () {
+function qubinode_idm_ask_ip_address () {
     # Get static IP address for IDM
     if [ "${product_in_use}" == "idm" ]
     then
@@ -115,11 +117,14 @@ qubinode_teardown_idm () {
    fi
    echo "Ensure IdM server deployment is cleaned up"
    ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+
+   printf "\n\n*************************\n"
+   printf "* IdM server VM deleted *\n"
+   printf "*************************\n\n"
 }
 
 function qubinode_deploy_idm_vm () {
    qubinode_vm_deployment_precheck
-   ask_user_input
    isIdMrunning
    IDM_VM_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
@@ -147,15 +152,10 @@ function qubinode_install_idm () {
    isIdMrunning
    IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
 
-   if [ "A${teardown}" == "Atrue" ]
+   if [ "A${idm_running}" == "Afalse" ]
    then
-       qubinode_deploy_idm_vm
-   else
-       if [ "A${idm_running}" == "Afalse" ]
-       then
-           echo "Install and configure the IdM server"
-           ansible-playbook "${IDM_INSTALL_PLAY}" || exit $?
-       fi
+       echo "Install and configure the IdM server"
+       ansible-playbook "${IDM_INSTALL_PLAY}" || exit $?
    fi
 }
 

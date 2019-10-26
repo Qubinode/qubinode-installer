@@ -88,7 +88,7 @@ function qubinode_networking () {
     iSkvm_host_mask_prefix=$(awk '/kvm_host_mask_prefix/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
     then
-        echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
+        #echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
         sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${vars_file}"
     fi
 

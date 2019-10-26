@@ -4,6 +4,7 @@ project_dir=$project_dir_path
 echo ${project_dir}
 project_dir="`( cd \"$project_dir_path\" && pwd )`"
 vars_file="${project_dir}/playbooks/vars/all.yml"
+idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 
 # Get hardware check function for OCP size deployments
 source ${project_dir}/lib/qubinode_hardware_check.sh
@@ -11,7 +12,7 @@ source ${project_dir}/lib/qubinode_hardware_check.sh
 function checkyamls() {
 
 
-  if [[  -f $project_dir/playbooks/vars/idm.yml  ]]; then
+  if [[  -f $idm_vars_file  ]]; then
     echo "idm yaml exists"
   fi
 
@@ -55,7 +56,8 @@ function generate_kvm_host() {
 }
 
 function generate_idm_product() {
-  if [[  -f $project_dir/playbooks/vars/idm.yml  ]]; then
+# NOTE: this function should go away
+  if [[  -f $idm_vars_file  ]]; then
     echo "idm yaml exists"
   else
     echo "Cannot continue idm yaml does not exist!"
@@ -66,7 +68,7 @@ function generate_idm_product() {
 ###
 # IDM PRODUCT
 ###"
-  cat $project_dir/playbooks/vars/idm.yml >> ${project_dir}/playbooks/vars/all.yml
+#  cat $idm_vars_file >> ${project_dir}/playbooks/vars/all.yml
 }
 
 function generate_ocp_product() {

@@ -6,6 +6,7 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/idm.yml
 
   tasks:
     - name: Check if IdM is answering
