@@ -183,7 +183,6 @@ function qubinode_vm_deployment_precheck () {
            qubinode_setup_ansible
        else
            STATUS=$(ansible-galaxy list | grep ansible-role-rhel7-kvm-cloud-init >/dev/null 2>&1; echo $?)
-           echo "STATUS=A${STATUS}"
            if [ "A${STATUS}" != "A0" ]
            then
                qubinode_setup_ansible
@@ -242,11 +241,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_idm
               else
-                  echo "Installing Satellite"
                   qubinode_deploy_idm
               fi
-              echo "Installing IdM"
-              qubinode_deploy_idm
               ;;
           kvmhost)
               echo "Setting up KVM host"

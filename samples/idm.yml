@@ -3,8 +3,11 @@
 ###################
 
 # IDM server attributes
+idm_server_ip: ""
+idm_public_ip: ""
+idm_check_static_ip: ""
 idm_admin_user: admin
-idm_hostname: "qbn-dns01"
+idm_hostname: "{{ instance_prefix }}-none"
 dns_server_public: ""
 qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
@@ -33,6 +36,9 @@ dns_server_vm:
     dns_group: dns
     dns_extra_storage: []
     dns_enable: true
+    dns_ip:
+    dns_mask:
+    dns_gateway:
 
 # This is required ansible-idm role
 idm_admin_password: "{{ idm_admin_pwd }}"
