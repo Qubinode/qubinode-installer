@@ -1,4 +1,5 @@
 product_in_use=idm
+idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 
 function display_idmsrv_unavailable () {
         echo ""

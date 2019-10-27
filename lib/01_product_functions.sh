@@ -10,6 +10,7 @@ function product_requirements () {
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
+    idm_vars_file="${project_dir}/playbooks/vars/all.yml"
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
     ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
@@ -19,6 +20,11 @@ function product_requirements () {
     if [ ! -f "${vars_file}" ]
     then
       cp "${project_dir}/samples/all.yml" "${vars_file}"
+    fi
+
+    if [ ! -f "${idm_vars_file}" ]
+    then
+      cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
     fi
 
     # create vault vars file
