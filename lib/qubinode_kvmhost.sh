@@ -69,8 +69,17 @@ function qubinode_networking () {
       KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
     KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+    KVM_HOST_NETMASK=$(mask=$(ip -o -f inet addr show $KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}');ipcalc -m $mask|awk -F= '{print $2}'
+)
 
    # Set KVM host ip info
+    iSkvm_host_netmask=$(awk '/kvm_host_netmask/ { print $2}' "${vars_file}")
+    if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
+    then
+        echo "Updating the kvm_host_netmask to $KVM_HOST_NETMASK"
+        sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${vars_file}"
+    fi
+
     iSkvm_host_ip=$(awk '/kvm_host_ip/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
     then

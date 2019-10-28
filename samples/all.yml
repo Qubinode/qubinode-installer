@@ -180,6 +180,7 @@ libvirt_host_networks:
 kvm_host_ip: ""
 kvm_host_interface: ""
 kvm_host_gw: ""
+kvm_host_netmask: ""
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_mask_prefix: ""
