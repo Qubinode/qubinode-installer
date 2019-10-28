@@ -1,3 +1,6 @@
+#!/bin/bash
+
+IDM_VM_PLAY="${project_dir}/playbooks/idm_vm_deployment.yml"
 product_in_use=idm
 idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 # Check if we should setup qubinode
@@ -110,7 +113,6 @@ function isIdMrunning () {
 function qubinode_teardown_idm () {
     qubinode_vm_deployment_precheck
     isIdMrunning
-    IDM_VM_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
     IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
 
     if sudo virsh list |grep -q "${idm_srv_hostname}"
@@ -129,7 +131,6 @@ function qubinode_teardown_idm () {
 function qubinode_deploy_idm_vm () {
    qubinode_vm_deployment_precheck
    isIdMrunning
-   IDM_VM_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
    SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
 
