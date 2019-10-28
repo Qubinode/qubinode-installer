@@ -8,8 +8,6 @@ idm_public_ip: ""
 idm_check_static_ip: ""
 idm_admin_user: admin
 idm_hostname: "{{ instance_prefix }}-none"
-dns_server_public: ""
-qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
   - "{{ qubinode_ptr }}"
 idm_repos:

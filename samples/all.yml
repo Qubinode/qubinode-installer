@@ -17,6 +17,9 @@ admin_user_password: "{{ admin_user_password }}"
 kvm_vm_root_pwd: "{{ admin_user_password }}"
 vm_domain: "{{ domain }}"
 
+# Public DNS server
+dns_server_public: ""
+
 # RHSM and the swygue-redhat-subscription role
 rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
@@ -147,6 +150,8 @@ vm_libvirt_net: "qubinet"
 #################################
 # KVM host / Qubinode variables #
 #################################
+# PTR
+qubinode_ptr: changeme.in-addr.arpa
 
 # set this variable to setup the system as a qubinode
 run_qubinode_setup: ""

@@ -1,5 +1,7 @@
 product_in_use=idm
 idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
+# Check if we should setup qubinode
+DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${idm_vars_file}" | tr -d '"')
 
 function display_idmsrv_unavailable () {
         echo ""
@@ -68,15 +70,15 @@ function qubinode_idm_ask_ip_address () {
                     echo "The variable idm_server_ip is not defined in ${idm_vars_file}."
                 fi
     
-                if grep -q idm_server_ip "${idm_vars_file}"
-                then            
-                    if grep '""' "${idm_vars_file}"|grep -q dns_server_public
-                    then
-                        sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "$    {idm_vars_file}"
-                    fi
-                else
-                    echo "The variable idm_server_ip is not defined in ${idm_vars_file}."
-                fi
+                #if grep -q idm_server_ip "${idm_vars_file}"
+                #then            
+                #    if grep '""' "${idm_vars_file}"|grep -q dns_server_public
+                #    then
+                #        sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "${idm_vars_file}"
+                #    fi
+                #else
+                #    echo "The variable idm_server_ip is not defined in ${idm_vars_file}."
+                #fi
             elif [ "A${response}" == "Ano" ]
             then
                 sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" "${idm_vars_file}"
@@ -105,23 +107,23 @@ function isIdMrunning () {
    fi
 }
 
-qubinode_teardown_idm () {
+function qubinode_teardown_idm () {
     qubinode_vm_deployment_precheck
     isIdMrunning
     IDM_VM_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
     IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
 
-   if sudo virsh list |grep -q "${idm_srv_hostname}"
-   then
-       echo "Remove IdM VM"
-       ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-   fi
-   echo "Ensure IdM server deployment is cleaned up"
-   ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+    if sudo virsh list |grep -q "${idm_srv_hostname}"
+    then
+        echo "Remove IdM VM"
+        ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+    fi
+    echo "Ensure IdM server deployment is cleaned up"
+    ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
 
-   printf "\n\n*************************\n"
-   printf "* IdM server VM deleted *\n"
-   printf "*************************\n\n"
+    printf "\n\n*************************\n"
+    printf "* IdM server VM deleted *\n"
+    printf "*************************\n\n"
 }
 
 function qubinode_deploy_idm_vm () {
@@ -162,5 +164,5 @@ function qubinode_install_idm () {
 
 function qubinode_deploy_idm () {
     qubinode_deploy_idm_vm
-    qubinode_install_idm
+#    qubinode_install_idm
 }

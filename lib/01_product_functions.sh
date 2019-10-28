@@ -10,7 +10,7 @@ function product_requirements () {
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
-    idm_vars_file="${project_dir}/playbooks/vars/all.yml"
+    idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
     ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
@@ -24,7 +24,7 @@ function product_requirements () {
 
     if [ ! -f "${idm_vars_file}" ]
     then
-      cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
+     cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
     fi
 
     # create vault vars file
@@ -102,9 +102,6 @@ function setup_variables () {
 
     # Check if we should setup qubinode
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
-
-    # Check if we should setup qubinode
-    DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${vars_file}" | tr -d '"')
 
     # Satellite server vars file
     SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"
