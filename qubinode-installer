@@ -130,6 +130,8 @@ then
 elif [ "A${qubinode_product}" == "Atrue" ]
 then
     qubinode_product_deployment $qubinode_product_opt
+else
+    display_help
 fi
 
 exit 0

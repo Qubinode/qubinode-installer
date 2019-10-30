@@ -10,7 +10,7 @@ function display_idmsrv_unavailable () {
         echo ""
         echo ""
         echo ""
-        echo "Eithr the IdM server variable idm_public_ip is not set."
+        echo "Either the IdM server variable idm_public_ip is not set."
         echo "Or the IdM server is not reachable."
         echo "Ensire the IdM server is running, update the variable and try again."
         exit 1

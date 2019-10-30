@@ -18,7 +18,7 @@ kvm_vm_root_pwd: "{{ admin_user_password }}"
 vm_domain: "{{ domain }}"
 
 # Public DNS server
-dns_server_public: ""
+dns_forwarder: ""
 
 # RHSM and the swygue-redhat-subscription role
 rhsm_org: "{{ rhsm_org }}"
@@ -91,7 +91,7 @@ instances:
 
 # This is for /etc/resolv.conf
 dns_servers:
-  - "{{ idm_public_ip | default('1.1.1.1') }}"
+  - "{{ idm_server_ip | default('1.1.1.1') }}"
   - 8.8.8.8
 
 ipa_client_principal: "{{ idm_admin_user }}"
@@ -171,12 +171,32 @@ ssh_username: "{{ admin_user }}"
 # should a bridge interface be created
 configure_bridge: true
 
+nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
+  - name: "{{ nat_network_name }}"
+    create: true
+    mode: nat
+    int_domain: compute.local
+    external_domain: "{{ public_domain }}"
+    mac_start: "52:54:00:"
+    master_count: 3
+    compute_count: 3
+    subnet: "192.168.50.0"
+    mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
+    create: true
     mode: bridge
-    bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}"
-    xml_file: "br_network.xml.j2"
+    bridge_device: "{{ kvm_host_bridge_name | default(qubinode_bridge_name) }}"
+    ifcfg_type: "{{ kvm_bridge_type }}"
+    ifcfg_bootproto: "{{ kvm_host_bootproto }}"
+    bridge_slave_dev: "{{ kvm_host_interface }}"
+    gateway: "{{ kvm_host_gw }}"
+    mask_prefix: "{{ kvm_host_mask_prefix }}"
+    ipaddress: "{{ kvm_host_ip }}"
+    mac: "{{ kvm_host_macaddr }}"
 
+#This is for KVM host initial setup of /etc/resolv.conf
+kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
 kvm_host_ip: ""
 kvm_host_interface: ""
 kvm_host_gw: ""
@@ -184,6 +204,7 @@ kvm_host_netmask: ""
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_mask_prefix: ""
+kvm_host_domain: "{{ domain }}"
 
 libvirt_pkgs:
    - virt-install
@@ -261,6 +282,15 @@ dns_wildcard: "*.apps"
 ###########################
 domain: ""
 
+####################
+## VM Network Info
+##-------------------
+## Currently we assume the VMs will use the name network as the host
+## This is why a bridge network is created by default. These values
+## can be changed to reflect a different network.
+vm_net_gateway: "{{ kvm_host_gw }}"
+vm_net_netmask: "{{ kvm_host_netmask }}"
+
 
 ###########################
 # these should be deleted #
@@ -278,3 +308,7 @@ qubi_required_pkgs: |
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
 product: ocp3
+
+## OCP4
+cluster_name: ocp42
+public_domain: poc.lunchnet.example 

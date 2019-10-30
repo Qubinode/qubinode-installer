@@ -60,48 +60,50 @@ function qubinode_networking () {
     else
         DEFINED_BRIDGE=""
     fi
-
+    
     CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
     else
+      echo "No bridge detected, using regular interface"
       KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
-    KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
-    KVM_HOST_NETMASK=$(mask=$(ip -o -f inet addr show $KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}');ipcalc -m $mask|awk -F= '{print $2}'
-)
+
+    KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+    mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+    KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
 
    # Set KVM host ip info
-    iSkvm_host_netmask=$(awk '/kvm_host_netmask/ { print $2}' "${vars_file}")
+    iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
     then
         echo "Updating the kvm_host_netmask to $KVM_HOST_NETMASK"
         sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${vars_file}"
     fi
 
-    iSkvm_host_ip=$(awk '/kvm_host_ip/ { print $2}' "${vars_file}")
+    iSkvm_host_ip=$(awk '/^kvm_host_ip/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
     then
         echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
         sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${vars_file}"
     fi
 
-    iSkvm_host_gw=$(awk '/kvm_host_gw/ { print $2}' "${vars_file}")
+    iSkvm_host_gw=$(awk '/^kvm_host_gw/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
     then
         echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
         sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${vars_file}"
     fi
 
-    iSkvm_host_mask_prefix=$(awk '/kvm_host_mask_prefix/ { print $2}' "${vars_file}")
+    iSkvm_host_mask_prefix=$(awk '/^kvm_host_mask_prefix/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
     then
         #echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
         sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${vars_file}"
     fi
 
-    iSkvm_host_interface=$(awk '/kvm_host_interface/ { print $2}' "${vars_file}")
+    iSkvm_host_interface=$(awk '/^kvm_host_interface/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_interface}" == "A" ]] || [[ "A${iSkvm_host_interface}" == 'A""' ]]
     then
         echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"

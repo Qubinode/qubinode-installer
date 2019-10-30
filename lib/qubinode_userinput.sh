@@ -15,12 +15,12 @@ function ask_user_for_networking_info () {
         sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
     fi
 
-    # ask user for public DNS server or use default
-    if grep '""' "${varsfile}"|grep -q dns_server_public
+    # ask user to enter a upstream dns server or default to 1.1.1.1
+    if grep '""' "${varsfile}"|grep -q dns_forwarder
     then
-        read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_server_public
-        dns_server_public=${dns_server_public:-1.1.1.1}
-        sed -i "s/dns_server_public: \"\"/dns_server_public: "$dns_server_public"/g" "${varsfile}"
+        read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_forwarder
+        dns_forwarder=${dns_forwarder:-1.1.1.1}
+        sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
     fi
 
     # ask user for their IP network and use the default
@@ -155,7 +155,12 @@ function ask_user_input () {
     printf "***************************\n\n"
     ask_user_for_networking_info "${vars_file}"
     ask_for_vault_values "${vault_vars_file}"
-    ask_user_if_qubinode_setup
+
+    if [ "A${qubinode_maintenance_opt}" == "Ahost" ] || [ "A${maintenance}" == "Akvmhost" ]
+    then
+        ask_user_if_qubinode_setup
+    fi
+
     if [ "A${product_in_use}" == "Aidm" ]
     then
         ask_user_for_custom_idm_server
