@@ -242,8 +242,10 @@ function qubinode_product_deployment () {
           idm)
               if [ "A${teardown}" == "Atrue" ]
               then
+                  echo "Running IdM VM teardown function"
                   qubinode_teardown_idm
               else
+                  echo "Running IdM VM deploy function"
                   qubinode_deploy_idm
               fi
               ;;

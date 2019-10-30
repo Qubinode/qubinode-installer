@@ -1,10 +1,15 @@
 #!/bin/bash
 
+setup_variables
 IDM_VM_PLAY="${project_dir}/playbooks/idm_vm_deployment.yml"
 product_in_use=idm
 idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 # Check if we should setup qubinode
 DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${idm_vars_file}" | tr -d '"')
+prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
+suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+idm_srv_hostname="$prefix-$suffix"
+idm_srv_fqdn="$prefix-$suffix.$domain"
 
 function display_idmsrv_unavailable () {
         echo ""
@@ -19,7 +24,6 @@ function display_idmsrv_unavailable () {
 # Ask if this host should be setup as a qubinode host
 function ask_user_for_custom_idm_server () {
     #echo "asking for custom IdM"
-    setup_variables
     if [ "A${DNS_SERVER_NAME}" == "Anone" ]
     then
         echo "If you are not deploying an IdM server and instead plan on using an existing IdM server."
@@ -72,16 +76,6 @@ function qubinode_idm_ask_ip_address () {
                 else
                     echo "The variable idm_server_ip is not defined in ${idm_vars_file}."
                 fi
-    
-                #if grep -q idm_server_ip "${idm_vars_file}"
-                #then            
-                #    if grep '""' "${idm_vars_file}"|grep -q dns_server_public
-                #    then
-                #        sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "${idm_vars_file}"
-                #    fi
-                #else
-                #    echo "The variable idm_server_ip is not defined in ${idm_vars_file}."
-                #fi
             elif [ "A${response}" == "Ano" ]
             then
                 sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" "${idm_vars_file}"
@@ -94,11 +88,6 @@ function qubinode_idm_ask_ip_address () {
 
 
 function isIdMrunning () {
-   setup_variables
-   prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
-   suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-   idm_srv_hostname="$prefix-$suffix"
-   idm_srv_fqdn="$prefix-$suffix.$domain"
    if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
    then
        idm_running=false
@@ -111,10 +100,8 @@ function isIdMrunning () {
 }
 
 function qubinode_teardown_idm () {
-    qubinode_vm_deployment_precheck
-    isIdMrunning
+    #qubinode_vm_deployment_precheck
     IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-
     if sudo virsh list |grep -q "${idm_srv_hostname}"
     then
         echo "Remove IdM VM"
