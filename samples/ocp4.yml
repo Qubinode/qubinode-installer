@@ -25,3 +25,5 @@ downloaded_files_dir: /tmp
 # found https://cloud.openshift.com/clusters/install
 image_pull_secret:
 ssh_ocp4_public_key:
+
+webserver_directory: /opt/qubinode_webserver
