@@ -6,7 +6,10 @@
 idm_admin_user: admin
 idm_hostname: "qbn-dns01"
 dns_server_public: ""
+dns_server: "{{ dns_server_public }}"
 qubinode_ptr: changeme.in-addr.arpa
+idm_dns_forward_zone: "changeme"
+idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 idm_reverse_zone:
   - "{{ qubinode_ptr }}"
 idm_repos:

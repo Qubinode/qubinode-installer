@@ -1146,6 +1146,12 @@ function display_idmsrv_unavailable () {
         exit 1
 }
 
+function deploy_dhcp_server() {
+  prereqs
+    CONFIGURE_DHCP_PLAY="${project_dir}/playbooks/configure_dhcp_server.yml"
+    ansible-playbook "${CONFIGURE_DHCP_PLAY}" || exit $?
+}
+
 function qubinode_dns_manager () {
     prereqs
     option="$1"
@@ -1418,6 +1424,7 @@ else
         elif [ "${product_opt}" == "dhcpserver" ]
         then
             qubinode_vm_manager deploy_dhcpserver
+            deploy_dhcp_server
         elif [ "${product_opt}" == "okd" ]
         then
           if [ "A${teardown}" == "Atrue" ]

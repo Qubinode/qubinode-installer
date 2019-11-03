@@ -1,0 +1,68 @@
+---
+- name: Prepare host for OpenShift 4.x
+  hosts: localhost
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+  become: yes
+
+  tasks:
+  - name: Enable rhel-7-server-extras-rpms repository
+    rhsm_repository:
+      name: rhel-7-server-extras-rpms
+      state: enabled
+
+  - name: Check /etc/systemd/network/10-mainif.network
+    stat:
+      path: /etc/systemd/network/10-mainif.network
+    register: stat_result
+
+  - name: ensure IPForward is set in /etc/systemd/network/10-mainif.network
+    lineinfile:
+      path: /etc/systemd/network/10-mainif.network
+      line: 'IPForward=ipv4'
+      insertafter: '^\[Network\]'
+      regexp: '^IPForward='
+    when: stat_result.stat.exists == True
+
+  - name: install podman,buildah and skopeo
+    yum:
+      name:
+      - podman
+      - buildah
+      - skopeo
+      - slirp4netns
+      state: present
+
+  - name: activate namespaces
+    become: True
+    sysctl:
+      name: user.max_user_namespaces
+      value: '15000'
+      sysctl_set: yes
+      state: present
+      reload: yes
+
+  - name: check if subuid file exists
+    stat:
+      path: /etc/subuid
+    register: subuid_setting
+
+  - name: check if subgid file exists
+    stat:
+      path: /etc/subgid
+    register: ssubgid_setting
+
+  - name: Ansible create file with content example
+    copy:
+      dest: "/etc/subuid"
+      content: |
+        {{ lookup('env','USER') }}:100000:65536
+    when: subuid_setting.stat.exists == True
+
+  - name: Ansible create file with content example
+    copy:
+      dest: "/etc/subgid"
+      content: |
+        {{ lookup('env','USER') }}:100000:65536
+    when: ssubgid_setting.stat.exists == True

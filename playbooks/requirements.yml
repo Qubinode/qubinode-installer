@@ -1,5 +1,5 @@
 - src: https://github.com/tosin2013/ansible-role-rhel7-kvm-cloud-init.git
-  version: master
+  version: v1.0
 
 - src: https://github.com/flyemsafe/swygue.edge_host_setup.git
   version: master
@@ -28,8 +28,8 @@
 - src: https://github.com/flyemsafe/swygue-install-satellite.git
   version: master
 
-- src: https://github.com/bertvv/ansible-role-dhcp.git
+- src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
   version: master
 
-- src: https://github.com/flyemsafe/swygue.coreos-virt-install-iso.git
+- src: https://github.com/Qubinode/openshift-4-loadbalancer.git
   version: master
