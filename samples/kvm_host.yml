@@ -93,7 +93,7 @@ network_interface_name: eno1
 kvm_host_libvirt_dir: /var/lib/libvirt/images
 host_device: nvme0n1
 vg_name: qubinode
-qubinode_bridge_name: qubinet
+qubinode_bridge_name: qubibr0
 
 libvirt_host_storage_pools:
   - name: default
