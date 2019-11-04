@@ -88,8 +88,12 @@ kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
 dns_servers:
   - "{{ dns_server }}"
   - "8.8.8.8"
+network_interface_name: eno1
 
 kvm_host_libvirt_dir: /var/lib/libvirt/images
+host_device: nvme0n1
+vg_name: qubinode
+qubinode_bridge_name: qubinet
 
 libvirt_host_storage_pools:
   - name: default
