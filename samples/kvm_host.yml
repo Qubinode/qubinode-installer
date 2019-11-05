@@ -92,7 +92,7 @@ network_interface_name: eno1
 
 kvm_host_libvirt_dir: /var/lib/libvirt/images
 host_device: nvme0n1
-vg_name: qubinode
+vg_name: vg_qubi
 qubinode_bridge_name: qubibr0
 
 libvirt_host_storage_pools:
@@ -102,4 +102,4 @@ libvirt_host_storage_pools:
     path: "{{ kvm_host_libvirt_dir }}"
 
 # set to false to skip creating a bridge interface
-configure_bridge: true
+configure_bridge: false
