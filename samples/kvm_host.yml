@@ -46,7 +46,7 @@ libvirt_services:
 
 ## OCP4
 cluster_name: ocp42
-public_domain: poc.lunchnet.example
+public_domain: "{{ domain }}"
 
 
 nat_network_name: "{{ cluster_name }}"

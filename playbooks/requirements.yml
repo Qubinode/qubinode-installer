@@ -1,5 +1,5 @@
 - src: https://github.com/tosin2013/ansible-role-rhel7-kvm-cloud-init.git
-  version: v1.0
+  version: ocp4
 
 - src: https://github.com/flyemsafe/swygue.edge_host_setup.git
   version: master

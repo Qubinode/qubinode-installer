@@ -18,7 +18,7 @@
     - name: add bootstrap to dns forward zone
       vars:
         ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
-        name: bootstrap-0
+        name: bootstrap
         ptr: 2
       set_fact:
         records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -27,7 +27,7 @@
     - name: add bootstrap to reverse forward zone
       vars:
         ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
-        name: bootstrap-0
+        name: bootstrap
         ptr: 2
       set_fact:
         reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
