@@ -54,8 +54,8 @@ libvirt_host_networks:
   - name: "{{ nat_network_name }}"
     create: true
     mode: nat
-    int_domain: "{{ public_domain }}"
-    external_domain: "{{ public_domain }}"
+    int_domain: ""{{ cluster_name }}.{{ public_domain }}"
+    external_domain: "{{ cluster_name }}.{{ public_domain }}"
     mac_start: "52:54:00:"
     master_count: 3
     compute_count: 2
