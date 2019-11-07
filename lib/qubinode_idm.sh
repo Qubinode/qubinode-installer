@@ -153,5 +153,5 @@ function qubinode_install_idm () {
 
 function qubinode_deploy_idm () {
     qubinode_deploy_idm_vm
-#    qubinode_install_idm
+    qubinode_install_idm
 }

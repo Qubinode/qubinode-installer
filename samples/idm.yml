@@ -5,8 +5,8 @@
 # IDM server attributes
 idm_server_ip: ""
 idm_public_ip: ""
-idm_check_static_ip: ""
 idm_admin_user: admin
+idm_check_static_ip: ""
 idm_hostname: "{{ instance_prefix }}-none"
 idm_reverse_zone:
   - "{{ qubinode_ptr }}"
@@ -21,8 +21,8 @@ idm_realm: "{{ domain | upper }}"
 idm_forward_ip: "{{ dns_forwarder }}"
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
-ipa_host: "{{idm_hostname}}.{{ domain }}"
-static_ip: True
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+static_ip: "{{ idm_check_static_ip }}"
 
 # Dns server VM attributes
 dns_server_vm:
