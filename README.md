@@ -22,11 +22,14 @@ The installer supports installing Red Hat OpenShift  (OCP) or The Origin Communi
 The Qubinode installer currently supports OpenShift 3.11.x builds.
 
 ## Recommended Hardware
-[Supported Hardware](docs/supported_hardware_coniguration.adoc)
+[Supported Hardware](docs/supported_hardware_coniguration.md)
 
 ## Quick start
 ```
-git clone https://github.com/tosin2013/qubinode-installer.git
+wget https://github.com/tosin2013/qubinode-installer/archive/master.zip
+unzip master.zip
+mv qubinode-installer-master quibinode-installer
+rm -f master.zip
 cd quibinode-installer
 ./quibinode-installer
 ```
@@ -61,7 +64,7 @@ cd quibinode-installer
 ```
 
 ## Installation
-[Installing The Qubinode](docs/installation_draft.adoc)
+[Installing The Qubinode](docs/installation_draft.md)
 
 ## Deployment Architecture
 

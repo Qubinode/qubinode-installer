@@ -2,7 +2,7 @@
   version: ocp4
 
 - src: https://github.com/flyemsafe/swygue.edge_host_setup.git
-  version: master
+  version: v1.0
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: master
