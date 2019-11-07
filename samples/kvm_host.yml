@@ -102,4 +102,4 @@ libvirt_host_storage_pools:
     path: "{{ kvm_host_libvirt_dir }}"
 
 # set to false to skip creating a bridge interface
-configure_bridge: false
+configure_bridge: true
