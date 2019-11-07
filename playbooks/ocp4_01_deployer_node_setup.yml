@@ -53,14 +53,14 @@
       path: /etc/subgid
     register: ssubgid_setting
 
-  - name: Ansible create file with content example
+  - name: Create /etc/subuid for non root podman exec
     copy:
       dest: "/etc/subuid"
       content: |
         {{ lookup('env','USER') }}:100000:65536
     when: subuid_setting.stat.exists == True
 
-  - name: Ansible create file with content example
+  - name: Create /etc/subgid for non root podman exec
     copy:
       dest: "/etc/subgid"
       content: |
