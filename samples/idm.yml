@@ -22,6 +22,7 @@ idm_forward_ip: "{{ dns_forwarder }}"
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
 ipa_host: "{{idm_hostname}}.{{ domain }}"
+static_ip: True
 
 # Dns server VM attributes
 dns_server_vm:
@@ -34,9 +35,9 @@ dns_server_vm:
     dns_group: dns
     dns_extra_storage: []
     dns_enable: true
-    dns_ip: "{{ idm_server_ip | default("") }}"
-    dns_mask: "{{ vm_net_netmask | default("") }}"
-    dns_gateway: "{{ vm_net_gateway | default("") }}"
+    dns_ip: "{{ idm_server_ip | default('', true) }}"
+    dns_mask: "{{ vm_net_netmask | default('', true) }}"
+    dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
 
 # This is required ansible-idm role

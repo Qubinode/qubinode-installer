@@ -102,7 +102,7 @@ function isIdMrunning () {
 function qubinode_teardown_idm () {
     #qubinode_vm_deployment_precheck
     IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-    if sudo virsh list |grep -q "${idm_srv_hostname}"
+    if sudo virsh list --all |grep -q "${idm_srv_hostname}"
     then
         echo "Remove IdM VM"
         ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
@@ -126,8 +126,8 @@ function qubinode_deploy_idm_vm () {
        echo "Deploy IdM VM"
        if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
        then
-           idm_server_ip=$(awk '/idm_server_ip/ {print $2}' "${idm_vars_file}")
            echo "Deploy with custom IP"
+           idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
            ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
         else
             echo "Deploy without custom IP"
@@ -146,7 +146,8 @@ function qubinode_install_idm () {
    if [ "A${idm_running}" == "Afalse" ]
    then
        echo "Install and configure the IdM server"
-       ansible-playbook "${IDM_INSTALL_PLAY}" || exit $?
+       idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+       ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
    fi
 }
 

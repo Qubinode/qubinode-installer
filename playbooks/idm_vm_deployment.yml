@@ -13,24 +13,17 @@
     vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
     vm_teardown: "{{ dns_server_vm.dns_teardown }}"
     vm_recreate: "{{ dns_server_vm.dns_recreate }}"
-    vm_ipaddress: "{{ dns_server_vm.dns_ip | default('') }}"
-    vm_gateway: "{{ dns_server_vm.dns_gateway | default('') }}"
-    vm_mask: "{{ dns_server_vm.dns_mask | default('') }}"
-    vm_mask_prefix: "{{ dns_server_vm.dns_mask_prefix | default('') }}"
+    vm_ipaddress: "{{ dns_server_vm.dns_ip }}"
+    vm_gateway: "{{ dns_server_vm.dns_gateway }}"
+    vm_mask: "{{ dns_server_vm.dns_mask }}"
+    vm_mask_prefix: "{{ dns_server_vm.dns_mask_prefix }}"
     vm_domain: "{{ domain }}"
     inventory_group: "{{ dns_server_vm.dns_group }}"
     extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
     enable: "{{ dns_server_vm.dns_enable }}"
-    dns_srv_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
+    current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
 
   tasks:
-    - name: ensure system is unregistered from Red Hat
-      vars:
-        rhsm_unregister: true
-      include_role:
-        name: swygue-redhat-subscription
-      when: vm_teardown|bool
-      delegate_to: dns
 
     - name: Create KVM VM for DNS Server
       include_role:
@@ -40,7 +33,7 @@
       lineinfile:
         dest: "{{ project_dir }}/playbooks/vars/idm.yml"
         regexp: '^idm_server_ip:'
-        line: "idm_server_ip: {{ dns_srv_ip }}"
+        line: "idm_server_ip: {{ current_vm_ip }}"
         state: present
       when: not vm_teardown|bool
 
