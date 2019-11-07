@@ -123,7 +123,7 @@ function qubinode_deploy_idm_vm () {
 
    if [ "A${idm_running}" == "Afalse" ]
    then
-       echo "Deploy IdM VM"
+       echo "running playbook ${IDM_VM_PLAY}"
        if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
        then
            echo "Deploy with custom IP"
@@ -140,14 +140,21 @@ function qubinode_deploy_idm_vm () {
 function qubinode_install_idm () {
    qubinode_vm_deployment_precheck
    ask_user_input
-   isIdMrunning
    IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
 
-   if [ "A${idm_running}" == "Afalse" ]
+   echo "Install and configure the IdM server"
+   idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+   ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+   isIdMrunning
+   if [ "A${idm_running}" == "Atrue" ]
    then
-       echo "Install and configure the IdM server"
-       idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-       ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+     printf "\n\n*********************************************************************************\n"
+     printf "    **IdM server is installed**\n"
+     printf "         Url: https://${idm_srv_fqdn}/ipa \n"
+     printf "         Username: $(whoami) \n"
+     printf "         Password: the vault variable *admin_user_password* \n\n"
+     printf "Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
+     printf "*******************************************************************************\n\n"
    fi
 }
 
