@@ -3,7 +3,7 @@ project_dir_path=$(sudo find / -type d -name qubinode-installer)
 project_dir=$project_dir_path
 echo ${project_dir}
 project_dir="`( cd \"$project_dir_path\" && pwd )`"
-vars_file="${project_dir}/playbooks/vars/all.yml"
+vars_file="${vars_file}"
 idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 
 # Get hardware check function for OCP size deployments
@@ -16,31 +16,31 @@ function checkyamls() {
     echo "idm yaml exists"
   fi
 
-  if [[  -f $project_dir/playbooks/vars/ocp3.yml  ]]; then
+  if [[  -f ${ocp3_vars_file}  ]]; then
     echo "ocp yaml exists"
-    OPENSHIFTYAML=$project_dir/playbooks/vars/ocp3.yml
-  elif [[  -f $project_dir/playbooks/vars/okd3.yml  ]]; then
+    OPENSHIFTYAML=${ocp3_vars_file}
+  elif [[  -f ${okd3_vars_file}  ]]; then
     echo "okd yaml exists"
-    OPENSHIFTYAML=$project_dir/playbooks/vars/okd3.yml
+    OPENSHIFTYAML=${okd3_vars_file}
   fi
 }
 
 function generate_defaults() {
-  if [[ -f $project_dir/playbooks/vars/defaults.yml ]]; then
+  if [[ -f ${ocp_defaults_vars_file} ]]; then
     echo "Defaults yaml exists"
   else
     echo "Cannot continue defaults yaml does not exist!"
     exit 1
   fi
 
-cat >${project_dir}/playbooks/vars/all.yml<<YAML
-  $(cat $project_dir/playbooks/vars/defaults.yml )
+cat >${vars_file}<<YAML
+  $(cat ${ocp_defaults_vars_file} )
 YAML
 
 }
 
 function generate_kvm_host() {
-  if [[  -f $project_dir/playbooks/vars/kvm_host.yml  ]]; then
+  if [[  -f ${kvm_host_vars_file}  ]]; then
     echo "kvm_host yaml exists"
   else
     echo "Cannot continue kvm_host yaml does not exist!"
@@ -50,8 +50,8 @@ function generate_kvm_host() {
   echo  "
 ###
 # KVM HOST Information
-###" >> ${project_dir}/playbooks/vars/all.yml
-  cat $project_dir/playbooks/vars/kvm_host.yml >> ${project_dir}/playbooks/vars/all.yml
+###" >> ${vars_file}
+  cat ${kvm_host_vars_file} >> ${vars_file}
 
 }
 
@@ -68,22 +68,22 @@ function generate_idm_product() {
 ###
 # IDM PRODUCT
 ###"
-#  cat $idm_vars_file >> ${project_dir}/playbooks/vars/all.yml
+#  cat $idm_vars_file >> ${vars_file}
 }
 
 function generate_ocp_product() {
-  productname=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  productname=$(awk '/^openshift_product:/ {print $2}' "${vars_file}")
   if [[ $productname == "ocp" ]]; then
-    if [[  -f $project_dir/playbooks/vars/ocp3.yml  ]]; then
-        OPENSHIFTYAML=$project_dir/playbooks/vars/ocp3.yml
+    if [[  -f ${ocp3_vars_file}  ]]; then
+        OPENSHIFTYAML=${ocp3_vars_file}
       echo "ocp3 yaml exists"
     else
       echo "Cannot continue ocp3 yaml does not exist!"
       exit 1
     fi
   elif [[ $productname == "okd"  ]]; then
-    if [[  -f $project_dir/playbooks/vars/okd3.yml  ]]; then
-      OPENSHIFTYAML=$project_dir/playbooks/vars/okd3.yml
+    if [[  -f ${okd3_vars_file}  ]]; then
+      OPENSHIFTYAML=${okd3_vars_file}
       echo "okd3 yaml exists"
     else
       echo "Cannot continue okd3 yaml does not exist!"
@@ -98,7 +98,7 @@ function generate_ocp_product() {
 ###
 #  Openshift Product
 ###"
-  cat $OPENSHIFTYAML >> ${project_dir}/playbooks/vars/all.yml
+  cat $OPENSHIFTYAML >> ${vars_file}
 }
 
 case ${1} in

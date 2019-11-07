@@ -15,6 +15,8 @@ function product_requirements () {
     inventory_file="${hosts_inventory_dir}/hosts"
     ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
+    ocp_defaults_vars_file="${project_dir}/playbooks/vars/defaults.yml"
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -27,19 +29,19 @@ function product_requirements () {
      cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
     fi
 
-    # create vault vars file
+    # copy sample vault file to playbook/vars directory
     if [ ! -f "${vault_vars_file}" ]
     then
         cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
     fi
 
-    # create ocp3 vars file
+    # copy sample ocp3 file to playbook/vars directory
     if [ ! -f "${ocp3_vars_file}" ]
     then
         cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
     fi
 
-    # create ocp3 vars file
+    # copy sample okd file to playbook/vars directory
     if [ ! -f "${okd3_vars_file}" ]
     then
         cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
@@ -49,23 +51,6 @@ function product_requirements () {
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
     then
         cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
-    fi
-
-    # setting OpenShift Product Type
-    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-    #echo "${product_opt}" || exit 1
-    if grep 'ocp3' "${vars_file}"|grep -q "product:"
-    then
-        echo "Updating OpenShift Product Type"
-        sed -i "s/product:.*/product: okd3/" "${vars_file}"
-    fi
-
-    if [[  ${product_opt} == "okd" ]]; then
-      if grep 'rhsm_setup_insights_client: true' "${vars_file}"|grep -q "product:"
-      then
-          echo "Disable Red Hat insights on OKD Deploument"
-          sed -i "s/rhsm_setup_insights_client:.*/rhsm_setup_insights_client: false/" "${vars_file}"
-      fi
     fi
 }
 
@@ -280,7 +265,7 @@ function qubinode_maintenance_options () {
         qubinode_setup_kvm_host
     elif [ "${qubinode_maintenance_opt}" == "deploy_nodes" ]
     then
-        qubinode_vm_manager deploy_nodes
+        maintenance_deploy_nodes
     elif [ "${qubinode_maintenance_opt}" == "undeploy" ]
     then
         #TODO: this should remove all VMs and clean up the project folder

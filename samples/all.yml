@@ -30,6 +30,9 @@ rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
 org_id: "{{ rhsm_org }}"
 
+# OpenShift VM info
+openshift_product: ""
+product: "{{ openshift_product }}"
 vm_teardown: false
 admin_user: ""
 openshift_user: qubinode
@@ -245,7 +248,6 @@ network_interface_name: "{{ kvm_host_interface }}"
 ##############################
 # Required for OpenShift/OKD #
 ##############################
-qubinode_product_name: ocp3
 
 inventory_destination: "{{ inventory_dir }}"
 glusterfs: True
@@ -307,7 +309,7 @@ qubi_required_pkgs: |
    bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
-product: ocp3
+
 
 ## OCP4
 cluster_name: ocp42

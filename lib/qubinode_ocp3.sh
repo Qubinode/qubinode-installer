@@ -1,5 +1,6 @@
 #!/bin/bash
 
+product_in_use: ocp3
 
 function check_for_openshift_subscription () {
     # This function trys to find a subscription that mataches the OpenShift product
@@ -99,11 +100,11 @@ function openshift-setup() {
   fi
 
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
-  INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+  INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   cat $INVENTORYDIR/inventory.3.11.rhel.gluster
   HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
-  OCUSER=$(cat ${project_dir}/playbooks/vars/all.yml | grep openshift_user: | awk '{print $2}')
+  OCUSER=$(cat ${vars_file} | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
     echo "***************************************"
     echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
@@ -125,10 +126,10 @@ function openshift-setup() {
 }
 
 function qubinode_uninstall_openshift() {
-  INVENTORYDIR=$(cat ${project_dir}/playbooks/vars/all.yml | grep inventory_dir: | awk '{print $2}' | tr -d '"')
+  INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
 
   if [[ ${product_in_use} == "ocp3" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster    /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
+    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
   elif [[ ${product_in_use} == "okd3" ]]; then
     echo "Work in Progress"
     exit 1
@@ -285,7 +286,7 @@ function qubinode_install_openshift () {
     # ensure required variables and files are in place
     product_requirements
 
-    product_in_use=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    product_in_use=$(awk '/^product:/ {print $2}' "${vars_file}")
     qubinode_product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
