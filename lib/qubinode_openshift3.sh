@@ -2,6 +2,22 @@
 
 product_in_use: ocp3
 
+function openshift3_config () {
+  check_hardware_resources
+  echo "REMINDER that this function qubinode_openshift3.sh as this exit that should be removed"
+  exit
+  if [[ "A${product_opt}" == "Aocp3"  ]]
+  then
+      bash $generate_all_yaml_script ocp  || exit 1
+  elif [[ "A${product_opt}" == "Aokd3"  ]]; then
+      bash $generate_all_yaml_script okd  || exit 1
+  else
+      echo "${product_opt} - Unsupported OpenShift 3 distro"
+      echo "ocp3 and okd3 are supported OpenShift 3 distro"
+      exit $?
+  fi
+}
+
 function check_for_openshift_subscription () {
     # This function trys to find a subscription that mataches the OpenShift product
     # then saves the pool id for that function and updates the varaibles file.

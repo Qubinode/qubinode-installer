@@ -24,7 +24,7 @@
   tasks:
     - name: Create KVM VM for Satellite Server Server
       include_role:
-        name: ansible-role-rhel7-kvm-cloud-init
+        name: deploy-kvm-vm
       tags: satellite_vm
 
     - name: set dns record state

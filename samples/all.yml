@@ -1,40 +1,67 @@
 ---
-##################################
-# Default VM instance attributes #
-##################################
-
-# all non sensitive variables are defined here
-instance_prefix: qbn
-preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
-deployment_type: standard
-update_inventory: true
+######################################
+#         USER VARIABLES             #
+# The are autojatically updated or   #
+# you can update them manually       #
+######################################
 inventory_dir: ""
 project_dir: ""
-vm_data_dir: "/var/lib/vmdata"
-inventory_file: "{{ inventory_dir }}/hosts"
-
-admin_user_password: "{{ admin_user_password }}"
-kvm_vm_root_pwd: "{{ admin_user_password }}"
-vm_domain: "{{ domain }}"
+admin_user: ""
+domain: ""
 
 # Public DNS server
 dns_forwarder: ""
 
-# RHSM and the swygue-redhat-subscription role
+# ROLE: swygue-redhat-subscription
+# whether to use username/pass or RHSM
+rhsm_reg_method: ""
+
+######################################
+#         SYSTEM VARIABLES           #
+# You shouldn't need to change these # 
+######################################
+instance_prefix: qbn
+preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
+update_inventory: true
+vm_data_dir: "/var/lib/vmdata"
+inventory_file: "{{ inventory_dir }}/hosts"
+admin_user_password: "{{ admin_user_password }}"
+kvm_vm_root_pwd: "{{ admin_user_password }}"
+vm_domain: "{{ domain }}"
+search_domains:
+  - "{{ vm_domain }}"
+# This is for /etc/resolv.conf
+dns_servers:
+  - "{{ idm_server_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
+ansible_repo: rhel-7-server-ansible-2.6-rpms
+rhel_release: 7.6
+
+# ROLE: swygue-redhat-subscription
 rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
-rhsm_reg_method: ""
 rhsm_setup_insights_client: false
 rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
 org_id: "{{ rhsm_org }}"
 
+# ROLE: swygue.edge_host_setup role
+# the user that will admin the system
+ssh_username: "{{ admin_user }}"
+
+# ROLE: deploy-kvm-vm
+#--------------------
+# name of the libvirt network to use
+vm_libvirt_net: "qubinet"
+# Use to create VM
+os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
+
+deployment_type: standard
+
 # OpenShift VM info
 openshift_product: ""
 product: "{{ openshift_product }}"
-vm_teardown: false
-admin_user: ""
 openshift_user: qubinode
 instances:
   - name: master
@@ -92,18 +119,12 @@ instances:
     vm_recreate: false
     qty: 0
 
-# This is for /etc/resolv.conf
-dns_servers:
-  - "{{ idm_server_ip | default('1.1.1.1') }}"
-  - 8.8.8.8
 
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
-ansible_repo: rhel-7-server-ansible-2.6-rpms
 openshift_repo: rhel-7-server-ose-3.11-rpms
-rhel_release: 7.6
 okd_repos:
   - rhel-7-server-rpms
   - rhel-7-server-optional-rpms
@@ -131,7 +152,6 @@ ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,ba
 
 ocp_gluster_pkg: docker-1.13.1
 
-valid_products: "okd3,ocp3,idm,kvmhost,satellite,rhhi"
 
  # LVM
 logical_volumes:
@@ -142,13 +162,6 @@ logical_volumes:
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
 
-###########################################
-# KVM instance                            #
-# ROLE: ansible-role-rhel7-kvm-cloud-init #
-###########################################
-
-# name of the libvirt network to use
-vm_libvirt_net: "qubinet"
 
 #################################
 # KVM host / Qubinode variables #
@@ -168,8 +181,6 @@ qubinode_bridge_name: qubibr0
 ###########################################
 # variables for swygue.edge_host_setup role
 
-# the user that will admin the system
-ssh_username: "{{ admin_user }}"
 
 # should a bridge interface be created
 configure_bridge: true
@@ -267,11 +278,7 @@ enable_metrics: True
 enable_logging: False
 enable_prometheous_operator: False
 
-search_domains:
-  - "{{ vm_domain }}"
 
-# Use to create VM
-os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
 
 
 ##################
@@ -282,7 +289,6 @@ dns_wildcard: "*.apps"
 ###########################
 # General Networking Info #
 ###########################
-domain: ""
 
 ####################
 ## VM Network Info

@@ -1,14 +1,10 @@
 #!/bin/bash
-project_dir_path=$(sudo find / -type d -name qubinode-installer)
-project_dir=$project_dir_path
-echo ${project_dir}
-project_dir="`( cd \"$project_dir_path\" && pwd )`"
-vars_file="${vars_file}"
-idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 
-# Get hardware check function for OCP size deployments
+source "${project_dir}/lib/01_product_functions.sh"
+echo "Checking hardware to determine the OCP size deployment"
 source ${project_dir}/lib/qubinode_hardware_check.sh
 
+exit
 function checkyamls() {
 
 

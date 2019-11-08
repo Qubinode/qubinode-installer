@@ -48,7 +48,9 @@ source "${project_dir}/lib/qubinode_idm.sh"
 source "${project_dir}/lib/qubinode_ansible.sh"
 source "${project_dir}/lib/qubinode_rhsm.sh"
 source "${project_dir}/lib/qubinode_deploy_ocp_nodes.sh"
-#source "${project_dir}/lib/qubinode_ocp3.sh"
+source "${project_dir}/lib/qubinode_openshift3.sh"
+source "${project_dir}/lib/qubinode_hardware_check.sh"
+
 
 # Exit if this is executed as the root user
 if is_root; then

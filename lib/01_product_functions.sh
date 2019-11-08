@@ -15,8 +15,8 @@ function product_requirements () {
     inventory_file="${hosts_inventory_dir}/hosts"
     ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
-    ocp_defaults_vars_file="${project_dir}/playbooks/vars/defaults.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -41,7 +41,7 @@ function product_requirements () {
         cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
     fi
 
-    # copy sample okd file to playbook/vars directory
+    # copy sample okd3 file to playbook/vars directory
     if [ ! -f "${okd3_vars_file}" ]
     then
         cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
@@ -170,7 +170,7 @@ function qubinode_vm_deployment_precheck () {
        then
            qubinode_setup_ansible
        else
-           STATUS=$(ansible-galaxy list | grep ansible-role-rhel7-kvm-cloud-init >/dev/null 2>&1; echo $?)
+           STATUS=$(ansible-galaxy list | grep deploy-kvm-vm >/dev/null 2>&1; echo $?)
            if [ "A${STATUS}" != "A0" ]
            then
                qubinode_setup_ansible
@@ -205,12 +205,16 @@ function check_for_rhel_qcow_image () {
 function qubinode_product_deployment () {
     # this function deploys a supported product
     PRODUCT_OPTION=$1
+
+    # the product_opt is still use by some functions and it should be refactored
+    product_opt="${PRODUCT_OPTION}"
     AVAIL_PRODUCTS="ocp3 ocp4 satellite idm kvmhost"
     case $PRODUCT_OPTION in
           ocp3)
               echo "Installing ocp3"
-              are_nodes_deployed
-              qubinode_run_openshift_installer
+              openshift3_config
+              #are_nodes_deployed
+              #qubinode_run_openshift_installer
               ;;
           ocp4)
               echo "Installing ocp4"
