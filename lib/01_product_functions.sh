@@ -208,15 +208,20 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="ocp3 ocp4 satellite idm kvmhost"
+    AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost"
     case $PRODUCT_OPTION in
           ocp3)
-              echo "Installing ocp3"
-              openshift3_config
-              #are_nodes_deployed
-              #qubinode_run_openshift_installer
+              product_in_use=ocp3
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_teardown_openshift
+              else
+                  echo "Deploying the OpenShift release $product_in_use."
+                  qubinode_deploy_openshift
+              fi
               ;;
           ocp4)
+              product_in_use=ocp4
               echo "Installing ocp4"
               ;;
           satellite)

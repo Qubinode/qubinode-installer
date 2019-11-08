@@ -4,7 +4,10 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/openshift3_size.yml
   tasks:
+  - name: include additional openshift variables
+    include_vars: "vars/{{ openshift_product }}.yml"
   - name: obtain the fully qualified domain name of the host
     shell: hostname -f
     ignore_errors: no

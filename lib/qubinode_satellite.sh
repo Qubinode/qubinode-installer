@@ -77,17 +77,8 @@ function qubinode_deploy_satellite () {
         echo "The OpenShift Pool ID is not available to playbooks/vars/all.yml"
     fi
 
-   # Check for ansible and role swygue-install-satellite
-   if [ -f /usr/bin/ansible ]
-   then
-       ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue-install-satellite')
-       if [ "A${ROLE_PRESENT}" == "A" ]
-       then
-           qubinode_setup_ansible
-       fi
-   else
-       qubinode_setup_ansible
-   fi
+   # Ensure required role exist
+   check_for_required_role swygue-install-satellite
 
    # Deploy or teardown Satellite
    if [ "A${teardown}" == "Atrue" ]

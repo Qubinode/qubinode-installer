@@ -37,6 +37,9 @@ dns_servers:
 ansible_repo: rhel-7-server-ansible-2.6-rpms
 rhel_release: 7.6
 
+# use by funciton check_hardware_resources
+libvirt_pool_name: default
+
 # ROLE: swygue-redhat-subscription
 rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"

@@ -16,22 +16,25 @@ function check_hardware_resources () {
     AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | awk '/images/ {print $5,$6}')
 
     # Check for available storage
-    if sudo virsh pool-list --details | grep images
+    if ! sudo virsh list | grep 'master01\|node01\|infra01'
     then
-        if [[ ${AVAILABLE_STORAGE} -ge ${RECOMMENDED_STORAGE} ]]
+        if sudo virsh pool-list --details | grep "${libvirt_pool_name}"
         then
-          echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} meets the requirements."
-        elif [[ ${AVAILABLE_STORAGE} -ge ${MIN_STORAGE} ]]
-        then
-          echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
-          echo "The installation will continue, but you may run out of storage depending on your workload."
+            if [[ ${AVAILABLE_STORAGE} -ge ${RECOMMENDED_STORAGE} ]]
+            then
+              echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} meets the requirements."
+            elif [[ ${AVAILABLE_STORAGE} -ge ${MIN_STORAGE} ]]
+            then
+              echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
+              echo "The installation will continue, but you may run out of storage depending on your workload."
+            else
+                echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet the requirements."
+                 exit $?
+            fi
         else
-          echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet the requirements."
-          exit $?
+            echo "Could not find the qubinode libvirt pool **${libvirt_pool_name}**"
+            echo "No storage check was performed, please ensure your pool has enough storage"
         fi
-    else
-        echo "Could not find the qubinode libvirt pool **images**"
-        echo "No storage check was performed, please ensure your pool has enough storage"
     fi
 
     # Set OpenShift deployment size based on available memory

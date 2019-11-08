@@ -1,23 +1,5 @@
 #!/bin/bash
 
-product_in_use: ocp3
-
-function openshift3_config () {
-  check_hardware_resources
-  echo "REMINDER that this function qubinode_openshift3.sh as this exit that should be removed"
-  exit
-  if [[ "A${product_opt}" == "Aocp3"  ]]
-  then
-      bash $generate_all_yaml_script ocp  || exit 1
-  elif [[ "A${product_opt}" == "Aokd3"  ]]; then
-      bash $generate_all_yaml_script okd  || exit 1
-  else
-      echo "${product_opt} - Unsupported OpenShift 3 distro"
-      echo "ocp3 and okd3 are supported OpenShift 3 distro"
-      exit $?
-  fi
-}
-
 function check_for_openshift_subscription () {
     # This function trys to find a subscription that mataches the OpenShift product
     # then saves the pool id for that function and updates the varaibles file.
@@ -28,9 +10,9 @@ function check_for_openshift_subscription () {
     then
        echo "The system is already attached to the Red Hat OpenShift Container Platform with pool id: ${CONSUMED}"
        POOL_ID="${CONSUMED}"
-    elif [ "A${CONSUMED}" != "A" ]
+    elif [ "A${CONSUMED}" == "A" ]
     then
-       echo "Found the repo id: ${CONSUMED} for Red Hat OpenShift Container Platform"
+       echo "Found the repo id: ${AVAILABLE} for Red Hat OpenShift Container Platform"
        POOL_ID="${AVAILABLE}"
     else
         cat "${project_dir}/docs/subscription_pool_message"
@@ -101,24 +83,35 @@ function set_openshift_rhsm_pool_id () {
 }
 
 
-function openshift-setup() {
+function qubinode_deploy_openshift() {
   # Does some prep work then runs the official OpenShift ansible playbooks
   setup_variables
   validate_openshift_pool_id
-  if [[ ${product_in_use} == "ocp3" ]]; then
-    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
-  elif [[ ${product_in_use} == "okd3" ]]; then
-    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+  check_hardware_resources
+  if [[ ${product_in_use} == "ocp3" ]]
+  then
+     # ensure we are deploying openshift enterprise
+     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+  elif [[ ${product_in_use} == "okd3" ]]
+  then
+      sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+  else
+      echo "Unsupported OpenShift distro"
+      exit 1
   fi
 
-  if [[ ! -d /usr/share/ansible/openshift-ansible ]]; then
+  # ensure KVMHOST is setup as a jumpbox
+  if [[ ! -d /usr/share/ansible/openshift-ansible ]]
+  then
       ansible-playbook "${project_dir}/playbooks/setup_openshift_deployer_node.yml" || exit $?
   fi
 
   ansible-playbook "${project_dir}/playbooks/openshift_inventory_generator.yml" || exit $?
+  exit
   INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
-  cat $INVENTORYDIR/inventory.3.11.rhel.gluster
-  HTPASSFILE=$(cat ${INVENTORYDIR}/inventory.3.11.rhel.gluster | grep openshift_master_htpasswd_file= | awk '{print $2}')
+  INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
+  cat $INVENTORYFILE || exit 1
+  HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
   OCUSER=$(cat ${vars_file} | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
@@ -131,13 +124,16 @@ function openshift-setup() {
   echo "Running Qubi node openshift deployment checks."
   ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${project_dir}/playbooks/pre-deployment-checks.yml" || exit $?
 
-  if [[ ${product_in_use} == "ocp3" ]]; then
-    cd /usr/share/ansible/openshift-ansible
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/prerequisites.yml || exit $?
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster playbooks/deploy_cluster.yml || exit $?
-  elif [[ ${product_in_use} == "okd3" ]]; then
-    echo "Work in Progress"
-    exit 1
+  if [[ ${product_in_use} == "ocp3" ]]
+  then
+      cd /usr/share/ansible/openshift-ansible
+      ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
+      ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
+  elif [[ ${product_in_use} == "okd3" ]]
+  then
+      cd ${HOME}/openshift-ansible
+      ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
+      ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
   fi
 }
 
@@ -152,42 +148,22 @@ function qubinode_uninstall_openshift() {
   fi
 }
 
-function qubinode_run_openshift_installer () {
-    # This function calls the openshift-setup which in turns
-    # runs the official openshift ansible playbooks
-    # Teardown the openshift deployment
-
-    # ensure subscription is setup for ocp3
-    set_openshift_rhsm_pool_id
- 
-    if [ "A${teardown}" == "Atrue" ]
+function qubinode_teardown_openshift () {
+    echo "This will delete all nodes and remove all DNS entries"
+    confirm "Are you sure you want to undeploy the entire ${product_in_use} cluster?"
+    if [ "A${response}" == "Ayes" ]
     then
-        echo "This will delete all nodes and remove all DNS entries"
-        confirm "Are you sure you want to undeploy the entire ${product_in_use} cluster?"
-        if [ "A${response}" == "Ayes" ]
-        then
-            #qubinode_vm_manager deploy_nodes
-            if [[ -f ${HTPASSFILE} ]]; then
-                rm -f ${HTPASSFILE}
-            fi
-        else
-            echo "No changes will be made"
-            exit
-        fi
-        # OpenShift Deployment
-    elif [ "A${qubinode_product}" == "Atrue" ]
-    then
-        if [ "A${product_in_use}" == "Aocp3" ] || [ "A${product_in_use}" == "Aokd3" ]
-        then
-            echo "Deploying ${product_in_use} cluster"
-            openshift-setup
-        else
-           display_help
+        # call function to remove all node VMs
+        qubinode_openshift_nodes
+        if [[ -f ${HTPASSFILE} ]]; then
+            rm -f ${HTPASSFILE}
         fi
     else
-        display_help
+        echo "No changes will be made"
+        exit
     fi
 }
+
 
 function cleanStaleKnownHost () {
     user=$1
@@ -211,89 +187,7 @@ function canSSH () {
     echo $RESULT
 }
 
-function qubinode_ocp3_nodes_postdeployment () {
-   # This functions does post deployment on nodes
-   # And it also create DNS records
-   # This function is called by are_nodes_deployed
-   NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
-   CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
-   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
 
-   if [ "A${teardown}" == "Atrue" ]
-   then
-       if sudo virsh list |grep -q "${idm_srv_hostname}"
-       then
-           echo "Remove ${qubinode_product} will be removed"
-       fi
-   else
-       echo "Post configure ${qubinode_product} VMs"
-       ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
-       ansible-playbook "${NODES_POST_PLAY}" || exit $?
-   fi
-}
-
-
-function qubinode_ocp3_nodes () {
-   # This functions deploys OpenShift nodes or undeploys them
-   # This function is called by are_nodes_deployed
-   qubinode_vm_deployment_precheck  #Ensure the host is setup correctly
-   NODES_PLAY="${project_dir}/playbooks/deploy_nodes.yml"
-   NODES_POST_PLAY="${project_dir}/playbooks/nodes_post_deployment.yml"
-   CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
-   NODES_DNS_RECORDS="${project_dir}/playbooks/nodes_dns_records.yml"
-
-   if [ "A${teardown}" == "Atrue" ]
-   then
-       if sudo virsh list |grep -q "${idm_srv_hostname}"
-       then
-           echo "Remove ${qubinode_product} VMs"
-           ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true" || exit $?
-           ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-           if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
-              rm -rf ${CHECK_OCP_INVENTORY}
-           fi
-       fi
-   else
-       echo "Deploy ${qubinode_product} VMs"
-       ansible-playbook "${NODES_PLAY}" || exit $?
-       ansible-playbook "${NODES_POST_PLAY}" || exit $?
-   fi
-}
-
-function are_nodes_deployed () {
-    nodes_list="${VM_DATA_DIR}/nodes_list.txt"
-    if [ -f "${nodes_list}" ]
-    then
-        for node in $(cat "${nodes_list}")
-        do
-            if sudo virsh list |grep running |grep -q $node
-            then
-                IP=$(awk -v var="${node}" '$0 ~ var {print $0}' "${project_dir}/inventory/hosts"|grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-                cleanStaleKnownHost "${ADMIN_USER}" "${IP}" "${node}"
-                ssh_status=$(canSSH "${ADMIN_USER}" "${IP}")
-                if [ "A${ssh_status}" == "ASSH_OK" ]
-                then
-                    echo "node $node VM is already deployed and ssh accessible"
-                else
-                    echo "Run deploy code"
-                    break
-                fi
-
-            else
-                echo "node $node VM is not running"
-                run_node_deploy=yes
-                break
-            fi
-        done
-
-   fi
-
-   if [ "A${run_nodes_deploy}" == "Ayes" ]
-   then
-       qubinode_deploy_ocp3
-   fi
-   qubinode_ocp3_nodes_postdeployment
-}
 
 function qubinode_install_openshift () {
     echo "Ensure ${CURRENT_USER} is in sudoers"

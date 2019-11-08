@@ -7,11 +7,32 @@ EDITOR=vim
 PASSWD=/etc/passwd
 RED='\033[0;41;30m'
 STD='\033[0;0;39m'
-project_dir_path=$(sudo find / -type d -name qubinode-installer)
-project_dir=$project_dir_path
-echo ${project_dir}
-project_dir="`( cd \"$project_dir_path\" && pwd )`"
 
+function config_err_msg () {
+    cat << EOH >&2
+  There was an error finding the full path to the qubinode-installer project directory.
+EOH
+}
+
+# this function just make sure the script
+# knows the full path to the project directory
+# and runs the config_err_msg if it can't determine
+# that start_deployment.conf can find the project directory
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+setup_required_paths
+openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size.yml"
 
 if [[ -z $1 ]]; then
   echo "No Flag has been passed. "
@@ -128,7 +149,7 @@ minimal_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
+    cp -f ${project_dir}/samples/ocp_vm_sizing/minimal.yml ${openshift_size_vars_file}
     exit 0
   fi
 
@@ -143,7 +164,7 @@ minimal_cns_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
+    cp -f ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml ${openshift_size_vars_file}
     exit 0
   fi
 }
@@ -157,7 +178,7 @@ perfomance_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/perfomance.yml >> ${project_dir}/playbooks/vars/all.yml
+    cp -f ${project_dir}/samples/ocp_vm_sizing/perfomance.yml ${openshift_size_vars_file}
     exit 0
   fi
 
@@ -172,7 +193,7 @@ standard_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/standard.yml >> ${project_dir}/playbooks/vars/all.yml
+    cp -f ${project_dir}/samples/ocp_vm_sizing/standard.yml ${openshift_size_vars_file}
     exit 0
   fi
 

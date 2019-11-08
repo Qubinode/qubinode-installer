@@ -5,7 +5,12 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/openshift3_size.yml
   tasks:
+    - name: include additional openshift variables
+      include_vars: "vars/{{ openshift_product }}.yml"
+    - name: include additional openshift variables
+      include_vars: "vars/{{ openshift_product }}.yml"
     - name: Generating Inventory File
       include_role:
         name: openshift-inventory

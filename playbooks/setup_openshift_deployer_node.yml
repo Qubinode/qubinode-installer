@@ -4,9 +4,12 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/openshift3_size.yml
   become: yes
 
   tasks:
+  - name: include additional openshift variables
+    include_vars: "vars/{{ openshift_product }}.yml"
   - name:  Attach a specific subscription through the Customer Portal
     command: subscription-manager refresh
     when: openshift_deployment_type == 'openshift-enterprise'

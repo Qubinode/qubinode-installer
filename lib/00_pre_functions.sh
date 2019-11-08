@@ -163,3 +163,18 @@ function isRPMinstalled() {
 }
 
 
+function check_for_required_role () {
+   # Ensure required ansible role exist on the system
+   REQUIRED_ROLE=$1
+   if [ -f /usr/bin/ansible ]
+   then
+       ROLE_PRESENT=$(ansible-galaxy list | grep "${REQUIRED_ROLE}")
+       if [ "A${ROLE_PRESENT}" == "A" ]
+       then
+           qubinode_setup_ansible
+       fi
+   else
+       qubinode_setup_ansible
+   fi
+}
+
