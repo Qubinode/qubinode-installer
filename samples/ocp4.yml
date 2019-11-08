@@ -7,7 +7,8 @@ dns_wildcard: "*.apps"
 listen_address: "{{ kvm_host_ip }}"
 
 # OpenShift client  and install information
-ocp4_version: 4.2.0
+ocp4_version: 4.2.2
+ocp4_image_version: 4.2.0
 ocp4_release: latest
 ocp4_dependencies_version: 4.2
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}/"
@@ -25,3 +26,6 @@ downloaded_files_dir: /tmp
 # found https://cloud.openshift.com/clusters/install
 image_pull_secret:
 ssh_ocp4_public_key:
+
+#Network name
+libvirt_network_name: "{{ nat_network_name }}"

@@ -6,7 +6,7 @@
       - vars/vault.yml
     become: yes
     vars:
-      vm_type: compute
+      vm_type: worker
       coreos_vm_hd_size: 120G
       coreos_vm_memory_size: 16192
       libvirt_network_name: ocp42
