@@ -73,6 +73,7 @@ ssh_username: "{{ admin_user }}"
 vm_libvirt_net: "qubinet"
 # Use to create VM
 os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
+vm_teardown: False
 
 deployment_type: standard
 
