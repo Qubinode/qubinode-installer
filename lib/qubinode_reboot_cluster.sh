@@ -1,15 +1,30 @@
 #!/bin/bash
 
-project_dir_path=$(sudo find / -type d -name qubinode-installer)
-project_dir=$project_dir_path
-echo ${project_dir}
-project_dir="`( cd \"$project_dir_path\" && pwd )`"
+function config_err_msg () {
+    cat << EOH >&2
+  There was an error finding the full path to the qubinode-installer project directory.
+EOH
+}
 
+# this function just make sure the script
+# knows the full path to the project directory
+# and runs the config_err_msg if it can't determine
+# that start_deployment.conf can find the project directory
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
 
-domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-ssh_username=$(awk '/^admin_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-ocp_user=$(awk '/^openshift_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-productname=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+setup_required_paths
+openshift3_variables
 
 infracount=$(cat "${project_dir}/inventory/hosts" | grep $productname-infra | awk '{print $1}')
 fdqn_all_node_names="";
@@ -83,4 +98,6 @@ rm /tmp/ocp-power-management.yml
 rm /tmp/cluster-inventory
 
 echo "Run Smoke test on environment."
-echo "./qubinode-installer  -c smoketest"
+echo "${project_dir}/qubinode-installer -c smoketest"
+
+exit 0

@@ -4,9 +4,11 @@ openshift3_variables () {
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
     product=$(awk '/^openshift_product:/ {print $2}' "${vars_file}")
-    web_console="https://${prefix}-${product}-master01.${domain}:8443"
+    productname="${prefix}-${product}"
+    web_console="https://${productname}-master01.${domain}:8443"
     ocp_user=$(awk '/^openshift_user:/ {print $2}' "${vars_file}")
     product_in_use="${product}"
+    ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
 }
 
 function check_for_openshift_subscription () {
