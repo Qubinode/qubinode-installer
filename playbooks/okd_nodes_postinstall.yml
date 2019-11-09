@@ -34,8 +34,13 @@
     - pkgs
 
 - name: install required node packages
-  yum:
-    name: "{{ okd_nodes_pkgs }}"
-  register: node_pkgs_install
+  shell: >
+    rpm -q "{{ item }}" || yum install -y "{{ item }}" && echo yes
+  args:
+    warn: false
+  loop: "{{ okd_nodes_pkgs }}"
+  register: pkg_installed
+  changed_when: pkg_installed.stdout == 'yes'
   tags:
     - pkgs
+
