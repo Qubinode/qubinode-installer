@@ -1,15 +1,10 @@
 # Required for OpenShift/OKD
-inventory_destination: "{{ inventory_dir }}"
-glusterfs: True
-htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
-openshift_pool_id: ""
+product: "{{ openshift_product }}"
+preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
+openshift_web_console_url: "https://{{preappend_host_name}}-master01.{{domain}:8443"
 openshift_release: "3.11"
 openshift_image_tag: v3.11.141
 openshift_pkg_version: -3.11.141
-openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
-openshift_user: qubinode
-glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
-metrics_storage_volume_size: 10Gi
 
 # Openshift Repos
 openshift_repo: rhel-7-server-ose-3.11-rpms
@@ -33,9 +28,4 @@ ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,ba
 
 ocp_gluster_pkg: docker-1.13.1
 
-valid_products: "okd,ocp"
-
-##################
-# OpenShift/OKD #
-#################
-dns_wildcard: "*.apps"
+dns_wildcard: "{{ openshift_dns_wildcard }}"

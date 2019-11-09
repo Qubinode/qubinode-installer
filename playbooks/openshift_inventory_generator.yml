@@ -9,8 +9,7 @@
   tasks:
     - name: include additional openshift variables
       include_vars: "vars/{{ openshift_product }}.yml"
-    - name: include additional openshift variables
-      include_vars: "vars/{{ openshift_product }}.yml"
+
     - name: Generating Inventory File
       include_role:
         name: openshift-inventory

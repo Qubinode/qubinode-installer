@@ -39,6 +39,7 @@ setup_required_paths
 
 # Include all required functions
 source "${project_dir}/lib/00_pre_functions.sh"
+source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/01_product_functions.sh"
 source "${project_dir}/lib/qubinode_menu_options.sh"
 source "${project_dir}/lib/setup_sudo.sh"

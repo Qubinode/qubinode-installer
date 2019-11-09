@@ -17,6 +17,8 @@ function product_requirements () {
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
+    ocp3_vars_files="${project_dir}/playbooks/ocp3.yml ${project_dir}/playbooks/openshift3_size.yml"
+    okd3_vars_files="${project_dir}/playbooks/okd3.yml ${project_dir}/playbooks/openshift3_size.yml"
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -108,41 +110,12 @@ function qubinode_installer_setup () {
     then
         echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
+        echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
+        sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
 
     # Pull variables from all.yml needed for the install
     domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-}
-
-function qubinode_project_cleanup () {
-    # ensure requirements are in place
-    product_requirements
-
-    FILES=()
-    mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
-    if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
-    then
-        FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
-    fi
-
-    product_opt=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-    if [[ ${product_opt} == "ocp3" ]]; then
-      FILES=("${FILES[@]}" "$ocp3_vars_file")
-    elif [[ ${product_opt} == "okd3" ]]; then
-      FILES=("${FILES[@]}" "$okd3_vars_file")
-    fi
-
-    if [ ${#FILES[@]} -eq 0 ]
-    then
-        echo "Project directory: ${project_dir} state is already clean"
-    else
-        for f in $(echo "${FILES[@]}")
-        do
-            test -f $f && rm $f
-            echo "purged $f"
-
-        done
-    fi
 }
 
 function qubinode_vm_deployment_precheck () {

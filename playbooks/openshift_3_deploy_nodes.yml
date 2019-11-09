@@ -5,8 +5,12 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/openshift3_size.yml
 
   tasks:
+    - name: include additional openshift variables
+      include_vars: "vars/{{ openshift_product }}.yml"
+
     - name: include create vm tasks
       include_tasks: vms_inc.yml
       loop: "{{ instances }}"
@@ -17,7 +21,7 @@
 
     - name: Cleanup hosts file
       vars:
-        vm_name: "{{ product }}-{{ outer_item.name }}"
+        vm_name: "{{ preappend_host_name }}{{ outer_item.name }}"
       lineinfile:
         path: "{{ inventory_dir }}/hosts"
         state: absent

@@ -16,6 +16,20 @@ dns_forwarder: ""
 # whether to use username/pass or RHSM
 rhsm_reg_method: ""
 
+#---------------------------------------------#
+# Required for Enterprise/Community OpenShift #
+#---------------------------------------------#
+openshift_product: ""
+openshift_pool_id: ""
+openshift_user: ""
+glusterfs: True
+metrics_storage_volume_size: 10Gi
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
+openshift_dns_wildcard: "*.apps"
+inventory_destination: "{{ inventory_dir }}"
+htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+
 ######################################
 #         SYSTEM VARIABLES           #
 # You shouldn't need to change these # 
@@ -63,65 +77,7 @@ os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
 deployment_type: standard
 
 # OpenShift VM info
-openshift_product: ""
-product: "{{ openshift_product }}"
 openshift_user: qubinode
-instances:
-  - name: master
-    enable: true
-    vm_cpu: 4
-    vm_memory: 16384
-    vm_root_disk_size: 40G
-    vm_recreate: false
-    vm_teardown: false
-    cluster_group: masters
-    role_group: masters
-    extra_storage:
-      - size: 60G
-        enable: true
-    qty: 1
-  - name: node
-    enable: true
-    vm_cpu: 4
-    vm_memory: 16384
-    vm_root_disk_size: 40G
-    vm_teardown: false
-    cluster_group: nodes
-    role_group: computes
-    extra_storage:
-      - size: 60G
-        enable: true
-      - size: 160G
-        enable: true
-    vm_recreate: false
-    qty: 2
-  - name: infra
-    enable: true
-    vm_cpu: 4
-    vm_memory: 16384
-    vm_root_disk_size: 40G
-    vm_teardown: false
-    cluster_group: nodes
-    role_group: infra
-    extra_storage:
-      - size: 60G
-        enable: true
-      - size: 160G
-        enable: true
-    vm_recreate: false
-    qty: 2
-  - name: lb
-    enable: true
-    vm_cpu: 2
-    vm_memory: 8192
-    vm_root_disk_size: 20G
-    vm_teardown: false
-    cluster_group: lbs
-    role_group: lbs
-    extra_storage: []
-    vm_recreate: false
-    qty: 0
-
 
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"
@@ -259,35 +215,7 @@ libvirt_pkgs:
 # used in playbook setup_kvmhost.yml
 network_interface_name: "{{ kvm_host_interface }}"
 
-##############################
-# Required for OpenShift/OKD #
-##############################
 
-inventory_destination: "{{ inventory_dir }}"
-glusterfs: True
-htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
-openshift_pool_id: ""
-openshift_release: "3.11"
-openshift_image_tag: v3.11.141
-openshift_pkg_version: -3.11.141
-openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
-glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
-metrics_storage_volume_size: 10Gi
-
-# Feature
-enable_firewalld: False
-enable_openshift_operators: True
-enable_metrics: True
-enable_logging: False
-enable_prometheous_operator: False
-
-
-
-
-##################
-# OpenShift/OKD #
-#################
-dns_wildcard: "*.apps"
 
 ###########################
 # General Networking Info #
