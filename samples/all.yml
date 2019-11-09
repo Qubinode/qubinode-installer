@@ -22,11 +22,12 @@ rhsm_reg_method: ""
 openshift_product: ""
 openshift_pool_id: ""
 openshift_user: ""
-glusterfs: True
 metrics_storage_volume_size: 10Gi
-glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('190') }}"
 openshift_dns_wildcard: "*.apps"
 inventory_destination: "{{ inventory_dir }}"
+
+# Use to setup http auth for openshift
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
 openshift_ansible_rpms:
