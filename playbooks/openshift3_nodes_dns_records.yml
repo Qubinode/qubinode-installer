@@ -6,12 +6,16 @@
     - vars/all.yml
     - vars/vault.yml
     - vars/idm.yml
+    - vars/openshift3_size.yml
   environment:
     IPA_HOST: "{{idm_hostname}}.{{ domain }}"
     IPA_USER: "{{ idm_admin_user }}"
     IPA_PASS: "{{ idm_admin_pwd }}"
 
   tasks:
+    - name: include additional openshift variables
+      include_vars: "vars/{{ openshift_product }}.yml"
+
     - name: set dns record state
       set_fact:
         record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"

@@ -1,6 +1,6 @@
 ---
 - name: create nodes dns records
-  import_playbook: nodes_dns_records.yml
+  import_playbook: openshift3_nodes_dns_records.yml
 
 - name: qbnodes post installation
   hosts: qbnodes:!*.{{domain}}
@@ -9,8 +9,12 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/openshift3_size.yml
 
   tasks:
+    - name: include additional openshift variables
+      include_vars: "vars/{{ openshift_product }}.yml"
+
     - name: declare post install file for {{ product }}
       set_fact:
         product_postinstall: "{{ 'ocp3_nodes_postinstall.yml' if openshift_product == 'ocp3' else 'okd_nodes_postinstall.yml' }}"

@@ -150,20 +150,23 @@ function ask_for_vault_values () {
 }
 
 function ask_user_input () {
-    printf "\n\n***************************\n"
-    printf "* Getting required inputs *\n"
-    printf "***************************\n\n"
-    ask_user_for_networking_info "${vars_file}"
-    ask_for_vault_values "${vault_vars_file}"
+    if [ "A${teardown}" != "Atrue" ]
+    then 
+        printf "\n\n***************************\n"
+        printf "* Getting required inputs *\n"
+        printf "***************************\n\n"
+        ask_user_for_networking_info "${vars_file}"
+        ask_for_vault_values "${vault_vars_file}"
 
-    if [ "A${qubinode_maintenance_opt}" == "Ahost" ] || [ "A${maintenance}" == "Akvmhost" ]
-    then
-        ask_user_if_qubinode_setup
-    fi
+        if [ "A${qubinode_maintenance_opt}" == "Ahost" ] || [ "A${maintenance}" == "Akvmhost" ]
+        then
+            ask_user_if_qubinode_setup
+        fi
 
-    if [ "A${product_in_use}" == "Aidm" ]
-    then
-        ask_user_for_custom_idm_server
-        qubinode_idm_ask_ip_address
+        if [ "A${product_in_use}" == "Aidm" ]
+        then
+            ask_user_for_custom_idm_server
+            qubinode_idm_ask_ip_address
+        fi
     fi
 }

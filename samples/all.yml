@@ -77,40 +77,10 @@ vm_teardown: False
 
 deployment_type: standard
 
-# OpenShift VM info
-openshift_user: qubinode
-
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
-openshift_repo: rhel-7-server-ose-3.11-rpms
-okd_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-optional-rpms
-  - rhel-7-server-supplementary-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-fast-datapath-rpms
-ocp_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-optional-rpms
-  - rhel-7-server-supplementary-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-fast-datapath-rpms
-  - "{{ openshift_repo }}"
-  - "{{ ansible_repo }}"
-ocp_gluster_client_repo:
-  - rh-gluster-3-client-for-rhel-7-server-rpms
-ocp_gluster_server_repo:
-  - rh-gluster-3-for-rhel-7-server-rpms
-
-ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
-okd_repos_with_glus_client: "{{ okd_repos + ocp_gluster_client_repo }}"
-ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
-
-ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
-
-ocp_gluster_pkg: docker-1.13.1
 
 
  # LVM

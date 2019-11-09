@@ -24,9 +24,9 @@ function check_hardware_resources () {
     AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
 
     # Check for available storage
-    if ! sudo virsh list | grep 'master01\|node01\|infra01'
+    if ! sudo virsh list | grep -q "${productname}-master01\|${productname}-node01\|${productname}-infra01"
     then
-        if sudo virsh pool-list --details | grep "${libvirt_pool_name}"
+        if sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
         then
             if [[ ${AVAILABLE_STORAGE} -ge ${RECOMMENDED_STORAGE} ]]
             then

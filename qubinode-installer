@@ -34,6 +34,7 @@ function setup_required_paths () {
 ##############################
 
 # load pre functions
+teardown="false"
 CURRENT_USER=$(whoami)
 setup_required_paths
 
@@ -48,7 +49,6 @@ source "${project_dir}/lib/qubinode_kvmhost.sh"
 source "${project_dir}/lib/qubinode_idm.sh"
 source "${project_dir}/lib/qubinode_ansible.sh"
 source "${project_dir}/lib/qubinode_rhsm.sh"
-source "${project_dir}/lib/qubinode_deploy_ocp_nodes.sh"
 source "${project_dir}/lib/qubinode_openshift3.sh"
 source "${project_dir}/lib/qubinode_hardware_check.sh"
 

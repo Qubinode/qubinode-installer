@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: qbnodes:!*.{{domain}}
   become: yes
   gather_facts: yes
   vars_files:
@@ -8,12 +8,13 @@
   tasks:
   - name: include additional openshift variables
     include_vars: "vars/{{ openshift_product }}.yml"
+
   - name: obtain the fully qualified domain name of the host
     shell: hostname -f
     ignore_errors: no
 
   - name: loop through vm types
-    include_tasks: openshift-pre-installation-checks.yml
+    include_tasks: openshift3_pre_install_checks_include.yml
     loop: "{{ instances }}"
     loop_control:
       loop_var: outer_item

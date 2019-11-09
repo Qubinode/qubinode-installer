@@ -9,6 +9,7 @@ okd_repos:
   - rhel-7-server-optional-rpms
   - rhel-7-server-supplementary-rpms
   - rhel-7-server-extras-rpms
+  - rhel-7-fast-datapath-rpms
 ocp_gluster_client_repo:
   - rh-gluster-3-client-for-rhel-7-server-rpms
 ocp_gluster_server_repo:
