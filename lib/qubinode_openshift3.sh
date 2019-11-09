@@ -8,6 +8,7 @@ openshift3_variables () {
     productname="${prefix}-${product}"
     web_console="https://${productname}-master01.${domain}:8443"
     ocp_user=$(awk '/^openshift_user:/ {print $2}' "${vars_file}")
+    OCUSER=$ocp_user
     product_in_use="${product}"
     ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
     libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
@@ -16,6 +17,7 @@ openshift3_variables () {
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
     DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
+    INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
 
 }
 
@@ -64,6 +66,17 @@ function ask_user_which_openshift_product () {
             then
                 echo "Setting OpenShift version to ${openshift_product}"
                 sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+                if [[ ${openshift_product} == "ocp3" ]]
+                then
+                    # ensure we are deploying openshift enterprise
+                    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+                elif [[ ${openshift_product} == "okd3" ]]
+                then
+                    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+                else
+                    echo "Unsupported OpenShift distro"
+                    exit 1
+                fi
             else
                 echo "OpenShift version is set to ${openshift_product}"
             fi
@@ -128,6 +141,10 @@ function check_for_openshift_subscription () {
     then
        echo "Found the repo id: ${AVAILABLE} for Red Hat OpenShift Container Platform"
        POOL_ID="${AVAILABLE}"
+      
+       echo "Attaching system Red Hat OpenShift Container Platform subscription pool"
+       sudo subscription-manager remove --all
+       sudo subscription-manager attach --pool="${POOL_ID}"
     else
         cat "${project_dir}/docs/subscription_pool_message"
         exit 1
@@ -200,18 +217,16 @@ function set_openshift_rhsm_pool_id () {
 function qubinode_deploy_openshift() {
   # Does some prep work then runs the official OpenShift ansible playbooks
   setup_variables
-  validate_openshift_pool_id
-  if [[ ${product_in_use} == "ocp3" ]]
+
+  if grep '""' "${vars_file}"|grep -q openshift_user
   then
-     # ensure we are deploying openshift enterprise
-     sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
-  elif [[ ${product_in_use} == "okd3" ]]
-  then
-      sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
-  else
-      echo "Unsupported OpenShift distro"
-      exit 1
+      echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
+      sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
   fi
+
+  openshift3_variables
+  qubinode_rhsm_register
+  validate_openshift_pool_id
 
   # ensure KVMHOST is setup as a jumpbox
   if [[ ! -d /usr/share/ansible/openshift-ansible ]]
@@ -220,13 +235,10 @@ function qubinode_deploy_openshift() {
   fi
 
   ansible-playbook "${playbooks_dir}/openshift3_inventory_generator.yml" || exit $?
-  exit
-  INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
   INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
   cat $INVENTORYFILE || exit 1
   HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
-  OCUSER=$(cat ${vars_file} | grep openshift_user: | awk '{print $2}')
   if [[ ! -f ${HTPASSFILE} ]]; then
     echo "***************************************"
     echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
@@ -235,7 +247,7 @@ function qubinode_deploy_openshift() {
   fi
 
   echo "Running Qubi node openshift deployment checks."
-  ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster "${playbooks_dir}/openshift3_pre_deployment_checks.yml" || exit $?
+  ansible-playbook -i  "${INVENTORYFILE}" "${playbooks_dir}/openshift3_pre_deployment_checks.yml" || exit $?
 
   if [[ ${product_in_use} == "ocp3" ]]
   then
@@ -251,8 +263,7 @@ function qubinode_deploy_openshift() {
 }
 
 function qubinode_uninstall_openshift() {
-  INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
-
+  openshift3_variables
   if [[ ${product_in_use} == "ocp3" ]]; then
     ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
   elif [[ ${product_in_use} == "okd3" ]]; then
@@ -263,34 +274,38 @@ function qubinode_uninstall_openshift() {
 
 
 function qubinode_teardown_cleanup () {
-        # Remove DNS entries
-        if sudo virsh list |grep -q "${idm_srv_hostname}"
-        then
-            echo "Remove ${openshift_product} VMs"
-            ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true"
-        fi
+    openshift3_variables
+    # Remove DNS entries
+    INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
+    test -f "${INVENTORYFILE}" && rm -f "${INVENTORYFILE}"
+
+    if sudo virsh list |grep -q "${idm_srv_hostname}"
+    then
+        echo "Remove ${openshift_product} VMs"
+        ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true"
+    fi
     
-        if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
-            rm -rf ${CHECK_OCP_INVENTORY}
-        fi
+    if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
+        rm -rf ${CHECK_OCP_INVENTORY}
+    fi
 
-        # Remove ocp3 yml files    
-        if [ "A${product}" == "Aocp3" ]
-        then
-            for file in $(echo ${ocp3_vars_files})
-            do
-                test -f $file && rm -f $file
-            done
-        fi
+    # Remove ocp3 yml files    
+    if [ "A${product}" == "Aocp3" ]
+    then
+        for file in $(echo ${ocp3_vars_files})
+        do
+            test -f $file && rm -f $file
+        done
+    fi
 
-        # Remove okd3 yml files    
-        if [ "A${product}" == "Aokd3" ]
-        then
-            for file in $(echo ${okd3_vars_files})
-            do
-                test -f $file && rm -f $file
-            done
-        fi
+    # Remove okd3 yml files    
+    if [ "A${product}" == "Aokd3" ]
+    then
+        for file in $(echo ${okd3_vars_files})
+        do
+            test -f $file && rm -f $file
+        done
+    fi
 }
 
 function qubinode_teardown_openshift () {
@@ -412,12 +427,62 @@ function qubinode_install_openshift () {
     printf "*******************************************************\n"
 }
 
+function are_openshift_nodes_available () {
+    ansible qbnodes -m ping 2>&1 | tee /tmp/fail >/dev/null
+    TOTAL_FAILED_HOST=0
+    TOTAL_HOST=0
+    while read line
+    do
+        HOST=$(echo $line | awk '/=>/ {print $1}')
+        STATUS=$(echo $line | awk '/=>/ {print $3}')
+
+        if [ "A${HOST}" != "A" ]
+        then
+            TOTAL_HOST=$(expr $TOTAL_HOST + 1)
+        fi
+
+        if [ "A${STATUS}" == "AUNREACHABLE!" ]
+        then
+            TOTAL_FAILED_HOST=$(expr $TOTAL_FAILED_HOST + 1)
+            echo "$HOST status is $STATUS"
+        fi
+    done < /tmp/fail
+
+    if [ "A${TOTAL_HOST}" != "A0" ]
+    then
+        if [ "A${TOTAL_FAILED_HOST}" != "A0" ]
+        then
+            echo "$TOTAL_FAILED_HOST of the $TOTAL_HOST OpenShift nodes failed"
+            exit 1
+        fi
+    fi
+
+    if [ "A${TOTAL_HOST}" == "A0" ]
+    then
+        echo "$TOTAL_HOST available attempting to deploy openshift nodes"
+        qubinode_openshift_nodes
+    else
+        echo "All ${TOTAL_HOST} OpenShift nodes are available"
+    fi
+}
+
 function maintenance_deploy_nodes () {
     # This is a wrapper function to deploy openshift nodes
     # via the -m deploy_nodes argument
     ask_user_which_openshift_product
     qubinode_openshift_nodes
 }
+
+function openshift_enterprise_deployment() {
+    # This is a wrapper function to deploy openshift nodes
+    # via the -m deploy_nodes argument
+    openshift_product=ocp3
+    sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+    ask_user_which_openshift_product
+    are_openshift_nodes_available
+    qubinode_deploy_openshift
+}
+
 
 function are_nodes_deployed () {
     nodes_list="${VM_DATA_DIR}/nodes_list.txt"

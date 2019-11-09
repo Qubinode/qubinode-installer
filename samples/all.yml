@@ -29,6 +29,9 @@ openshift_dns_wildcard: "*.apps"
 inventory_destination: "{{ inventory_dir }}"
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+openshift_ansible_rpms:
+  - openshift-ansible
+  - atomic-openshift-clients
 
 ######################################
 #         SYSTEM VARIABLES           #

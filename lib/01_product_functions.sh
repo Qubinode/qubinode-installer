@@ -105,15 +105,6 @@ function qubinode_installer_setup () {
     setup_variables
     ask_user_input
 
-    # Setup admin user variable
-    if grep '""' "${vars_file}"|grep -q admin_user
-    then
-        echo "Updating ${vars_file} admin_user variable"
-        sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
-        echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
-        sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
-    fi
-
     # Pull variables from all.yml needed for the install
     domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 }
@@ -189,8 +180,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_openshift
               else
-                  echo "Deploying the OpenShift release $product_in_use."
-                  qubinode_deploy_openshift
+                  openshift_enterprise_deployment
               fi
               ;;
           ocp4)
