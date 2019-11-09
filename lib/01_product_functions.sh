@@ -179,6 +179,9 @@ function qubinode_product_deployment () {
               if [ "A${teardown}" == "Atrue" ]
               then
                   qubinode_teardown_openshift
+              elif [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  openshift3_server_maintenance
               else
                   openshift_enterprise_deployment
               fi

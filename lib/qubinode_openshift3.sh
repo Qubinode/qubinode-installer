@@ -18,7 +18,7 @@ openshift3_variables () {
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
     DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
     INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
-
+    CHECK_STATE_CMD="${project_dir}/playbooks/roles/ocp-power-management/files/check_system_state.sh"
 }
 
 function check_openshift3_size_yml () {
@@ -279,11 +279,6 @@ function qubinode_teardown_cleanup () {
     INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
     test -f "${INVENTORYFILE}" && rm -f "${INVENTORYFILE}"
 
-    if sudo virsh list |grep -q "${idm_srv_hostname}"
-    then
-        echo "Remove ${openshift_product} VMs"
-        ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true"
-    fi
     
     if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
         rm -rf ${CHECK_OCP_INVENTORY}
@@ -317,6 +312,12 @@ function qubinode_teardown_openshift () {
     confirm "Are you sure you want to undeploy the entire ${product_in_use} cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
+        # Remove DNS entries
+        if sudo virsh list |grep -q "${idm_srv_hostname}"
+        then
+            echo "Remove ${openshift_product} VMs"
+            ansible-playbook "${NODES_DNS_RECORDS}" --extra-vars "vm_teardown=true"
+        fi
 
         # Remove VMs and files
         master="${productname}-master01"
@@ -325,6 +326,7 @@ function qubinode_teardown_openshift () {
         if sudo virsh list | grep -q "'${master}\|${node}\|${infra}'"
         then
             ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+            qubinode_teardown_cleanup
         elif ! sudo virsh list | grep -q "'${master}\|${node}\|${infra}'"
         then
             qubinode_teardown_cleanup
@@ -519,5 +521,36 @@ function are_nodes_deployed () {
 
    # Run post deployment
    qubinode_openshift3_nodes_postdeployment
+}
+
+function openshift3_server_maintenance () {
+    openshift3_variables
+    case ${product_maintenance} in
+        diag)
+            echo "Perparing to run full Diagnostics"
+            MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
+            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE "sudo oadm diagnostics"
+            ;;
+        smoketest)
+            echo  "Running smoke test on environment."
+            bash "${project_dir}/lib/openshift-smoke-test.sh" || exit $?
+            ;;
+        shutdown)
+            echo  "Shutting down cluster."
+            bash "${project_dir}/lib/qubinode_shutdown_cluster.sh" || exit $?
+            ;;
+        startup)
+            echo  "Starting up Cluster"
+            bash "${project_dir}/lib/qubinode_startup_cluster.sh" || exit $?
+            ;;
+        checkcluster)
+            echo  "Running Cluster health check"
+            MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
+            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
+            ;;
+        *)
+            echo "No arguement was passed"
+            ;;
+    esac
 }
 

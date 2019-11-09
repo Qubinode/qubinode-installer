@@ -127,7 +127,9 @@ then
     fi
 elif [ "A${qubinode_product}" == "Atrue" ] && [ "A${qubinode_maintenance}" == "Atrue" ]
 then
-    echo "run product maintenance"
+    echo "run product maintenance options is: ${qubinode_maintenance_opt}"
+    product_maintenance="${qubinode_maintenance_opt}"
+    qubinode_product_deployment $qubinode_product_opt
 elif [ "A${qubinode_maintenance}" == "Atrue" ]
 then
     qubinode_maintenance_options
