@@ -1,6 +1,14 @@
 #!/bin/bash
 
 function check_hardware_resources () {
+
+    if ! sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
+    then
+        echo "Libvirt Pool ${libvirt_pool_name} not found"
+        echo "Please verify the variable libvirt_pool_name value is correct"
+        exit 1
+    fi
+
     PROJECTDIR=${project_dir}
     STANDARD_MEMORY=131495372
     SMALL_MEMORY=976282
@@ -12,8 +20,8 @@ function check_hardware_resources () {
     AVAILABLE_MEMORY=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
     AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
 
-    AVAILABLE_STORAGE=$(sudo virsh pool-list --details | awk '/images/ {print $5*1024}')
-    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | awk '/images/ {print $5,$6}')
+    AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
+    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
 
     # Check for available storage
     if ! sudo virsh list | grep 'master01\|node01\|infra01'

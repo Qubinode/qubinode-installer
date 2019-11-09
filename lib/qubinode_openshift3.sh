@@ -9,6 +9,7 @@ openshift3_variables () {
     ocp_user=$(awk '/^openshift_user:/ {print $2}' "${vars_file}")
     product_in_use="${product}"
     ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
+    libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
 }
 
 function check_for_openshift_subscription () {
