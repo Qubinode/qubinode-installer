@@ -184,7 +184,7 @@ function qubinode_product_deployment () {
     AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost"
     case $PRODUCT_OPTION in
           ocp3)
-              product_in_use=ocp3
+              openshift3_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   qubinode_teardown_openshift

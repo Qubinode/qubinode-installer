@@ -1,5 +1,14 @@
 #!/bin/bash
 
+openshift3_variables () {
+    domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
+    prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
+    product=$(awk '/^openshift_product:/ {print $2}' "${vars_file}")
+    web_console="https://${prefix}-${product}-master01.${domain}:8443"
+    ocp_user=$(awk '/^openshift_user:/ {print $2}' "${vars_file}")
+    product_in_use="${product}"
+}
+
 function check_for_openshift_subscription () {
     # This function trys to find a subscription that mataches the OpenShift product
     # then saves the pool id for that function and updates the varaibles file.
@@ -196,7 +205,6 @@ function qubinode_install_openshift () {
     # ensure required variables and files are in place
     product_requirements
 
-    product_in_use=$(awk '/^product:/ {print $2}' "${vars_file}")
     qubinode_product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
