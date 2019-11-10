@@ -13,7 +13,7 @@ done
 for i in {0..1}
 do
   COMPUTE=$(sudo virsh net-dumpxml ocp42 | grep  compute-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-  ansible-playbook playbooks/ocp4_07.1_deploy_master_vm.yml  -e vm_mac_address=${COMPUTE}   -e vm_name=compute-${i}
+  ansible-playbook playbooks/ocp4_07.2_deploy_compute_vm.yml  -e vm_mac_address=${COMPUTE}   -e vm_name=compute-${i}
   sleep 10s
 done
 

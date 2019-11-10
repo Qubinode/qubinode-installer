@@ -11,6 +11,9 @@
     IPA_PASS: "{{ idm_admin_pwd }}"
 
   tasks:
+    - fail: msg="Bailing out. this play requires 'idm_server_ip'  your idm server ip"
+      when: idm_server_ip |length == 0
+
     - name: set dns record state
       set_fact:
         record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
@@ -35,7 +38,7 @@
 
     - name: add api-int to dns records list
       vars:
-        ip: "{{ kvm_host_ip }}"
+        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.1"
         name: api-int
         ptr: 1
       set_fact:
