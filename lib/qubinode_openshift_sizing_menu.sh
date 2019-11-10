@@ -232,35 +232,52 @@ trap '' SIGINT SIGQUIT SIGTSTP
 # -----------------------------------
 # Step #4: Main logic - infinite loop
 # ------------------------------------
-if [[ ! -z ${INSTALLTYPE} ]]; then
-  echo "Your Deployment is ${INSTALLTYPE}"
-  echo "This will deploy the following. "
-  case $1 in
-    minimal) minimal_desc ;;
-    minimal_cns) minimal_cns_desc ;;
-    standard) standard_desc ;;
-    performance) performance_desc ;;
-    *) exit 0;;
-  esac
 
-  read -p "Would you like a customize this deployment? " -n 1 -r
-  echo    # (optional) move to a new line
-  if [[ ! $REPLY =~ ^[Yy]$ ]]
-  then
-    case $INSTALLTYPE in
-      minimal) minimal_deployment;;
-      minimal_cns) minimal_cns_deployment;;
-      standard) standard_deployment;;
-      performance) performance_deployment;;
-      *) exit 0;;
-    esac
-  else
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "openshift_auto_install: $openshift_auto_install"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+exit
+if [ "A${openshift_auto_install}" != "Atrue" ]
+then
+    if [[ ! -z ${INSTALLTYPE} ]]
+    then
+        echo "Your Deployment is ${INSTALLTYPE}"
+        echo "This will deploy the following. "
+        case $1 in
+            minimal) minimal_desc ;;
+            minimal_cns) minimal_cns_desc ;;
+            standard) standard_desc ;;
+            performance) performance_desc ;;
+            *) exit 0;;
+        esac
 
-    while true
-    do
-      show_menus
-      read_options
-    done
-
-  fi
+        read -p "Would you like a customize this deployment? " -n 1 -r
+        echo    # (optional) move to a new line
+        if [[ ! $REPLY =~ ^[Yy]$ ]]
+        then
+            case $INSTALLTYPE in
+                minimal) minimal_deployment;;
+                minimal_cns) minimal_cns_deployment;;
+                standard) standard_deployment;;
+                performance) performance_deployment;;
+                *) exit 0;;
+            esac
+        else
+            while true
+            do
+                show_menus
+                read_options
+            done
+        fi
+    fi
+else
+    echo "COPY STANDARD*********************"
+    exit
+    cp -f ${project_dir}/samples/ocp_vm_sizing/standard.yml ${openshift_size_vars_file}
 fi
+
+exit 0

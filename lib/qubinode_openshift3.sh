@@ -16,7 +16,10 @@ openshift3_variables () {
     CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
-    DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
+    if [ -f "${playbooks_dir}/vars/openshift3_size.yml" ]
+    then
+        DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
+    fi
     INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
     CHECK_STATE_CMD="${project_dir}/playbooks/roles/ocp-power-management/files/check_system_state.sh"
 }
@@ -27,11 +30,16 @@ function check_openshift3_size_yml () {
     then
         echo ""
         echo ""
-        confirm "Continue with a $DEPLOYMENT_TYPE type deployment? yes/no"
-        if [ "A${response}" != "Ayes" ]
+        if [ "A${openshift_auto_install}" == "Atrue" ]
         then
             check_hardware_resources
-        fi
+        else
+            confirm "Continue with a $DEPLOYMENT_TYPE type deployment? yes/no"
+            if [ "A${response}" != "Ayes" ]
+            then
+                check_hardware_resources
+            fi
+       fi
     else
         check_hardware_resources
     fi
@@ -59,30 +67,39 @@ function ask_user_which_openshift_product () {
 
     if [ "A${teardown}" != "Atrue" ]
     then
-        confirm "Continue with OpenShift version: ${openshift_product}? yes/no"
-        if [ "A${response}" == "Ayes" ]
+        if [ "A${openshift_auto_install}" == "Atrue" ]
         then
-            if [ "A${update_variable}" == "Atrue" ]
-            then
-                echo "Setting OpenShift version to ${openshift_product}"
-                sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
-                if [[ ${openshift_product} == "ocp3" ]]
-                then
-                    # ensure we are deploying openshift enterprise
-                    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
-                elif [[ ${openshift_product} == "okd3" ]]
-                then
-                    sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
-                else
-                    echo "Unsupported OpenShift distro"
-                    exit 1
-                fi
-            else
-                echo "OpenShift version is set to ${openshift_product}"
-            fi
+            set_openshift_production_variables
         else
-            ask_user_which_openshift_product
+            confirm "Continue with OpenShift version: ${openshift_product}? yes/no"
+            if [ "A${response}" == "Ayes" ]
+            then
+                set_openshift_production_variables
+            else
+                ask_user_which_openshift_product
+            fi
         fi
+    fi
+}
+
+function set_openshift_production_variables () {
+    if [ "A${update_variable}" == "Atrue" ]
+    then
+        echo "Setting OpenShift version to ${openshift_product}"
+        sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+        if [[ ${openshift_product} == "ocp3" ]]
+        then
+            # ensure we are deploying openshift enterprise
+            sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+        elif [[ ${openshift_product} == "okd3" ]]
+        then
+            sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+        else
+            echo "Unsupported OpenShift distro"
+            exit 1
+        fi
+    else
+        echo "OpenShift version is set to ${openshift_product}"
     fi
 }
 
@@ -363,18 +380,15 @@ function canSSH () {
 }
 
 
-function qubinode_install_openshift () {
+function qubinode_autoinstall_openshift () {
     echo "Ensure ${CURRENT_USER} is in sudoers"
-    setup_sudo
+    setup_sudoers
+    product_in_use="ocp3"
 
-    # ensure required variables and files are in place
-    product_requirements
-
-    qubinode_product=true
     printf "\n\n***********************\n"
     printf "* Running perquisites *\n"
     printf "***********************\n\n"
-    qubinode_installer_preflight
+    qubinode_installer_setup
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
@@ -389,44 +403,19 @@ function qubinode_install_openshift () {
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    qubinode_check_kvmhost
+    qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
-    printf     "* Deploy VM for DNS server *\n"
+    printf     "* Deploy IdM DNS Server    *\n"
     printf     "****************************\n"
-    qubinode_deploy_idm_vm
-
-    printf "\n\n*****************************\n"
-    printf     "* Install IDM on DNS VM*\n"
-    printf     "*****************************\n"
-    if ! curl -k -s "https://${idm_srv_hostname}/ipa/config/ca.crt" > /dev/null
-    then
-        qubinode_deploy_idm
-    fi
-
-    printf "\n\n******************************\n"
-    printf     "* Deploy Nodes for ${product_in_use} cluster *\n"
-    printf     "******************************\n"
-    are_nodes_deployed
-
-    OCUSER=$(cat "${vars_file}" | grep openshift_user: | awk '{print $2}')
+    qubinode_deploy_idm
 
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
-    qubinode_run_openshift_installer
-    OCP3_HOSTNAME=$(awk '/master01/ {print $1}' ${project_dir}/inventory/hosts)
-    DNS_SRV=$(awk '/dns01/ {print $1}' ${project_dir}/inventory/hosts)
-
-    printf "\n\n*******************************************************\n"
-    printf   "\nDeployment steps for ${product_in_use} cluster is complete.\n"
-    printf "\nCluster login: https://${OCP3_HOSTNAME}.${domain}:8443\n"
-    printf "     Username: changeme\n"
-    printf "     Password: <yourpassword>\n"
-    printf "\n\nIDM DNS Server login: https://${DNS_SRV}.${domain}\n"
-    printf "     Username: admin\n"
-    printf "     Password: <yourpassword>\n"
-    printf "*******************************************************\n"
+    openshift_auto_install=true
+    openshift_enterprise_deployment
+    report_on_openshift3_installation
 }
 
 function are_openshift_nodes_available () {
@@ -475,7 +464,7 @@ function maintenance_deploy_nodes () {
     qubinode_openshift_nodes
 }
 
-function openshift_enterprise_deployment() {
+function openshift_enterprise_deployment () {
     # This is a wrapper function to deploy openshift nodes
     # via the -m deploy_nodes argument
     openshift_product=ocp3
@@ -552,5 +541,51 @@ function openshift3_server_maintenance () {
             echo "No arguement was passed"
             ;;
     esac
+}
+
+
+function report_on_openshift3_installation () {
+  # load openshift variables
+  openshift3_variables
+
+    if sudo virsh list|grep -E 'master|node|infra'
+    then
+        echo "Checking to see if Openshift is online."
+        OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null " ${web_console}" --insecure)
+        if [[ $OCP_STATUS -eq 200 ]];  then
+            openshift3_installation_msg
+            exit 0
+        else
+            CHECKFOROCP=$(sudo virsh list|grep -E "'${productname}-master'" | awk '{print $2}')
+            if [[ $CHECKFOROCP == "${productname}-master01" ]]; then
+                if [[ ${productname} == "okd" ]]; then
+                    echo "Please destroy running OpenShift Enterprise VMs before continuing to install OpenShift Origin."
+                    echo "********************************************"
+                    echo "1. ./qubinode-installer -p ocp -d or ./qubinode-installer -p ocp -m deploy_nodes -d "
+                    echo "2. ./qubinode-installer -p idm -d "
+                    echo "3. ./qubinode-installer -p ocp -m clean "
+                    echo "restart ./qubinode-installer option 2"
+                    exit 1
+                fi
+            fi
+            echo  "FAILED to connect to Openshift Console URL:  ${web_console}"
+            printf "\n\n*********************\n"
+        fi
+    fi
+}
+
+function openshift3_installation_msg () {
+    # load openshift variables
+    openshift3_variables
+
+    printf "\n\n*******************************************************\n"
+    printf "\nDeployment steps for ${product} cluster is complete.\n"
+    printf "\nCluster login: ${web_console}\n"
+    printf "     Username: ${OCUSER}\n"
+    printf "     Password: <yourpassword>\n"
+    printf "\n\nIDM DNS Server login: https://${prefix}-dns01.${domain}\n"
+    printf "     Username: admin\n"
+    printf "     Password: <yourpassword>\n"
+    printf "*******************************************************\n"
 }
 
