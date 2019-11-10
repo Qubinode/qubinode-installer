@@ -27,7 +27,7 @@
 
     - name: Create KVM VM for DNS Server
       include_role:
-        name: ansible-role-rhel7-kvm-cloud-init
+        name: deploy-kvm-vm
 
     - name: update idm_public_ip with current IDM server IP
       lineinfile:
