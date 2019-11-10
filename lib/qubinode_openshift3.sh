@@ -1,6 +1,7 @@
 #!/bin/bash
 
 openshift3_variables () {
+    echo "Loading OpenShift 3 global variables"
     playbooks_dir="${project_dir}/playbooks"
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
@@ -16,6 +17,7 @@ openshift3_variables () {
     CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
+    master_node="${productname}-master01"
     if [ -f "${playbooks_dir}/vars/openshift3_size.yml" ]
     then
         DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
@@ -255,6 +257,8 @@ function qubinode_deploy_openshift() {
       ansible-playbook "${playbooks_dir}/openshift3_setup_deployer_node.yml" || exit $?
   fi
 
+  # Ensure the OpenShift sizing yaml is generated
+  check_openshift3_size_yml
   ansible-playbook "${playbooks_dir}/openshift3_inventory_generator.yml" || exit $?
   INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
   cat $INVENTORYFILE || exit 1
@@ -518,7 +522,6 @@ function are_nodes_deployed () {
 }
 
 function openshift3_server_maintenance () {
-    openshift3_variables
     case ${product_maintenance} in
         diag)
             echo "Perparing to run full Diagnostics"
@@ -530,8 +533,8 @@ function openshift3_server_maintenance () {
             bash "${project_dir}/lib/openshift-smoke-test.sh" || exit $?
             ;;
         shutdown)
-            echo  "Shutting down cluster."
-            bash "${project_dir}/lib/qubinode_shutdown_cluster.sh" || exit $?
+            echo  "Shutting down cluster"
+            openshift3_cluster_shutdown
             ;;
         startup)
             echo  "Starting up Cluster"

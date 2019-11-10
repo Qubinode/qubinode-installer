@@ -1,68 +1,44 @@
 #!/bin/bash
 
-function config_err_msg () {
-    cat << EOH >&2
-  There was an error finding the full path to the qubinode-installer project directory.
-EOH
-}
 
-# this function just make sure the script
-# knows the full path to the project directory
-# and runs the config_err_msg if it can't determine
-# that start_deployment.conf can find the project directory
-function setup_required_paths () {
-    current_dir="`dirname \"$0\"`"
-    project_dir="$(dirname ${current_dir})"
-    project_dir="`( cd \"$project_dir\" && pwd )`"
-    if [ -z "$project_dir" ] ; then
-        config_err_msg; exit 1
-    fi
+function openshift3_cluster_shutdown_temp_inventory () {
+    # load variables
+    fdqn_all_node_names=""
+    infra_names=""
+    node_names=""
+    fdqn_node_names="";
+    product_hostname="${productname}"
+    cluster_inventory="${hosts_inventory_dir}/openshift3_cluster_shutdown"
+    cluster_shutdown_playbook="${playbooks_dir}/openshift3_cluster_shutdown.yml"
 
-    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
-        config_err_msg; exit 1
-    fi
-}
+    infracount=$(cat "${inventory_file}" | grep ${product_hostname}-infra | awk '{print $1}')
+    for item in $infracount; do
+        fdqn_all_node_names+="'$item.$domain',"
+        infra_names+="'$item.$domain',"
+        node_names+="'$item',"
+    done
 
-setup_required_paths
-openshift3_variables
+    nodecount=$(cat "${inventory_file}" | grep $product_hostname-node | awk '{print $1}')
+    for item in $nodecount; do
+        fdqn_all_node_names+="'$item.$domain',"
+        fdqn_node_names+="'$item.$domain',"
+        node_names+="'$item',"
+        compute_node_names+="'$item',"
+    done
 
-
-product_hostname="${product_name}"
-
-infracount=$(cat "${project_dir}/inventory/hosts" | grep $product_hostname-infra | awk '{print $1}')
-fdqn_all_node_names="";
-infra_names="";
-node_names="";
-for item in $infracount; do
-  echo $item.$domain
-  fdqn_all_node_names+="'$item.$domain',"
-  infra_names+="'$item.$domain',"
-  node_names+="'$item',"
-done
-
-nodecount=$(cat "${project_dir}/inventory/hosts" | grep $product_hostname-node | awk '{print $1}')
-fdqn_node_names="";
-for item in $nodecount; do
-  echo $item.$domain
-  fdqn_all_node_names+="'$item.$domain',"
-  fdqn_node_names+="'$item.$domain',"
-  node_names+="'$item',"
-  compute_node_names+="'$item',"
-done
-
-fdqn_all_node_names=$(echo $fdqn_all_node_names | sed 's/,*$//g')
-echo $fdqn_all_node_names
-fdqn_node_names=$(echo $fdqn_node_names | sed 's/,*$//g')
-echo $fdqn_node_names
-infra_names=$(echo $infra_names | sed 's/,*$//g')
-echo $infra_names
-node_names=$(echo $node_names | sed 's/,*$//g')
-echo $node_names
-compute_node_names=$(echo $compute_node_names | sed 's/,*$//g')
-echo $compute_node_names
+    #fdqn_all_node_names=$(echo $fdqn_all_node_names | sed 's/,*$//g')
+    #echo $fdqn_all_node_names
+    #fdqn_node_names=$(echo $fdqn_node_names | sed 's/,*$//g')
+    #echo $fdqn_node_names
+    #infra_names=$(echo $infra_names | sed 's/,*$//g')
+    #echo $infra_names
+    #node_names=$(echo $node_names | sed 's/,*$//g')
+    #echo $node_names
+    #compute_node_names=$(echo $compute_node_names | sed 's/,*$//g')
+    #echo $compute_node_names
 
 
-cat >/tmp/cluster-inventory<<EOF
+cat >"${cluster_inventory}"<<EOF
 [master]
 ${product_hostname}-master01.$domain
 [master:vars]
@@ -80,7 +56,7 @@ infra_nodes=[ $(echo $infra_names) ]
 compute_nodes=[ $(echo $compute_node_names) ]
 EOF
 
-cat >/tmp/ocp-power-management.yml<<EOF
+cat >"${cluster_shutdown_playbook}"<<EOF
 ---
 - hosts: master
   remote_user: ${ssh_username}
@@ -89,18 +65,58 @@ cat >/tmp/ocp-power-management.yml<<EOF
     - ocp-power-management
 EOF
 
-#ansible-playbook -i /tmp/cluster-inventory /tmp/ocp-power-management.yml || exit 1
+}
 
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${product_hostname}-master01.$domain "shutdown 'Shutting Down Node'"
-sudo virsh shutdown "${product_hostname}-master01"
-# Wait until all domains are shut down or timeout has reached.
-END_TIME=$(date -d "$TIMEOUT seconds" +%s)
-while [ $(date +%s) -lt $END_TIME ]; do
-    test -z "$(sudo virsh list | grep master01)" && break
-    sleep 1
-done
+function wait_for_nodes_shutdown () {
+    while sudo virsh list|grep -qE 'node|infra'
+    do
+        echo "Waiting on nodes to shutdown..."
+        sleep 1
+    done
+    echo "The infra and app nodes are shutoff"
+}
 
-rm /tmp/ocp-power-management.yml
-rm /tmp/cluster-inventory
+function openshift3_shutdown_master () {
+    MASTER_NODE="$1"
+    MASTER_FQDN="$2"
+    SSH_ARGS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+    if sudo virsh list|grep -qE "${MASTER_NODE}"
+    then
+        ssh "${SSH_ARGS}" "${MASTER_FQDN}" "shutdown 'Shutting Down Node'"
+        sudo virsh shutdown "${MASTER_NODE}"
+    fi
+    while sudo virsh list|grep -qE "${MASTER_NODE}"
+    do
+        echo "Waiting on "${MASTER_NODE}" node to shutdown..."
+        sleep 1
+    done
+    echo "The master node ${MASTER_NODE} is shutoff"
+}
 
-exit 0
+function openshift3_cluster_shutdown () {
+    TIMEOUT_ARGS="--preserve-status 300s"
+    if sudo virsh list|grep -qE 'node|infra'
+    then
+        openshift3_cluster_shutdown_temp_inventory 
+        echo "Shutting down nodes: ${fdqn_all_node_names}"
+        ansible-playbook -i "${cluster_inventory}" "${cluster_shutdown_playbook}" || exit 1
+    fi
+    nodes_msg="Timeout threshold reached: nodes did not shutdown"
+    export -f wait_for_nodes_shutdown
+    timeout $TIMEOUT_ARGS bash -c wait_for_nodes_shutdown
+    if [ $? -eq 124 ]
+    then
+        echo "$nodes_msg"
+        exit 1
+    fi
+   
+    # Shutdown master 
+    master_msg="Timeout threshold reached: $master_node did not shutdown"
+    export -f openshift3_shutdown_master
+    timeout $TIMEOUT_ARGS bash -c "openshift3_shutdown_master $productname ${productname}.${domain}"
+    if [ $? -eq 124 ]
+    then
+        echo "$master_msg"
+        exit 1
+    fi
+}

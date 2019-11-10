@@ -5,6 +5,7 @@ function product_requirements () {
     # Setup of the required paths
     # Sets up the inventory file
 
+    echo "Loading function product_requirements"
     # setup required paths
     setup_required_paths
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"

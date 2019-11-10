@@ -51,6 +51,7 @@ source "${project_dir}/lib/qubinode_ansible.sh"
 source "${project_dir}/lib/qubinode_rhsm.sh"
 source "${project_dir}/lib/qubinode_openshift3.sh"
 source "${project_dir}/lib/qubinode_hardware_check.sh"
+source "${project_dir}/lib/qubinode_shutdown_cluster.sh"
 
 
 # Exit if this is executed as the root user
@@ -126,7 +127,6 @@ then
     fi
 elif [ "A${qubinode_product}" == "Atrue" ] && [ "A${qubinode_maintenance}" == "Atrue" ]
 then
-    echo "run product maintenance options is: ${qubinode_maintenance_opt}"
     product_maintenance="${qubinode_maintenance_opt}"
     qubinode_product_deployment $qubinode_product_opt
 elif [ "A${qubinode_maintenance}" == "Atrue" ]
