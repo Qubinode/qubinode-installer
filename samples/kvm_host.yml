@@ -76,22 +76,26 @@ libvirt_host_networks:
 
 
 #ibvirt_host_networks: []
-kvm_host_ipaddr: "{{ ansible_default_ipv4.address }}"
-kvm_host_interface: "{{ ansible_default_ipv4.interface }}"
-kvm_host_gw: "{{ ansible_default_ipv4.gateway }}"
-kvm_host_macaddr: "{{ ansible_default_ipv4.macaddress }}"
-kvm_host_netmask: "{{ ansible_default_ipv4.netmask }}"
-kvm_host_bootproto: 'dhcp'
-kvm_bridge_type: 'Bridge'
-storage_nic: false
-libvirt_disk: false
-use_dns: idm # use idm or use libvirt
+#kvm_host_ipaddr: "{{ ansible_default_ipv4.address }}"
+#kvm_host_interface: "{{ ansible_default_ipv4.interface }}"
+#kvm_host_gw: "{{ ansible_default_ipv4.gateway }}"
+#kvm_host_macaddr: "{{ ansible_default_ipv4.macaddress }}"
+#kvm_host_netmask: "{{ ansible_default_ipv4.netmask }}"
+#kvm_host_bootproto: 'dhcp'
+#kvm_bridge_type: 'Bridge'
+#libvirt_disk: false
+##storage_nic: false
+#use_dns: idm # use idm or use libvirt
 
-kvm_host_ip: "{{ kvm_host_ipaddr }}"
-kvm_host_mask_prefix: "{{ kvm_host_netmask }}"
+kvm_host_ip: ""
+kvm_host_interface: ""
+kvm_host_mask_prefix: ""
+kvm_host_gw: ""
 ssh_username: ""
 kvm_host_domain: "lab.example"
 kvm_host_dns_server: "1.1.1.1"
+kvm_host_bootproto: 'dhcp'
+kvm_bridge_type: 'Bridge'
 dns_servers:
   - "{{ dns_server }}"
   - "8.8.8.8"
