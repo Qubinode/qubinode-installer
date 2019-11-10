@@ -10,13 +10,13 @@
     - name: Setting Ingress information and machine configuration  for bootsrap nodes and other machines
       set_fact:
         tmp_api: "[ 'bootstrap={{ vn_subnet.split('.')[:3] | join('.')}}.2:6443' ]"
-        tmp_api_listen: "[ '{{ vn_subnet.split('.')[:3] | join('.')}}.1:6443','{{ listen_address }}:6443' ]"
+        tmp_api_listen: "[ '{{ listen_address }}:6443' ]"
         tmp_ingress_http: "[]"
-        tmp_ingress_http_listen: "['{{ vn_subnet.split('.')[:3] | join('.')}}.1:80','{{ listen_address }}:80']"
+        tmp_ingress_http_listen: "['{{ listen_address }}:80']"
         tmp_ingress_https: "[]"
-        tmp_ingress_https_listen: "[ '{{ vn_subnet.split('.')[:3] | join('.')}}.1:443','{{ listen_address }}:443']"
+        tmp_ingress_https_listen: "['{{ listen_address }}:443']"
         tmp_machine_config_server: "[ 'bootstrap={{ vn_subnet.split('.')[:3] | join('.')}}.2:22623' ]"
-        tmp_machine_config_server_listen: "['{{ vn_subnet.split('.')[:3] | join('.')}}.1:22623','{{ listen_address }}:22623']"
+        tmp_machine_config_server_listen: "['{{ listen_address }}:22623']"
       ignore_errors: false
 
     - name: Setting Ingress information and machine configuration for master nodes

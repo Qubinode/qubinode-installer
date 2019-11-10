@@ -16,9 +16,18 @@
         name: swygue-redhat-subscription
       when: "'ocp' in product"
 
+    - fail: msg="Checking to see if host_device is defined."
+      when: host_device is not defined
+
+    - fail: msg="Checking to see if vg_name is defined."
+      when: vg_name is not defined
+
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm
+
+    - fail: msg="Checking to see if network_interface_name is defined."
+      when: network_interface_name is not defined
 
     - name: Check whether ifcfg-{{ network_interface_name }} contains "UUID"
       command: grep -Fxq "UUID" /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }}
