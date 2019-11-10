@@ -137,6 +137,10 @@ function qubinode_openshift_nodes () {
    elif [ "A${teardown}" != "Atrue" ]
    then
        check_openshift3_size_yml
+       if [ ! -f "${playbooks_dir}/vars/openshift3_size.yml" ]
+       then
+           check_hardware_resources
+       fi 
        echo "Deploy ${openshift_product} VMs"
        ansible-playbook "${NODES_PLAY}" || exit $?
        ansible-playbook "${NODES_POST_PLAY}" || exit $?
@@ -414,6 +418,7 @@ function qubinode_autoinstall_openshift () {
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
     openshift_auto_install=true
+    sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${vars_file}"
     openshift_enterprise_deployment
     report_on_openshift3_installation
 }

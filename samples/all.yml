@@ -22,6 +22,7 @@ rhsm_reg_method: ""
 openshift_product: ""
 openshift_pool_id: ""
 openshift_user: ""
+openshift_auto_install: ""
 metrics_storage_volume_size: 10Gi
 glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('190') }}"
 openshift_dns_wildcard: "*.apps"

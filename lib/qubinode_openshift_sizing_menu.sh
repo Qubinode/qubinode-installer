@@ -32,6 +32,13 @@ function setup_required_paths () {
 }
 
 setup_required_paths
+source "${project_dir}/lib/00_pre_functions.sh"
+source "${project_dir}/lib/qubinode_utils.sh"
+source "${project_dir}/lib/01_product_functions.sh"
+
+product_requirements
+auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${vars_file}")
+
 openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size.yml"
 
 if [[ -z $1 ]]; then
@@ -233,15 +240,7 @@ trap '' SIGINT SIGQUIT SIGTSTP
 # Step #4: Main logic - infinite loop
 # ------------------------------------
 
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "openshift_auto_install: $openshift_auto_install"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-exit
-if [ "A${openshift_auto_install}" != "Atrue" ]
+if [ "A${auto_install}" != "Atrue" ]
 then
     if [[ ! -z ${INSTALLTYPE} ]]
     then
@@ -275,8 +274,6 @@ then
         fi
     fi
 else
-    echo "COPY STANDARD*********************"
-    exit
     cp -f ${project_dir}/samples/ocp_vm_sizing/standard.yml ${openshift_size_vars_file}
 fi
 
