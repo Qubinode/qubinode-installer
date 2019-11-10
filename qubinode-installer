@@ -51,7 +51,7 @@ source "${project_dir}/lib/qubinode_ansible.sh"
 source "${project_dir}/lib/qubinode_rhsm.sh"
 source "${project_dir}/lib/qubinode_openshift3.sh"
 source "${project_dir}/lib/qubinode_hardware_check.sh"
-source "${project_dir}/lib/qubinode_shutdown_cluster.sh"
+source "${project_dir}/lib/qubinode_openshift3_powermgt.sh"
 
 
 # Exit if this is executed as the root user

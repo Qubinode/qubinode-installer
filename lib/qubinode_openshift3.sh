@@ -534,11 +534,11 @@ function openshift3_server_maintenance () {
             ;;
         shutdown)
             echo  "Shutting down cluster"
-            openshift3_cluster_shutdown
+            openshift3_cluster_shutdown halt
             ;;
         startup)
             echo  "Starting up Cluster"
-            bash "${project_dir}/lib/qubinode_startup_cluster.sh" || exit $?
+            openshift3_cluster_startup running
             ;;
         checkcluster)
             echo  "Running Cluster health check"
