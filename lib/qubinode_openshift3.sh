@@ -471,6 +471,10 @@ function maintenance_deploy_nodes () {
     # via the -m deploy_nodes argument
     ask_user_which_openshift_product
     qubinode_openshift_nodes
+
+    printf "\n\n**************************************\n"
+    printf "* Nodes for OpenShift Cluster deployed  *\n"
+    printf "****************************************\n\n"
 }
 
 function openshift_enterprise_deployment () {
