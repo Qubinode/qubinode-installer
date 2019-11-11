@@ -84,6 +84,10 @@ function qubinode_setup_ansible () {
         echo "Ansible not found, please install and retry."
         exit 1
     fi
+
+    printf "\n\n***************************\n"
+    printf "* Ansible Setup Complete *\n"
+    printf "***************************\n\n"
 }
 
 function decrypt_ansible_vault () {

@@ -152,12 +152,21 @@ function qubinode_check_libvirt_net () {
 
 
 function qubinode_setup_kvm_host () {
-    echo "Running qubinode_setup_kvm_host setup."
+    echo "Running qubinode_setup_kvm_host function"
+
+    # set variable to enable prompting user if they want to 
+    # setup host as a qubinode
+    qubinode_maintenance_opt="host"
+
+    # run functions
     product_requirements
     setup_variables
     setup_sudoers
     ask_user_input
     setup_user_ssh_key
+
+    # Check if we should setup qubinode
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
 
     if [ "A${OS}" != "AFedora" ]
     then
@@ -204,17 +213,25 @@ function qubinode_setup_kvm_host () {
    
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
+           echo "Setting up qubinode system"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            qubinode_check_libvirt_net
        else
+           echo "not qubinode system"
            qubinode_check_libvirt_net
        fi
     else
+       echo "Some other option"
         qubinode_setup_ansible
         qubinode_check_libvirt_net
         echo "Installing required packages"
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
     fi
+
+    printf "\n\n***************************\n"
+    printf "* KVM Host Setup Complete  *\n"
+    printf "***************************\n\n"
+
 }
 
 
@@ -254,7 +271,7 @@ function qubinode_check_kvmhost () {
         fi
     fi
 
-    echo "Running qubinode checks: QUBINODE_SYSTEM=$QUBINODE_SYSTEM"
+    # Running qubinode checks
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
         echo "qubinode network checks"

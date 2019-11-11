@@ -88,8 +88,8 @@ function setup_variables () {
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     echo ""
 
-    # Check if we should setup qubinode
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    # Check if we should setup qubinode NOTE: this should be removed
+    #QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
 
     # Satellite server vars file
     SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"
@@ -108,6 +108,9 @@ function qubinode_installer_setup () {
 
     # Pull variables from all.yml needed for the install
     domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    printf "\n\n*********************\n"
+    printf "* Setup is complete *\n"
+    printf "*********************\n\n"
 }
 
 function qubinode_vm_deployment_precheck () {

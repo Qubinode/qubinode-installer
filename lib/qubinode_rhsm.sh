@@ -119,6 +119,10 @@ function qubinode_rhsm_register () {
             check_rhsm_status
         fi
     fi
+
+    printf "\n\n******************************\n"
+    printf "* RHSM registration complete *\n"
+    printf "******************************\n\n"
 }
     
     function get_rhsm_user_and_pass () {
