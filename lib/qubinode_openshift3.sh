@@ -265,10 +265,11 @@ function qubinode_deploy_openshift() {
   HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
   if [[ ! -f ${HTPASSFILE} ]]; then
-    echo "***************************************"
-    echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
-    echo "***************************************"
-    htpasswd -c ${HTPASSFILE} $OCUSER
+    get_admin_user_password
+#    echo "***************************************"
+#    echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
+#    echo "***************************************"
+    htpasswd -b ${HTPASSFILE} $OCUSER $admin_user_passowrd
   fi
 
   echo "Running Qubi node openshift deployment checks."

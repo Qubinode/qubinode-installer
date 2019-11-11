@@ -34,3 +34,13 @@ function qubinode_project_cleanup () {
     fi
 }
 
+function get_admin_user_password () {
+    ansible-vault decrypt "${vault_vars_file}"
+    admin_user_passowrd=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
+    ansible-vault encrypt "${vault_vars_file}"
+    if [ "A${admin_user_passowrd}" == "A" ]
+    then
+        echo "Unable to retrieve $CURRENT_USER user password from the vault"
+        exit 1
+    fi
+}
