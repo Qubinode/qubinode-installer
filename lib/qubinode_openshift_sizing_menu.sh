@@ -46,13 +46,14 @@ if [[ -z $1 ]]; then
   exit 1
 fi
 
-arr=('minimal', 'minimal_cns', 'standard', 'performnance')
+arr=('minimal', 'small', 'standard', 'performnance')
 match=$(echo "${arr[@]:0}" | grep -o $1)
+
 if [[ ! -z $match ]];  then
   echo ""
 else
   echo "Incorrect flag has been passed. "
-  echo "Valid flags are  minimal, minimal_cns, standard, performnance"
+  echo "Valid flags are  minimal, small, standard, performnance"
   exit 1
 fi
 
@@ -75,10 +76,11 @@ Openshift Operators: False
 Hawkular Metrics: False
 ELK logging: False
 Promethous: False
+Gluster: False
 EOF
 }
 
-function minimal_cns_desc() {
+function small_desc() {
 cat << EOF
 ======================
 Deployment Type: Minimal CNS
@@ -162,8 +164,8 @@ minimal_deployment(){
 
 }
 
-minimal_cns_deployment(){
-	minimal_cns_desc
+small_deployment(){
+	small_desc
   read -p "Are you sure? " -n 1 -r
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
@@ -171,7 +173,7 @@ minimal_cns_deployment(){
     show_menus
     read_options
   else
-    cp -f ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml ${openshift_size_vars_file}
+    cp -f ${project_dir}/samples/ocp_vm_sizing/small.yml ${openshift_size_vars_file}
     exit 0
   fi
 }
@@ -223,7 +225,7 @@ read_options(){
 	read -p "Enter choice [ 1 - 5] " choice
 	case $choice in
 		1) minimal_deployment ;;
-		2) minimal_cns_deployment ;;
+		2) small_deployment ;;
     3) standard_deployment ;;
     4) perfomance_deployment;;
 		5) exit 0;;
@@ -248,7 +250,7 @@ then
         echo "This will deploy the following. "
         case $1 in
             minimal) minimal_desc ;;
-            minimal_cns) minimal_cns_desc ;;
+            small) small_desc ;;
             standard) standard_desc ;;
             performance) performance_desc ;;
             *) exit 0;;
@@ -260,7 +262,7 @@ then
         then
             case $INSTALLTYPE in
                 minimal) minimal_deployment;;
-                minimal_cns) minimal_cns_deployment;;
+                small) small_deployment;;
                 standard) standard_deployment;;
                 performance) performance_deployment;;
                 *) exit 0;;

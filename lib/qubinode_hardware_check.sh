@@ -37,7 +37,16 @@ function check_hardware_resources () {
               echo "The installation will continue, but you may run out of storage depending on your workload."
             else
                 echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet the requirements."
-                 exit $?
+                read -p "Do you want to continue with a minimal installation? y/n " -n 1 -r
+                echo "REPLY is $REPLY"
+                if [[ ! $REPLY =~ ^[Nn]$ ]]
+                then
+                    echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
+                    echo "The installation will continue, but you may run out of storage depending on your workload."
+                else
+                    echo "Aborting installation, the minium supported storage is $MIN_STORAGE"
+                    exit 1
+                fi
             fi
         else
             echo "Could not find the qubinode libvirt pool **${libvirt_pool_name}**"
@@ -53,9 +62,9 @@ function check_hardware_resources () {
         ${project_dir}/lib/qubinode_openshift_sizing_menu.sh standard
     elif [[ ${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY} ]]
     then
-        echo "Do minimal OpenShift Deployment"
+        echo "Do small OpenShift Deployment"
         #cat ${PROJECTDIR}/samples/ocp_vm_sizing/small.yml >> ${PROJECTDIR}/playbooks/vars/all.yml
-        ${project_dir}/lib/qubinode_openshift_sizing_menu.sh minimal_cns
+        ${project_dir}/lib/qubinode_openshift_sizing_menu.sh small
     elif [[ ${AVAILABLE_MEMORY} -ge ${MINIMAL_MEMORY} ]]
     then
         echo "Do minimal OpenShift Deployment"
@@ -63,6 +72,16 @@ function check_hardware_resources () {
         ${project_dir}/lib/qubinode_openshift_sizing_menu.sh minimal
     else
         echo "Your available memory of ${AVAILABLE_HUMAN_MEMORY} is not enough to continue"
-        exit $?
+        read -p "Do you want to continue with a minimal instalation? y/n " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]
+        then
+            echo "Your available memory ${AVAILABLE_HUMAN_MEMORY} does not meet our minimum supported."
+            echo "The installation will continue, but you may run out of memory depending on your workload"
+            ${project_dir}/lib/qubinode_openshift_sizing_menu.sh minimal
+        else
+            echo "Aborting installation, the minium supported memory is ${MINIMAL_MEMORY}"
+            exit $?
+        fi
     fi
 }

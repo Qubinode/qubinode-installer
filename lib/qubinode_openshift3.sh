@@ -18,19 +18,23 @@ openshift3_variables () {
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
     master_node="${productname}-master01"
-    INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
-    HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
     openshift3_pre_deployment_checks_playbook="${playbooks_dir}/openshift3_pre_deployment_checks.yml"
     openshift3_setup_deployer_node_playbook="${playbooks_dir}/openshift3_setup_deployer_node.yml"
     openshift3_inventory_generator_playbook="${playbooks_dir}/openshift3_inventory_generator.yml"
     openshift_ansible_dir=/usr/share/ansible/openshift-ansible
+    INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
 
     if [ -f "${playbooks_dir}/vars/openshift3_size.yml" ]
     then
         DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
     fi
-    INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
-    CHECK_STATE_CMD="${project_dir}/playbooks/roles/ocp-power-management/files/check_system_state.sh"
+
+    
+    if ls $INVENTORYDIR/inventory.3.11.rhel.*
+    then
+        INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
+        HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+    fi
 }
 
 function check_openshift3_size_yml () {
@@ -279,6 +283,7 @@ function qubinode_deploy_openshift () {
     run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
     $run_cmd || exit_status "$run_cmd" $LINENO
     INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
+    HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
 
     # Ensure the inventory file exists
     if [ ! -f "${INVENTORYFILE}" ]
