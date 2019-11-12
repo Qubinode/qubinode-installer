@@ -7,28 +7,6 @@
     - vars/vault.yml
 
   tasks:
-    - name: ensure host is reigistered to Red Hat
-      vars:
-        rhsm_user: "{{ rhsm_username | default('') }}"
-        rhsm_pass: "{{ rhsm_password | default('') }}"
-      include_role:
-        name: swygue-redhat-subscription
-      when: (openshift_product is defined) and (openshift_product|length == 0) or
-            (openshift_pool_id is defined) and (openshift_pool_id|length == 0)
-
-    - name: ensure host is registered to Red Hat and attached to the OpenShift Pool
-      vars:
-        rhsm_user: "{{ rhsm_username | default('') }}"
-        rhsm_pass: "{{ rhsm_password | default('') }}"
-        rhsm_pool_ids: "{{ openshift_pool_id | default('') }}"
-      include_role:
-        name: swygue-redhat-subscription
-      when:
-        - (openshift_product is defined) and (openshift_product|length > 0)
-        - "'ocp' in openshift_product"
-        - (openshift_pool_id is defined) and (openshift_pool_id|length > 0)
-
-
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm
