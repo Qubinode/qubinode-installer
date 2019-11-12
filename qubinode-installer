@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# This script will start the automated depoyment of openshift home lab
+set -E
+set -o functrace
 
 # Uncomment for debugging
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
