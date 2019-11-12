@@ -18,6 +18,13 @@ openshift3_variables () {
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
     master_node="${productname}-master01"
+    INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
+    HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+    openshift3_pre_deployment_checks_playbook="${playbooks_dir}/openshift3_pre_deployment_checks.yml"
+    openshift3_setup_deployer_node_playbook="${playbooks_dir}/openshift3_setup_deployer_node.yml"
+    openshift3_inventory_generator_playbook="${playbooks_dir}/openshift3_inventory_generator.yml"
+    openshift_ansible_dir=/usr/share/ansible/openshift-ansible
+
     if [ -f "${playbooks_dir}/vars/openshift3_size.yml" ]
     then
         DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
@@ -237,55 +244,77 @@ function set_openshift_rhsm_pool_id () {
 }
 
 
-function qubinode_deploy_openshift() {
-  # Does some prep work then runs the official OpenShift ansible playbooks
-  setup_variables
+function qubinode_deploy_openshift () {
+    # Load function variables
+    setup_variables
+    openshift3_variables
 
-  if grep '""' "${vars_file}"|grep -q openshift_user
-  then
-      echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
-      sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
-  fi
+    # Load functions
+    qubinode_rhsm_register  # ensure system is registered
+    validate_openshift_pool_id # ensure it's attached to the ocp pool
+    check_openshift3_size_yml # ensure ocp size yaml is generated
 
-  openshift3_variables
-  qubinode_rhsm_register
-  validate_openshift_pool_id
+    # Check for openshift user
+    if grep '""' "${vars_file}"|grep -q openshift_user
+    then
+        echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
+        sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
+    else
+        echo "Could not determine the openshift_user variable, please resolve and try again"
+        exit 1
+    fi
 
-  # ensure KVMHOST is setup as a jumpbox
-  if [[ ! -d /usr/share/ansible/openshift-ansible ]]
-  then
-      ansible-playbook "${playbooks_dir}/openshift3_setup_deployer_node.yml" || exit $?
-  fi
+    # ensure KVMHOST is setup as a jumpbox
+    if [[ ! -d "${openshift_ansible_dir}" ]]
+    then
+        run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
+        $run_cmd || exit_status "$run_cmd" $LINENO
+    else
+        echo "Could not find ${openshift_ansible_dir}"
+        echo "Ensure the openshift installer is installed and try again."
+        exit 1
+    fi
 
-  # Ensure the OpenShift sizing yaml is generated
-  check_openshift3_size_yml
-  ansible-playbook "${playbooks_dir}/openshift3_inventory_generator.yml" || exit $?
-  INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
-  cat $INVENTORYFILE || exit 1
-  HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+    # Generate the openshift inventory
+    run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
+    $run_cmd || exit_status "$run_cmd" $LINENO
+    INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
 
-  if [[ ! -f ${HTPASSFILE} ]]; then
-    get_admin_user_password
-#    echo "***************************************"
-#    echo "Enter pasword to be used by ${OCUSER} user to access openshift console"
-#    echo "***************************************"
-    htpasswd -b ${HTPASSFILE} $OCUSER $admin_user_passowrd
-  fi
+    # Ensure the inventory file exists
+    if [ ! -f "${INVENTORYFILE}" ]
+    then
+        echo "Installation aborted: cannot find the inventory file ${INVENTORYFILE}"
+        exit
+    fi
+    
+    # run openshift pre deployment checks
+    echo "Running Qubi node openshift deployment checks."
+    run_cmd="ansible-playbook -i ${INVENTORYFILE} ${openshift3_pre_deployment_checks_playbook}"
+    $run_cmd || exit_status "$run_cmd" $LINENO
 
-  echo "Running Qubi node openshift deployment checks."
-  ansible-playbook -i  "${INVENTORYFILE}" "${playbooks_dir}/openshift3_pre_deployment_checks.yml" || exit $?
+    # ensure htpassword file is created and populated
+    if [[ ! -f ${HTPASSFILE} ]]; then
+        get_admin_user_password
+        run_cmd="htpasswd -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
+        $run_cmd || exit_status "$run_cmd" $LINENO
+    fi
 
-  if [[ ${product_in_use} == "ocp3" ]]
-  then
-      cd /usr/share/ansible/openshift-ansible
-      ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
-      ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
-  elif [[ ${product_in_use} == "okd3" ]]
-  then
-      cd ${HOME}/openshift-ansible
-      ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
-      ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
-  fi
+
+    # run openshift installation 
+    if [[ ${product_in_use} == "ocp3" ]]
+    then
+        cd "${openshift_ansible_dir}"
+        run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
+        $run_cmd || exit_status "$run_cmd" $LINENO
+
+        run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/deploy_cluster.yml"
+        $run_cmd || exit_status "$run_cmd" $LINENO
+    elif [[ ${product_in_use} == "okd3" ]]
+    then
+        cd ${HOME}/openshift-ansible
+        ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
+        ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
+    fi
 }
 
 function qubinode_uninstall_openshift() {
@@ -486,6 +515,7 @@ function openshift_enterprise_deployment () {
     ask_user_which_openshift_product
     are_openshift_nodes_available
     qubinode_deploy_openshift
+    report_on_openshift3_installation
 }
 
 

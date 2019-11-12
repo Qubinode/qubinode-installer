@@ -44,3 +44,15 @@ function get_admin_user_password () {
         exit 1
     fi
 }
+
+function exit_status () {
+    RESULT=$?
+    FAIL_MSG=$1
+    LINE=$2
+    if [ "A${RESULT}" != "A0" ]
+    then
+        echo "LINE $LINE - FAILED TO COMPLETE: ${FAIL_MSG}"
+        exit "${RESULT}"
+    fi
+}
+

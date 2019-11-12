@@ -115,6 +115,11 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
                satellite_install_msg
            else
+               # need to add a check to verify login to the satellite server then
+               # and if not run other steps
+               ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
+               update_satellite_ip
+               ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
                satellite_install_msg
            fi
        else

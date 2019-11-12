@@ -5,6 +5,7 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/idm.yml
     - vars/satellite_server.yml
 
   tasks:
@@ -14,7 +15,7 @@
       user: "{{ satellite_user }}"
       password: "{{ satellite_pass }}"
       force_basic_auth: yes
-     register: satellite_is_installed
+    register: satellite_is_installed
     ignore_errors: yes
     tags: [ always ]
 

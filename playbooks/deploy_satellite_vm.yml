@@ -5,6 +5,7 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/idm.yml
     - vars/satellite_server.yml
   vars:
     vm_name: "{{ sat_server_vm.sat_name }}"

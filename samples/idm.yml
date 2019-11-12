@@ -8,6 +8,10 @@ idm_public_ip: ""
 idm_admin_user: admin
 idm_check_static_ip: ""
 idm_hostname: "{{ instance_prefix }}-none"
+ipa_client_principal: "{{ idm_admin_user }}"
+ipa_client_pass: "{{ idm_dm_pwd }}"
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
+
 idm_reverse_zone:
   - "{{ qubinode_ptr }}"
 idm_repos:
