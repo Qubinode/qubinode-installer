@@ -18,8 +18,6 @@ function product_requirements () {
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
-    ocp3_vars_files="${project_dir}/playbooks/vars/ocp3.yml ${project_dir}/playbooks/vars/openshift3_size.yml"
-    okd3_vars_files="${project_dir}/playbooks/vars/okd3.yml ${project_dir}/playbooks/vars/openshift3_size.yml"
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]

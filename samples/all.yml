@@ -20,6 +20,8 @@ rhsm_reg_method: ""
 # Required for Enterprise/Community OpenShift #
 #---------------------------------------------#
 openshift_product: ""
+openshift_deployment_size: ""
+deployment_type: "{{ openshift_deployment_size | default('standard') }}"
 openshift_pool_id: ""
 openshift_user: ""
 openshift_auto_install: ""
@@ -80,7 +82,6 @@ vm_libvirt_net: "qubinet"
 os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
 vm_teardown: False
 
-deployment_type: standard
 
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"

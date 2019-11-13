@@ -14,7 +14,6 @@ openshift3_variables () {
     ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
     libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
     NODES_POST_PLAY="${playbooks_dir}/openshift3_nodes_post_deployment.yml"
-    CHECK_OCP_INVENTORY="${project_dir}/inventory/inventory.3.11.rhel.gluster"
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
     master_node="${productname}-master01"
@@ -22,39 +21,45 @@ openshift3_variables () {
     openshift3_setup_deployer_node_playbook="${playbooks_dir}/openshift3_setup_deployer_node.yml"
     openshift3_inventory_generator_playbook="${playbooks_dir}/openshift3_inventory_generator.yml"
     openshift_ansible_dir=/usr/share/ansible/openshift-ansible
-    INVENTORYDIR=$(cat ${vars_file} | grep inventory_dir: | awk '{print $2}' | tr -d '"')
 
-    if [ -f "${playbooks_dir}/vars/openshift3_size.yml" ]
+    if ! grep '""' "${vars_file}"|grep -q "openshift_deployment_size:"
     then
-        DEPLOYMENT_TYPE=$(awk '/deployment_type:/ {print $2}' "${playbooks_dir}/vars/openshift3_size.yml")
+        openshift_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${vars_file}")
+        openshift_deployment_size_yml="${project_dir}/playbooks/vars/openshift3_size_${openshift_deployment_size}.yml"
+        ocp3_vars_files="${project_dir}/playbooks/vars/ocp3.yml ${openshift_deployment_size_yml}"
+        okd3_vars_files="${project_dir}/playbooks/vars/okd3.yml ${openshift_deployment_size_yml}"
     fi
 
-    
-    if ls $INVENTORYDIR/inventory.3.11.rhel.*
+
+    if [ -f "${openshift_deployment_size_yml}" ]
     then
-        INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
+        DEPLOYMENT_SIZE=$(awk '/openshift_deployment_size:/ {print $2}' "${vars_file}")
+    fi
+
+    # Set the OpenShift inventory file 
+    if ls "${hosts_inventory_dir}/inventory.3.11.rhel*" 1> /dev/null 2>&1
+    then
+        INVENTORYFILE=$(ls "${hosts_inventory_dir}/inventory.3.11.rhel*")
         HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
     fi
 }
 
 function check_openshift3_size_yml () {
     openshift3_variables
-    if [ -f "${playbooks_dir}/vars/openshift3_size.yml" ]
+    if [ ! -f "${openshift_deployment_size_yml}" ]
     then
-        echo ""
-        echo ""
-        if [ "A${openshift_auto_install}" == "Atrue" ]
+        echo "Running Hardware Check"
+        check_hardware_resources
+    else
+        if [ "A${openshift_auto_install}" != "Atrue" ]
         then
-            check_hardware_resources
-        else
-            confirm "Continue with a $DEPLOYMENT_TYPE type deployment? yes/no"
-            if [ "A${response}" != "Ayes" ]
+            echo ""
+            confirm "Continue with a $DEPLOYMENT_SIZE type deployment? yes/no"
+            if [ "A${response}" != "Ano" ]
             then
                 check_hardware_resources
             fi
-       fi
-    else
-        check_hardware_resources
+        fi
     fi
 }
 
@@ -63,13 +68,14 @@ function ask_user_which_openshift_product () {
     then
         echo "We support the following OpenShift deployment options: "
         echo ""
-        echo "   * okd3 - Origin Community Distribution 3"
+        #echo "   * okd3 - Origin Community Distribution 3"
         echo "   * ocp3 - Red Hat OpenShift Container Platform 3"
-        echo "   * ocp4 - Red Hat OpenShift Container Platform 4"
+        #echo "   * ocp4 - Red Hat OpenShift Container Platform 4"
         echo ""
 
         echo "Select one of the options below to deploy : "
-        ocp_product_msg=("ocp3" "ocp4" "okd3")
+        #ocp_product_msg=("ocp3" "ocp4" "okd3")
+        ocp_product_msg=("ocp3")
         createmenu "${ocp_product_msg[@]}"
         openshift_product=($(echo "${selected_option}"))
         update_variable=true
@@ -149,10 +155,10 @@ function qubinode_openshift_nodes () {
        qubinode_teardown_openshift
    elif [ "A${teardown}" != "Atrue" ]
    then
-       check_openshift3_size_yml
-       if [ ! -f "${playbooks_dir}/vars/openshift3_size.yml" ]
+       if [ ! -f "${openshift_deployment_size_yml}" ]
        then
-           check_hardware_resources
+           echo "Running check_openshift3_size_yml"
+           check_openshift3_size_yml
        fi 
        echo "Deploy ${openshift_product} VMs"
        ansible-playbook "${NODES_PLAY}" || exit $?
@@ -272,7 +278,8 @@ function qubinode_deploy_openshift () {
     if [[ ! -d "${openshift_ansible_dir}" ]]
     then
         run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
-        $run_cmd || exit_status "$run_cmd" $LINENO
+        $run_cmd || exit_status "$run_cmd" $LINENf [[ ${product_in_use} == "okd3" ]]
+O
     else
         echo "Could not find ${openshift_ansible_dir}"
         echo "Ensure the openshift installer is installed and try again."
@@ -282,8 +289,15 @@ function qubinode_deploy_openshift () {
     # Generate the openshift inventory
     run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
     $run_cmd || exit_status "$run_cmd" $LINENO
-    INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
-    HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+    # Set the OpenShift inventory file 
+    if ls "${hosts_inventory_dir}/inventory.3.11.rhel*" 1> /dev/null 2>&1
+    then
+        INVENTORYFILE=$(ls "${hosts_inventory_dir}/inventory.3.11.rhel*")
+        HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+    else
+        echo "Could not file the openshift inventory file under ${hosts_inventory_dir}/inventory.3.11.rhel*"
+        exit 1
+    fi
 
     # Ensure the inventory file exists
     if [ ! -f "${INVENTORYFILE}" ]
@@ -325,7 +339,7 @@ function qubinode_deploy_openshift () {
 function qubinode_uninstall_openshift() {
   openshift3_variables
   if [[ ${product_in_use} == "ocp3" ]]; then
-    ansible-playbook -i  $INVENTORYDIR/inventory.3.11.rhel.gluster /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml || exit $?
+    ansible-playbook -i  "${INVENTORYFILE}" "${openshift_ansible_uninstall_playbook}" || exit $?
   elif [[ ${product_in_use} == "okd3" ]]; then
     echo "Work in Progress"
     exit 1
@@ -336,12 +350,10 @@ function qubinode_uninstall_openshift() {
 function qubinode_teardown_cleanup () {
     openshift3_variables
     # Remove DNS entries
-    INVENTORYFILE=$(ls $INVENTORYDIR/inventory.3.11.rhel.*)
     test -f "${INVENTORYFILE}" && rm -f "${INVENTORYFILE}"
 
-    
-    if [[ -f ${CHECK_OCP_INVENTORY}  ]]; then
-        rm -rf ${CHECK_OCP_INVENTORY}
+    if [[ -f "${INVENTORYFILE}"  ]]; then
+        rm -rf "${INVENTORYFILE}"
     fi
 
     # Remove ocp3 yml files    
@@ -507,9 +519,16 @@ function maintenance_deploy_nodes () {
     ask_user_which_openshift_product
     qubinode_openshift_nodes
 
-    printf "\n\n**************************************\n"
-    printf "* Nodes for OpenShift Cluster deployed  *\n"
-    printf "****************************************\n\n"
+    if [ "A${teardown}" != "Atrue" ]
+    then
+        printf "\n\n**************************************\n"
+        printf "* Nodes for OpenShift Cluster deployed  *\n"
+        printf "****************************************\n\n"
+    else
+        printf "\n\n**************************************\n"
+        printf "* Nodes for OpenShift Cluster deleted   *\n"
+        printf "****************************************\n\n"
+    fi
 }
 
 function openshift_enterprise_deployment () {
