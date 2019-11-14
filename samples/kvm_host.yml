@@ -90,8 +90,9 @@ libvirt_host_networks:
 kvm_host_ip: ""
 kvm_host_interface: ""
 kvm_host_mask_prefix: ""
+kvm_host_macaddr: ""
 kvm_host_gw: ""
-ssh_username: ""
+ssh_username: "{{ admin_user }}"
 kvm_host_domain: "lab.example"
 kvm_host_dns_server: "1.1.1.1"
 kvm_host_bootproto: 'dhcp'
