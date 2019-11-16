@@ -22,7 +22,6 @@ idm_forward_ip: "{{ dns_forwarder }}"
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
-static_ip: "{{ idm_check_static_ip }}"
 
 # Dns server VM attributes
 dns_server_vm:

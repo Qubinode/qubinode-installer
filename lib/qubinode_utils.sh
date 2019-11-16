@@ -34,6 +34,30 @@ function qubinode_project_cleanup () {
     fi
 }
 
+function cleanStaleKnownHost () {
+    user=$1
+    host=$2
+    alt_host_name=$3
+    isKnownHostStale=$(ssh -o connecttimeout=2 -o stricthostkeychecking=no ${user}@${host} true 2>&1|grep -c "Offending")
+    if [ "A${isKnownHostStale}" == "A1" ]
+    then
+        ssh-keygen -R ${host} >/dev/null 2>&1
+        if [ "A${alt_host_name}" != "A" ]
+        then
+            ssh-keygen -R ${alt_host_name} >/dev/null 2>&1
+        fi
+    fi
+}
+
+function canSSH () {
+    user=$1
+    host=$2
+    RESULT=$(ssh -q -o StrictHostKeyChecking=no -o "BatchMode=yes" -i /home/${user}/.ssh/id_rsa "${user}@${host}" "echo 2>&1" && echo SSH_OK || echo SSH_NOK)
+    echo $RESULT
+}
+
+
+
 function get_admin_user_password () {
     ansible-vault decrypt "${vault_vars_file}"
     admin_user_passowrd=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")

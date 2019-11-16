@@ -55,11 +55,14 @@ search_domains:
 dns_servers:
   - "{{ idm_server_ip | default('1.1.1.1') }}"
   - 8.8.8.8
-ansible_repo: rhel-7-server-ansible-2.6-rpms
-rhel_release: 7.6
+ansible_repo: rhel-7-server-ansible-2.7-rpms
+rhel_release: 7.7
 
 # use by funciton check_hardware_resources
 libvirt_pool_name: default
+
+# Ensure VMs are always using static IP even when DHCP issued
+static_ip: true
 
 # ROLE: swygue-redhat-subscription
 rhsm_org: "{{ rhsm_org }}"
@@ -79,7 +82,7 @@ ssh_username: "{{ admin_user }}"
 # name of the libvirt network to use
 vm_libvirt_net: "qubinet"
 # Use to create VM
-os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
+os_qcow_image_name: rhel-server-7.7-x86_64-kvm.qcow2
 vm_teardown: False
 
 
@@ -206,6 +209,7 @@ network_interface_name: "{{ kvm_host_interface }}"
 ## can be changed to reflect a different network.
 vm_net_gateway: "{{ kvm_host_gw }}"
 vm_net_netmask: "{{ kvm_host_netmask }}"
+vm_gateway: "{{ vm_net_gateway }}"
 
 
 ###########################

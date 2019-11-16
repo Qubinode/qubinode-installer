@@ -36,10 +36,11 @@ openshift3_variables () {
         DEPLOYMENT_SIZE=$(awk '/openshift_deployment_size:/ {print $2}' "${vars_file}")
     fi
 
-    # Set the OpenShift inventory file 
-    if ls "${hosts_inventory_dir}/inventory.3.11.rhel*" 1> /dev/null 2>&1
+    # Set the OpenShift inventory file
+    OCP_INVENTORY=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+    if [ "A${OCP_INVENTORY}" != "A" ]
     then
-        INVENTORYFILE=$(ls "${hosts_inventory_dir}/inventory.3.11.rhel*")
+        INVENTORYFILE="${OCP_INVENTORY}"
         HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
     fi
 }
@@ -55,7 +56,7 @@ function check_openshift3_size_yml () {
         then
             echo ""
             confirm "Continue with a $DEPLOYMENT_SIZE type deployment? yes/no"
-            if [ "A${response}" != "Ano" ]
+            if [ "A${response}" != "Ayes" ]
             then
                 check_hardware_resources
             fi
@@ -164,6 +165,17 @@ function qubinode_openshift_nodes () {
        ansible-playbook "${NODES_PLAY}" || exit $?
        ansible-playbook "${NODES_POST_PLAY}" || exit $?
    fi
+
+   if [ "A${teardown}" != "Atrue" ]
+   then
+       printf "\n\n**************************************\n"
+       printf "* Nodes for OpenShift Cluster deployed  *\n"
+       printf "*****************************************\n\n"
+   else
+       printf "\n\n*****************************************\n"
+       printf "* Nodes for OpenShift Cluster deleted   *\n"
+       printf "*****************************************\n\n"
+   fi
 }
 
 
@@ -253,6 +265,20 @@ function set_openshift_rhsm_pool_id () {
 
 }
 
+function get_all_nodes () {
+    printf "\n\n*********************\n"
+    printf "* OpenShift Nodes *\n"
+    printf "*********************\n\n"
+    while read line
+    do
+        HOST=$(echo $line |awk -v pattern="$openshift_product" '$0~pattern{print $1}')
+        IP=$(echo $line|awk -v pattern="$openshift_product" '$0~pattern{print $2}'|cut -d'=' -f2)
+        if [ "A${IP}" != "A" ]
+        then
+            echo "$IP $HOST.${domain}"
+        fi
+    done < $inventory_file
+}
 
 function qubinode_deploy_openshift () {
     # Load function variables
@@ -262,40 +288,47 @@ function qubinode_deploy_openshift () {
     # Load functions
     qubinode_rhsm_register  # ensure system is registered
     validate_openshift_pool_id # ensure it's attached to the ocp pool
-    check_openshift3_size_yml # ensure ocp size yaml is generated
+    if [ ! -f "${openshift_deployment_size_yml}" ]
+    then
+        echo "Running check_openshift3_size_yml"
+        check_openshift3_size_yml
+    fi
+
 
     # Check for openshift user
     if grep '""' "${vars_file}"|grep -q openshift_user
     then
         echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
         sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
-    else
-        echo "Could not determine the openshift_user variable, please resolve and try again"
-        exit 1
+        if grep '""' "${vars_file}"|grep -q openshift_user
+        then
+            echo "Could not determine the openshift_user variable, please resolve and try again"
+            exit 1
+        fi
     fi
 
     # ensure KVMHOST is setup as a jumpbox
-    if [[ ! -d "${openshift_ansible_dir}" ]]
+    if [ ! -d "${openshift_ansible_dir}" ]
     then
-        run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
-        $run_cmd || exit_status "$run_cmd" $LINENf [[ ${product_in_use} == "okd3" ]]
-O
-    else
         echo "Could not find ${openshift_ansible_dir}"
         echo "Ensure the openshift installer is installed and try again."
         exit 1
+    else
+        run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
+        $run_cmd || exit_status "$run_cmd" $LINENO
     fi
 
     # Generate the openshift inventory
     run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
     $run_cmd || exit_status "$run_cmd" $LINENO
     # Set the OpenShift inventory file 
-    if ls "${hosts_inventory_dir}/inventory.3.11.rhel*" 1> /dev/null 2>&1
+    #INVENTORYFILE=$(ls "${hosts_inventory_dir}/inventory.3.11.rhel*" /dev/null 2>&1)
+    INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+    if [ "A${INVENTORYFILE}" != "A" ]
     then
-        INVENTORYFILE=$(ls "${hosts_inventory_dir}/inventory.3.11.rhel*")
         HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
     else
-        echo "Could not file the openshift inventory file under ${hosts_inventory_dir}/inventory.3.11.rhel*"
+        echo "Could not find the openshift inventory file inventory.3.11.rhel under ${hosts_inventory_dir}"
         exit 1
     fi
 
@@ -314,8 +347,9 @@ O
     # ensure htpassword file is created and populated
     if [[ ! -f ${HTPASSFILE} ]]; then
         get_admin_user_password
-        run_cmd="htpasswd -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
-        $run_cmd || exit_status "$run_cmd" $LINENO
+        run_cmd="htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
+        echo "Creating OpenShift HTAUTH file ${HTPASSFILE}"
+        $run_cmd || "$LINENO: FAILED TO COMPLETE htpasswd -c -b ${HTPASSFILE} $OCUSER" && exit 1
     fi
 
 
@@ -324,10 +358,19 @@ O
     then
         cd "${openshift_ansible_dir}"
         run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
+        echo "Running OpenShift prerequisites"
         $run_cmd || exit_status "$run_cmd" $LINENO
+        echo "Running OpenShift prerequisites"
+        printf "\n\n************************************************\n"
+        printf     "* OpenShift prerequisites playbook run completed *\n"
+        printf     "************************************************\n\n"
 
+        echo "Deploying OpenShift Cluster"
         run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/deploy_cluster.yml"
         $run_cmd || exit_status "$run_cmd" $LINENO
+        printf "\n\n************************************************\n"
+        printf     "* OpenShift Cluster Deployment Complete *\n"
+        printf     "************************************************\n\n"
     elif [[ ${product_in_use} == "okd3" ]]
     then
         cd ${HOME}/openshift-ansible
@@ -373,6 +416,9 @@ function qubinode_teardown_cleanup () {
             test -f $file && rm -f $file
         done
     fi
+    printf "\n\n************************************************\n"
+    printf     "* OpenShift Cluster and Nodes are deleted *\n"
+    printf     "************************************************\n\n"
 }
 
 function qubinode_teardown_openshift () {
@@ -395,43 +441,24 @@ function qubinode_teardown_openshift () {
         master="${productname}-master01"
         node="${productname}-node01"
         infra="${productname}-infra01"
-        if sudo virsh list | grep -q "'${master}\|${node}\|${infra}'"
-        then
-            ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-            qubinode_teardown_cleanup
-        elif ! sudo virsh list | grep -q "'${master}\|${node}\|${infra}'"
-        then
-            qubinode_teardown_cleanup
-        else
-            qubinode_teardown_cleanup
-        fi
+        echo "Running teardown"
+        ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+        qubinode_teardown_cleanup
+        #if sudo virsh list | grep -q "'${master}\|${node}\|${infra}'"
+        #then
+        #    echo "Running teardown"
+        #    ansible-playbook "${NODES_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+        #    qubinode_teardown_cleanup
+        #elif ! sudo virsh list | grep -q "'${master}\|${node}\|${infra}'"
+        #then
+        #    qubinode_teardown_cleanup
+        #else
+        #    qubinode_teardown_cleanup
+        #fi
     else
         echo "No changes will be made"
         exit
     fi
-}
-
-
-function cleanStaleKnownHost () {
-    user=$1
-    host=$2
-    alt_host_name=$3
-    isKnownHostStale=$(ssh -o connecttimeout=2 -o stricthostkeychecking=no ${user}@${host} true 2>&1|grep -c "Offending")
-    if [ "A${isKnownHostStale}" == "A1" ]
-    then
-        ssh-keygen -R ${host}
-        if [ "A${alt_host_name}" != "A" ]
-        then
-            ssh-keygen -R ${alt_host_name} >/dev/null 2>&1
-        fi
-    fi
-}
-
-function canSSH () {
-    user=$1
-    host=$2
-    RESULT=$(ssh -q -o StrictHostKeyChecking=no -o "BatchMode=yes" -i /home/${user}/.ssh/id_rsa "${user}@${host}" "echo 2>&1" && echo SSH_OK || echo SSH_NOK)
-    echo $RESULT
 }
 
 
@@ -440,9 +467,9 @@ function qubinode_autoinstall_openshift () {
     setup_sudoers
     product_in_use="ocp3"
 
-    printf "\n\n***********************\n"
-    printf "* Running perquisites *\n"
-    printf "***********************\n\n"
+    printf "\n\n***************************\n"
+    printf "* Running qubinode perquisites *\n"
+    printf "******************************\n\n"
     qubinode_installer_setup
 
     printf "\n\n********************************************\n"
@@ -474,42 +501,80 @@ function qubinode_autoinstall_openshift () {
     report_on_openshift3_installation
 }
 
-function are_openshift_nodes_available () {
-    ansible qbnodes -m ping 2>&1 | tee /tmp/fail >/dev/null
-    TOTAL_FAILED_HOST=0
-    TOTAL_HOST=0
-    while read line
+function ping_nodes () {
+    HOSTS=$(awk -v pattern="$openshift_product" '$0~pattern{print $1}' "${inventory_file}")
+    TEMP_INVENTORY=$(mktemp)
+    PING_RESULTS=$(mktemp)
+    echo "[all]" > $TEMP_INVENTORY
+    for host in $(echo $HOSTS)
     do
-        HOST=$(echo $line | awk '/=>/ {print $1}')
-        STATUS=$(echo $line | awk '/=>/ {print $3}')
+        echo "${host}.${domain}" >> $TEMP_INVENTORY
+        ansible ${host}.${domain} -i $TEMP_INVENTORY -m ping 2>&1 | tee -a $PING_RESULTS >/dev/null
+    done
+    # Exit if total available host does not match what is expected
+    PINGED_NODES_TOTAL=$(awk '/ok=1/ {print $1}' "${PING_RESULTS}"|wc -l)
+    PINGED_NODES=$(awk '/ok=1/ {print $1}' "${PING_RESULTS}")
+    PINGED_FAILED_NODES=$(awk '/ok=0/ {print $1}' "${PING_RESULTS}")
+    PINGED_MASTER=$(echo "${PINGED_NODES}" |grep master|wc -l)
+}
 
-        if [ "A${HOST}" != "A" ]
-        then
-            TOTAL_HOST=$(expr $TOTAL_HOST + 1)
-        fi
+function are_openshift_nodes_available () {
 
-        if [ "A${STATUS}" == "AUNREACHABLE!" ]
-        then
-            TOTAL_FAILED_HOST=$(expr $TOTAL_FAILED_HOST + 1)
-            echo "$HOST status is $STATUS"
-        fi
-    done < /tmp/fail
-
-    if [ "A${TOTAL_HOST}" != "A0" ]
+    if [ "A${openshift_deployment_size}" == "Aminimal" ]
     then
-        if [ "A${TOTAL_FAILED_HOST}" != "A0" ]
-        then
-            echo "$TOTAL_FAILED_HOST of the $TOTAL_HOST OpenShift nodes failed"
-            exit 1
-        fi
+        TOTAL_NODES=3
+        MASTERS=1
+    elif [ "A${openshift_deployment_size}" == "Asmall" ]
+    then
+        TOTAL_NODES=5
+        MASTERS=1
+    elif [ "A${openshift_deployment_size}" == "Astandard" ]
+    then
+        TOTAL_NODES=5
+        MASTERS=1
+    elif [ "A${openshift_deployment_size}" == "Aperformance" ]
+    then
+        TOTAL_NODES=8
+        MASTERS=3
+    else
+        echo "Unknown OpenShift deployment size"
+        echo "Installation aborted"
+        exit 1
     fi
 
-    if [ "A${TOTAL_HOST}" == "A0" ]
+    ping_nodes
+    if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
     then
-        echo "$TOTAL_HOST available attempting to deploy openshift nodes"
         qubinode_openshift_nodes
+        ping_nodes
+        if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
+        then
+            echo "A ${openshift_deployment_size} cluster requires ${TOTAL_NODES} nodes."
+            echo "Was only able to verify connectivity to ${PINGED_NODES_TOTAL} nodes."
+            echo "Failed nodes are: "
+            echo "${PINGED_FAILED_NODES}"
+            echo "Aborting the installation"
+            exit 1
+        fi
     else
-        echo "All ${TOTAL_HOST} OpenShift nodes are available"
+        if [ "A${PINGED_MASTER}" != "A${MASTERS}" ]
+        then
+            echo "A ${openshift_deployment_size} cluster requires ${MASTERS} masters."
+            echo "Found ${PINGED_MASTER} masters."
+            echo "Aborting the installation"
+            exit 1
+        else
+            echo "Found all ${TOTAL_NODES} nodes: "
+            echo "${PINGED_NODES}"
+            
+            echo "Cluster Nodes" > "${project_dir}/openshift_nodes"
+            for host in $(echo "${PINGED_NODES}")
+            do
+                IP=$(host "${host}" | awk '{print $4}')
+                cleanStaleKnownHost "${ADMIN_USER}" "${host}" "${IP}"
+                echo "FQDN=${host}  IP=${IP}" >> "${project_dir}/openshift_nodes"
+            done
+        fi
     fi
 }
 
@@ -518,17 +583,6 @@ function maintenance_deploy_nodes () {
     # via the -m deploy_nodes argument
     ask_user_which_openshift_product
     qubinode_openshift_nodes
-
-    if [ "A${teardown}" != "Atrue" ]
-    then
-        printf "\n\n**************************************\n"
-        printf "* Nodes for OpenShift Cluster deployed  *\n"
-        printf "****************************************\n\n"
-    else
-        printf "\n\n**************************************\n"
-        printf "* Nodes for OpenShift Cluster deleted   *\n"
-        printf "****************************************\n\n"
-    fi
 }
 
 function openshift_enterprise_deployment () {
@@ -539,6 +593,8 @@ function openshift_enterprise_deployment () {
     ask_user_which_openshift_product
     are_openshift_nodes_available
     qubinode_deploy_openshift
+    echo ENDPLAY
+    exit
     report_on_openshift3_installation
 }
 

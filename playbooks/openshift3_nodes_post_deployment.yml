@@ -32,8 +32,7 @@
       blockinfile:
         path:  /etc/resolv.conf
         block: |
-          domain {{ domain }}
-          nameserver {{ idm_public_ip }}
+          nameserver {{ idm_server_ip }}
       when: etc_resolv_conf.stdout == ""
 
     - name: include post install for product {{ product }}
@@ -73,12 +72,13 @@
         - docker-storage
         - gluster
 
-    - name: update ifcfg-eth0 with loopback for dns
-      blockinfile:
-        path:  /etc/sysconfig/network-scripts/ifcfg-eth0
-        block: |
-          PEERDNS=yes
-          NM_CONTROLLED=yes
+   # - name: update ifcfg-eth0 with loopback for dns
+   #   blockinfile:
+   #     path:  /etc/sysconfig/network-scripts/ifcfg-eth0
+   #     block: |
+   #       PEERDNS=yes
+   #       NM_CONTROLLED=yes
+
     # This was added to address issue #62
     - name: check for cluster.local
       command: grep -o cluster.local /etc/resolv.conf
@@ -109,19 +109,19 @@
         state: present
     # end issue #62
 
-    - name: Reboot immediately if there was a change.
-      shell: "sleep 5 && reboot"
-      async: 1
-      poll: 0
+#    - name: Reboot immediately if there was a change.
+#      shell: "sleep 5 && reboot"
+#      async: 1
+#      poll: 0
 
-    - name: Wait 60 seconds, but only start checking after 30 seconds
-      wait_for_connection:
-        delay: 30
-        timeout: 60
+#    - name: Wait 60 seconds, but only start checking after 30 seconds
+#      wait_for_connection:
+#        delay: 30
+#        timeout: 60
 
-    - name: Wait for the reboot to complete if there was a change.
-      wait_for_connection:
-        connect_timeout: 20
-        sleep: 5
-        delay: 5
-        timeout: 300
+#    - name: Wait for the reboot to complete if there was a change.
+#      wait_for_connection:
+#        connect_timeout: 20
+#        sleep: 5
+#        delay: 5
+#        timeout: 300
