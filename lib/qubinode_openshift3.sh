@@ -497,7 +497,7 @@ function qubinode_autoinstall_openshift () {
     openshift_auto_install=true
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${vars_file}"
     openshift_enterprise_deployment
-    report_on_openshift3_installation
+    openshift3_installation_msg
 }
 
 function ping_nodes () {
@@ -515,9 +515,6 @@ function ping_nodes () {
     PINGED_NODES=$(awk '/ok=1/ {print $1}' "${PING_RESULTS}")
     PINGED_FAILED_NODES=$(awk '/ok=0/ {print $1}' "${PING_RESULTS}")
     PINGED_MASTER=$(echo "${PINGED_NODES}" |grep master|wc -l)
-}
-
-function are_openshift_nodes_available () {
 
     if [ "A${openshift_deployment_size}" == "Aminimal" ]
     then
@@ -540,7 +537,9 @@ function are_openshift_nodes_available () {
         echo "Installation aborted"
         exit 1
     fi
+}
 
+function are_openshift_nodes_available () {
     ping_nodes
     if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
     then
@@ -589,12 +588,17 @@ function openshift_enterprise_deployment () {
     # via the -m deploy_nodes argument
     openshift_product=ocp3
     sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
-    ask_user_which_openshift_product
-    are_openshift_nodes_available
-    qubinode_deploy_openshift
-    echo ENDPLAY
-    exit
     report_on_openshift3_installation
+    STATUS=$?
+    if [[ $OCP_STATUS -ne 200 ]]
+    then
+        ask_user_which_openshift_product
+        are_openshift_nodes_available
+        qubinode_deploy_openshift
+        openshift3_installation_msg
+    else
+        openshift3_installation_msg
+    fi
 }
 
 
@@ -667,47 +671,36 @@ function openshift3_server_maintenance () {
 
 
 function report_on_openshift3_installation () {
-  # load openshift variables
-  openshift3_variables
-
-    if sudo virsh list|grep -E 'master|node|infra'
+    ping_nodes
+    if [ "A${PINGED_NODES_TOTAL}" == "A${TOTAL_NODES}" ]
     then
         echo "Checking to see if Openshift is online."
-        OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null " ${web_console}" --insecure)
-        if [[ $OCP_STATUS -eq 200 ]];  then
-            openshift3_installation_msg
-            exit 0
-        else
-            CHECKFOROCP=$(sudo virsh list|grep -E "'${productname}-master'" | awk '{print $2}')
-            if [[ $CHECKFOROCP == "${productname}-master01" ]]; then
-                if [[ ${productname} == "okd" ]]; then
-                    echo "Please destroy running OpenShift Enterprise VMs before continuing to install OpenShift Origin."
-                    echo "********************************************"
-                    echo "1. ./qubinode-installer -p ocp -d or ./qubinode-installer -p ocp -m deploy_nodes -d "
-                    echo "2. ./qubinode-installer -p idm -d "
-                    echo "3. ./qubinode-installer -p ocp -m clean "
-                    echo "restart ./qubinode-installer option 2"
-                    exit 1
-                fi
-            fi
-            echo  "FAILED to connect to Openshift Console URL:  ${web_console}"
-            printf "\n\n*********************\n"
-        fi
+        OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
+        return $OCP_STATUS
     fi
 }
 
 function openshift3_installation_msg () {
-    # load openshift variables
-    openshift3_variables
-
-    printf "\n\n*******************************************************\n"
-    printf "\nDeployment steps for ${product} cluster is complete.\n"
-    printf "\nCluster login: ${web_console}\n"
-    printf "     Username: ${OCUSER}\n"
-    printf "     Password: <yourpassword>\n"
-    printf "\n\nIDM DNS Server login: https://${prefix}-dns01.${domain}\n"
-    printf "     Username: admin\n"
-    printf "     Password: <yourpassword>\n"
-    printf "*******************************************************\n"
+   report_on_openshift3_installation
+   STATUS=$?
+   if [[ $OCP_STATUS -eq 200 ]]
+   then
+       IDM_IP=$(host "${host}" | awk '{print $4}') 
+       printf "\n\n*******************************************************\n"
+       printf "\nDeployment steps for ${product} cluster is complete.\n"
+       printf "\nCluster login: ${web_console}\n"
+       printf "     Username: ${OCUSER}\n"
+       printf "     Password: <yourpassword>\n\n"
+       cat "${project_dir}/openshift_nodes"
+       printf "\n\nIDM DNS Server login: https://${prefix}-dns01.${domain}\n"
+       printf "     Username: admin\n"
+       printf "     Password: <yourpassword>\n"
+       printf "IdM server IP: $IDM_IP\n"
+       printf "*******************************************************\n"
+   else
+       echo  "FAILED to connect to Openshift Console URL:  ${web_console}"
+       printf "\n\n*********************\n"
+       exit 1
+   fi
 }
 
