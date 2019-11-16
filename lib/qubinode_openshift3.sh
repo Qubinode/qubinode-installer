@@ -648,7 +648,8 @@ function openshift3_server_maintenance () {
             ;;
         smoketest)
             echo  "Running smoke test on environment."
-            bash "${project_dir}/lib/openshift-smoke-test.sh" || exit $?
+            get_admin_user_password
+            bash "${project_dir}/lib/openshift-smoke-test.sh" "${web_console}" "${OCUSER}" "${admin_user_passowrd}"
             ;;
         shutdown)
             echo  "Shutting down cluster"
@@ -682,7 +683,16 @@ function report_on_openshift3_installation () {
 
 function openshift3_installation_msg () {
    report_on_openshift3_installation
-   STATUS=$?
+
+   if [[ $OCP_STATUS -eq 200 ]]
+   then
+       echo "Running post installation test"
+       get_admin_user_password
+       bash "${project_dir}/lib/openshift-smoke-test.sh" "${web_console}" "${OCUSER}" "${admin_user_passowrd}"
+       MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
+       #ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
+   fi
+   
    if [[ $OCP_STATUS -eq 200 ]]
    then
        IDM_IP=$(host "${host}" | awk '{print $4}') 

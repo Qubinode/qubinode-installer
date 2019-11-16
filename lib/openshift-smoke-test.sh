@@ -1,9 +1,10 @@
 #!/bin/bash
 
-web_console="https://qbn-ocp3-master01.lunchnet.example:8443"
-ocp_user=admin33
+web_console="$1"
+ocp_user="$2"
+ocp_user_password="$3"
 
-oc login ${web_console} --username=${ocp_user} --password=redhat2019 --insecure-skip-tls-verify=true
+oc login ${web_console} --username=${ocp_user} --password=$ocp_user_password --insecure-skip-tls-verify=true
 if [ $? -eq 1 ]
 then
     echo "Log to $web_console failed as user $ocp_user"
