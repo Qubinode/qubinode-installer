@@ -21,7 +21,7 @@ The installer supports installing Red Hat OpenShift  (OCP) or The Origin Communi
 ## Supported Versions
 The Qubinode installer currently supports OpenShift 3.11.x builds.
 
-## In Development
+## Testing
 * OCP 4.2 installation
   - [Install instructions](https://gist.github.com/tosin2013/479acd3ca676aec6f42514f7df2f8921)
   - Testing and contributions are welcome
