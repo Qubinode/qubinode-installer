@@ -294,7 +294,6 @@ function qubinode_deploy_openshift () {
         check_openshift3_size_yml
     fi
 
-
     # Check for openshift user
     if grep '""' "${vars_file}"|grep -q openshift_user
     then
@@ -349,9 +348,9 @@ function qubinode_deploy_openshift () {
         get_admin_user_password
         run_cmd="htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
         echo "Creating OpenShift HTAUTH file ${HTPASSFILE}"
-        $run_cmd || "$LINENO: FAILED TO COMPLETE htpasswd -c -b ${HTPASSFILE} $OCUSER" && exit 1
+        $run_cmd 
+        test $(grep $OCUSER ${HTPASSFILE} >/dev/null 2>&1) || exit_status "$run_cmd" $LINENO
     fi
-
 
     # run openshift installation 
     if [[ ${product_in_use} == "ocp3" ]]

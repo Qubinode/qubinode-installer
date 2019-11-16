@@ -82,7 +82,9 @@ ssh_username: "{{ admin_user }}"
 # name of the libvirt network to use
 vm_libvirt_net: "qubinet"
 # Use to create VM
-os_qcow_image_name: rhel-server-7.7-x86_64-kvm.qcow2
+# Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)
+os_qcow_image_name: rhel-server-7.7-update-2-x86_64-kvm.qcow2
+cloud_init_vm_image: "{{ os_qcow_image_name }}"
 vm_teardown: False
 
 

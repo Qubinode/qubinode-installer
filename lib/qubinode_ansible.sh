@@ -66,8 +66,12 @@ function qubinode_setup_ansible () {
         # Ensure roles are downloaded
         echo ""
         echo "Downloading required roles"
-        #ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
-        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
+        if [ "${qubinode_maintenance_opt}" == "ansible" ]
+        then
+            ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
+        else
+            ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
+        fi
         echo ""
         echo ""
 
