@@ -30,7 +30,7 @@
     - name: add bootstrap to reverse forward zone
       vars:
         ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
-        name: bootstrap
+        name: "bootstrap"
         ptr: 2
       set_fact:
         reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -135,7 +135,7 @@
         zone_name: "{{ idm_dns_reverse_zone }}"
         record_name: "{{ item.ptr_record }}"
         record_type: PTR
-        record_value: "{{ item.hostname }}.{{ cluster_name }}"
+        record_value: "{{ item.hostname }}.{{ cluster_name }}.{{ public_domain }}."
         state: "{{ record_state }}"
         validate_certs: no
       with_items: "{{ reverse_records }}"

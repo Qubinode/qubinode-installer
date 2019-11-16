@@ -27,3 +27,11 @@
       args:
         creates: "{{ openshift_install_dir}}/.openshift_install_state.json"
       become: true
+
+    - name: "Recursively change ownership of {{ openshift_install_dir}}"
+      file:
+        path: "{{ openshift_install_dir}}"
+        state: directory
+        recurse: yes
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"

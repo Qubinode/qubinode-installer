@@ -48,19 +48,20 @@ libvirt_services:
 ## OCP4
 cluster_name: ocp42
 public_domain: "{{ domain }}"
-
+internal_domain: qubinode.local
 
 nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"
     create: true
     mode: nat
-    int_domain: "{{ cluster_name }}.{{ public_domain }}"
+    int_domain: "{{ cluster_name }}.{{ internal_domain }}"
     external_domain: "{{ cluster_name }}.{{ public_domain }}"
     mac_start: "52:54:00:"
     master_count: 3
     compute_count: 2
     subnet: "192.168.50.0"
+    gateway: "192.168.50.1"
     mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
     create: true

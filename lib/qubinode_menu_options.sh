@@ -20,7 +20,8 @@ function default_install () {
     TOTAL=$(ls -lsth  $ROLES_DIR | awk '{print $10}'  | wc -l)
 
     if [[ ${TOTAL} -le 10 ]]; then
-      qubinode_setup_ansible
+      qubinode_installer_preflight ${product_opt}
+      qubinode_setup_kvm_host
     fi
 
     printf "\n\n*********************************************\n"
@@ -29,6 +30,7 @@ function default_install () {
     test ! -f /usr/bin/virsh && qubinode_setup_kvm_host
     BRIDGEIP=$(ifconfig qubibr0 | grep inet |  grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | head -1)
     if [[ -z $BRIDGEIP ]]; then
+      qubinode_installer_preflight ${product_opt}
       qubinode_setup_kvm_host
     fi
 
