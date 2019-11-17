@@ -470,6 +470,18 @@ function qubinode_autoinstall_openshift () {
     openshift_auto_install=true
     update_variable=true
     sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${vars_file}"
+    #report_on_openshift3_installation
+    #STATUS=$?
+    #if [[ $OCP_STATUS -ne 200 ]]
+    #then
+    #    ask_user_which_openshift_product
+    #    are_openshift_nodes_available
+    #    qubinode_deploy_openshift
+    #    openshift3_installation_msg
+    #else
+    #    openshift3_installation_msg
+    #fi
+
 
     printf "\n\n***************************\n"
     printf "* Running qubinode perquisites *\n"
@@ -692,6 +704,7 @@ function report_on_openshift3_installation () {
     if [ "A${PINGED_NODES_TOTAL}" == "A${TOTAL_NODES}" ]
     then
         echo "Checking to see if Openshift is online."
+        sleep 45s
         OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
         return $OCP_STATUS
     fi
