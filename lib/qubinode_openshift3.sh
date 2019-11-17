@@ -462,9 +462,8 @@ function qubinode_teardown_openshift () {
 
 
 function qubinode_autoinstall_openshift () {
-    echo "Ensure ${CURRENT_USER} is in sudoers"
-    setup_sudoers
     product_in_use="ocp3"
+    openshift_auto_install=true
 
     printf "\n\n***************************\n"
     printf "* Running qubinode perquisites *\n"
@@ -494,7 +493,6 @@ function qubinode_autoinstall_openshift () {
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
-    openshift_auto_install=true
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${vars_file}"
     openshift_enterprise_deployment
     openshift3_installation_msg

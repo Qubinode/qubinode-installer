@@ -18,6 +18,7 @@ function product_requirements () {
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
+    domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -103,12 +104,6 @@ function qubinode_installer_setup () {
     setup_user_ssh_key
     setup_variables
     ask_user_input
-
-    # Pull variables from all.yml needed for the install
-    domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-    printf "\n\n*********************\n"
-    printf "* Setup is complete *\n"
-    printf "*********************\n\n"
 }
 
 function qubinode_vm_deployment_precheck () {
