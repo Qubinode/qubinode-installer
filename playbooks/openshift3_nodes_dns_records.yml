@@ -22,21 +22,23 @@
       set_fact:
         record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
-    - name: Create/Delete A Records
+    - name: Create/Delete OpenShift Cluster A Records
       ipa_dnsrecord:
         zone_name: "{{ domain }}"
         record_name: "{{ hostvars[ansible_hostname].inventory_hostname }}"
         record_type: A
         record_value: "{{ hostvars[ansible_hostname].ansible_host }}"
+        record_ttl: 300
         state: "{{ record_state }}"
         validate_certs: no
       delegate_to: localhost
 
-    - name: Create/Delete PTR Records
+    - name: Create/Delete OpenShift Cluster PTR Records
       ipa_dnsrecord:
         zone_name: "{{ qubinode_ptr }}"
         record_name: "{{ hostvars[ansible_hostname].ansible_host.split('.')[3:4] | join('.') }}"
         record_type: PTR
+        record_ttl: 300
         record_value: "{{ hostvars[ansible_hostname].inventory_hostname }}.{{ domain }}."
         state: "{{ record_state }}"
         validate_certs: no
