@@ -74,7 +74,7 @@ function qubinode_idm_ask_ip_address () {
         then
             sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" ${idm_vars_file}
         else
-            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" ${idm_vars_file}
+            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" ${idm_vars_file}
         fi
     fi
 
