@@ -464,6 +464,7 @@ function qubinode_teardown_openshift () {
 function qubinode_autoinstall_openshift () {
     product_in_use="ocp3"
     openshift_auto_install=true
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${vars_file}"
 
     printf "\n\n***************************\n"
     printf "* Running qubinode perquisites *\n"
@@ -499,6 +500,7 @@ function qubinode_autoinstall_openshift () {
 }
 
 function ping_nodes () {
+    openshift3_variables
     HOSTS=$(awk -v pattern="$openshift_product" '$0~pattern{print $1}' "${inventory_file}")
     TEMP_INVENTORY=$(mktemp)
     PING_RESULTS=$(mktemp)
@@ -531,7 +533,7 @@ function ping_nodes () {
         TOTAL_NODES=8
         MASTERS=3
     else
-        echo "Unknown OpenShift deployment size"
+        echo "The OpenShift deployment siz of **${openshift_deployment_size}** is unknown"
         echo "Installation aborted"
         exit 1
     fi
