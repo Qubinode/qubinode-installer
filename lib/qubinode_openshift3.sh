@@ -307,14 +307,13 @@ function qubinode_deploy_openshift () {
     fi
 
     # ensure KVMHOST is setup as a jumpbox
+    run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
+    $run_cmd || exit_status "$run_cmd" $LINENO
     if [ ! -d "${openshift_ansible_dir}" ]
     then
         echo "Could not find ${openshift_ansible_dir}"
         echo "Ensure the openshift installer is installed and try again."
         exit 1
-    else
-        run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
-        $run_cmd || exit_status "$run_cmd" $LINENO
     fi
 
     # Generate the openshift inventory
@@ -349,7 +348,11 @@ function qubinode_deploy_openshift () {
         run_cmd="htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
         echo "Creating OpenShift HTAUTH file ${HTPASSFILE}"
         $run_cmd 
-        test $(grep $OCUSER ${HTPASSFILE} >/dev/null 2>&1) || exit_status "$run_cmd" $LINENO
+        #test $(grep $OCUSER ${HTPASSFILE} >/dev/null 2>&1) || exit_status "$run_cmd" $LINENO
+        if ! grep $OCUSER ${HTPASSFILE} >/dev/null 2>&1
+        then
+            exit_status "$run_cmd" $LINENO
+        fi
     fi
 
     # run openshift installation 
@@ -464,6 +467,7 @@ function qubinode_teardown_openshift () {
 function qubinode_autoinstall_openshift () {
     product_in_use="ocp3"
     openshift_auto_install=true
+    update_variable=true
     sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${vars_file}"
 
     printf "\n\n***************************\n"
@@ -587,6 +591,7 @@ function openshift_enterprise_deployment () {
     # This is a wrapper function to deploy openshift nodes
     # via the -m deploy_nodes argument
     openshift_product=ocp3
+    set_openshift_production_variables
     sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
     report_on_openshift3_installation
     STATUS=$?
