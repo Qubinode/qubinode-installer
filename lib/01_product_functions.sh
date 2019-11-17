@@ -18,7 +18,8 @@ function product_requirements () {
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
-    domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
+    deploy_idm_server=$(awk '/deploy_idm_server:/ {print $2}' "${vars_file}")
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]

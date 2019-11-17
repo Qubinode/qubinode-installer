@@ -163,10 +163,14 @@ function ask_user_input () {
             ask_user_if_qubinode_setup
         fi
 
-        if [ "A${product_in_use}" == "Aidm" ]
+        if [ "A${idm_ask_already}" != "Ayes" ]
         then
-            ask_user_for_custom_idm_server
-            qubinode_idm_ask_ip_address
+            if [ "A${deploy_idm_server}" == "Ayes" ]
+            then
+                ask_user_for_custom_idm_server
+                qubinode_idm_ask_ip_address
+                idm_ask_already=yes
+            fi
         fi
     fi
 }

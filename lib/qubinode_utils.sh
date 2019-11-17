@@ -32,6 +32,11 @@ function qubinode_project_cleanup () {
 
         done
     fi
+
+   echo "Removing playbook vars"
+   rm -rvf ${project_dir}/playbooks/vars/*.yml > /dev/null
+   echo "Removing downloaded roles"
+   rm -rvf ${project_dir}/playbooks/roles/* > /dev/null
 }
 
 function cleanStaleKnownHost () {

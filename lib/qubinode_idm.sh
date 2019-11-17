@@ -53,38 +53,56 @@ function ask_user_for_custom_idm_server () {
     fi
 }
 
+function set_idm_static_ip () {
+    read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
+    idm_server_ip="${USER_IDM_SERVER_IP}"
+    sed -i "s/idm_server_ip:.*/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${idm_vars_file}"
+    echo "IdM server VM will install using this ip address $idm_server_ip"
+}
 
 function qubinode_idm_ask_ip_address () {
-    # Get static IP address for IDM
-    if [ "${product_in_use}" == "idm" ]
+    IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+    CURRENT_IDM_IP=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+    echo "${IDM_STATIC}" | grep -qE 'yes|no'
+    RESULT=$?
+    if [ "A${RESULT}" == "A1" ]
     then
-        IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
-        if [[ "A${IDM_STATIC}" == "A" ]] || [[ "A${IDM_STATIC}" == 'A""' ]]
+        echo "Would you like to set a static IP for for the IdM server?"
+        echo "Default choice is to choose: No"
+        confirm " Yes/No"
+        if [ "A${response}" == "Ayes" ]
         then
-            confirm "Would you like to set a static IP for for the IdM server? Default choice is no. Yes/No"
+            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" ${idm_vars_file}
+        else
+            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" ${idm_vars_file}
+        fi
+    fi
+
+    # Check on vailable IP
+    IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+    MSGUK="The varaible idm_server_ip in $idm_vars_file is set to an unknown value of $CURRENT_IDM_IP"
+        
+    if [ "A${IDM_STATIC}" == "Ayes" ]
+    then
+        if [ "A${CURRENT_IDM_IP}" == 'A""' ]
+        then
+           set_idm_static_ip
+        elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
+        then
+            echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
+            confirm "Do you want to change? yes/no"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" "${idm_vars_file}"
-                if grep -q idm_server_ip "${idm_vars_file}"
-                then
-                    if grep idm_server_ip "${idm_vars_file}"| grep -q '""'
-                    then
-                        read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
-                        idm_server_ip="${USER_IDM_SERVER_IP}"
-                        sed -i "s/idm_server_ip:.*/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${idm_vars_file}"
-                    fi
-                else
-                    echo "The variable idm_server_ip is not defined in ${idm_vars_file}."
-                fi
-            elif [ "A${response}" == "Ano" ]
-            then
-                sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" "${idm_vars_file}"
-            else
-                echo "IdM static ip check not required"
+                set_idm_static_ip
             fi
+        else
+            echo "${MSGUK}"
+            echo 'Please reset to "" and try again'
+            exit 1
         fi
     fi
 }
+
 
 
 function isIdMrunning () {
@@ -100,7 +118,6 @@ function isIdMrunning () {
 }
 
 function qubinode_teardown_idm () {
-    #qubinode_vm_deployment_precheck
     IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
     if sudo virsh list --all |grep -q "${idm_srv_hostname}"
     then
@@ -134,7 +151,6 @@ function qubinode_deploy_idm_vm () {
             ansible-playbook "${IDM_VM_PLAY}" || exit $?
         fi
     fi
-
 }
 
 function qubinode_install_idm () {
