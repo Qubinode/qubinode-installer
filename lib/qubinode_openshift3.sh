@@ -163,7 +163,8 @@ function qubinode_openshift_nodes () {
        fi 
        echo "Deploy ${openshift_product} VMs"
        ansible-playbook "${NODES_PLAY}" || exit $?
-       ansible-playbook "${NODES_POST_PLAY}" || exit $?
+       #ansible-playbook "${NODES_POST_PLAY}" || exit $?
+       qubinode_openshift3_nodes_postdeployment
    fi
 
    if [ "A${teardown}" != "Atrue" ]
@@ -547,8 +548,16 @@ function are_openshift_nodes_available () {
     ping_nodes
     if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
     then
+        # Deploy OpenShift Nodes
         qubinode_openshift_nodes
+        
+        # Run post configuration tasks on Openshift Nodes
+        qubinode_openshift3_nodes_postdeployment
+
+        # Check if nodes are now available
         ping_nodes
+
+        # Validate OpenShift nodes deployment
         if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
         then
             echo "A ${openshift_deployment_size} cluster requires ${TOTAL_NODES} nodes."
@@ -576,6 +585,8 @@ function are_openshift_nodes_available () {
                 cleanStaleKnownHost "${ADMIN_USER}" "${host}" "${IP}"
                 echo "FQDN=${host}  IP=${IP}" >> "${project_dir}/openshift_nodes"
             done
+            # Ensure post configruation is done on OpenShift nodes
+            qubinode_openshift3_nodes_postdeployment
         fi
     fi
 }
