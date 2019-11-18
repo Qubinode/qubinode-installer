@@ -10,7 +10,7 @@ function is_root () {
 function display_help() {
     setup_required_paths
     SCRIPT="$0"
-    cat < "${project_dir}/docs/qubinode-install.adoc"
+    cat < "${project_dir}/lib/docs/qubinode-menu-options.adoc"
 }
 
 # generic user choice menu
