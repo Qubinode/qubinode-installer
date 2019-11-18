@@ -5,27 +5,34 @@ function ask_user_if_qubinode_setup () {
     # ensure all required variables are setup
     setup_variables
 
-    if [ "A${QUBINODE_SYSTEM}" == "A" ]
+    if [ "A${openshift_auto_install}" != "Atrue" ]
     then
-        echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
-        echo "This is the default setup. Enter no to skip setting up your system as KVM host."
-        echo "If you choose to install OpenShift, your host will be setup as a OpenShift jumpbox."
-        echo ""
-        echo ""
-        confirm "Continue setting up a qubinode host? yes/no"
-        if [ "A${response}" == "Ayes" ]
+        if [ "A${QUBINODE_SYSTEM}" == "A" ]
         then
-            #"Setting variabel to yes"
-            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
-        elif [ "A${response}" == "Ano" ]
-        then
-            #"Setting variabel to no"
-            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
-        else
-            echo "No action taken"
+            echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
+            echo "This is the default setup. Enter no to skip setting up your system as KVM host."
+            echo "If you choose to install OpenShift, your host will be setup as a OpenShift jumpbox."
+            echo ""
+            echo ""
+            confirm "Continue setting up a qubinode host? yes/no"
+            if [ "A${response}" == "Ayes" ]
+            then
+                #"Setting variabel to yes"
+                sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            elif [ "A${response}" == "Ano" ]
+            then
+                #"Setting variabel to no"
+                sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            else
+                echo "No action taken"
+            fi
         fi
+    else
+        #"Setting variabel to yes"
+        sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
     fi
 }
+
 # Ensure RHEL is set to the supported release
 function set_rhel_release () {
     product_requirements
