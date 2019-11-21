@@ -8,3 +8,4 @@ inventory/*
 *.swp
 all.yml
 rhel-server-*-x86_64-kvm.qcow2
+tower-license.txt
