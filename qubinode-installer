@@ -54,6 +54,7 @@ source "${project_dir}/lib/qubinode_openshift3.sh"
 source "${project_dir}/lib/qubinode_hardware_check.sh"
 source "${project_dir}/lib/qubinode_openshift3_powermgt.sh"
 source "${project_dir}/lib/qubinode_satellite.sh"
+source "${project_dir}/lib/qubinode_tower.sh"
 
 
 # Exit if this is executed as the root user
@@ -122,6 +123,7 @@ then
         display_help
     elif [ "A${result}" == "AContinue" ]
     then
+        check_for_rhel_qcow_image
         qubinode_autoinstall_openshift
     else
         echo $result
@@ -136,6 +138,7 @@ then
     qubinode_maintenance_options
 elif [ "A${qubinode_product}" == "Atrue" ]
 then
+    check_for_rhel_qcow_image
     qubinode_product_deployment $qubinode_product_opt
 else
     display_help

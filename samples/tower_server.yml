@@ -1,0 +1,37 @@
+# Satellite server
+tower_name_append: tower01
+redhat_subscription_name: "Red Hat Enterprise Linux Server"
+tower_latest_download_url: https://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
+tower_server_hostname: "{{ instance_prefix }}-{{ tower_name_append }}"
+tower_server_vm:
+    tower_name: "{{ tower_server_hostname }}"
+    tower_vcpu: 4
+    tower_memory: 4096
+    tower_root_disk_size: 60G
+    tower_teardown: false
+    tower_recreate: false
+    tower_group: tower
+    tower_extra_storage:
+      - size: 300G
+        enable: false
+    tower_enable: true
+
+tower_server_ip: ""
+
+# RHSM info
+tower_pool_id: ""
+rhsm_pool_ids: "{{ tower_pool_id | default('') }}"
+
+tower_repos:
+  - rhel-7-server-rpms
+  - rhel-server-rhscl-7-rpms
+  - rhel-7-server-ansible-2.8-rpms
+
+tower_installer_repo: 'https://releases.ansible.com/ansible-tower/setup'
+tower_version: '3.6.0-1'
+tower_admin_password: "{{ admin_user_password }}"
+tower_ssl_cert: ''
+tower_ssl_key: ''
+tower_custom_cert: no
+tower_license_file: "{{ project_dir }}/tower-license.txt"
+tower_user: admin

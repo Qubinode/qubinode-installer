@@ -16,6 +16,8 @@ localhost               ansible_connection=local ansible_user=root
 
 [osp]
 
+[tower]
+
 [qbnodes:children]
 masters
 infra

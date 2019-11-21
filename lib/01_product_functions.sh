@@ -150,6 +150,7 @@ function check_for_rhel_qcow_image () {
     os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
     if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
     then
+        echo "INSIDE FIRST BLOCK"
         if [ -f "${project_dir}/${os_qcow_image}" ]
         then
             sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
@@ -158,8 +159,6 @@ function check_for_rhel_qcow_image () {
             echo "Please refer the documentation for additional information."
             exit 1
         fi
-    else
-        echo "The require OS image ${libvirt_dir}/${os_qcow_image} was found."
     fi
 }
 
@@ -170,7 +169,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost"
+    AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost tower"
     case $PRODUCT_OPTION in
           ocp3)
               openshift3_variables
@@ -195,6 +194,14 @@ function qubinode_product_deployment () {
               else
                   echo "Installing Satellite"
                   qubinode_deploy_satellite
+              fi
+              ;;
+          tower)
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_teardown_tower
+              else
+                  qubinode_deploy_tower
               fi
               ;;
           idm)
