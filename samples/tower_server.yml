@@ -3,6 +3,7 @@ tower_name_append: tower01
 redhat_subscription_name: "Red Hat Enterprise Linux Server"
 tower_latest_download_url: https://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
 tower_server_hostname: "{{ instance_prefix }}-{{ tower_name_append }}"
+tower_fqdn: "{{ tower_server_hostname }}.{{ domain }}"
 tower_server_vm:
     tower_name: "{{ tower_server_hostname }}"
     tower_vcpu: 4
@@ -35,3 +36,17 @@ tower_ssl_key: ''
 tower_custom_cert: no
 tower_license_file: "{{ project_dir }}/tower-license.txt"
 tower_user: admin
+
+# LDAP Auth
+tower_bind_dn: "uid={{ idm_admin_user }},cn=users,cn=accounts,dc=lunchnet,dc=example"
+
+# Configure Tower
+tower_project_name: "Demo"
+tower_project_desc: "Demo Project"
+tower_org: Default
+tower_scm_type: git
+tower_scm_url: https://github.com/ansible/ansible-tower-samples
+tower_inventory: "{{ tower_project_name }} Inventory"
+tower_credentials: "{{ tower_project_name }} Credentials"
+tower_job_template: "{{ tower_project_name }} Job Template"
+tower_job_playbook: hello_world.yml

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+tower-cli setting modify AUTH_LDAP_SERVER_URI ldap://{{ idm_server_ip }}
+tower-cli setting modify AUTH_LDAP_BIND_DN uid=admin,cn=users,cn=accounts,dc=lunchnet,dc=example
+tower-cli setting modify AUTH_LDAP_BIND_PASSWORD {{ idm_admin_password }}
+tower-cli setting modify AUTH_LDAP_START_TLS false
+tower-cli setting modify AUTH_LDAP_CONNECTION_OPTIONS "{u'OPT_NETWORK_TIMEOUT': 30, u'OPT_REFERRALS': 0}"
+tower-cli setting modify AUTH_LDAP_USER_SEARCH "[u'cn=users,cn=accounts,dc=lunchnet,dc=example', u'SCOPE_SUBTREE', u'(uid=%(user)s)']"
+tower-cli setting modify AUTH_LDAP_GROUP_SEARCH "[u'cn=tower_users,cn=groups,cn=accounts,dc=lunchnet,dc=example', u'SCOPE_SUBTREE', u'(objectClass=ipausergroup)']"
+tower-cli setting modify AUTH_LDAP_GROUP_TYPE NestedMemberDNGroupType
+tower-cli setting modify AUTH_LDAP_REQUIRE_GROUP cn=tower_users,cn=groups,cn=accounts,dc=lunchnet,dc=example
+tower-cli setting modify AUTH_LDAP_USER_ATTR_MAP "{u'first_name': u'givenName', u'last_name': u'sn', u'email': u'mail'}"
+
+# Create a project
+tower-cli project create --name "{{ tower_project_name }}" --description "{{ tower_project_desc }}" --organization "{{ tower_org }}" --scm-type "{{ tower_scm_type }}" --scm-url "{{ tower_scm_url }}"
+
+# Create an inventory
+tower-cli inventory create --name "{{ tower_inventory }}" --organization "{{ tower_org }}"
+
+# Add local host to inventory
+tower-cli host create --name "localhost" --inventory "{{ tower_inventory }}" --variables "ansible_connection: local"
+
+# Create credentials
+tower-cli credential create --name "{{ tower_credentials }}" --credential-type "Machine" --user "admin"
+
+# Create job template
+tower-cli job_template create --name "{{ tower_job_template }}" --project "{{ tower_project_name }}" --inventory "{{ tower_inventory }}" --job-type "run" --credential "{{ tower_credentials }}" --playbook "{{ tower_job_playbook }}" --verbosity "default"
+
+exit 0
