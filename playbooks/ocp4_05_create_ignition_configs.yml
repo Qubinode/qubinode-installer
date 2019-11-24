@@ -1,0 +1,39 @@
+---
+  - name: Create OpenShift installation Configs
+    hosts: localhost
+    vars_files:
+      - vars/all.yml
+      - vars/vault.yml
+      - vars/idm.yml
+      - vars/ocp4.yml
+    become: yes
+
+    tasks:
+    - name: Ensure installion directory
+      file:
+        path: "{{ openshift_install_dir }}"
+        state: directory
+
+    - name: Create install config
+      template:
+        src: install-config.yaml.j2
+        dest: "{{ openshift_install_dir }}/install-config.yaml"
+
+    - name: Save install-config from deletion
+      copy:
+        dest: "{{ openshift_install_dir }}/install-config.yaml.original"
+        src: "{{ openshift_install_dir }}/install-config.yaml"
+
+    - name: Create ignition files
+      command: "/usr/local/bin/openshift-install --dir={{ openshift_install_dir }} create ignition-configs"
+      args:
+        creates: "{{ openshift_install_dir}}/.openshift_install_state.json"
+      become: true
+
+    - name: "Recursively change ownership of {{ openshift_install_dir}}"
+      file:
+        path: "{{ openshift_install_dir}}"
+        state: directory
+        recurse: yes
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
