@@ -234,7 +234,3 @@ qubi_required_pkgs: |
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
 
-
-## OCP4
-cluster_name: ocp42
-public_domain: poc.lunchnet.example 

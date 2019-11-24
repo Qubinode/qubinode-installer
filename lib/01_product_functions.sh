@@ -184,8 +184,16 @@ function qubinode_product_deployment () {
               fi
               ;;
           ocp4)
-              product_in_use=ocp4
-              echo "Installing ocp4"
+              openshift4_variables
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  openshift4_qubinode_teardown
+              elif [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  openshift4_server_maintenance
+              else
+                  openshift4_enterprise_deployment
+              fi
               ;;
           satellite)
               if [ "A${teardown}" == "Atrue" ]
