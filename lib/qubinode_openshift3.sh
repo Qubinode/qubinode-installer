@@ -1,6 +1,6 @@
 #!/bin/bash
 
-openshift3_variables () {
+function openshift3_variables () {
     echo "Loading OpenShift 3 global variables"
     playbooks_dir="${project_dir}/playbooks"
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")

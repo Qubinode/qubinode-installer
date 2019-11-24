@@ -91,11 +91,13 @@ function deploy_tower () {
         exit 1
     fi
     ansible-playbook "${TOWER_SERVER_PLAYBOOK}" || exit $?
+    
 }
 
 function qubinode_deploy_tower () {
     deploy_tower_vm
     deploy_tower
+    tower_install_msg
 }
 
 function qubinode_teardown_tower () {
@@ -139,7 +141,7 @@ function tower_install_msg () {
 }
 
 
-function qubinode_deploy_satellite () {
+function qubinode_deploy_tower () {
     # Load variables
     tower_variables
 
@@ -169,7 +171,7 @@ function qubinode_deploy_satellite () {
     fi
 
    # Ensure required role exist
-   #check_for_required_role swygue-install-satellite
+   check_for_required_role swygue.ansible-tower
 
    # Deploy or teardown Tower
    if [ "A${teardown}" == "Atrue" ]
