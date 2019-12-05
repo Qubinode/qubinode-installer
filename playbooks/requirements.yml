@@ -30,3 +30,6 @@
 
 - src: https://github.com/Qubinode/openshift-4-loadbalancer.git
   version: master
+
+- src: https://github.com/flyemsafe/swygue.coreos-virt-install-iso.git
+  version: dev

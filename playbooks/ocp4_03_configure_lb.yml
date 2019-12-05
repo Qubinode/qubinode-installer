@@ -91,7 +91,6 @@
         name: openshift-4-loadbalancer
         tasks_from: destroy.yml
       vars:
-        lb_name: "openshift-4-loadbalancer-{{ cluster_name }}"
         lb_api: "{{ tmp_api | join(',') }}"
         lb_api_listen: "{{ tmp_api_listen | join(',') }}"
         lb_ingress_http: "{{ tmp_ingress_http | join(',') }}"
@@ -107,7 +106,6 @@
         name: openshift-4-loadbalancer
         tasks_from: create.yml
       vars:
-        lb_name: "openshift-4-loadbalancer-{{ cluster_name }}"
         lb_api: "{{ tmp_api | join(',') }}"
         lb_api_listen: "{{ tmp_api_listen | join(',') }}"
         lb_ingress_http: "{{ tmp_ingress_http | join(',') }}"

@@ -130,6 +130,7 @@ qubinode_bridge_name: qubibr0
 # should a bridge interface be created
 configure_bridge: true
 
+cluster_name: ocp42
 nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"
@@ -152,6 +153,7 @@ libvirt_host_networks:
     gateway: "{{ kvm_host_gw }}"
     mask_prefix: "{{ kvm_host_mask_prefix }}"
     ipaddress: "{{ kvm_host_ip }}"
+    mask: "{{ kvm_host_netmask }}"
     mac: "{{ kvm_host_macaddr }}"
 
 #This is for KVM host initial setup of /etc/resolv.conf

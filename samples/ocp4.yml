@@ -7,13 +7,15 @@ dns_wildcard: "*.apps"
 listen_address: "{{ kvm_host_ip }}"
 
 # OpenShift client  and install information
-ocp4_version: 4.2.7
+ocp4_release: 4.2.7
+ocp4_version: "{{ ocp4_release }}"
 ocp4_image_version: 4.2.0
 ocp4_release: latest
 ocp4_dependencies_version: 4.2
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}/"
 ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
+openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
 
 # set when you want to remove an old version of openshift tools
 remove_oc_tool: false
@@ -35,3 +37,7 @@ libvirt_network_name: "{{ nat_network_name }}"
 idm_dns_forward_zone: "{{ domain }}"
 idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 public_domain: "{{ domain }}"
+
+# Load Balancer
+lb_name: "lb{{ cluster_name }}"
+libvirt_network_name: "{{ cluster_name }}"
