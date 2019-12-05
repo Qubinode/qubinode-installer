@@ -77,8 +77,14 @@
 
     - name: ensure backup folder is created
       file:
-        path: "{{ project_dir }}/backups"
-      when:  idm_is_installed|bool
+        path: '{{ project_dir }}/backups-test'
+        state: directory
+        mode: '0755'
+
+    - debug:
+        msg: "{{ project_dir }}/backups-test"
+
+    - meta: end_play
 
     - name: check if resolv.conf backup file exists
       stat:
