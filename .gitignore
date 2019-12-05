@@ -12,3 +12,4 @@ tower-license.txt
 backup
 ocp4/
 pull-secret.txt
+rhcos-install

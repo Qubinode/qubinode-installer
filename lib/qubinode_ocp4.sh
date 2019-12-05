@@ -58,15 +58,6 @@ is_node_up () {
     fi
 }
 
-openshift4_enterprise_deployment () {
-    #openshift4_prechecks
-    #ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml
-    #ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml
-    #ansible-playbook playbooks/ocp4_03_configure_lb.yml
-    #ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml
-    #ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml
-    #ansible-playbook playbooks/ocp4_06_deploy_webserver.yml 
-}
 
 deploy_bootstrap_node () {
     # Deploy Bootstrap
@@ -130,4 +121,15 @@ deploy_compute_nodes () {
         sleep 10s
         i="$(sudo virsh list | grep running |wc -l)"
     done
+}
+
+openshift4_enterprise_deployment () {
+    openshift4_prechecks
+    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml
+    ansible-playbook playbooks/ocp4_03_configure_lb.yml
+    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml
+    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml
+    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml 
+    deploy_bootstrap_node
 }
