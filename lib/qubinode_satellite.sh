@@ -57,7 +57,10 @@ function qubinode_deploy_satellite () {
    test -f "${ACTIVE_VARS_FILE}" || cp "${SAMPLE_VARS_FILE}" "${ACTIVE_VARS_FILE}"
    SATELLITE_VM_PLAYBOOK="${project_dir}/playbooks/deploy_satellite_vm.yml"
    SATELLITE_SERVER_IP=$(awk '/qbn-sat/ {print $2}' "${project_dir}/inventory/hosts" |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-   SATELLITE_SERVER_DNS=$(dig +short -x "${SATELLITE_SERVER_IP}")
+   if [ "A${SATELLITE_SERVER_IP}" != "A" ]
+   then
+       SATELLITE_SERVER_DNS=$(dig +short -x "${SATELLITE_SERVER_IP}")
+   fi
    SATELLITE_SERVER_PLAYBOOK="${project_dir}/playbooks/satellite_server.yml"
 
    #TODO: either a playbook or function to set the variable sat_server_ip in the satellite_server.yml var file

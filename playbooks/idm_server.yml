@@ -75,6 +75,11 @@
           Please re-run qubinode-installer or undeploy and start again.
       when: not idm_is_installed|bool
 
+    - name: ensure backup folder is created
+      file:
+        path: "{{ project_dir }}/backups"
+      when:  idm_is_installed|bool
+
     - name: check if resolv.conf backup file exists
       stat:
         path: "{{ project_dir }}/backups/resolv.conf"
