@@ -77,21 +77,17 @@
 
     - name: ensure backup folder is created
       file:
-        path: '{{ project_dir }}/backups-test'
+        path: "{{ project_dir }}/backups"
         state: directory
         mode: '0755'
-
-    - debug:
-        msg: "{{ project_dir }}/backups-test"
-
-    - meta: end_play
+      delegate_to: 127.0.0.1
 
     - name: check if resolv.conf backup file exists
       stat:
         path: "{{ project_dir }}/backups/resolv.conf"
       register: resolv_backup
-      delegate_to: 127.0.0.1
       when:  idm_is_installed|bool
+      delegate_to: 127.0.0.1
 
     - name: backup original /etc/resolv.conf file
       copy:
