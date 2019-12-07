@@ -108,6 +108,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+               ansible-playbook playbooks/satellite_server_setup.yml
                satellite_install_msg
            elif [ "A${SATELLITE_SERVER_DNS}" == "A" ]
            then
@@ -116,6 +117,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+               ansible-playbook playbooks/satellite_server_setup.yml
                satellite_install_msg
            else
                # need to add a check to verify login to the satellite server then
@@ -123,6 +125,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+               ansible-playbook playbooks/satellite_server_setup.yml
                satellite_install_msg
            fi
        else
@@ -131,6 +134,7 @@ function qubinode_deploy_satellite () {
            ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
            update_satellite_ip
            ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+           ansible-playbook playbooks/satellite_server_setup.yml
            satellite_install_msg
        fi
    fi
