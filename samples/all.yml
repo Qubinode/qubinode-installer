@@ -142,6 +142,7 @@ libvirt_host_networks:
     master_count: 3
     compute_count: 3
     subnet: "192.168.50.0"
+    gateway: "192.168.50.1"
     mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
     create: true

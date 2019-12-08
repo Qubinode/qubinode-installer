@@ -30,9 +30,6 @@ pull_secret: "{{ project_dir }}/pull-secret.txt"
 #image_pull_secret: "{{ lookup('file', pull_secret) }}"
 ssh_ocp4_public_key: "{{ lookup('file', vm_public_key) }}"
 
-#Network name
-libvirt_network_name: "{{ nat_network_name }}"
-
 # DNS
 idm_dns_forward_zone: "{{ domain }}"
 idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
@@ -41,3 +38,6 @@ public_domain: "{{ domain }}"
 # Load Balancer
 lb_name: "lb{{ cluster_name }}"
 libvirt_network_name: "{{ cluster_name }}"
+
+# Web server
+webserver_directory: /opt/qubinode_webserver
