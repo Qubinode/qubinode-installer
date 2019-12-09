@@ -196,12 +196,12 @@ start_ocp4_deployment () {
 }
 
 openshift4_enterprise_deployment () {
-    #openshift4_prechecks
-    #ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml
-    #ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml
-    #ansible-playbook playbooks/ocp4_03_configure_lb.yml
-    #ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml
-    #ansible-playbook playbooks/ocp4_06_deploy_webserver.yml
+    openshift4_prechecks
+    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml
+    ansible-playbook playbooks/ocp4_03_configure_lb.yml
+    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml
+    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml
     ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml
     NODE_NETINFO=$(mktemp)
     sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
