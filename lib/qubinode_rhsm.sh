@@ -51,7 +51,7 @@ function qubinode_rhsm_register () {
     then
         echo "Skipping registering to RHSM"
     else
-        product_requirements
+        qubinode_required_prereqs
         vaultfile="${vault_vars_file}"
         varsfile="${vars_file}"
         does_exist=$(does_file_exist "${vault_vars_file} ${vars_file}")
