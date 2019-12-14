@@ -7,6 +7,12 @@
     - vars/vault.yml
 
   tasks:
+    - name: ensure backup folder is created
+      file:
+        path: "{{ project_dir }}/backups"
+        state: directory
+        mode: '0755'
+
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm
