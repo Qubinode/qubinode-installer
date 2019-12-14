@@ -4,7 +4,7 @@
 function qubinode_project_cleanup () {
     # resets the project to a clean state by removing all vars files 
     # ensure requirements are in place
-    product_requirements
+    qubinode_required_prereqs
 
     FILES=()
     mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)

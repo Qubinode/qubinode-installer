@@ -46,7 +46,7 @@ satellite_hostname: "{{ sat_server_vm.sat_name }}"
 satellite_ip_address: "{{ sat_server_ip }}"
 satellite_user: "{{ admin_user }}"
 satellite_pass: "{{ admin_user_password }}"
-satellite_version: 6.5
+satellite_version: 6.6
 
 satellite_repos:
   - rhel-7-server-rpms
@@ -54,3 +54,113 @@ satellite_repos:
   - "rhel-7-server-satellite-{{ satellite_version }}-rpms"
   - rhel-7-server-satellite-maintenance-6-rpms
   - rhel-7-server-ansible-2.6-rpms
+
+# The below is for Satellite post installation
+satellite_admin_user: "{{ satellite_user }}"
+satellite_user_pass: "{{ satellite_pass }}"
+satellite_url: "https://qbn-sat01.{{ domain }}"
+satellite_verify_ssl: no
+rhsm_password: ""
+rhsm_user: ""
+manifest_download_path: /root
+local_manifest_path: "{{ project_dir }}"
+default_subscription:
+  - name: "Red Hat Cloud Suite (2-sockets), Premium"
+satellite_orgs:
+  - name: "{{ satellite_default_organization }}"
+    state: present
+    manifest: satellite-server-manifest
+    manifest_state: present
+    manifest_force_upload: False
+    sync_right_away: True
+    use_local_manifest: True
+    cdn_url: https://cdn.redhat.com
+    wait_for_respo_sync: false
+    pool:
+      - id: 8a85f99b6977b7c0016979464ee772cb
+        pool_state: present
+        quantity: 7
+    location:
+      - name: "{{ satellite_default_location }}"
+        state: present
+    products:
+      - rhel7
+      - rhel8
+      - ansible
+    lifecycle_environments:
+      - name: Dev
+        prior: Library
+        state: present
+        description: Dev environment
+      - name: QA
+        prior: Dev
+        state: present
+        description: QA environment
+      - name: Production
+        prior: QA
+        state: present
+        description: Production environment
+    sync_plans:
+      - name: "Red Hat Sync Plan"
+        date: "2019/10/09 00:00:00 +0000"
+        interval: daily
+        enabled: true
+        description: "Sync Plan for Red Hat products"
+    domains:
+      - name: "{{ domain }}"
+        locations:
+          - "{{ satellite_default_location }}"
+        organizations:
+          - "{{ satellite_default_organization }}"
+        state: present
+        description: "{{ domain }}"
+    subnets:
+      - name: lunchnet
+        locations:
+          - "{{ satellite_default_location }}"
+        organizations:
+          - "{{ satellite_default_organization }}"
+        network: 172.24.24.0
+        mask: "{{ kvm_host_netmask }}"
+        gateway: "{{ kvm_host_gw }}"
+        from_ip: 172.24.24.200
+        to_ip: 172.24.24.205
+        domains:
+          - "{{ domain }}"
+        state: present
+        description: 172.24.24.0
+    compute_resource:
+      - name: lunchnet
+        locations:
+          - "{{ satellite_default_location }}"
+        organizations:
+          - "{{ satellite_default_organization }}"
+        state: present
+        provider: libvirt
+        provider_params:
+          url: "qemu+ssh://root@{{ kvm_host_ip }}/system"
+          display_type: vnc
+        description: KVM Compute Host
+
+# Ansible Tower Integration Role
+role_name: "ansible_tower_integration_role"
+role_description: "Ansible Tower Integration Role"
+role_state: present
+role_filters:
+  - resource: 'Host'
+    permissions:
+      - view_hosts
+  - resource: 'Host Group'
+    permissions:
+      - view_hostgroups
+  - resource: 'Fact value'
+    permissions:
+      - view_facts
+addtl_username: ansible_integration
+addtl_firstname: Ansible
+addtl_lastname: Integration
+addtl_description: "Ansible Integration User"
+addtl_admin: no
+addtl_password: redhat2019 
+addtl_state: present
+

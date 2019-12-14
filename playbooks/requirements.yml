@@ -20,10 +20,19 @@
   version: master
 
 - src: https://github.com/flyemsafe/swygue-lvm.git
-  version: master
+  version: dev
 
 - src: https://github.com/tosin2013/ocp-power-management.git
   version: master
 
 - src: https://github.com/flyemsafe/swygue-install-satellite.git
   version: master
+
+- src: https://github.com/Qubinode/openshift-4-loadbalancer.git
+  version: master
+
+- src: https://github.com/flyemsafe/swygue.coreos-virt-install-iso.git
+  version: dev
+
+- src: https://github.com/flyemsafe/satellite-day-two-ops.git
+  varsion: master

@@ -82,25 +82,28 @@ function qubinode_idm_ask_ip_address () {
     IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
     MSGUK="The varaible idm_server_ip in $idm_vars_file is set to an unknown value of $CURRENT_IDM_IP"
         
-    if [ "A${IDM_STATIC}" == "Ayes" ]
-    then
-        if [ "A${CURRENT_IDM_IP}" == 'A""' ]
-        then
-           set_idm_static_ip
-        elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
-        then
-            echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
-            confirm "Do you want to change? yes/no"
-            if [ "A${response}" == "Ayes" ]
-            then
-                set_idm_static_ip
-            fi
-        else
-            echo "${MSGUK}"
-            echo 'Please reset to "" and try again'
-            exit 1
-        fi
-    fi
+   if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
+   then
+       if [ "A${IDM_STATIC}" == "Ayes" ]
+       then
+           if [ "A${CURRENT_IDM_IP}" == 'A""' ]
+           then
+               set_idm_static_ip
+           elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
+           then
+               echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
+               confirm "Do you want to change? yes/no"
+               if [ "A${response}" == "Ayes" ]
+               then
+                   set_idm_static_ip
+               fi
+           else
+               echo "${MSGUK}"
+               echo 'Please reset to "" and try again'
+               exit 1
+           fi
+       fi
+   fi
 }
 
 

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-function product_requirements () {
+function qubinode_required_prereqs () {
     # This function copies over the required variables files
     # Setup of the required paths
     # Sets up the inventory file
 
-    echo "Loading function product_requirements"
+    echo "Loading function qubinode_required_prereqs"
     # setup required paths
     setup_required_paths
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
@@ -58,7 +58,7 @@ function product_requirements () {
 }
 
 function setup_variables () {
-    product_requirements
+    qubinode_required_prereqs
 
     echo ""
     #echo "Populating ${vars_file}"
@@ -101,7 +101,7 @@ function setup_variables () {
 function qubinode_installer_setup () {
     # Run required functions
     setup_sudoers
-    product_requirements
+    qubinode_required_prereqs
     setup_user_ssh_key
     setup_variables
     ask_user_input
@@ -111,7 +111,7 @@ function qubinode_vm_deployment_precheck () {
    # This function ensure that the host is setup as a KVM host.
    # It ensures the foundation is set to allow ansible playbooks can run
    # and the products can be deployed.
-   product_requirements
+   qubinode_required_prereqs
    setup_variables
    ask_user_input
    echo "Running VM deployment prechecks"
@@ -150,6 +150,7 @@ function check_for_rhel_qcow_image () {
     os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
     if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
     then
+        echo "INSIDE FIRST BLOCK"
         if [ -f "${project_dir}/${os_qcow_image}" ]
         then
             sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
@@ -158,97 +159,7 @@ function check_for_rhel_qcow_image () {
             echo "Please refer the documentation for additional information."
             exit 1
         fi
-    else
-        echo "The require OS image ${libvirt_dir}/${os_qcow_image} was found."
     fi
 }
 
-
-function qubinode_product_deployment () {
-    # this function deploys a supported product
-    PRODUCT_OPTION=$1
-
-    # the product_opt is still use by some functions and it should be refactored
-    product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost"
-    case $PRODUCT_OPTION in
-          ocp3)
-              openshift3_variables
-              if [ "A${teardown}" == "Atrue" ]
-              then
-                  qubinode_teardown_openshift
-              elif [ "A${qubinode_maintenance}" == "Atrue" ]
-              then
-                  openshift3_server_maintenance
-              else
-                  openshift_enterprise_deployment
-              fi
-              ;;
-          ocp4)
-              product_in_use=ocp4
-              echo "Installing ocp4"
-              ;;
-          satellite)
-              if [ "A${teardown}" == "Atrue" ]
-              then
-                  qubinode_teardown_satellite
-              else
-                  echo "Installing Satellite"
-                  qubinode_deploy_satellite
-              fi
-              ;;
-          idm)
-              if [ "A${teardown}" == "Atrue" ]
-              then
-                  echo "Running IdM VM teardown function"
-                  qubinode_teardown_idm
-              else
-                  echo "Running IdM VM deploy function"
-                  qubinode_deploy_idm
-              fi
-              ;;
-          kvmhost)
-              echo "Setting up KVM host"
-              qubinode_setup_kvm_host
-              ;;
-          *)
-              echo "Product ${PRODUCT_OPTION} is not supported."
-              echo "Supported products are: ${AVAIL_PRODUCTS}"
-              exit 1
-              ;;
-    esac
-           
-}
-
-function qubinode_maintenance_options () {
-    if [ "${qubinode_maintenance_opt}" == "clean" ]
-    then
-        qubinode_project_cleanup
-    elif [ "${qubinode_maintenance_opt}" == "setup" ]
-    then
-        qubinode_installer_setup
-    elif [ "${qubinode_maintenance_opt}" == "rhsm" ]
-    then
-        qubinode_rhsm_register
-    elif [ "${qubinode_maintenance_opt}" == "ansible" ]
-    then
-        qubinode_setup_ansible
-    elif [ "${qubinode_maintenance_opt}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
-    then
-        qubinode_setup_kvm_host
-    elif [ "${qubinode_maintenance_opt}" == "deploy_nodes" ]
-    then
-        maintenance_deploy_nodes
-    elif [ "${qubinode_maintenance_opt}" == "undeploy" ]
-    then
-        #TODO: this should remove all VMs and clean up the project folder
-        qubinode_vm_manager undeploy
-    elif [ "${qubinode_maintenance_opt}" == "uninstall_openshift" ]
-    then
-      #TODO: this should remove all VMs and clean up the project folder
-        qubinode_uninstall_openshift
-    else
-        display_help
-    fi
-}
 

@@ -40,10 +40,11 @@ CURRENT_USER=$(whoami)
 setup_required_paths
 
 # Include all required functions
-source "${project_dir}/lib/00_pre_functions.sh"
+source "${project_dir}/lib/qubinode_installer_prereqs.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
-source "${project_dir}/lib/01_product_functions.sh"
 source "${project_dir}/lib/qubinode_menu_options.sh"
+source "${project_dir}/lib/qubinode_requirements.sh"
+source "${project_dir}/lib/01_product_functions.sh"
 source "${project_dir}/lib/setup_sudo.sh"
 source "${project_dir}/lib/qubinode_userinput.sh"
 source "${project_dir}/lib/qubinode_kvmhost.sh"
@@ -51,9 +52,11 @@ source "${project_dir}/lib/qubinode_idm.sh"
 source "${project_dir}/lib/qubinode_ansible.sh"
 source "${project_dir}/lib/qubinode_rhsm.sh"
 source "${project_dir}/lib/qubinode_openshift3.sh"
+source "${project_dir}/lib/qubinode_ocp4.sh"
 source "${project_dir}/lib/qubinode_hardware_check.sh"
 source "${project_dir}/lib/qubinode_openshift3_powermgt.sh"
 source "${project_dir}/lib/qubinode_satellite.sh"
+source "${project_dir}/lib/qubinode_tower.sh"
 
 
 # Exit if this is executed as the root user
@@ -122,6 +125,7 @@ then
         display_help
     elif [ "A${result}" == "AContinue" ]
     then
+        check_for_rhel_qcow_image
         qubinode_autoinstall_openshift
     else
         echo $result
@@ -136,6 +140,7 @@ then
     qubinode_maintenance_options
 elif [ "A${qubinode_product}" == "Atrue" ]
 then
+    check_for_rhel_qcow_image
     qubinode_product_deployment $qubinode_product_opt
 else
     display_help

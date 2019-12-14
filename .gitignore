@@ -9,3 +9,8 @@ inventory/*
 all.yml
 rhel-server-*-x86_64-kvm.qcow2
 tower-license.txt
+backups
+ocp4/
+pull-secret.txt
+rhcos-install
+satellite-server-manifest.zip

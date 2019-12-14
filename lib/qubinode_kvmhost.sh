@@ -35,7 +35,7 @@ function ask_user_if_qubinode_setup () {
 
 # Ensure RHEL is set to the supported release
 function set_rhel_release () {
-    product_requirements
+    qubinode_required_prereqs
     RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
     RELEASE="Release: ${RHEL_RELEASE}"
     CURRENT_RELEASE=$(sudo subscription-manager release --show)
@@ -54,7 +54,7 @@ function set_rhel_release () {
 }
 
 function qubinode_networking () {
-    product_requirements
+    qubinode_required_prereqs
     KVM_HOST_IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -166,7 +166,7 @@ function qubinode_setup_kvm_host () {
     qubinode_maintenance_opt="host"
 
     # run functions
-    product_requirements
+    qubinode_required_prereqs
     setup_variables
     setup_sudoers
     ask_user_input

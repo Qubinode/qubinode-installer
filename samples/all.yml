@@ -130,6 +130,7 @@ qubinode_bridge_name: qubibr0
 # should a bridge interface be created
 configure_bridge: true
 
+cluster_name: ocp42
 nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"
@@ -141,6 +142,7 @@ libvirt_host_networks:
     master_count: 3
     compute_count: 3
     subnet: "192.168.50.0"
+    gateway: "192.168.50.1"
     mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
     create: true
@@ -152,6 +154,7 @@ libvirt_host_networks:
     gateway: "{{ kvm_host_gw }}"
     mask_prefix: "{{ kvm_host_mask_prefix }}"
     ipaddress: "{{ kvm_host_ip }}"
+    mask: "{{ kvm_host_netmask }}"
     mac: "{{ kvm_host_macaddr }}"
 
 #This is for KVM host initial setup of /etc/resolv.conf
@@ -234,7 +237,3 @@ qubi_required_pkgs: |
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
 
-
-## OCP4
-cluster_name: ocp42
-public_domain: poc.lunchnet.example 
