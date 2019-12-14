@@ -98,15 +98,6 @@ function setup_variables () {
     ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
 }
 
-function qubinode_installer_setup () {
-    # Run required functions
-    setup_sudoers
-    qubinode_required_prereqs
-    setup_user_ssh_key
-    setup_variables
-    ask_user_input
-}
-
 function qubinode_vm_deployment_precheck () {
    # This function ensure that the host is setup as a KVM host.
    # It ensures the foundation is set to allow ansible playbooks can run

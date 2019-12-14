@@ -76,6 +76,9 @@ function ask_for_vault_values () {
         unset idm_admin_pwd
         while [[ ${#idm_admin_pwd} -lt 8 ]]
         do
+            echo "The qubinode-installer depends on IdM as the DNS server"
+            echo "If you are using a existing IdM server enter the password admin console login."
+            echo "If a new IdM server will be created, this password will be used."
             echo -n 'Enter a password for the IDM server console and press [ENTER]: '
             read_sensitive_data
             idm_admin_pwd="${sensitive_data}"
