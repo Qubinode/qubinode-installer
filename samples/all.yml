@@ -92,6 +92,8 @@ dns_servers:
   - "{{ idm_server_ip | default('1.1.1.1') }}"
   - 8.8.8.8
 
+public_domain: "{{ domain }}"
+
 # use by funciton check_hardware_resources
 libvirt_pool_name: default
 
