@@ -10,6 +10,7 @@
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm
+      when: create_lvm|bool
 
     - name: Check whether ifcfg-{{ network_interface_name }} contains "UUID"
       command: grep -Fxq "UUID" /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }}

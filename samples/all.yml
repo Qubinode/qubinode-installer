@@ -73,6 +73,11 @@ preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 # should a bridge interface be created
 configure_bridge: true
 
+# Set to no prevent the installer from attempting
+# setup a LVM group for qubinode. Also set this to no
+# if you already have you storage for lvm setup
+create_lvm: yes
+
 vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
 update_inventory: true
 vm_data_dir: "/var/lib/vmdata"
