@@ -32,9 +32,9 @@ function setup_required_paths () {
 }
 
 setup_required_paths
-source "${project_dir}/lib/00_pre_functions.sh"
+source "${project_dir}/lib/qubinode_installer_prereqs.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
-source "${project_dir}/lib/01_product_functions.sh"
+source "${project_dir}/lib/qubinode_requirements.sh"
 
 qubinode_required_prereqs
 auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${vars_file}")
