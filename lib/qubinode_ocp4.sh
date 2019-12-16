@@ -13,14 +13,14 @@ function openshift4_prechecks () {
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
 
-    #check for pull secret 
+    #check for pull secret
     if [ ! -f "${ocp4_pull_secret}" ]
     then
         echo "Please download your pull-secret from: "
         echo "https://cloud.redhat.com/openshift/install/metal/user-provisioned"
         echo "and save it as ${ocp4_pull_secret}"
         echo ""
-        exit 
+        exit
     fi
 
     check_for_required_role openshift-4-loadbalancer
@@ -39,12 +39,12 @@ openshift4_qubinode_teardown () {
 
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
     for n in $(cat rhcos-install/node-list)
-    do 
+    do
         sudo virsh shutdown $n;sleep 10s; sudo virsh undefine $n
     done
-   
-    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4" 
-    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install" 
+
+    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
+    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
 
     if sudo podman ps -a| grep -q ocp4lb
     then
@@ -76,6 +76,7 @@ is_node_up () {
     IP=$1
     VMNAME=$2
     WAIT_TIME=0
+    DNSIP=$(cat playbooks/vars/idm.yml  |grep idm_server_ip: | awk '{print $2}')
     until ping -c4 "${NODE_IP}" >& /dev/null || [ $WAIT_TIME -eq 60 ]
     do
         sleep $(( WAIT_TIME++ ))
@@ -83,7 +84,7 @@ is_node_up () {
     ssh -q -o "StrictHostKeyChecking=no" core@${IP} 'hostname -s' &>/dev/null
     NAME_CHECK=$(ssh core@${IP} 'hostname -s')
     #NAME_CHECK=$(ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" core@${IP} 'hostname -s')
-    ETCD_CHECK=$(ssh core@${IP} 'dig @172.24.24.10 -t srv _etcd-server-ssl._tcp.ocp42.lunchnet.example|grep "^_etcd-server-ssl."|wc -l')
+    ETCD_CHECK=$(ssh core@${IP} 'dig @${DNSIP} -t srv _etcd-server-ssl._tcp.ocp42.lunchnet.example|grep "^_etcd-server-ssl."|wc -l')
     echo ETCD_CHECK=$ETCD_CHECK
     if [ "A${VMNAME}" != "A${NAME_CHECK}" ]
     then
@@ -126,7 +127,7 @@ function ignite_node () {
         do
             sleep $(( WAIT_TIME++ ))
         done
-                
+
         echo -n "Igniting $VMNAME node "
         while ping -c 1 -W 3 "${NODE_IP}" >& /dev/null
         do
@@ -138,8 +139,8 @@ function ignite_node () {
         echo "Starting $VMNAME"
         sudo virsh start $VMNAME &> /dev/null
         is_node_up $NODE_IP $VMNAME
-    fi  
-} 
+    fi
+}
 
 
 deploy_bootstrap_node () {
@@ -149,45 +150,48 @@ deploy_bootstrap_node () {
     sudo virsh dominfo $VMNAME > $DOMINFO 2>/dev/null
     #NODE_NETINFO=$(mktemp)
     #sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
-    NODE_MAC=$(awk -F"'" '/bootstrap/ {print $2}' $NODE_NETINFO)
-    NODE_IP=$(awk -F"'" '/bootstrap/ {print $6}' $NODE_NETINFO)
-    ignite_node ocp4_07_deploy_bootstrap_vm.yml
+    BOOTSTRAP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+    COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap  | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+    ansible-playbook playbooks/ocp4_07_deploy_bootstrap_vm.yml  -e vm_mac_address=${BOOTSTRAP} -e coreos_host_ip=${COREOS_IP}
+    sleep 10s
 }
 
-deploy_master_nodes () {    
+deploy_master_nodes () {
     ## Deploy Master
-    MASTER_COUNT=$(grep master $NODE_NETINFO|wc -l)
-    COUNTER=0
-    while [  $COUNTER -lt $MASTER_COUNT ]; do
-        DOMINFO=$(mktemp)
-        VMNAME="master-${COUNTER}"
-        sudo virsh dominfo $VMNAME > $DOMINFO 2>/dev/null
-        #NODE_NETINFO=$(mktemp)
-        #sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
-        NODE_MAC=$(awk -v var="${VMNAME}" -F"'" '$0 ~ var  {print $2}' $NODE_NETINFO)
-        NODE_IP=$(awk -v var="${VMNAME}" -F"'" '$0 ~ var {print $6}' $NODE_NETINFO)
-        ignite_node ocp4_07.1_deploy_master_vm.yml
-        let COUNTER=COUNTER+1 
+    for i in {0..2}
+    do
+        MASTER=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+        ansible-playbook playbooks/ocp4_07.1_deploy_master_vm.yml  -e vm_mac_address=${MASTER}   -e vm_name=master-${i} -e coreos_host_ip=${COREOS_IP}
+        sleep 10s
     done
+
 }
 
 deploy_compute_nodes () {
     # Deploy computes
-    COMPUTE_COUNT=$(grep compute- $NODE_NETINFO|wc -l)
-    COUNTER=0
-    sleep 10s
-    while [  $COUNTER -lt $COMPUTE_COUNT ]; do
-        DOMINFO=$(mktemp)
-        VMNAME="compute-${COUNTER}"
-        sudo virsh dominfo $VMNAME > $DOMINFO 2>/dev/null
-        NODE_MAC=$(awk -v var="${VMNAME}" -F"'" '$0 ~ var  {print $2}' $NODE_NETINFO)
-        NODE_IP=$(awk -v var="${VMNAME}" -F"'" '$0 ~ var {print $6}' $NODE_NETINFO)
-        ignite_node ocp4_07.2_deploy_compute_vm.yml
-        let COUNTER=COUNTER+1 
+    for i in {0..1}
+    do
+      COMPUTE=$(sudo virsh net-dumpxml ocp42 | grep  compute-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+      COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep   compute-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+      ansible-playbook playbooks/ocp4_07.2_deploy_compute_vm.yml  -e vm_mac_address=${COMPUTE}   -e vm_name=compute-${i} -e coreos_host_ip=${COREOS_IP}
+      sleep 10s
     done
 }
 
+wait_for_nodes (){
+  i="$(sudo virsh list | grep running |wc -l)"
+
+  while [ $i -gt 1 ]
+  do
+    echo "waiting for coreos first boot to complete current count ${i}"
+    sleep 10s
+    i="$(sudo virsh list | grep running |wc -l)"
+  done
+}
+
 start_ocp4_deployment () {
+    ansible-playbook playbooks/ocp4_08_startup_coreos_nodes.yml
     ignition_dir="${project_dir}/ocp4"
     install_cmd=$(mktemp)
     cd "${project_dir}"
@@ -197,16 +201,18 @@ start_ocp4_deployment () {
 
 openshift4_enterprise_deployment () {
     openshift4_prechecks
-    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml
-    ansible-playbook playbooks/ocp4_03_configure_lb.yml
-    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml
-    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml
-    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml
+    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
+    ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
+    sudo podman ps || exit 1
+    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
+    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
+    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
     NODE_NETINFO=$(mktemp)
     sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
     deploy_bootstrap_node
     deploy_master_nodes
     deploy_compute_nodes
+    wait_for_nodes
     start_ocp4_deployment
 }

@@ -7,8 +7,7 @@ dns_wildcard: "*.apps"
 listen_address: "{{ kvm_host_ip }}"
 
 # OpenShift client  and install information
-ocp4_release: 4.2.7
-ocp4_version: "{{ ocp4_release }}"
+ocp4_version: 4.2.10
 ocp4_image_version: 4.2.0
 ocp4_release: latest
 ocp4_dependencies_version: 4.2
