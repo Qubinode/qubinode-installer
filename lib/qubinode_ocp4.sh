@@ -199,6 +199,40 @@ start_ocp4_deployment () {
     bash $install_cmd
 }
 
+post_deployment_steps (){
+  echo "Shutdown bootstrap node"
+  echo "*****************************"
+  echo "sudo virsh shutdown bootstrap"
+
+  echo "Check openshift enviornment and monitor clusteroperator status"
+  echo "*****************************"
+  cat << EOF
+  # export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+  # oc whoami
+  # oc get nodes
+  # oc get csr
+  # oc get clusteroperators
+EOF
+
+
+  echo "Configure registry to use empty directory"
+  echo "*****************************"
+  cat << EOF
+  # oc get pod -n openshift-image-registry
+  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+  # oc get pod -n openshift-image-registry
+  # oc get clusteroperators
+EOF
+
+  echo "Check that OpenShift installation is complete"
+  echo "*****************************"
+  cat << EOF
+  # cd ~/qubinode-installer
+  # openshift-install --dir=ocp4 wait-for install-complete
+EOF
+
+}
+
 openshift4_enterprise_deployment () {
     openshift4_prechecks
     ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
@@ -215,4 +249,5 @@ openshift4_enterprise_deployment () {
     deploy_compute_nodes
     wait_for_nodes
     start_ocp4_deployment
+    post_deployment_steps
 }
