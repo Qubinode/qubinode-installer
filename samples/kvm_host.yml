@@ -13,7 +13,7 @@ host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
 
 # Libvirt network
-nat_network_name: "{{ cluster_name }}" 
+nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"
     create: true
@@ -22,7 +22,7 @@ libvirt_host_networks:
     external_domain: "{{ public_domain }}"
     mac_start: "52:54:00:"
     master_count: 3
-    compute_count: 3
+    compute_count: 2
     subnet: "192.168.50.0"
     mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
@@ -43,6 +43,7 @@ kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_ip: ""
 kvm_host_gw: ""
+kvm_host_macaddr: ""
 kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
 kvm_host_interface: ""

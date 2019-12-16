@@ -41,7 +41,7 @@ inventory_destination: "{{ inventory_dir }}"
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
 openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
 openshift_ansible_rpms:
-  - openshift-ansible-playbooks-3.11.153-2.git.0.ee699b5.el7 
+  - openshift-ansible-playbooks-3.11.153-2.git.0.ee699b5.el7
   - openshift-ansible-3.11.153-2.git.0.ee699b5.el7
   - openshift-ansible-roles-3.11.153-2.git.0.ee699b5.el7
   - openshift-ansible-docs-3.11.153-2.git.0.ee699b5.el7
@@ -49,7 +49,7 @@ openshift_ansible_rpms:
 
 ######################################
 #         SYSTEM VARIABLES           #
-# You shouldn't need to change these # 
+# You shouldn't need to change these #
 ######################################
 
 # RHEL 7.7 is the current tested RHEL 7 minor release.
@@ -58,10 +58,10 @@ rhel_release: 7.7
 
 # Ansible 2.7 is the current tested version.
 # Ansible 2.8 is currently being tested.
-ansible_repo: rhel-7-server-ansible-2.7-rpms
+ansible_repo: rhel-7-server-ansible-2.8-rpms
 
 # We leverage a bridge network for OCP3 installs
-# and other VMS. This sets the name of the bridge to be created and use when 
+# and other VMS. This sets the name of the bridge to be created and use when
 # deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
 qubinode_bridge_name: qubibr0
 
@@ -261,4 +261,3 @@ qubi_required_pkgs: |
    bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
    java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
-
