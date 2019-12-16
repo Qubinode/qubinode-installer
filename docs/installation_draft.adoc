@@ -66,9 +66,9 @@ cd qubinode-installer/
 . Download the qcow image
  From your web browser:
 
-. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
-. Find "Red Hat Enterprise Linux 7.6 KVM Guest Image" and right click on the *Download Now" box
-. wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
+. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.7/x86_64/product-software 
+. Find *Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)* and right click on the *Download Now" box
+. wget -c "insert-url-here" -O rhel-server-7.7-update-2-x86_64-kvm.qcow2
 
 :numbered:
 
