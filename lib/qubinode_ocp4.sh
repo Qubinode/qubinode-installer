@@ -36,11 +36,18 @@ function openshift4_prechecks () {
 }
 
 openshift4_qubinode_teardown () {
-
+    # delete dns entries
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
+
+    # Delete VMS
     for n in $(cat rhcos-install/node-list)
     do
-        sudo virsh shutdown $n;sleep 10s; sudo virsh undefine $n
+        echo "Deleting VM $n..."
+        sudo virsh shutdown $n
+        sleep 10s
+        sudo virsh destroy $n
+        sudo virsh undefine $n
+        sudo rm -f /var/lib/libvirt/images/${n}.qcow2
     done
 
     test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
@@ -48,8 +55,23 @@ openshift4_qubinode_teardown () {
 
     if sudo podman ps -a| grep -q ocp4lb
     then
+        echo "Removing ocp4lb container."
         sudo podman stop ocp4lb
         sudo podman rm ocp4lb
+    fi
+
+    if sudo podman ps -a| grep -q lbocp42
+    then
+        echo "Removing lbocp42 container."
+        sudo podman stop lbocp42
+        sudo podman rm lbocp42
+    fi
+
+    if sudo podman ps -a| grep -q openshift-4-loadbalancer-ocp42
+    then
+        echo "Removing openshift-4-loadbalancer-ocp42 container."
+        sudo podman stop openshift-4-loadbalancer-ocp42
+        sudo podman rm openshift-4-loadbalancer-ocp42
     fi
 
     if sudo podman ps -a| grep -q ocp4ignhttpd
@@ -66,6 +88,19 @@ openshift4_qubinode_teardown () {
 
     test -d /opt/qubinode_webserver/4.2/ignitions && \
          rm -rf /opt/qubinode_webserver/4.2/ignitions
+
+for i in $(echo "lbocp42.service ocp4lb.service openshift-4-loadbalancer-ocp42.service")
+do
+    echo "Removing podman container $i"
+    sudo systemctl stop $i
+    sudo systemctl disable $i
+    sudo systemctl daemon-reload
+    sudo systemctl reset-failed
+done
+
+    echo ""
+    echo "OCP4 deployment removed"
+    exit 0
 }
 
 openshift4_server_maintenance () {
