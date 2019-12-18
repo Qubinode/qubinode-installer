@@ -98,6 +98,7 @@ do
     sudo systemctl reset-failed
 done
 
+test -d "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
     echo ""
     echo "OCP4 deployment removed"
     exit 0
