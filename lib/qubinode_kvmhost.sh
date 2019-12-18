@@ -128,7 +128,7 @@ function qubinode_check_libvirt_net () {
     else
         echo "Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
         echo "Will attempt to find and use the first bridge or nat libvirt network"
-    
+
         nets=$(sudo virsh net-list --all --name)
         for item in $(echo $nets)
         do
@@ -147,14 +147,14 @@ function qubinode_check_libvirt_net () {
                 exit 1
             fi
         done
-    
+
         confirm "Use the discovered libvirt net: *${vm_libvirt_net}* yes/no: "
         if [ "A${response}" == "Ayes" ]
         then
             echo "Updating libvirt network"
             sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$vm_libvirt_net"/g" "${vars_file}"
         fi
-    fi 
+    fi
 }
 
 
@@ -197,7 +197,7 @@ function qubinode_setup_kvm_host () {
            echo ""
            exit 1
        fi
-   
+
        # check for inventory directory
        if [ -f "${vars_file}" ]
        then
@@ -250,7 +250,7 @@ function qubinode_check_kvmhost () {
     DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
     BRIDGE_IP=$(sudo awk -F'=' '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
     BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
-   
+
     if [ ! -f /usr/bin/virsh ]
     then
         qubinode_setup_kvm_host
@@ -316,6 +316,6 @@ function qubinode_check_kvmhost () {
     else
         KVM_HOST_MSG="KVM host is setup"
     fi
-    
+
     echo $KVM_HOST_MSG
 }

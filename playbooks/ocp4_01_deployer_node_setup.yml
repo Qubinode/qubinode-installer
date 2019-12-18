@@ -4,8 +4,11 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+<<<<<<< HEAD
     - vars/idm.yml
     - vars/ocp4.yml
+=======
+>>>>>>> 0cc93945943604a90fac4e8a5ac9101cef4f67e4
   become: yes
 
   tasks:

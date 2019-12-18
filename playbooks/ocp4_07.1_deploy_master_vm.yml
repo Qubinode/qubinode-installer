@@ -11,7 +11,6 @@
       vm_type: master
       coreos_vm_hd_size: 120G
       coreos_vm_memory_size: 16192
-      libvirt_network_name: ocp42
 
     tasks:
     - name: Deploy Master node

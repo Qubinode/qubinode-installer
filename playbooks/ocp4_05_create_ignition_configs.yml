@@ -37,8 +37,3 @@
         recurse: yes
         owner: "{{ admin_user }}"
         group: "{{ admin_user }}"
-
-#    - name: copy over files to ignition webserver
-#      import_role:
-#        name: swygue.coreos-virt-install-iso
-#        tasks_from: setup_httpd_files.yml

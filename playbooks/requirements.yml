@@ -1,8 +1,8 @@
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
   version: master
 
-- src: https://github.com/flyemsafe/swygue.edge_host_setup.git
-  version: master
+- src: https://github.com/tosin2013/swygue.edge_host_setup.git
+  version: ocp4
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: master
