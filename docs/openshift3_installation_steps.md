@@ -22,24 +22,12 @@ The qubinode is a prescriptive installation of either Red Hat OpenShift Platform
  - [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel)
 
 * Get your developer subscription of RHEL
-* Download the RHEL 7.6 iso
+* Download the RHEL 7.7 iso
 * From the software selection choose: Virtualization Host > Virtualization Platform
 * If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
 * Configure NETWORK & HOSTNAME
 * Begin installation
 * set root password and create admin user with sudo privilege
-
-== Get the subscription pool for OpenShift
-This step is not required for OKD installation.
-
-To get pool-id
-
-. Log in here https://access.redhat.com/management/subscriptions
-. Locate your subscription and click on the subscription name
-. Click on the Subscriptions tab
-. Click on the Subscription Number of the active subscription
-. From here you should see *Pool IDs*, copy the master pool-id
-
 
 == Prepare the system
 One RHEL has been installed on your system, ensure the system has internet connection. The qubinode-installer expects that your already have DHCP running in your environment for the purpose of supplying IP addresses for the VM nodes.
@@ -66,9 +54,9 @@ cd qubinode-installer/
 . Download the qcow image
  From your web browser:
 
-. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.6/x86_64/product-software
-. Find "Red Hat Enterprise Linux 7.6 KVM Guest Image" and right click on the *Download Now" box
-. wget -c "insert-url-here" -O rhel-server-7.6-x86_64-kvm.qcow2
+. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.7/x86_64/product-software 
+. Find *Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)* and right click on the *Download Now" box
+. wget -c "insert-url-here" -O rhel-server-7.7-update-2-x86_64-kvm.qcow2
 
 :numbered:
 

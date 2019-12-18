@@ -1,10 +1,15 @@
 # Supported Hardware Specs For Qubinode
 
-Qubinode-installer may support different product types. The table below defines what is need for an OpenShift Deployment.
+The qubinode-installer supports deploying multiple Red Hat products, such as IdM and Satellite. 
+The primary products that we focus on are OCP4, OCP3 and IdM.
 
-Below are a set of hardware specs for qubinode-installer to install OpenShift
+The table below defines what is need for an OpenShift Deployment.
 
-## Hardware Spec Table
+## OpenShift Single Node Hardware Spec Table
+
+This was originally created base on OCP3. We have not validated the minimum requirements for OCP4.
+However, the recommended should work for both OCP3 and OCP4.
+
 |   | **Minimum** | **Recommended** |
 | --- | :--- | :--- |
 |  **CPU** | 6 Core | 8 core or more |
@@ -12,17 +17,28 @@ Below are a set of hardware specs for qubinode-installer to install OpenShift
 |  **Root Disk** | 80 GB SSD | 500 or more |
 |  **Secondary Drive** | 500 GB SSD | 1 TB Nvme Drive |
 
-## Recommended Systems
+## Recommended Hardware
 
-Here are some of the systems we recommend. The router and cables are optional. The router accomplishes two things right now.
+Here are some hardware we recommend for standing up an OCP cluster on a single node.
+We have validated that the below is enough to deploy a production like OCP cluster.
+That will be sufficient for a operator needing to learn OpenShift and also validated 
+some production type deployment. The hardware may not be sufficient to run some workloads.
+We have not yet explore the limits in terms of what sorts of apps you can run with reasonable performance.
 
-1. Allows for keeping the qubinode network separate from yours. You would need to put in a static route from your router to this router if you wanted to get to qubinode from your network.
-2. Makes the qubinode portable. You can plug the router into an existing network or bridge an existing wireless network. That existing wired or wireless network is how you will get internet access. Then you will have a segregated wired and wireless network for the qubinode.
+
+**Router**
+
+The router and cables are optional. The router makes the qubinode portable.
+You can plug the router into an existing wired network or bridge an existing wireless network.
+If you plug it into an existing wired network, you would need to setup static routes. Bridging a wireless
+network is the easiest way to drop the qubinode into any network.
 
 ![Example Router Usage](img/QubinodeHardware.jpeg)
 
 
-### 6 Core Systems (Low)
+### Option 1: SuperServer E200-8D 6 Cores
+
+Before the AMD system below this was the cheapest option available.
 
 |  **Componets** | **Description** | **Unit Cost** | **QTY** | **Total** | **Amazon URL** |
 | --- | --- | --- | --- | --- | --- |
@@ -35,9 +51,9 @@ Here are some of the systems we recommend. The router and cables are optional. T
 |   |  | **Subtotal** |  | $1,506.50 |  |
 
 
-### 8 Core Systems (Medium)
+### Option 2: Superserver E301-9D-8CN4 8 Cores
 
-This system has not been tested, however, we included it here because of the price for a 8 core/16 thread system.
+This system has not been tested, however, we included it here because of the price for a 8 core/16 thread system. This is a better buy vs option 1.
 
 |  **Componets** | **Description** | **Unit Cost** | **QTY** | **Total** | **Amazon URL** |
 | --- | --- | --- | --- | --- | --- |
@@ -49,7 +65,9 @@ This system has not been tested, however, we included it here because of the pri
 |  Cable | InstallerParts Ethernet Cable CAT6 Cable UTP Booted 1 FT - Green - Professional Series - 10Gigabit/Sec Network/High Speed Internet Cable, 550MHZ | $5.79 | 2 | $11.58 | https://amzn.to/2VTXEoQ |
 |   |  | **Subtotal** |  | $1,647.50 |  |
 
-### 8 Core Systems (High)
+### Option 3: Superserver E300-9D-8CN8TP 8 Cores
+
+This is what we are using. Assuming Option 2 works well, it's a more cost effective than this. You can the same amount of cores and threads.
 
 |  **Componets** | **Description** | **Unit Cost** | **QTY** | **Total** | **Amazon URL** |
 | --- | --- | --- | --- | --- | --- |
@@ -62,7 +80,9 @@ This system has not been tested, however, we included it here because of the pri
 |   |  | **Subtotal** |  | $2,550.29 |  |
 
 
-### DIY 32 Core System with 256G Ram
+### Option 4: Build-it 32 Core System with 256G Ram
+
+This is not a portable option. However, if you have the space, looking for something with more power but don't want to buy a used HP or Dell. Then this is a quiet, good on power easy DIY build.
 
 |  **Componets** | **Description** | **Unit Cost** | **QTY** | **Total** | **Buy URL** | **Notes** |
 | --- | --- | :--- | :--- | :--- | :--- | :--- |
