@@ -24,8 +24,6 @@ instances:
     extra_storage:
       - size: 60G
         enable: true
-      - size: 160G
-        enable: true
     vm_recreate: false
     qty: 1
   - name: infra
@@ -38,8 +36,6 @@ instances:
     role_group: infra
     extra_storage:
       - size: 60G
-        enable: true
-      - size: 160G
         enable: true
     vm_recreate: false
     qty: 1
@@ -56,6 +52,7 @@ instances:
     qty: 0
 
 # Features
+glusterfs: False
 enable_firewalld: True
 enable_openshift_operators: False
 enable_metrics: False

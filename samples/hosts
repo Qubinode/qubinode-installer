@@ -16,7 +16,7 @@ localhost               ansible_connection=local ansible_user=root
 
 [osp]
 
-[dhcpserver]
+[tower]
 
 [qbnodes:children]
 masters

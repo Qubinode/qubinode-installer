@@ -1,8 +1,21 @@
+#!/bin/bash
+
+setup_variables
+IDM_VM_PLAY="${project_dir}/playbooks/idm_vm_deployment.yml"
+product_in_use=idm
+idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
+# Check if we should setup qubinode
+DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${idm_vars_file}" | tr -d '"')
+prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
+suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+idm_srv_hostname="$prefix-$suffix"
+idm_srv_fqdn="$prefix-$suffix.$domain"
+
 function display_idmsrv_unavailable () {
         echo ""
         echo ""
         echo ""
-        echo "Eithr the IdM server variable idm_public_ip is not set."
+        echo "Either the IdM server variable idm_public_ip is not set."
         echo "Or the IdM server is not reachable."
         echo "Ensire the IdM server is running, update the variable and try again."
         exit 1
@@ -10,8 +23,7 @@ function display_idmsrv_unavailable () {
 
 # Ask if this host should be setup as a qubinode host
 function ask_user_for_custom_idm_server () {
-    echo "asking for custom IdM"
-    setup_variables
+    #echo "asking for custom IdM"
     if [ "A${DNS_SERVER_NAME}" == "Anone" ]
     then
         echo "If you are not deploying an IdM server and instead plan on using an existing IdM server."
@@ -26,7 +38,7 @@ function ask_user_for_custom_idm_server () {
             confirm "You entered $idm_server_hostname, is this correct? yes/no"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/idm_hostname:.*/idm_hostname: "$idm_server_hostname"/g" "${vars_file}"
+                sed -i "s/idm_hostname:.*/idm_hostname: "$idm_server_hostname"/g" "${idm_vars_file}"
             else
                 echo "Run the installer again"
                 exit 1
@@ -34,63 +46,69 @@ function ask_user_for_custom_idm_server () {
         elif [ "A${response}" == "Ano" ]
         then
             echo "Setting default IdM server name"
-            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${vars_file}"
+            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
         else
             echo "No action taken"
         fi
     fi
 }
 
+function set_idm_static_ip () {
+    read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
+    idm_server_ip="${USER_IDM_SERVER_IP}"
+    sed -i "s/idm_server_ip:.*/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${idm_vars_file}"
+    echo "IdM server VM will install using this ip address $idm_server_ip"
+}
 
-function qubinode_idm_user_input () {
-    # Get static IP address for IDM
-    if [ "${product_in_use}" == "idm" ]
+function qubinode_idm_ask_ip_address () {
+    IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+    CURRENT_IDM_IP=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+    echo "${IDM_STATIC}" | grep -qE 'yes|no'
+    RESULT=$?
+    if [ "A${RESULT}" == "A1" ]
     then
-        IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${vars_file}"| tr -d '"')
-        if [[ "A${IDM_STATIC}" == "A" ]] || [[ "A${IDM_STATIC}" == 'A""' ]]
+        echo "Would you like to set a static IP for for the IdM server?"
+        echo "Default choice is to choose: No"
+        confirm " Yes/No"
+        if [ "A${response}" == "Ayes" ]
         then
-            confirm "Would you like to set a static IP for for the IdM server? Default choice is no. Yes/No"
-            if [ "A${response}" == "Ayes" ]
-            then
-                sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" "${vars_file}"
-                if grep -q idm_server_ip "${vars_file}"
-                then
-                    if grep idm_server_ip "${vars_file}"| grep -q '""'
-                    then
-                        read -p "Enter an ip address for the IdM server: " USER_IDM_SERVER_IP
-                        idm_server_ip="${USER_IDM_SERVER_IP}"
-                        sed -i "s/idm_server_ip:.*/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${vars_file}"
-                    fi
-                else
-                    echo "The variable idm_server_ip is not defined in ${vars_file}."
-                fi
-    
-                if grep -q idm_server_ip "${vars_file}"
-                then            
-                    if grep '""' "${vars_file}"|grep -q dns_server_public
-                    then
-                        sed -i "s/dns_server_public: \"\"/dns_server_public: "$USER_IDM_SERVER_IP"/g" "$    {vars_file}"
-                    fi
-                else
-                    echo "The variable idm_server_ip is not defined in ${vars_file}."
-                fi
-            elif [ "A${response}" == "Ano" ]
-            then
-                sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" "${vars_file}"
-            else
-                echo "IdM static ip check not required"
-            fi
+            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" ${idm_vars_file}
+        else
+            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" ${idm_vars_file}
         fi
     fi
+
+    # Check on vailable IP
+    IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+    MSGUK="The varaible idm_server_ip in $idm_vars_file is set to an unknown value of $CURRENT_IDM_IP"
+        
+   if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
+   then
+       if [ "A${IDM_STATIC}" == "Ayes" ]
+       then
+           if [ "A${CURRENT_IDM_IP}" == 'A""' ]
+           then
+               set_idm_static_ip
+           elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
+           then
+               echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
+               confirm "Do you want to change? yes/no"
+               if [ "A${response}" == "Ayes" ]
+               then
+                   set_idm_static_ip
+               fi
+           else
+               echo "${MSGUK}"
+               echo 'Please reset to "" and try again'
+               exit 1
+           fi
+       fi
+   fi
 }
 
 
+
 function isIdMrunning () {
-   setup_variables
-   prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
-   suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${vars_file}" |tr -d '"')
-   idm_srv_hostname="$prefix-$suffix"
-   idm_srv_fqdn="$prefix-$suffix.$domain"
    if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
    then
        idm_running=false
@@ -102,57 +120,60 @@ function isIdMrunning () {
    fi
 }
 
+function qubinode_teardown_idm () {
+    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+    if sudo virsh list --all |grep -q "${idm_srv_hostname}"
+    then
+        echo "Remove IdM VM"
+        ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+    fi
+    echo "Ensure IdM server deployment is cleaned up"
+    ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+
+    printf "\n\n*************************\n"
+    printf "* IdM server VM deleted *\n"
+    printf "*************************\n\n"
+}
+
 function qubinode_deploy_idm_vm () {
    qubinode_vm_deployment_precheck
-   ask_user_input
    isIdMrunning
-   IDM_VM_PLAY="${project_dir}/playbooks/deploy-dns-server.yml"
    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-   SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${vars_file}"| tr -d '"')
+   SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
 
-   if [ "A${teardown}" == "Atrue" ]
+   if [ "A${idm_running}" == "Afalse" ]
    then
-       if sudo virsh list |grep -q "${idm_srv_hostname}"
+       echo "running playbook ${IDM_VM_PLAY}"
+       if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
        then
-           echo "Remove IdM VM"
-           ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-       fi
-       echo "Ensure IdM server deployment is cleaned up"
-       ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
-   else
-       if [ "A${idm_running}" == "Afalse" ]
-       then
-           echo "Deploy IdM VM"
-           if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
-           then
-               idm_server_ip=$(awk '/idm_server_ip/ {print $2}' "${vars_file}")
-               echo "Deploy with custom IP"
-               ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
-           else
-               echo "Deploy without custom IP"
-               ansible-playbook "${IDM_VM_PLAY}" || exit $?
-           fi
-       fi
-
-   fi
-
+           echo "Deploy with custom IP"
+           idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+           ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
+        else
+            echo "Deploy without custom IP"
+            ansible-playbook "${IDM_VM_PLAY}" || exit $?
+        fi
+    fi
 }
 
 function qubinode_install_idm () {
    qubinode_vm_deployment_precheck
    ask_user_input
-   isIdMrunning
    IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
 
-   if [ "A${teardown}" == "Atrue" ]
+   echo "Install and configure the IdM server"
+   idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+   ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+   isIdMrunning
+   if [ "A${idm_running}" == "Atrue" ]
    then
-       qubinode_deploy_idm_vm
-   else
-       if [ "A${idm_running}" == "Afalse" ]
-       then
-           echo "Install and configure the IdM server"
-           ansible-playbook "${IDM_INSTALL_PLAY}" || exit $?
-       fi
+     printf "\n\n*********************************************************************************\n"
+     printf "    **IdM server is installed**\n"
+     printf "         Url: https://${idm_srv_fqdn}/ipa \n"
+     printf "         Username: $(whoami) \n"
+     printf "         Password: the vault variable *admin_user_password* \n\n"
+     printf "Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
+     printf "*******************************************************************************\n\n"
    fi
 }
 

@@ -4,7 +4,7 @@
 # along with any other dependancy the project
 # depends on
 function qubinode_setup_ansible () {
-    prereqs
+    qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
     HAS_SUDO=$(has_sudo)
     if [ "A${HAS_SUDO}" == "Ano_sudo" ]
@@ -66,8 +66,12 @@ function qubinode_setup_ansible () {
         # Ensure roles are downloaded
         echo ""
         echo "Downloading required roles"
-        #ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
-        ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
+        if [ "${qubinode_maintenance_opt}" == "ansible" ]
+        then
+            ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
+        else
+            ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
+        fi
         echo ""
         echo ""
 
@@ -84,6 +88,10 @@ function qubinode_setup_ansible () {
         echo "Ansible not found, please install and retry."
         exit 1
     fi
+
+    printf "\n\n***************************\n"
+    printf "* Ansible Setup Complete *\n"
+    printf "***************************\n\n"
 }
 
 function decrypt_ansible_vault () {

@@ -51,7 +51,7 @@ function qubinode_rhsm_register () {
     then
         echo "Skipping registering to RHSM"
     else
-        prereqs
+        qubinode_required_prereqs
         vaultfile="${vault_vars_file}"
         varsfile="${vars_file}"
         does_exist=$(does_file_exist "${vault_vars_file} ${vars_file}")
@@ -110,7 +110,6 @@ function qubinode_rhsm_register () {
                 echo "Successfully registered $(hostname) to RHSM"
                 cat "${rhsm_reg_result}"
                 check_rhsm_status
-                set_openshift_rhsm_pool_id
             else
                 echo "$(hostname) registration to RHSM was unsuccessfull"
                 cat "${rhsm_reg_result}"
@@ -118,9 +117,12 @@ function qubinode_rhsm_register () {
         else
             echo "$(hostname) is already registered"
             check_rhsm_status
-            set_openshift_rhsm_pool_id
         fi
     fi
+
+    printf "\n\n******************************\n"
+    printf "* RHSM registration complete *\n"
+    printf "******************************\n\n"
 }
     
     function get_rhsm_user_and_pass () {

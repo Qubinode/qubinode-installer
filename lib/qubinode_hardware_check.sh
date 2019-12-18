@@ -1,8 +1,18 @@
+#!/bin/bash
+
 function check_hardware_resources () {
-    PROJECTDIR=${1}
-    STANDARD_MEMORY=131495372
-    SMALL_MEMORY=976282
-    MINIMAL_MEMORY=488141
+    if ! sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
+    then
+        echo "Libvirt Pool ${libvirt_pool_name} not found"
+        echo "Please verify the variable libvirt_pool_name value is correct"
+        exit 1
+    fi
+
+    PROJECTDIR=${project_dir}
+    PERFORMANCE_MEMORY=131495372
+    STANDARD_MEMORY=98304000
+    SMALL_MEMORY=49152000
+    MINIMAL_MEMORY=32768000
 
     MIN_STORAGE=488141
     RECOMMENDED_STORAGE=976282
@@ -10,48 +20,65 @@ function check_hardware_resources () {
     AVAILABLE_MEMORY=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
     AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
 
-    AVAILABLE_STORAGE=$(sudo virsh pool-list --details | awk '/images/ {print $5*1024}')
-    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | awk '/images/ {print $5,$6}')
+    AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
+    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
 
     # Check for available storage
-    if sudo virsh pool-list --details | grep images
+    if sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
     then
         if [[ ${AVAILABLE_STORAGE} -ge ${RECOMMENDED_STORAGE} ]]
         then
-          echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} meets the requirements."
+            echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} meets the requirements."
         elif [[ ${AVAILABLE_STORAGE} -ge ${MIN_STORAGE} ]]
         then
-          echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
-          echo "The installation will continue, but you may run out of storage depending on your workload."
+             echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
+             echo "The installation will continue, but you may run out of storage depending on your workload."
         else
-          echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet the requirements."
-          exit $?
+            echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet the requirements."
+            read -p "Do you want to continue with a minimal installation? y/n " -n 1 -r
+            echo "REPLY is $REPLY"
+            if [[ ! $REPLY =~ ^[Nn]$ ]]
+            then
+                echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
+                echo "The installation will continue, but you may run out of storage depending on your workload."
+            else
+                echo "Aborting installation, the minium supported storage is $MIN_STORAGE"
+                exit 1
+            fi
         fi
     else
-        echo "Could not find the qubinode libvirt pool **images**"
+        echo "Could not find the qubinode libvirt pool **${libvirt_pool_name}**"
         echo "No storage check was performed, please ensure your pool has enough storage"
     fi
 
+    
+    echo "${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY}"
     # Set OpenShift deployment size based on available memory
     if [[ ${AVAILABLE_MEMORY} -ge ${STANDARD_MEMORY} ]]
     then
-        echo "Do standard OpenShift Deployment"
-        #cat ${PROJECTDIR}/samples/ocp_vm_sizing/standard.yml >> ${PROJECTDIR}/playbooks/vars/all.yml
-        lib/qubinode_openshift_sizing_menu.sh standard
+        memory_size=standard
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
     elif [[ ${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY} ]]
     then
-        echo "Do minimal OpenShift Deployment"
-        #cat ${PROJECTDIR}/samples/ocp_vm_sizing/small.yml >> ${PROJECTDIR}/playbooks/vars/all.yml
-        lib/qubinode_openshift_sizing_menu.sh minimal_cns
+        memory_size=small
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
     elif [[ ${AVAILABLE_MEMORY} -ge ${MINIMAL_MEMORY} ]]
     then
-        echo "Do minimal OpenShift Deployment"
-        #cat ${PROJECTDIR}/samples/ocp_vm_sizing/minimal.yml >> ${PROJECTDIR}/playbooks/vars/all.yml
-        lib/qubinode_openshift_sizing_menu.sh minimal
+        memory_size=minimal
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
     else
         echo "Your available memory of ${AVAILABLE_HUMAN_MEMORY} is not enough to continue"
-        exit $?
-    fi
-
-    exit 0
+        read -p "Do you want to continue with a minimal instalation? y/n " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]
+        then
+            memory_size=minimal
+            echo "Your available memory ${AVAILABLE_HUMAN_MEMORY} does not meet our minimum supported."
+            echo "The installation will continue, but you may run out of memory depending on your workload"
+            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+        else
+            echo "Aborting installation, the minium supported memory is ${MINIMAL_MEMORY}"
+            exit $?
+        fi
+    fi 
 }

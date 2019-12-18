@@ -1,29 +1,20 @@
 #!/bin/bash
-function sleep_for_a_sec() {
-  sleep 5s
-}
 
-echo "******************************************"
-echo "***   Qubinode OpenShift Smoke Test    ***"
-echo "******************************************"
-sleep_for_a_sec
+web_console="$1"
+ocp_user="$2"
+ocp_user_password="$3"
 
-project_dir_path=$(sudo find / -type d -name qubinode-installer)
-project_dir=$project_dir_path
-echo ${project_dir}
-project_dir="`( cd \"$project_dir_path\" && pwd )`"
+oc login ${web_console} --username=${ocp_user} --password=$ocp_user_password --insecure-skip-tls-verify=true
+if [ $? -eq 1 ]
+then
+    echo "Log to $web_console failed as user $ocp_user"
+    exit 1
+else
+    echo "Log into to $web_console as user $ocp_user"
+fi
 
-
-
-domain=$(awk '/^domain:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-ocp_user=$(awk '/^openshift_user:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-
-oc login https://${product}-master01.${domain}:8443  -u ${ocp_user}
-
-oc new-project validate
-
-oc new-app nodejs-mongo-persistent
+oc new-project validate > /dev/null 2>&1
+oc new-app nodejs-mongo-persistent > /dev/null 2>&1
 
 NODEJS_MONGO_STATUS=$( oc get pods | grep "nodejs-mongo-persistent" | grep -v build | awk '{print $3}')
 MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')
@@ -32,7 +23,7 @@ while [[ $COUNTER -lt 10  ]]; do
   echo "STATUS: ${NODEJS_MONGO_STATUS}  ${MONGO_STATUS} "
   if [[ "$NODEJS_MONGO_STATUS" == 'Running'  &&  "$MONGO_STATUS" == "Running" ]]; then
     echo "Pods Deployed Successfully"
-    oc get pods
+    oc get pods > /dev/null 2>&1
     break
   fi
   echo "Waiting for pod to launch."
@@ -42,18 +33,17 @@ while [[ $COUNTER -lt 10  ]]; do
   let COUNTER=COUNTER+1
 done
 
-sleep_for_a_sec
-
 echo "Testing external route to application"
 APP_URL=$(oc get routes | grep nodejs | awk '{print $2}')
-curl -vs http://$APP_URL || exit 1
+curl -vs http://$APP_URL > /dev/null 2>&1 || exit 1
 
-sleep_for_a_sec
 
-oc delete all --selector app=nodejs-mongo-persistent
-
-oc delete project validate
+oc delete all --selector app=nodejs-mongo-persistent > /dev/null 2>&1
+oc delete project validate > /dev/null 2>&1
 
 echo "******************************************"
 echo "*** SMOKE TESTS COMPLTED SUCCESSFULLY  ***"
 echo "******************************************"
+
+exit 0
+

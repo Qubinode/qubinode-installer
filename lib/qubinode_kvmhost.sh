@@ -5,30 +5,37 @@ function ask_user_if_qubinode_setup () {
     # ensure all required variables are setup
     setup_variables
 
-    if [ "A${QUBINODE_SYSTEM}" == "A" ]
+    if [ "A${openshift_auto_install}" != "Atrue" ]
     then
-        echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
-        echo "This is the default setup. Enter no to skip setting up your system as KVM host."
-        echo "If you choose to install OpenShift, your host will be setup as a OpenShift jumpbox."
-        echo ""
-        echo ""
-        confirm "Continue setting up a qubinode host? yes/no"
-        if [ "A${response}" == "Ayes" ]
+        if [ "A${QUBINODE_SYSTEM}" == "A" ]
         then
-            #"Setting variabel to yes"
-            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
-        elif [ "A${response}" == "Ano" ]
-        then
-            #"Setting variabel to no"
-            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
-        else
-            echo "No action taken"
+            echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
+            echo "This is the default setup. Enter no to skip setting up your system as KVM host."
+            echo "If you choose to install OpenShift, your host will be setup as a OpenShift jumpbox."
+            echo ""
+            echo ""
+            confirm "Continue setting up a qubinode host? yes/no"
+            if [ "A${response}" == "Ayes" ]
+            then
+                #"Setting variabel to yes"
+                sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            elif [ "A${response}" == "Ano" ]
+            then
+                #"Setting variabel to no"
+                sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            else
+                echo "No action taken"
+            fi
         fi
+    else
+        #"Setting variabel to yes"
+        sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
     fi
 }
+
 # Ensure RHEL is set to the supported release
 function set_rhel_release () {
-    product_requirements
+    qubinode_required_prereqs
     RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
     RELEASE="Release: ${RHEL_RELEASE}"
     CURRENT_RELEASE=$(sudo subscription-manager release --show)
@@ -47,7 +54,7 @@ function set_rhel_release () {
 }
 
 function qubinode_networking () {
-    product_requirements
+    qubinode_required_prereqs
     KVM_HOST_IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -60,39 +67,50 @@ function qubinode_networking () {
     else
         DEFINED_BRIDGE=""
     fi
-
+    
     CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
     else
+      echo "No bridge detected, using regular interface"
       KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
-    KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+
+    KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+    mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+    KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
 
    # Set KVM host ip info
-    iSkvm_host_ip=$(awk '/kvm_host_ip/ { print $2}' "${vars_file}")
+    iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${vars_file}")
+    if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
+    then
+        echo "Updating the kvm_host_netmask to $KVM_HOST_NETMASK"
+        sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${vars_file}"
+    fi
+
+    iSkvm_host_ip=$(awk '/^kvm_host_ip/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
     then
         echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
         sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${vars_file}"
     fi
 
-    iSkvm_host_gw=$(awk '/kvm_host_gw/ { print $2}' "${vars_file}")
+    iSkvm_host_gw=$(awk '/^kvm_host_gw/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
     then
         echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
         sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${vars_file}"
     fi
 
-    iSkvm_host_mask_prefix=$(awk '/kvm_host_mask_prefix/ { print $2}' "${vars_file}")
+    iSkvm_host_mask_prefix=$(awk '/^kvm_host_mask_prefix/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
     then
         #echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
         sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${vars_file}"
     fi
 
-    iSkvm_host_interface=$(awk '/kvm_host_interface/ { print $2}' "${vars_file}")
+    iSkvm_host_interface=$(awk '/^kvm_host_interface/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_interface}" == "A" ]] || [[ "A${iSkvm_host_interface}" == 'A""' ]]
     then
         echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
@@ -103,7 +121,7 @@ function qubinode_networking () {
 
 function qubinode_check_libvirt_net () {
     DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}"| tr -d '"')
-
+    
     if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
     then
         echo "Using the defined libvirt network: ${DEFINED_LIBVIRT_NETWORK}"
@@ -141,12 +159,21 @@ function qubinode_check_libvirt_net () {
 
 
 function qubinode_setup_kvm_host () {
-    echo "Running qubinode_setup_kvm_host setup."
-    product_requirements
+    echo "Running qubinode_setup_kvm_host function"
+
+    # set variable to enable prompting user if they want to 
+    # setup host as a qubinode
+    qubinode_maintenance_opt="host"
+
+    # run functions
+    qubinode_required_prereqs
     setup_variables
     setup_sudoers
     ask_user_input
     setup_user_ssh_key
+
+    # Check if we should setup qubinode
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
 
     if [ "A${OS}" != "AFedora" ]
     then
@@ -187,32 +214,31 @@ function qubinode_setup_kvm_host () {
            echo ""
            exit 1
         fi
-
-       # Check for ansible and ansible role
-       if [ -f /usr/bin/ansible ]
-       then
-           ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue.edge_host_setup')
-           if [ "A${ROLE_PRESENT}" == "A" ]
-           then
-               qubinode_setup_ansible
-           fi
-       else
-           qubinode_setup_ansible
-       fi
-
+   
+       # Check for ansible and required role
+       check_for_required_role swygue.edge_host_setup
+   
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
+           echo "Setting up qubinode system"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            qubinode_check_libvirt_net
        else
+           echo "not qubinode system"
            qubinode_check_libvirt_net
        fi
     else
+       echo "Some other option"
         qubinode_setup_ansible
         qubinode_check_libvirt_net
         echo "Installing required packages"
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
     fi
+
+    printf "\n\n***************************\n"
+    printf "* KVM Host Setup Complete  *\n"
+    printf "***************************\n\n"
+
 }
 
 
@@ -252,7 +278,7 @@ function qubinode_check_kvmhost () {
         fi
     fi
 
-    echo "Running qubinode checks: QUBINODE_SYSTEM=$QUBINODE_SYSTEM"
+    # Running qubinode checks
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
         echo "qubinode network checks"

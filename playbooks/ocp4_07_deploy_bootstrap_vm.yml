@@ -4,13 +4,14 @@
     vars_files:
       - vars/all.yml
       - vars/vault.yml
+      - vars/idm.yml
+      - vars/ocp4.yml
     become: yes
     vars:
       vm_type: bootstrap
       vm_name: bootstrap
       coreos_vm_hd_size: 120G
       coreos_vm_memory_size: 16192
-      libvirt_network_name: ocp42
 
     tasks:
     - name: Deploy Bootstrap node

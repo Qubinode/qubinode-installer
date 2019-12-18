@@ -14,7 +14,7 @@
       user: "{{ satellite_user }}"
       password: "{{ satellite_pass }}"
       force_basic_auth: yes
-     register: satellite_is_installed
+    register: satellite_is_installed
     ignore_errors: yes
     tags: [ always ]
 

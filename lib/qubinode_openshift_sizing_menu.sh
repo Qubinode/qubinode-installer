@@ -7,10 +7,37 @@ EDITOR=vim
 PASSWD=/etc/passwd
 RED='\033[0;41;30m'
 STD='\033[0;0;39m'
-project_dir_path=$(sudo find / -type d -name qubinode-installer)
-project_dir=$project_dir_path
-echo ${project_dir}
-project_dir="`( cd \"$project_dir_path\" && pwd )`"
+
+function config_err_msg () {
+    cat << EOH >&2
+  There was an error finding the full path to the qubinode-installer project directory.
+EOH
+}
+
+# this function just make sure the script
+# knows the full path to the project directory
+# and runs the config_err_msg if it can't determine
+# that start_deployment.conf can find the project directory
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+setup_required_paths
+source "${project_dir}/lib/qubinode_installer_prereqs.sh"
+source "${project_dir}/lib/qubinode_utils.sh"
+source "${project_dir}/lib/qubinode_requirements.sh"
+
+qubinode_required_prereqs
+auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${vars_file}")
 
 
 if [[ -z $1 ]]; then
@@ -18,13 +45,14 @@ if [[ -z $1 ]]; then
   exit 1
 fi
 
-arr=('minimal', 'minimal_cns', 'standard', 'performnance')
+arr=('minimal', 'small', 'standard', 'performnance')
 match=$(echo "${arr[@]:0}" | grep -o $1)
+
 if [[ ! -z $match ]];  then
   echo ""
 else
   echo "Incorrect flag has been passed. "
-  echo "Valid flags are  minimal, minimal_cns, standard, performnance"
+  echo "Valid flags are  minimal, small, standard, performnance"
   exit 1
 fi
 
@@ -47,13 +75,14 @@ Openshift Operators: False
 Hawkular Metrics: False
 ELK logging: False
 Promethous: False
+Gluster: False
 EOF
 }
 
-function minimal_cns_desc() {
+function small_desc() {
 cat << EOF
 ======================
-Deployment Type: Minimal CNS
+Deployment Type: Small
 Deployment will contain Container Native Storage
 ======================
 1 master
@@ -128,14 +157,17 @@ minimal_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/minimal.yml >> ${project_dir}/playbooks/vars/all.yml
+    echo "Setting OpenShift Deployment size to $ocp_size"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
+    cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
   fi
 
 }
 
-minimal_cns_deployment(){
-	minimal_cns_desc
+small_deployment(){
+	small_desc
   read -p "Are you sure? " -n 1 -r
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
@@ -143,7 +175,10 @@ minimal_cns_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/minimal_cns.yml >> ${project_dir}/playbooks/vars/all.yml
+    echo "Setting OpenShift Deployment size to $ocp_size"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
+    cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
   fi
 }
@@ -157,7 +192,10 @@ perfomance_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/perfomance.yml >> ${project_dir}/playbooks/vars/all.yml
+    echo "Setting OpenShift Deployment size to $ocp_size"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
+    cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
   fi
 
@@ -172,7 +210,10 @@ standard_deployment(){
     show_menus
     read_options
   else
-    cat ${project_dir}/samples/ocp_vm_sizing/standard.yml >> ${project_dir}/playbooks/vars/all.yml
+    echo "Setting OpenShift Deployment size to $ocp_size"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
+    cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
   fi
 
@@ -184,8 +225,8 @@ show_menus() {
 	echo " Qubinode OpenShift Profiles"
 	echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 	echo "1. Minimal Deployment"
-  echo "2. Minimal CNS Deployment"
-  echo "3. Standard Deployment"
+        echo "2. Small Deployment"
+        echo "3. Standard Deployment"
 	echo "4. Performance Deployment"
 	echo "5. Exit"
 }
@@ -194,10 +235,14 @@ read_options(){
 	local choice
 	read -p "Enter choice [ 1 - 5] " choice
 	case $choice in
-		1) minimal_deployment ;;
-		2) minimal_cns_deployment ;;
-    3) standard_deployment ;;
-    4) perfomance_deployment;;
+		1) ocp_size=minimal 
+                   minimal_deployment ;;
+		2) ocp_size=small 
+                   small_deployment ;;
+                3) ocp_size=standard 
+                   standard_deployment ;;
+                4) ocp_size=performance
+                   perfomance_deployment;;
 		5) exit 0;;
 		*) echo -e "${RED}Error...${STD}" && sleep 2
 	esac
@@ -211,35 +256,74 @@ trap '' SIGINT SIGQUIT SIGTSTP
 # -----------------------------------
 # Step #4: Main logic - infinite loop
 # ------------------------------------
-if [[ ! -z ${INSTALLTYPE} ]]; then
-  echo "Your Deployment is ${INSTALLTYPE}"
-  echo "This will deploy the following. "
-  case $1 in
-    minimal) minimal_desc ;;
-    minimal_cns) minimal_cns_desc ;;
-    standard) standard_desc ;;
-    performance) performance_desc ;;
-    *) exit 0;;
-  esac
 
-  read -p "Would you like a customize this deployment? " -n 1 -r
-  echo    # (optional) move to a new line
-  if [[ ! $REPLY =~ ^[Yy]$ ]]
-  then
-    case $INSTALLTYPE in
-      minimal) minimal_deployment;;
-      minimal_cns) minimal_cns_deployment;;
-      standard) standard_deployment;;
-      performance) performance_deployment;;
-      *) exit 0;;
-    esac
-  else
+if [ "A${auto_install}" != "Atrue" ]
+then
+    if [[ ! -z ${INSTALLTYPE} ]]
+    then
+        echo "Your Deployment is ${INSTALLTYPE}"
+        echo "This will deploy the following. "
+        case "${INSTALLTYPE}" in
+            #minimal) minimal_desc ;;
+            #small) small_desc ;;
+            #standard) standard_desc ;;
+            #performance) performance_desc ;;
+            minimal)     
+                         minimal_desc
+                         ;;
+            small)       
+                         small_desc
+                         ;;
+            standard)    
+                         standard_desc
+                         ;;
+            performance) 
+                         performance_desc
+                         ;;
 
-    while true
-    do
-      show_menus
-      read_options
-    done
+            *) exit 0;;
+        esac
 
-  fi
+        read -p "Would you like a customize this deployment? " -n 1 -r
+        echo    # (optional) move to a new line
+        if [[ ! $REPLY =~ ^[Yy]$ ]]
+        then
+            case $INSTALLTYPE in
+            minimal)    
+                         ocp_size=minimal
+                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         minimal_deployment 
+                         ;;
+            small)       
+                         ocp_size=small
+                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         small_deployment
+                         ;;
+            standard)    
+                         ocp_size=standard
+                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         standard_deployment
+                         ;;
+            performance) 
+                         ocp_size=performance
+                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         performance_deployment
+                         ;;
+                *) exit 0;;
+            esac
+        else
+            while true
+            do
+                show_menus
+                read_options
+            done
+        fi
+    fi
+else
+    ocp_size="standard"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
+    cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
 fi
+
+exit 0

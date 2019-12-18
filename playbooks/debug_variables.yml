@@ -1,5 +1,5 @@
 - name: Test Inventory Variables
-  hosts: nodes
+  hosts: qbnodes
   gather_facts: false
   tasks:
   - name: get variables

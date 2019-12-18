@@ -1,0 +1,55 @@
+Basic usage: qubinode-installer [options]
+
+Options:
+    -p      Deploys the specified product
+    -h      Display this help menu
+    -m      Runs operational tasks
+    -d      Pass this agrument where supported will force a deletition
+    -v      Verbose output
+
+    Supported Products
+    ------------------
+        * OpenShift   Supports a -m and -d argument
+            okd3    - deploy upstream OpenShift 3.11
+            ocp3    - deploy Red Hat OpenShift Platform
+
+            -m arguments are:
+                   checkcluster - runs a health check of the cluster (not implemented)
+                   diag         - runs a adv health check
+                   smoketest    - runs a smoke test on cluster
+                   startup      - start up OpenShift cluster after shutdown
+                   shutdown     - safely shutdown OpenShift cluster
+                
+        * DNS         Supports -d argument
+            idm     - deploy IDM as a DNS Server
+
+    Standalone -m options 
+    ---------------------
+        clean        - remove all files created in the project folder
+        setup        - setup playbooks vars and user sudoers
+        rhsm         - register host system to Red Hat
+        ansible      - setup host system as an ansible controller
+        host         - setup the host system as an KVM host
+        deploy_nodes - deploy all VMS to install ocp3/okd3, supports -d
+
+
+Examples:
+
+DNS
+  * Deploy DNS server: qubinode-installer -p idm
+  * Delete the DNS server: qubinode-installer -p idm -d
+
+OpenShift
+  * Deploy OCP3 cluster: qubinode-installer -p ocp3
+  * Delete the cluster: qubinode-installer -p ocp3 -d
+  * Shutdown the cluster: qubinode-installer -p ocp3 -m shutdown
+  * Startup the cluster: qubinode-installer -p ocp3 -m startup
+
+Standalone
+  * Deploy just the OpenShift nodes: qubinode-installer -m deploy_nodes
+  * Delete the OpenShift nodes: qubinode-installer -m deploy_nodes -d
+  * Setup the system as a KVM host: qubinode-installer -m host
+  * Clean up all configuration and playbook variables files created:
+        qubinode-installer -m clean
+
+

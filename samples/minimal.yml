@@ -228,7 +228,7 @@ qubinode_bridge_name: qubibr0
 # IDM server attributes
 idm_admin_user: admin
 idm_hostname: "{{ instance_prefix }}-dns01"
-dns_server_public: ""
+dns_forwarder: ""
 qubinode_ptr: changeme.in-addr.arpa
 idm_reverse_zone:
   - "{{ qubinode_ptr }}"
@@ -241,7 +241,7 @@ idm_packages:
   - ipa-server
   - ipa-server-dns
 idm_realm: "{{ domain | upper }}"
-idm_forward_ip: "{{ dns_server_public }}"
+idm_forward_ip: "{{ dns_forwarder }}"
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
 

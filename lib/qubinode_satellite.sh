@@ -57,7 +57,10 @@ function qubinode_deploy_satellite () {
    test -f "${ACTIVE_VARS_FILE}" || cp "${SAMPLE_VARS_FILE}" "${ACTIVE_VARS_FILE}"
    SATELLITE_VM_PLAYBOOK="${project_dir}/playbooks/deploy_satellite_vm.yml"
    SATELLITE_SERVER_IP=$(awk '/qbn-sat/ {print $2}' "${project_dir}/inventory/hosts" |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-   SATELLITE_SERVER_DNS=$(dig +short -x "${SATELLITE_SERVER_IP}")
+   if [ "A${SATELLITE_SERVER_IP}" != "A" ]
+   then
+       SATELLITE_SERVER_DNS=$(dig +short -x "${SATELLITE_SERVER_IP}")
+   fi
    SATELLITE_SERVER_PLAYBOOK="${project_dir}/playbooks/satellite_server.yml"
 
    #TODO: either a playbook or function to set the variable sat_server_ip in the satellite_server.yml var file
@@ -77,17 +80,8 @@ function qubinode_deploy_satellite () {
         echo "The OpenShift Pool ID is not available to playbooks/vars/all.yml"
     fi
 
-   # Check for ansible and role swygue-install-satellite
-   if [ -f /usr/bin/ansible ]
-   then
-       ROLE_PRESENT=$(ansible-galaxy list | grep 'swygue-install-satellite')
-       if [ "A${ROLE_PRESENT}" == "A" ]
-       then
-           qubinode_setup_ansible
-       fi
-   else
-       qubinode_setup_ansible
-   fi
+   # Ensure required role exist
+   check_for_required_role swygue-install-satellite
 
    # Deploy or teardown Satellite
    if [ "A${teardown}" == "Atrue" ]
@@ -114,6 +108,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+               ansible-playbook playbooks/satellite_server_setup.yml
                satellite_install_msg
            elif [ "A${SATELLITE_SERVER_DNS}" == "A" ]
            then
@@ -122,8 +117,15 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+               ansible-playbook playbooks/satellite_server_setup.yml
                satellite_install_msg
            else
+               # need to add a check to verify login to the satellite server then
+               # and if not run other steps
+               ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
+               update_satellite_ip
+               ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+               ansible-playbook playbooks/satellite_server_setup.yml
                satellite_install_msg
            fi
        else
@@ -132,6 +134,7 @@ function qubinode_deploy_satellite () {
            ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
            update_satellite_ip
            ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+           ansible-playbook playbooks/satellite_server_setup.yml
            satellite_install_msg
        fi
    fi

@@ -2,13 +2,16 @@
 Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 ## Motivation
-Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to test OpenShift in a private setting where data security is top of mind. Qubinode..
+Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node. 
 
 ## What is OpenShift?
 * OCP - is Red Hat's on-premises private platform as a service product, built around a core of application containers powered by Docker, with orchestration and management provided by Kubernetes, on a foundation of Red Hat Enterprise Linux.
 * OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
 
-The installer supports installing Red Hat OpenShift  (OCP) or The Origin Community Distribution of Kubernetes (OKD).  The OCP installation requires an OCP subscription. The OKD installation will require Red Hat Enterprise Linux (RHEL) subscription only. To obtain a OCP subscription please contact Red Hat sales. To obtain a RHEL subscription please  visit developers.redhat.com.
+The installer supports installing Red Hat OpenShift (OCP) or The Origin Community Distribution of Kubernetes (OKD).
+ - Current state is support only exist for OKD3. Installing OCP3 or OCP4 will require a Red Hat subscription.
+ - Installing OCP3 or OCP4 will requires a Red Hat OpenShift subscription. Please contact Red Hat slaes.
+ - The base OS is RHEL. If you are installing OKD3 you can take advantage of the no-cost RHEL subscription available at developers.redhat.com.
 
 ## Requirements
 * Server with at least 64 GB Memory
@@ -19,7 +22,7 @@ The installer supports installing Red Hat OpenShift  (OCP) or The Origin Communi
 * For [OpenShift Origin](https://www.okd.io/) (OKD) a subscription is not needed.
 
 ## Supported Versions
-The Qubinode installer currently supports OpenShift 3.11.x builds.
+The Qubinode installer currently supports OpenShift 3.11.x and 4.2 builds.
 
 ## Testing
 * OCP 4.2 installation
@@ -29,51 +32,14 @@ The Qubinode installer currently supports OpenShift 3.11.x builds.
 ## Recommended Hardware
 [Supported Hardware](docs/supported_hardware_coniguration.md)
 
-## Quick start
-```
-wget https://github.com/tosin2013/qubinode-installer/archive/master.zip
-unzip master.zip
-mv qubinode-installer-master quibinode-installer
-rm -f master.zip
-cd quibinode-installer
-./quibinode-installer
-```
-
-## Qubinode Installer Menu
-```
-[admin@qubinode qubinode-installer]$ ./qubinode-installer
-
-
-    The default product option is to install Red Hat Openshift Container Platform (OCP).
-    An subscription for OCP is required. If you do not have an OCP subscription. Please
-    display the menu options for other product installation such as OKD.
-
-    The OCP cluster deployment consist of:
-
-      - 1 IDM server for DNS
-      - 1 Master node
-      - 2 App nodes
-      - 2 Infra nodes
-
-    Gluster is deployed as the container storage running on the infra and app nodes.
-
-    If you wish to continue with this install choose the **continue** option otherwise
-    display the help menu to see the available options.
-1) Continue with the default installation - OCP OpenShift Enterprise
-2) OKD - The Origin Community Distribution of Kubernetes
-3) IDM - Red Hat Identity Manager Install
-4) KVM - Configure your machine to run KVM
-5) Display the help menu
-#?
-
-```
 
 ## Installation
-[Installing The Qubinode](docs/installation_draft.md)
 
-## Deployment Architecture
+We are working as best we can to have better documentation.
 
-## Architecture
+- [Installing OpenShift 4](docs/openshift4_installation_steps.md)
+- [Installing OpenShift 3](docs/openshift3_installation_steps.md)
+
 
 ## Contribute
 [Communications](docs/communication.adoc)

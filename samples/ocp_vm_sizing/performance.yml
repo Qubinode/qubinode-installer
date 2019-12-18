@@ -44,7 +44,7 @@ instances:
       - size: 160G
         enable: true
     vm_recreate: false
-    qty: 0
+    qty: 2
   - name: lb
     enable: true
     vm_cpu: 2
@@ -58,6 +58,8 @@ instances:
     qty: 1
 
 # Features
+glusterfs: True
+glusterfs_block_host_vol_size: 190
 enable_firewalld: True
 enable_openshift_operators: True
 enable_metrics: True

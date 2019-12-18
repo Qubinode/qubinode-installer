@@ -1,129 +1,137 @@
 ---
-# all non sensitive variables are defined here
-product: ocp3
-run_qubinode_setup: ""
-instance_prefix: qbn
-preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
-deployment_type: standard
-update_inventory: true
+######################################
+#         USER VARIABLES             #
+# The are autojatically updated or   #
+# you can update them manually       #
+######################################
 inventory_dir: ""
 project_dir: ""
+admin_user: ""
+domain: ""
+
+# PTR - The PTR record that should be use
+qubinode_ptr: changeme.in-addr.arpa
+
+# Set this to false if the host is already setup to function as a KVM host
+# Set to true if this box needs to be setup as a KVM host.
+run_qubinode_setup: ""
+
+# Public DNS server
+dns_forwarder: ""
+
+# ROLE: swygue-redhat-subscription
+# whether to use username/pass or RHSM
+rhsm_reg_method: ""
+
+#---------------------------------------------#
+# Required for Enterprise/Community OpenShift #
+#---------------------------------------------#
+openshift_product: ""
+openshift_deployment_size: ""
+deployment_type: "{{ openshift_deployment_size | default('standard') }}"
+openshift_pool_id: ""
+openshift_user: ""
+openshift_auto_install: ""
+metrics_storage_volume_size: 10Gi
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('190') }}"
+openshift_dns_wildcard: "*.apps"
+inventory_destination: "{{ inventory_dir }}"
+
+# Use to setup http auth for openshift
+htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+openshift_ansible_rpms:
+  - openshift-ansible-playbooks-3.11.153-2.git.0.ee699b5.el7
+  - openshift-ansible-3.11.153-2.git.0.ee699b5.el7
+  - openshift-ansible-roles-3.11.153-2.git.0.ee699b5.el7
+  - openshift-ansible-docs-3.11.153-2.git.0.ee699b5.el7
+  - atomic-openshift-clients
+
+######################################
+#         SYSTEM VARIABLES           #
+# You shouldn't need to change these #
+######################################
+
+# RHEL 7.7 is the current tested RHEL 7 minor release.
+# RHEL 7.6 was also tested and may work if you need to stay at 7.6
+rhel_release: 7.7
+
+# Ansible 2.7 is the current tested version.
+# Ansible 2.8 is currently being tested.
+ansible_repo: rhel-7-server-ansible-2.8-rpms
+
+# We leverage a bridge network for OCP3 installs
+# and other VMS. This sets the name of the bridge to be created and use when
+# deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
+qubinode_bridge_name: qubibr0
+
+# The qubinode-installer depends on IdM as the DNS server.
+# If there is an existing Idm, then set this to no.
+deploy_idm_server: yes
+
+# All VMs created name will begin with this prefix.
+instance_prefix: qbn
+preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
+
+# should a bridge interface be created
+configure_bridge: true
+
+# Set to no prevent the installer from attempting
+# setup a LVM group for qubinode. Also set this to no
+# if you already have you storage for lvm setup
+create_lvm: yes
+
+vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
+update_inventory: true
 vm_data_dir: "/var/lib/vmdata"
 inventory_file: "{{ inventory_dir }}/hosts"
-vm_libvirt_net: "qubinet"
 admin_user_password: "{{ admin_user_password }}"
 kvm_vm_root_pwd: "{{ admin_user_password }}"
 vm_domain: "{{ domain }}"
+search_domains:
+  - "{{ vm_domain }}"
+# This is for /etc/resolv.conf
+dns_servers:
+  - "{{ idm_server_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
 
-# RHSM and the swygue-redhat-subscription role
+public_domain: "{{ domain }}"
+
+# use by funciton check_hardware_resources
+libvirt_pool_name: default
+
+# Ensure VMs are always using static IP even when DHCP issued
+static_ip: true
+
+# ROLE: swygue-redhat-subscription
 rhsm_org: "{{ rhsm_org }}"
 rhsm_activationkey: "{{ rhsm_activationkey }}"
 rhsm_org_id: "{{ rhsm_org }}"
-rhsm_reg_method: ""
 rhsm_setup_insights_client: false
 rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
 org_id: "{{ rhsm_org }}"
 
-vm_teardown: false
-admin_user: ""
-openshift_user: qubinode
-instances:
-  - name: master
-    enable: true
-    vm_cpu: 4
-    vm_memory: 16384
-    vm_root_disk_size: 40G
-    vm_recreate: false
-    vm_teardown: false
-    cluster_group: masters
-    role_group: masters
-    extra_storage:
-      - size: 60G
-        enable: true
-    qty: 1
-  - name: node
-    enable: true
-    vm_cpu: 4
-    vm_memory: 16384
-    vm_root_disk_size: 40G
-    vm_teardown: false
-    cluster_group: nodes
-    role_group: computes
-    extra_storage:
-      - size: 60G
-        enable: true
-      - size: 160G
-        enable: true
-    vm_recreate: false
-    qty: 2
-  - name: infra
-    enable: true
-    vm_cpu: 4
-    vm_memory: 16384
-    vm_root_disk_size: 40G
-    vm_teardown: false
-    cluster_group: nodes
-    role_group: infra
-    extra_storage:
-      - size: 60G
-        enable: true
-      - size: 160G
-        enable: true
-    vm_recreate: false
-    qty: 2
-  - name: lb
-    enable: true
-    vm_cpu: 2
-    vm_memory: 8192
-    vm_root_disk_size: 20G
-    vm_teardown: false
-    cluster_group: lbs
-    role_group: lbs
-    extra_storage: []
-    vm_recreate: false
-    qty: 0
+# ROLE: swygue.edge_host_setup role
+# the user that will admin the system
+ssh_username: "{{ admin_user }}"
 
-# This is for /etc/resolv.conf
-dns_servers:
-  - "{{ idm_public_ip | default('1.1.1.1') }}"
-  - 8.8.8.8
+# ROLE: deploy-kvm-vm
+#--------------------
+# name of the libvirt network to use
+vm_libvirt_net: "qubinet"
+# Use to create VM
+# Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)
+os_qcow_image_name: rhel-server-7.7-update-2-x86_64-kvm.qcow2
+cloud_init_vm_image: "{{ os_qcow_image_name }}"
+
+# setting this to true will result is no VMs being created and any existing vms to be deleted
+vm_teardown: False
 
 ipa_client_principal: "{{ idm_admin_user }}"
 ipa_client_pass: "{{ idm_dm_pwd }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
 ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
-ansible_repo: rhel-7-server-ansible-2.6-rpms
-openshift_repo: rhel-7-server-ose-3.11-rpms
-rhel_release: 7.6
-okd_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-optional-rpms
-  - rhel-7-server-supplementary-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-fast-datapath-rpms
-ocp_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-optional-rpms
-  - rhel-7-server-supplementary-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-fast-datapath-rpms
-  - "{{ openshift_repo }}"
-  - "{{ ansible_repo }}"
-ocp_gluster_client_repo:
-  - rh-gluster-3-client-for-rhel-7-server-rpms
-ocp_gluster_server_repo:
-  - rh-gluster-3-for-rhel-7-server-rpms
-
-ocp_repos_with_glus_client: "{{ ocp_repos + ocp_gluster_client_repo }}"
-okd_repos_with_glus_client: "{{ okd_repos + ocp_gluster_client_repo }}"
-ocp_repos_with_glus_server: "{{ ocp_gluster_server_repo + ocp_gluster_client_repo }}"
-
-ocp_nodes_pkgs: "wget,git,net-tools,bind-utils,iptables-services,bridge-utils,bash-completion,kexec-tools,sos,psacct"
-
-ocp_gluster_pkg: docker-1.13.1
-
-valid_products: "okd3,ocp3,idm,kvmhost,satellite,rhhi"
 
  # LVM
 logical_volumes:
@@ -134,32 +142,58 @@ logical_volumes:
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
 
-# Libvirt network
+
+#################################
+# KVM host / Qubinode variables #
+#################################
+
+# set path to libvirt images
+kvm_host_libvirt_dir: /var/lib/libvirt/images
+
+
+###########################################
+# variables for swygue.edge_host_setup role
+
+
+# This is required for OpenShift 4
+cluster_name: ocp42
+
+nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
+  - name: "{{ nat_network_name }}"
+    create: true
+    mode: nat
+    int_domain: compute.local
+    external_domain: "{{ public_domain }}"
+    mac_start: "52:54:00:"
+    master_count: 3
+    compute_count: 3
+    subnet: "192.168.50.0"
+    gateway: "192.168.50.1"
+    mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
+    create: true
     mode: bridge
-    bridge: "{{ kvm_host_bridge_name | default('qubibr0') }}"
+    bridge_device: "{{ kvm_host_bridge_name | default(qubinode_bridge_name) }}"
+    ifcfg_type: "{{ kvm_bridge_type }}"
+    ifcfg_bootproto: "{{ kvm_host_bootproto }}"
+    bridge_slave_dev: "{{ kvm_host_interface }}"
+    gateway: "{{ kvm_host_gw }}"
+    mask_prefix: "{{ kvm_host_mask_prefix }}"
+    ipaddress: "{{ kvm_host_ip }}"
+    mask: "{{ kvm_host_netmask }}"
+    mac: "{{ kvm_host_macaddr }}"
+
+#This is for KVM host initial setup of /etc/resolv.conf
+kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
+kvm_host_ip: ""
+kvm_host_interface: ""
+kvm_host_gw: ""
+kvm_host_netmask: ""
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
-kvm_host_ip: ""
-kvm_host_gw: ""
 kvm_host_mask_prefix: ""
-kvm_host_netmask: ""
-kvm_host_interface: ""
-kvm_host_libvirt_dir: /var/lib/libvirt/images
-qubinode_bridge_name: qubibr0
-
-# KVM host packages
-qubi_required_pkgs: |
-   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm,
-   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon,
-   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard,
-   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
-   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
-   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
-   bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
-   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
-   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"
+kvm_host_domain: "{{ domain }}"
 
 libvirt_pkgs:
    - virt-install
@@ -194,81 +228,36 @@ libvirt_pkgs:
    - tmux
    - python-dns
 
-# Required for OpenShift/OKD
-inventory_destination: "{{ inventory_dir }}"
-glusterfs: True
-htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
-openshift_pool_id: ""
-openshift_release: "3.11"
-openshift_image_tag: v3.11.141
-openshift_pkg_version: -3.11.141
-openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
-ssh_username: "{{ admin_user }}"
-glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('150') }}"
-metrics_storage_volume_size: 10Gi
-
-# Feature
-enable_firewalld: False
-enable_openshift_operators: True
-enable_metrics: True
-enable_logging: False
-enable_prometheous_operator: False
-
-search_domains:
-  - "{{ vm_domain }}"
-
-# Use to create VM
-os_qcow_image_name: rhel-server-7.6-x86_64-kvm.qcow2
-
-
-###################
-# IDM DNS Server  #
-###################
-
-# IDM server attributes
-idm_server_ip: ""
-idm_check_static_ip: ""
-idm_admin_user: admin
-idm_hostname: "{{ instance_prefix }}-none"
-dns_server_public: ""
-qubinode_ptr: changeme.in-addr.arpa
-idm_reverse_zone:
-  - "{{ qubinode_ptr }}"
-idm_public_ip: ""                       # IP address of the IDM server
-idm_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-server-optional-rpms
-idm_packages:
-  - ipa-server
-  - ipa-server-dns
-idm_realm: "{{ domain | upper }}"
-idm_forward_ip: "{{ dns_server_public }}"
-idm_ssh_pwd: "{{ admin_user_password }}"
-idm_ssh_user: "{{ admin_user }}"
-
-# Dns server VM attributes
-dns_server_vm:
-    dns_name: "{{ idm_hostname }}"
-    dns_vcpu: 2
-    dns_memory: 2048
-    dns_root_disk_size: 20G
-    dns_teardown: false
-    dns_recreate: false
-    dns_group: dns
-    dns_extra_storage: []
-    dns_enable: true
-
-# This is required ansible-idm role
-idm_admin_password: "{{ idm_admin_pwd }}"
-
-
-##################
-# OpenShift/OKD #
-#################
-dns_wildcard: "*.apps"
+# used in playbook setup_kvmhost.yml
+network_interface_name: "{{ kvm_host_interface }}"
 
 ###########################
 # General Networking Info #
 ###########################
-domain: ""
+
+####################
+## VM Network Info
+##-------------------
+## Currently we assume the VMs will use the name network as the host
+## This is why a bridge network is created by default. These values
+## can be changed to reflect a different network.
+vm_net_gateway: "{{ kvm_host_gw }}"
+vm_net_netmask: "{{ kvm_host_netmask }}"
+vm_gateway: "{{ vm_net_gateway }}"
+
+
+###########################
+# these should be deleted #
+# #########################
+
+# KVM host packages
+qubi_required_pkgs: |
+   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm,
+   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon,
+   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard,
+   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
+   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
+   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
+   bash-completion, kexec-tools, sos, psacct, vim, atomic-openshift-clients, ansible,
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools,
+   java-1.8.0-openjdk-devel.x86_64, tmux, patch, openshift-ansible, python-netaddr"

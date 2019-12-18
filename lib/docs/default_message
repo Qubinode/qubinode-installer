@@ -1,3 +1,5 @@
+
+    ************************************************************************************
     The default product option is to install Red Hat Openshift Container Platform (OCP).
     An subscription for OCP is required. If you do not have an OCP subscription. Please
     display the menu options for other product installation such as OKD.
@@ -13,3 +15,8 @@
 
     If you wish to continue with this install choose the **continue** option otherwise
     display the help menu to see the available options.
+    ************************************************************************************
+
+
+
+

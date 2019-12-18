@@ -5,19 +5,39 @@
   vars_files:
     - vars/all.yml
     - vars/vault.yml
+    - vars/idm.yml
 
   tasks:
+    - name: include additional openshift variables
+      include_vars: "vars/{{ openshift_product }}.yml"
+
+    - name: include additional openshift variables
+      include_vars: "vars/openshift3_size_{{ openshift_deployment_size }}.yml"
+
     - name: include create vm tasks
       include_tasks: vms_inc.yml
       loop: "{{ instances }}"
       loop_control:
         loop_var: outer_item
         label: outer_item.name
+#      register: _create_vms
+#      async: 600
+#      poll: 0
       when: outer_item.name != 'dns'
+
+#    - name: wait for vms to be created
+#      async_status:
+#        jid: "{{ _create_vms }}"
+#      register: _jobs
+#      until: _jobs.finished
+#      delay: 5
+#      retries: 10
+#      with_items: "{{ _create_vms.results }}"
+#      when: _create_vms.results is defined
 
     - name: Cleanup hosts file
       vars:
-        vm_name: "{{ product }}-{{ outer_item.name }}"
+        vm_name: "{{ preappend_host_name }}{{ outer_item.name }}"
       lineinfile:
         path: "{{ inventory_dir }}/hosts"
         state: absent

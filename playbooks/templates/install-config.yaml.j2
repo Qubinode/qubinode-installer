@@ -21,7 +21,5 @@ networking:
   type: OpenShiftSDN
 platform:
   none: {}
-pullSecret:
-  '{{ image_pull_secret }}'
-sshKey: |
-  {{ ssh_ocp4_public_key }}
+pullSecret: '{{ lookup('file', pull_secret) }}'
+sshKey: {{ ssh_ocp4_public_key }}

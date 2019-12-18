@@ -1,0 +1,80 @@
+- name: Deploy Tower server VM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/tower_server.yml
+  vars:
+    vm_name: "{{ tower_server_vm.tower_name }}"
+    vm_cpu: "{{ tower_server_vm.tower_vcpu }}"
+    vm_memory: "{{ tower_server_vm.tower_memory }}"
+    vm_root_disk_size: "{{ tower_server_vm.tower_root_disk_size }}"
+    vm_teardown: "{{ tower_server_vm.tower_teardown }}"
+    vm_recreate: "{{ tower_server_vm.tower_recreate }}"
+    inventory_group: "{{ tower_server_vm.tower_group }}"
+    extra_storage: "{{ tower_server_vm.tower_extra_storage }}"
+    enable: "{{ tower_server_vm.tower_enable }}"
+  environment:
+    IPA_HOST: "{{ ipa_host }}"
+    IPA_USER: "{{ idm_admin_user }}"
+    IPA_PASS: "{{ idm_admin_pwd }}"
+    IPA_TIMEOUT: 40
+
+  tasks:
+    - name: Create KVM VM for Tower Server Server
+      include_role:
+        name: deploy-kvm-vm
+      tags: tower_vm
+
+    - name: set dns record state
+      set_fact:
+        dns_a_result: "none"
+        dns_ptr_result: "none"
+        record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
+      tags: create_dns_records
+
+    - name: check if A record for {{ vm_name }} exist
+      debug: msg="{{ lookup('dig', vm_name )}}"
+      register: dns_a_result
+      when: not vm_teardown|bool
+
+    - name: Create/Delete {{ vm_name }} A Records
+      ipa_dnsrecord:
+        zone_name: "{{ domain }}"
+        record_name: "{{ hostvars[vm_name].inventory_hostname }}"
+        record_type: A
+        record_ttl: 300
+        record_value: "{{ hostvars[vm_name].ansible_host }}"
+        state: "{{ record_state }}"
+        validate_certs: no
+      tags: create_dns_records
+      when: '"NXDOMAIN" in dns_a_result' or vm_teardown|bool
+
+    - name: check if PTR record for {{ vm_name }} exist
+      vars:
+        ip: "{{ hostvars[vm_name].ansible_host }}"
+      debug: msg="{{ lookup('dig', ip + '/PTR' )}}"
+      register: dns_ptr_result
+      when: not vm_teardown|bool
+
+    - name: Create/Delete {{ vm_name }} PTR Records
+      ipa_dnsrecord:
+        zone_name: "{{ qubinode_ptr }}"
+        record_name: "{{ hostvars[vm_name].ansible_host.split('.')[3:4] | join('.') }}"
+        record_type: PTR
+        record_ttl: 300
+        record_value: "{{ hostvars[vm_name].inventory_hostname }}.{{ domain }}."
+        state: "{{ record_state }}"
+        validate_certs: no
+      tags: create_dns_records
+      when: '"NXDOMAIN" in dns_ptr_result' or vm_teardown|bool
+
+    - name: REMOVE|ensure {{ vm_name }} is removed from inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      when: vm_teardown|bool

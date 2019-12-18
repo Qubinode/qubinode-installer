@@ -1,0 +1,20 @@
+- name: PLAY| install tower server
+  hosts: tower
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/tower_server.yml
+
+  tasks:
+  - name: ensure system is registered to Red Hat
+    vars:
+      rhsm_repos: "{{ tower_repos }}"
+    include_role:
+      name: swygue-redhat-subscription
+
+  - name: run ansible tower role
+    include_role:
+      name: swygue.ansible-tower

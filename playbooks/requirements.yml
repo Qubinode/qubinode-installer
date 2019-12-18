@@ -1,4 +1,4 @@
-- src: https://github.com/tosin2013/ansible-role-rhel7-kvm-cloud-init.git
+- src: https://github.com/Qubinode/deploy-kvm-vm.git
   version: master
 
 - src: https://github.com/tosin2013/swygue.edge_host_setup.git
@@ -20,7 +20,7 @@
   version: master
 
 - src: https://github.com/flyemsafe/swygue-lvm.git
-  version: master
+  version: dev
 
 - src: https://github.com/tosin2013/ocp-power-management.git
   version: master
@@ -28,8 +28,11 @@
 - src: https://github.com/flyemsafe/swygue-install-satellite.git
   version: master
 
+- src: https://github.com/Qubinode/openshift-4-loadbalancer.git
+  version: master
+
 - src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
   version: master
 
-- src: https://github.com/Qubinode/openshift-4-loadbalancer.git
-  version: master
+- src: https://github.com/flyemsafe/satellite-day-two-ops.git
+  varsion: master

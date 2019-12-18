@@ -1,67 +1,29 @@
-# KVM host packages
-libvirt_pkgs:
-   - virt-install
-   - libvirt-daemon-config-network
-   - libvirt-daemon-kvm
-   - libguestfs-tools
-   - libvirt-client
-   - qemu-kvm
-   - nfs-utils
-   - libvirt-daemon
-   - libvirt-client
-   - virt-top
-   - tuned
-   - openssh-server
-   - wget
-   - git
-   - net-tools
-   - bind-utils
-   - yum-utils
-   - iptables-services
-   - bridge-utils
-   - bash-completion
-   - kexec-tools
-   - sos
-   - psacct
-   - vim
-   - pyOpenSSL
-   - device-mapper-event-libs
-   - device-mapper-libs
-   - httpd-tools
-   - java-1.8.0-openjdk-devel.x86_64
-   - tmux
-   - patch
-   - python-dns
+#######################################################
+# THIS IS CURRENTLY NOT IN USE                        #
+# PLAN IS TO MOVE ALL KVM HOST RELATED VARIABLES HERE #
+#######################################################
 
-libvirt_services:
-  - libvirtd
-  - tuned
+# LVM
+logical_volumes:
+ - name: qubi_images
+   size: "+100%FREE"
+   mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
+   fstype: xfs
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
+vg_name: vg_qubi
 
-# This hash defines all the libvirt networks that should be created
-# The example below defines a bridge and nat network.
-# The bridge network is needed for ocp3 installs, IdM and anything else that needs direct
-# access to the host network.
-# The nat network is primarly for OCP4. Perhaps it will be use for other things in the furture.
-# If there are other types of networks you want to support, make sure
-# to create the associated libvirt network xml template
-
-## OCP4
-cluster_name: ocp42
-public_domain: "{{ domain }}"
-internal_domain: qubinode.local
-
+# Libvirt network
 nat_network_name: "{{ cluster_name }}"
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"
     create: true
     mode: nat
-    int_domain: "{{ cluster_name }}.{{ internal_domain }}"
-    external_domain: "{{ cluster_name }}.{{ public_domain }}"
+    int_domain: compute.local
+    external_domain: "{{ public_domain }}"
     mac_start: "52:54:00:"
     master_count: 3
     compute_count: 2
     subnet: "192.168.50.0"
-    gateway: "192.168.50.1"
     mask: "255.255.255.0"
   - name: "{{ vm_libvirt_net }}"
     create: true
@@ -75,20 +37,15 @@ libvirt_host_networks:
     ipaddress: "{{ kvm_host_ip }}"
     mac: "{{ kvm_host_macaddr }}"
 
-
-#ibvirt_host_networks: []
-#kvm_host_ipaddr: "{{ ansible_default_ipv4.address }}"
-#kvm_host_interface: "{{ ansible_default_ipv4.interface }}"
-#kvm_host_gw: "{{ ansible_default_ipv4.gateway }}"
-#kvm_host_macaddr: "{{ ansible_default_ipv4.macaddress }}"
-#kvm_host_netmask: "{{ ansible_default_ipv4.netmask }}"
-#kvm_host_bootproto: 'dhcp'
-#kvm_bridge_type: 'Bridge'
-#libvirt_disk: false
-##storage_nic: false
-#use_dns: idm # use idm or use libvirt
-
+kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
+kvm_host_domain: "{{ domain }}"
+kvm_bridge_type: Bridge
+kvm_host_bootproto: none
 kvm_host_ip: ""
+kvm_host_gw: ""
+kvm_host_macaddr: ""
+kvm_host_mask_prefix: ""
+kvm_host_netmask: ""
 kvm_host_interface: ""
 kvm_host_mask_prefix: ""
 kvm_host_macaddr: ""
