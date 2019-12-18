@@ -28,7 +28,7 @@
         record_name: "{{ hostvars[ansible_hostname].inventory_hostname }}"
         record_type: A
         record_value: "{{ hostvars[ansible_hostname].ansible_host }}"
-        record_ttl: 300
+        #record_ttl: 300
         state: "{{ record_state }}"
         validate_certs: no
       delegate_to: localhost
@@ -38,7 +38,7 @@
         zone_name: "{{ qubinode_ptr }}"
         record_name: "{{ hostvars[ansible_hostname].ansible_host.split('.')[3:4] | join('.') }}"
         record_type: PTR
-        record_ttl: 300
+        #record_ttl: 300
         record_value: "{{ hostvars[ansible_hostname].inventory_hostname }}.{{ domain }}."
         state: "{{ record_state }}"
         validate_certs: no
