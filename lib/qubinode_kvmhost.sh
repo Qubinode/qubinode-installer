@@ -67,7 +67,7 @@ function qubinode_networking () {
     else
         DEFINED_BRIDGE=""
     fi
-    
+
     CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
@@ -116,12 +116,22 @@ function qubinode_networking () {
         echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
         sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${vars_file}"
     fi
+
+    iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr/ { print $2}' "${vars_file}")
+    if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
+    then
+        foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}')
+        echo "Updating the kvm_host_macaddr to ${foundmac}"
+        sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: "${foundmac}"#g" "${vars_file}"
+    fi
+
+    #host_device
 }
 
 
 function qubinode_check_libvirt_net () {
     DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}"| tr -d '"')
-    
+
     if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
     then
         echo "Using the defined libvirt network: ${DEFINED_LIBVIRT_NETWORK}"
@@ -161,7 +171,7 @@ function qubinode_check_libvirt_net () {
 function qubinode_setup_kvm_host () {
     echo "Running qubinode_setup_kvm_host function"
 
-    # set variable to enable prompting user if they want to 
+    # set variable to enable prompting user if they want to
     # setup host as a qubinode
     qubinode_maintenance_opt="host"
 
@@ -214,10 +224,10 @@ function qubinode_setup_kvm_host () {
            echo ""
            exit 1
         fi
-   
+
        # Check for ansible and required role
        check_for_required_role swygue.edge_host_setup
-   
+
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
            echo "Setting up qubinode system"

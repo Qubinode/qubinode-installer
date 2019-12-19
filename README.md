@@ -2,7 +2,7 @@
 Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 ## Motivation
-Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node. 
+Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
 ## What is OpenShift?
 * OCP - is Red Hat's on-premises private platform as a service product, built around a core of application containers powered by Docker, with orchestration and management provided by Kubernetes, on a foundation of Red Hat Enterprise Linux.
@@ -24,22 +24,21 @@ The installer supports installing Red Hat OpenShift (OCP) or The Origin Communit
 ## Supported Versions
 The Qubinode installer currently supports OpenShift 3.11.x and 4.2 builds.
 
-## Testing
-* OCP 4.2 installation
-  - [Install instructions](https://gist.github.com/tosin2013/479acd3ca676aec6f42514f7df2f8921)
-  - Testing and contributions are welcome
-
 ## Recommended Hardware
 [Supported Hardware](docs/supported_hardware_coniguration.md)
 
+## OpenShift Architecture
 
 ## Installation
 
-We are working as best we can to have better documentation.
+We are working as best we can to have better documentation. Contributions are welcome.
 
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
 - [Installing OpenShift 3](docs/openshift3_installation_steps.md)
 
+## Day Two Operations
+
+## Training
 
 ## Contribute
 [Communications](docs/communication.adoc)
@@ -50,31 +49,10 @@ If you need support, start with [the troubleshooting guide](docs/troubleshooting
 If you have any direct questions, reach out to us [using the guide](docs/communication.adoc).
 
 ## Known issues
-* DNS server fails to get IP on first deployment
-```
-# run the following
-./qubinode_installer -p idm -d
-rerun qubinode_installer or ./qubinode_installer -p idm
-```
-
-* OpenShift VM fails to get ip on first depoyment
-```
-# run the following
-# for OpenShift Enterprise
-./qubinode_installer -p ocp -d
-rerun qubinode_installer Option 1 or
-./qubinode_installer -p ocp -m deploy_nodes and ./qubinode_installer -p ocp
-
-# for OpenShift Origin
-./qubinode_installer -p okd -d
-rerun qubinode_installer Option 2 or
-./qubinode_installer -p okd -m deploy_nodes and ./qubinode_installer -p okd
-```
 
 ## Roadmap
-* OCP 4.2
-* OCP 4.2 Container Native Storage
-* OCP 4.3 and RHEV
+* OCP 4.x Container Native Storage
+* OCP 4.x and RHEV
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)

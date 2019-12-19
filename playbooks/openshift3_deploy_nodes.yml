@@ -6,7 +6,7 @@
     - vars/all.yml
     - vars/vault.yml
     - vars/idm.yml
-
+    - vars/ocp3.yml
   tasks:
     - name: include additional openshift variables
       include_vars: "vars/{{ openshift_product }}.yml"

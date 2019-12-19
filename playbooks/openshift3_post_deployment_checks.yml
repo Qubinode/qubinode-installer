@@ -17,7 +17,7 @@
     ignore_errors: no
 
   - name: loop through vm types
-    include_tasks: openshift3_pre_install_checks_include.yml
+    include_tasks: openshift3_post_install_checks_include.yml
     loop: "{{ instances }}"
     loop_control:
       loop_var: outer_item

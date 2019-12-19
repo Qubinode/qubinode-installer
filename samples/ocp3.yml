@@ -1,7 +1,22 @@
 # Required for OpenShift/OKD
+#---------------------------------------------#
+# Required for Enterprise/Community OpenShift #
+#---------------------------------------------#
+openshift_product: ""
+openshift_deployment_size: ""
+deployment_type: "{{ openshift_deployment_size | default('standard') }}"
+openshift_pool_id: ""
+openshift_user: ""
+openshift_auto_install: ""
+metrics_storage_volume_size: 10Gi
+glusterfs_block_host_vol_size: "{{ glusterfs_vol_size | default('190') }}"
+openshift_dns_wildcard: "*.apps"
+inventory_destination: "{{ inventory_dir }}"
+
 product: "{{ openshift_product }}"
 preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 openshift_web_console_url: "https://{{preappend_host_name}}-master01.{{domain}:8443"
+accept_openshift_release: false
 openshift_release: "3.11"
 openshift_image_tag: v3.11.153
 openshift_pkg_version: -3.11.153
@@ -39,3 +54,13 @@ ocp_nodes_pkgs:
 ocp_gluster_pkg: docker-1.13.1
 
 dns_wildcard: "{{ openshift_dns_wildcard }}"
+
+# Use to setup http auth for openshift
+htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
+openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+openshift_ansible_rpms:
+  - openshift-ansible-playbooks-3.11.153-2.git.0.ee699b5.el7
+  - openshift-ansible-3.11.153-2.git.0.ee699b5.el7
+  - openshift-ansible-roles-3.11.153-2.git.0.ee699b5.el7
+  - openshift-ansible-docs-3.11.153-2.git.0.ee699b5.el7
+  - atomic-openshift-clients
