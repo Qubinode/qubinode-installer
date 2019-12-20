@@ -18,8 +18,8 @@ preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 openshift_web_console_url: "https://{{preappend_host_name}}-master01.{{domain}:8443"
 accept_openshift_release: false
 openshift_release: "3.11"
-openshift_image_tag: v3.11.153
-openshift_pkg_version: -3.11.153
+openshift_image_tag: v3.11.157
+openshift_pkg_version: -3.11.157
 
 # Openshift Repos
 openshift_repo: rhel-7-server-ose-3.11-rpms

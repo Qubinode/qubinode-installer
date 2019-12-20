@@ -34,7 +34,7 @@ The Qubinode installer currently supports OpenShift 3.11.x and 4.2 builds.
 We are working as best we can to have better documentation. Contributions are welcome.
 
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
-- [Installing OpenShift 3](docs/openshift3_installation_steps.md)
+- [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
 ## Day Two Operations
 
