@@ -5,6 +5,7 @@
       playbooks_dir="${project_dir}/playbooks"
       vars_file="${playbooks_dir}/vars/all.yml"
       ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
+      idm_vars_file="${playbooks_dir}/vars/idm.yml"
       domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
       prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
       product=$(awk '/^openshift_product:/ {print $2}' "${ocp3_vars_file}")
@@ -889,7 +890,7 @@
 
      if [[ $OCP_STATUS -eq 200 ]]
      then
-         IDM_IP=$(host "${host}" | awk '{print $4}')
+         IDM_IP=$(cat "${idm_vars_file}" | grep "idm_server_ip:" | awk '{print $2}')
          printf "\n\n*******************************************************\n"
          printf "\nDeployment steps for ${product} cluster is complete.\n"
          printf "\nCluster login: ${web_console}\n"
