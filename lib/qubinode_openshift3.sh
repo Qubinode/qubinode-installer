@@ -6,14 +6,14 @@
       vars_file="${playbooks_dir}/vars/all.yml"
       ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
       domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
-      prefix=$(awk '/^instance_prefix:/ {print $2}' "${ocp3_vars_file}")
+      prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
       product=$(awk '/^openshift_product:/ {print $2}' "${ocp3_vars_file}")
       productname="${prefix}-${product}"
       web_console="https://${productname}-master01.${domain}:8443"
       ocp_user=$(awk '/^openshift_user:/ {print $2}' "${ocp3_vars_file}")
       OCUSER=$ocp_user
       product_in_use="${product}"
-      ssh_username=$(awk '/^admin_user:/ {print $2}' "${ocp3_vars_file}")
+      ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
       libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
       NODES_POST_PLAY="${playbooks_dir}/openshift3_nodes_post_deployment.yml"
       NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
