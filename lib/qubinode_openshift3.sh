@@ -3,15 +3,17 @@
   function openshift3_variables () {
       echo "Loading OpenShift 3 global variables"
       playbooks_dir="${project_dir}/playbooks"
+      vars_file="${playbooks_dir}/vars/all.yml"
+      ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
       domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
-      prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
-      product=$(awk '/^openshift_product:/ {print $2}' "${vars_file}")
+      prefix=$(awk '/^instance_prefix:/ {print $2}' "${ocp3_vars_file}")
+      product=$(awk '/^openshift_product:/ {print $2}' "${ocp3_vars_file}")
       productname="${prefix}-${product}"
       web_console="https://${productname}-master01.${domain}:8443"
-      ocp_user=$(awk '/^openshift_user:/ {print $2}' "${vars_file}")
+      ocp_user=$(awk '/^openshift_user:/ {print $2}' "${ocp3_vars_file}")
       OCUSER=$ocp_user
       product_in_use="${product}"
-      ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
+      ssh_username=$(awk '/^admin_user:/ {print $2}' "${ocp3_vars_file}")
       libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
       NODES_POST_PLAY="${playbooks_dir}/openshift3_nodes_post_deployment.yml"
       NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
@@ -23,18 +25,18 @@
       openshift3_inventory_generator_playbook="${playbooks_dir}/openshift3_inventory_generator.yml"
       openshift_ansible_dir=/usr/share/ansible/openshift-ansible
 
-      if ! grep '""' "${vars_file}"|grep -q "openshift_deployment_size:"
+      if ! grep '""' "${ocp3_vars_file}"|grep -q "openshift_deployment_size:"
       then
-          openshift_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${vars_file}")
+          openshift_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
           openshift_deployment_size_yml="${project_dir}/playbooks/vars/openshift3_size_${openshift_deployment_size}.yml"
-          ocp3_vars_files="${project_dir}/playbooks/vars/ocp3.yml ${openshift_deployment_size_yml}"
-          okd3_vars_files="${project_dir}/playbooks/vars/okd3.yml ${openshift_deployment_size_yml}"
+          ocp3_ocp3_vars_files="${project_dir}/playbooks/vars/ocp3.yml ${openshift_deployment_size_yml}"
+          okd3_ocp3_vars_files="${project_dir}/playbooks/vars/okd3.yml ${openshift_deployment_size_yml}"
       fi
 
 
       if [ -f "${openshift_deployment_size_yml}" ]
       then
-          DEPLOYMENT_SIZE=$(awk '/openshift_deployment_size:/ {print $2}' "${vars_file}")
+          DEPLOYMENT_SIZE=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
       fi
 
       # Set the OpenShift inventory file
@@ -66,7 +68,7 @@
   }
 
   function ask_user_which_openshift_product () {
-      if grep '""' "${vars_file}"|grep -q openshift_product:
+      if grep '""' "${ocp3_vars_file}"|grep -q openshift_product:
       then
           echo "We support the following OpenShift deployment options: "
           echo ""
@@ -82,7 +84,7 @@
           openshift_product=($(echo "${selected_option}"))
           update_variable=true
       else
-          openshift_product=$(awk '/openshift_product:/ {print $2}' "${vars_file}")
+          openshift_product=$(awk '/openshift_product:/ {print $2}' "${ocp3_vars_file}")
           update_variable=false
       fi
 
@@ -133,11 +135,11 @@
       if [ "A${update_variable}" == "Atrue" ]
       then
           echo "Setting OpenShift version to ${openshift_product}"
-          sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+          sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${ocp3_vars_file}"
           if [[ ${openshift_product} == "ocp3" ]]
           then
               # ensure we are deploying openshift enterprise
-              sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+              sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${ocp3_vars_file}"
           elif [[ ${openshift_product} == "okd3" ]]
 
   # this function make sure Ansible is installed
@@ -145,7 +147,7 @@
   # depends on
   function qubinode_setup_ansible () {
       qubinode_required_prereqs
-      vaultfile="${vault_vars_file}"
+      vaultfile="${vault_ocp3_vars_file}"
       HAS_SUDO=$(has_sudo)
       if [ "A${HAS_SUDO}" == "Ano_sudo" ]
       then
@@ -175,10 +177,10 @@
         confirm "Will You be deploying OpenShift 3.11.x? yes/no"
         if [ "A${response}" == "Ayes" ]
         then
-            sed -i "s/ansible_repo:.*/ansible_repo: rhel-7-server-ansible-2.7-rpms/g" "${vars_file}"
+            sed -i "s/ansible_repo:.*/ansible_repo: rhel-7-server-ansible-2.7-rpms/g" "${ocp3_vars_file}"
         fi
 
-         ANSIBLE_REPO=$(awk '/ansible_repo:/ {print $2}' "${vars_file}")
+         ANSIBLE_REPO=$(awk '/ansible_repo:/ {print $2}' "${ocp3_vars_file}")
          CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
          # check to make sure the support ansible repo is enabled
          if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
@@ -263,7 +265,7 @@
 
 
           then
-              sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
+              sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${ocp3_vars_file}"
           else
               echo "Unsupported OpenShift distro"
               exit 1
@@ -369,10 +371,10 @@
       if [ "A${POOL_ID}" != "A" ]
       then
           echo "Setting pool id for OpenShift Container Platform"
-          if grep '""' "${vars_file}"|grep -q openshift_pool_id
+          if grep '""' "${ocp3_vars_file}"|grep -q openshift_pool_id
           then
-              echo "${vars_file} openshift_pool_id variable"
-              sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${vars_file}"
+              echo "${ocp3_vars_file} openshift_pool_id variable"
+              sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${ocp3_vars_file}"
           fi
       else
           echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
@@ -388,7 +390,7 @@
           if [ "A${qubinode_maintenance_opt}" != "Arhsm" ] && [ "A${qubinode_maintenance_opt}" != "Asetup" ] && [ "A${qubinode_maintenance_opt}" != "Aclean" ]
           then
               check_for_openshift_subscription
-              if grep '""' "${vars_file}"|grep -q openshift_pool_id
+              if grep '""' "${ocp3_vars_file}"|grep -q openshift_pool_id
               then
                   echo "The OpenShift Pool ID is required."
                   echo "Please run: 'qubinode-installer -p ocp3 -m rhsm' or modify"
@@ -458,11 +460,11 @@
       fi
 
       # Check for openshift user
-      if grep '""' "${vars_file}"|grep -q openshift_user
+      if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
       then
-          echo "Setting openshift_user variable to $CURRENT_USER in ${vars_file}"
-          sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${vars_file}"
-          if grep '""' "${vars_file}"|grep -q openshift_user
+          echo "Setting openshift_user variable to $CURRENT_USER in ${ocp3_vars_file}"
+          sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${ocp3_vars_file}"
+          if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
           then
               echo "Could not determine the openshift_user variable, please resolve and try again"
               exit 1
@@ -567,7 +569,7 @@
       # Remove ocp3 yml files
       if [ "A${product}" == "Aocp3" ]
       then
-          for file in $(echo ${ocp3_vars_files})
+          for file in $(echo ${ocp3_ocp3_vars_files})
           do
               test -f $file && rm -f $file
           done
@@ -576,7 +578,7 @@
       # Remove okd3 yml files
       if [ "A${product}" == "Aokd3" ]
       then
-          for file in $(echo ${okd3_vars_files})
+          for file in $(echo ${okd3_ocp3_vars_files})
           do
               test -f $file && rm -f $file
           done
@@ -631,7 +633,7 @@
       product_in_use="ocp3"
       openshift_auto_install=true
       update_variable=true
-      sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${vars_file}"
+      sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
       #report_on_openshift3_installation
       #STATUS=$?
       #if [[  -ne 200 ]]
@@ -673,7 +675,7 @@
       printf "\n\n*********************\n"
       printf     "*Deploy ${product_in_use} cluster *\n"
       printf     "*********************\n"
-      sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${vars_file}"
+      sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
       openshift_enterprise_deployment
       openshift3_installation_msg
   }
@@ -778,7 +780,7 @@
       # via the -m deploy_nodes argument
       openshift_product=ocp3
       set_openshift_production_variables
-      sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+      sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${ocp3_vars_file}"
       report_on_openshift3_installation
       STATUS=$?
       if [[ $OCP_STATUS -ne 200 ]]

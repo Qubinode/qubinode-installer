@@ -7,6 +7,7 @@ EDITOR=vim
 PASSWD=/etc/passwd
 RED='\033[0;41;30m'
 STD='\033[0;0;39m'
+ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
 
 function config_err_msg () {
     cat << EOH >&2
@@ -37,7 +38,7 @@ source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/qubinode_requirements.sh"
 
 qubinode_required_prereqs
-auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${vars_file}")
+auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${ocp3_vars_file}")
 
 
 if [[ -z $1 ]]; then
@@ -158,7 +159,7 @@ minimal_deployment(){
     read_options
   else
     echo "Setting OpenShift Deployment size to $ocp_size"
-    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
     openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
     cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
@@ -176,7 +177,7 @@ small_deployment(){
     read_options
   else
     echo "Setting OpenShift Deployment size to $ocp_size"
-    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
     openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
     cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
@@ -193,7 +194,7 @@ perfomance_deployment(){
     read_options
   else
     echo "Setting OpenShift Deployment size to $ocp_size"
-    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
     openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
     cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
@@ -211,7 +212,7 @@ standard_deployment(){
     read_options
   else
     echo "Setting OpenShift Deployment size to $ocp_size"
-    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
     openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
     cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
     exit 0
@@ -235,11 +236,11 @@ read_options(){
 	local choice
 	read -p "Enter choice [ 1 - 5] " choice
 	case $choice in
-		1) ocp_size=minimal 
+		1) ocp_size=minimal
                    minimal_deployment ;;
-		2) ocp_size=small 
+		2) ocp_size=small
                    small_deployment ;;
-                3) ocp_size=standard 
+                3) ocp_size=standard
                    standard_deployment ;;
                 4) ocp_size=performance
                    perfomance_deployment;;
@@ -268,16 +269,16 @@ then
             #small) small_desc ;;
             #standard) standard_desc ;;
             #performance) performance_desc ;;
-            minimal)     
+            minimal)
                          minimal_desc
                          ;;
-            small)       
+            small)
                          small_desc
                          ;;
-            standard)    
+            standard)
                          standard_desc
                          ;;
-            performance) 
+            performance)
                          performance_desc
                          ;;
 
@@ -289,24 +290,24 @@ then
         if [[ ! $REPLY =~ ^[Yy]$ ]]
         then
             case $INSTALLTYPE in
-            minimal)    
+            minimal)
                          ocp_size=minimal
-                         echo "*** RUNNING SIZE $ocp_size ***" 
-                         minimal_deployment 
+                         echo "*** RUNNING SIZE $ocp_size ***"
+                         minimal_deployment
                          ;;
-            small)       
+            small)
                          ocp_size=small
-                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         echo "*** RUNNING SIZE $ocp_size ***"
                          small_deployment
                          ;;
-            standard)    
+            standard)
                          ocp_size=standard
-                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         echo "*** RUNNING SIZE $ocp_size ***"
                          standard_deployment
                          ;;
-            performance) 
+            performance)
                          ocp_size=performance
-                         echo "*** RUNNING SIZE $ocp_size ***" 
+                         echo "*** RUNNING SIZE $ocp_size ***"
                          performance_deployment
                          ;;
                 *) exit 0;;
@@ -321,7 +322,7 @@ then
     fi
 else
     ocp_size="standard"
-    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${vars_file}"
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
     openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
     cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
 fi

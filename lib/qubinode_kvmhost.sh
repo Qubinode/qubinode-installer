@@ -120,9 +120,9 @@ function qubinode_networking () {
     iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
     then
-        foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}')
+        foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
         echo "Updating the kvm_host_macaddr to ${foundmac}"
-        sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: "${foundmac}"#g" "${vars_file}"
+        sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${vars_file}"
     fi
 
     #host_device

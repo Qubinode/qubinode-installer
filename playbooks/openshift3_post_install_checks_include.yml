@@ -39,7 +39,7 @@
 
 - name: Validate required packages are installed
   fail:
-    msg: "{{ item }} found"
-  when: "'{{item}}' not in ansible_facts.packages"
+    msg: "{{ item }} not found"
+  when: "'item' not in ansible_facts.packages"
   ignore_errors: no
   loop: "{{ ocp_nodes_pkgs }}"
