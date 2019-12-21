@@ -29,6 +29,7 @@
       openshift3_inventory_generator_playbook="${playbooks_dir}/openshift3_inventory_generator.yml"
       openshift_ansible_dir=/usr/share/ansible/openshift-ansible
 
+      # The the defined cluster size to deploy
       if ! grep '""' "${ocp3_vars_file}"|grep -q "openshift_deployment_size:"
       then
           openshift_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
@@ -76,14 +77,13 @@
       then
           echo "We support the following OpenShift deployment options: "
           echo ""
-          #echo "   * okd3 - Origin Community Distribution 3"
+          echo "   * okd3 - Origin Community Distribution 3"
           echo "   * ocp3 - Red Hat OpenShift Container Platform 3"
-          #echo "   * ocp4 - Red Hat OpenShift Container Platform 4"
+          echo "   * ocp4 - Red Hat OpenShift Container Platform 4"
           echo ""
 
           echo "Select one of the options below to deploy : "
-          #ocp_product_msg=("ocp3" "ocp4" "okd3")
-          ocp_product_msg=("ocp3")
+          ocp_product_msg=("ocp3" "ocp4" "okd3")
           createmenu "${ocp_product_msg[@]}"
           openshift_product=($(echo "${selected_option}"))
           update_variable=true
@@ -489,7 +489,6 @@
       run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
       $run_cmd || exit_status "$run_cmd" $LINENO
       # Set the OpenShift inventory file
-      #INVENTORYFILE=$(ls "${hosts_inventory_dir}/inventory.3.11.rhel*" /dev/null 2>&1)
       INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
       if [ "A${INVENTORYFILE}" != "A" ]
       then
@@ -514,7 +513,10 @@
       # ensure htpassword file is created and populated
       if [[ ! -f ${HTPASSFILE} ]]; then
           get_admin_user_password
-          run_cmd="htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
+          echo "htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
+          #FIX 
+          exit 1
+          #run_cmd="htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
           echo "Creating OpenShift HTAUTH file ${HTPASSFILE}"
           $run_cmd
           #test $(grep $OCUSER ${HTPASSFILE} >/dev/null 2>&1) || exit_status "$run_cmd" $LINENO
@@ -523,6 +525,9 @@
               exit_status "$run_cmd" $LINENO
           fi
       fi
+ 
+      #FIX
+      exit 1
 
       # run openshift installation
       if [[ ${product_in_use} == "ocp3" ]]
@@ -539,9 +544,8 @@
           echo "Deploying OpenShift Cluster"
           run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/deploy_cluster.yml"
           $run_cmd || exit_status "$run_cmd" $LINENO
-          printf "\n\n************************************************\n"
-          printf     "* OpenShift Cluster Deployment Complete *\n"
-          printf     "************************************************\n\n"
+
+          openshift3_installation_msg
       elif [[ ${product_in_use} == "okd3" ]]
       then
           cd ${HOME}/openshift-ansible
@@ -651,19 +655,6 @@
       else
           echo "OpenShift 3 deployment size is $current_deployment_size"
       fi
-
-      #report_on_openshift3_installation
-      #STATUS=$?
-      #if [[  -ne 200 ]]
-      #then
-      #    ask_user_which_openshift_product
-      #    are_openshift_nodes_available
-      #    qubinode_deploy_openshift
-      #    openshift3_installation_msg
-      #else
-      #    openshift3_installation_msg
-      #fi
-
 
       printf "\n\n***************************\n"
       printf "* Running qubinode perquisites *\n"
