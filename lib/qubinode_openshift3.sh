@@ -1,7 +1,10 @@
   #!/bin/bash
 
   function openshift3_variables () {
-      echo "Loading OpenShift 3 global variables"
+      # This function is a catch all for all
+      # global variables used used in this script
+      # for ocp3.
+
       playbooks_dir="${project_dir}/playbooks"
       vars_file="${playbooks_dir}/vars/all.yml"
       ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
@@ -631,10 +634,24 @@
 
 
   function qubinode_autoinstall_openshift () {
-      product_in_use="ocp3"
-      openshift_auto_install=true
+      product_in_use="ocp3" # Tell the installer this is openshift3 installation
+      openshift_auto_install=true # Tells the installer to use defaults options
       update_variable=true
-      sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
+      
+      # Check current deployment size
+      current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
+
+      # The default openshift size is stanadard
+      # This ensures that if the size is already set
+      # it does not get overwritten
+      if [ "A${current_deployment_size}" == 'A""' ]
+      then
+          echo "Setting Openshift deployment size to standard."
+          sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
+      else
+          echo "OpenShift 3 deployment size is $current_deployment_size"
+      fi
+
       #report_on_openshift3_installation
       #STATUS=$?
       #if [[  -ne 200 ]]
@@ -723,7 +740,8 @@
 
 
   function are_openshift_nodes_available () {
-      ping_nodes
+      ping_nodes  # check if nodes respond to ping command
+
       if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
       then
           # Deploy OpenShift Nodes
@@ -866,18 +884,23 @@
 
 
   function report_on_openshift3_installation () {
-      ping_nodes
+      # This function checks to see if the openshift console up
+      # It expects a return code of 200
+
+      are_openshift_nodes_available
       if [ "A${PINGED_NODES_TOTAL}" == "A${TOTAL_NODES}" ]
       then
           echo "Checking to see if Openshift is online."
-          sleep 45s
+          sleep 40s
           OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
           return $OCP_STATUS
       fi
   }
 
   function openshift3_installation_msg () {
-     report_on_openshift3_installation
+
+     # check the availability of OpenShift nodes
+     report_on_openshift3_installation 
 
      if [[ $OCP_STATUS -eq 200 ]]
      then
@@ -886,10 +909,7 @@
          bash "${project_dir}/lib/openshift-smoke-test.sh" "${web_console}" "${OCUSER}" "${admin_user_passowrd}"
          MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
          #ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
-     fi
 
-     if [[ $OCP_STATUS -eq 200 ]]
-     then
          IDM_IP=$(cat "${idm_vars_file}" | grep "idm_server_ip:" | awk '{print $2}')
          printf "\n\n*******************************************************\n"
          printf "\nDeployment steps for ${product} cluster is complete.\n"
