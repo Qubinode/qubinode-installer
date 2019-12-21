@@ -641,8 +641,17 @@
       # Check current deployment size
       current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
 
-      if [ "A${current_deployment_size}" "Astandard" ]
-      sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
+      # The default openshift size is stanadard
+      # This ensures that if the size is already set
+      # it does not get overwritten
+      if [ "A${current_deployment_size}" == 'A""' ]
+      then
+          echo "Setting Openshift deployment size to standard."
+          sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
+      else
+          echo "OpenShift 3 deployment size is $current_deployment_size"
+      fi
+
       #report_on_openshift3_installation
       #STATUS=$?
       #if [[  -ne 200 ]]
@@ -882,8 +891,7 @@
       if [ "A${PINGED_NODES_TOTAL}" == "A${TOTAL_NODES}" ]
       then
           echo "Checking to see if Openshift is online."
-          #sleep 45s
-          #FIX
+          sleep 40s
           OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
           return $OCP_STATUS
       fi
