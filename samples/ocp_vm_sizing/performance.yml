@@ -44,7 +44,7 @@ instances:
       - size: 160G
         enable: true
     vm_recreate: false
-    qty: 2
+    qty: 0
   - name: lb
     enable: true
     vm_cpu: 2
