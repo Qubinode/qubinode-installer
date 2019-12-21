@@ -25,6 +25,11 @@ cd qubinode-installer/
 sudo yum update -y
 ```
 
+**TEMP FIX for kvmhost**
+```
+sed -i "s/ansible_repo:.*/ansible_repo: rhel-7-server-ansible-2.6-rpms/g" playbooks/vars/all.yml
+```
+
 **setup host system as an ansible controller**
 ```
 ./qubinode-installer -m ansible
