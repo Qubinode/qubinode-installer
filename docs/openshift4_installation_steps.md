@@ -25,11 +25,6 @@ cd qubinode-installer/
 sudo yum update -y
 ```
 
-**TEMP FIX for kvmhost**
-```
-sed -i "s/ansible_repo:.*/ansible_repo: rhel-7-server-ansible-2.6-rpms/g" playbooks/vars/all.yml
-```
-
 **setup host system as an ansible controller**
 ```
 ./qubinode-installer -m ansible
@@ -39,14 +34,17 @@ sed -i "s/ansible_repo:.*/ansible_repo: rhel-7-server-ansible-2.6-rpms/g" playbo
 ```
 ./qubinode-installer -m host
 ```
+**Download qcow images for idmserver**
+```
 copy rhel-server-7.7-update-2-x86_64-kvm.qcow2 to qubinode-installer directory
+```
 
 **install idm dns server**
 ```
 ./qubinode-installer -p idm
 ```
 
-**Optional: Uninstall idm dns server**
+**Optional: Uninstall idm dns server. This may be used when there is an issue with the deployment. Note that idm is required for OpenShift 4.x installations.**
 ```
 ./qubinode-installer  -p idm -d
 ```

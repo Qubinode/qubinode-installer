@@ -34,9 +34,10 @@ rhsm_reg_method: ""
 # RHEL 7.6 was also tested and may work if you need to stay at 7.6
 rhel_release: 7.7
 
+# Ansible 2.6 is current working version
 # Ansible 2.7 is the current tested version.
 # Ansible 2.8 is currently being tested.
-ansible_repo: rhel-7-server-ansible-2.8-rpms
+ansible_repo: rhel-7-server-ansible-2.6-rpms
 
 # We leverage a bridge network for OCP3 installs
 # and other VMS. This sets the name of the bridge to be created and use when
