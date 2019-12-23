@@ -400,18 +400,7 @@ function qubinode_deploy_openshift () {
     fi
 
     # ensure htpassword file is created and populated
-    if [[ ! -f ${HTPASSFILE} ]]; then
-        get_admin_user_password
-        echo "htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
-        #FIX 
-        run_cmd="htpasswd -c -b ${HTPASSFILE} $OCUSER $admin_user_passowrd"
-        echo "Creating OpenShift HTAUTH file ${HTPASSFILE}"
-        $run_cmd
-    fi
-    if ! grep $OCUSER ${HTPASSFILE} >/dev/null 2>&1
-    then
-        exit_status "$run_cmd" $LINENO
-    fi
+    ensure_ocp3_basic_auth_file
 
     # run openshift installation
     if [[ ${product_in_use} == "ocp3" ]]
@@ -618,72 +607,78 @@ function ping_nodes () {
 function are_openshift_nodes_available () {
     echo "Running are_openshift_nodes_available"
 
-    # check if nodes respond to ping command
+    # Check for connectivity to nodes and retun TOTAL_NODES
+    # and PINGED_NODES_TOTAL variables.
     ping_nodes
 
+    # Check if the right number of nodes are deployed
+    # and master nodes are deployed and return DEPLOY_OPENSHIFT_NODES
     if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
     then
-        # Deploy OpenShift Nodes
-        qubinode_openshift_nodes
+        printf "\n\n The ocp3 installation profile of ${openshift_deployment_size} requires\
+                \n a total of ${TOTAL_NODES} nodes, found $PINGED_NODES_TOTAL nodes.\n\n"
 
-        # Run post configuration tasks on Openshift Nodes
-        if [ "A${WEBCONSOLE_STATUS}" != "A200" ]; then
-            qubinode_openshift3_nodes_postdeployment
-        fi
+        DEPLOY_OPENSHIFT_NODES=1
+    elif [ "A${PINGED_MASTER}" != "A${MASTERS}" ]
+    then
+        DEPLOY_OPENSHIFT_NODES=1
+     else
+        DEPLOY_OPENSHIFT_NODES=0
+     fi
 
-       # Check if nodes are now available
-       ping_nodes
+    if [ "A${DEPLOY_OPENSHIFT_NODES}" != "A1" ]
+    then
+        printf "\n\n Found all ${TOTAL_NODES} nodes required for the Cluster profile size ${openshift_deployment_size}.\n\n"
 
-       # Validate OpenShift nodes deployment
-       if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
-       then
-           echo "A ${openshift_deployment_size} cluster requires ${TOTAL_NODES} nodes."
-           echo "Was only able to verify connectivity to ${PINGED_NODES_TOTAL} nodes."
-           echo "Failed nodes are: "
-           echo "${PINGED_FAILED_NODES}"
-           echo "Aborting the installation"
-           exit 1
-       fi
-   else
-       if [ "A${PINGED_MASTER}" != "A${MASTERS}" ]
-       then
-           echo "A ${openshift_deployment_size} cluster requires ${MASTERS} masters."
-           echo "Found ${PINGED_MASTER} masters."
-           echo "Aborting the installation"
-           exit 1
-       else
-           echo "Found all ${TOTAL_NODES} nodes required for the Cluster profile of ${openshift_deployment_size}"
-           # Create a report of all nodes including their IP address and FQDN 
-           divider===============================
-           divider=$divider$divider
-           header="\n %-035s %010s\n"
-           format=" %-035s %010s\n"
-           width=50
-           printf "$header" "OCP3 Cluster Nodes" "IP Address" >"${project_dir}/openshift_nodes"
-           printf "%$width.${width}s\n" "$divider" >>"${project_dir}/openshift_nodes"
-           for host in $(echo "${PINGED_NODES}")
-           do
-               IP=$(host "${host}" | awk '{print $4}')
-               cleanStaleKnownHost "${ADMIN_USER}" "${host}" "${IP}"
-               printf "$format" "${host}"  "${IP}" >> "${project_dir}/openshift_nodes"
-           done
+        # Create a report of all nodes including their IP address and FQDN 
+        divider===============================
+        divider=$divider$divider
+        header="\n %-035s %010s\n"
+        format=" %-035s %010s\n"
+        width=50
+        printf "$header" "OCP3 Cluster Nodes" "IP Address" >"${project_dir}/openshift_nodes"
+        printf "%$width.${width}s\n" "$divider" >>"${project_dir}/openshift_nodes"
+        for host in $(echo "${PINGED_NODES}")
+        do
+            IP=$(host "${host}" | awk '{print $4}')
+            cleanStaleKnownHost "${ADMIN_USER}" "${host}" "${IP}"
+            printf "$format" "${host}"  "${IP}" >> "${project_dir}/openshift_nodes"
+        done
 
-           # Ensure post configruation is done on OpenShift nodes
-           # Run post configuration tasks on Openshift Nodes
-           if [ "A${WEBCONSOLE_STATUS}" != "A200" ]
-           then
-               qubinode_openshift3_nodes_postdeployment
-           fi
-
-        fi
     fi
 }
 
-function maintenance_deploy_nodes () {
-    # This is a wrapper function to deploy openshift nodes
-    # via the -m deploy_nodes argument
+function deploy_openshift3_nodes () {
+    # Deploys nodes for openshift 3
     ask_user_which_openshift_product
     qubinode_openshift_nodes
+    validate_opeshift3_nodes_deployment
+}
+
+function validate_opeshift3_nodes_deployment () {
+    # Validate OpenShift nodes deployment
+    # check connectivity to nodes and return
+    # DEPLOY_OPENSHIFT_NODES variable
+    are_openshift_nodes_available
+
+    # exit when nodes fail to deploy
+    if [ "A${DEPLOY_OPENSHIFT_NODES}" == "A1" ]
+    then
+
+        msg="\n A ${openshift_deployment_size} cluster requires ${TOTAL_NODES} nodes. \
+             \n A total of ${PINGED_NODES_TOTAL} nodes were deployed."
+
+        if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
+        then
+           printf "$msg"
+           printf "\n Failed nodes are: \n"
+           printf " ${PINGED_FAILED_NODES}\n"
+           printf "\n Please troubleshoot why nodes aren't being deployed."
+           printf "\n Try removing all nodes with the below command and try again."
+           printf "\n\n ./qubinode-installer -p ocp3 -d \n\n"
+           exit 1
+        fi
+    fi
 }
 
 function generate_htpasswd_file () {
@@ -737,8 +732,19 @@ function openshift_enterprise_deployment () {
     # Load all global openshift variable 
     set_openshift_production_variables
 
+    # Check if OpenShift nodes are deployed
+    # and return the variable DEPLOY_OPENSHIFT_NODES
+    are_openshift_nodes_available
+
+    # Deploy OpenShift Nodes if they are not deployed
+    if [ "A${DEPLOY_OPENSHIFT_NODES}" == "A1" ]
+    then
+        deploy_openshift3_nodes
+    fi
+
     # Check if the OCP3 cluster is already deployed
     check_webconsole_status
+
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
         ask_user_which_openshift_product
@@ -846,8 +852,16 @@ function openshift3_installation_msg () {
    # check connectivity to webconsole
    check_webconsole_status
 
+   # Setup variables for smoketest
+   get_admin_user_password
+   SMOKETEST="${project_dir}/lib/openshift-smoke-test.sh"
+
    if [[ $WEBCONSOLE_STATUS -eq 200 ]]
    then
+       # Run smoketest to ensure cluster is up
+       echo "Running post installation test"
+       bash "${SMOKETEST}" "${web_console}" "${OCUSER}" "${admin_user_passowrd}"
+
        MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
        IDM_IP=$(cat "${idm_vars_file}" | grep "idm_server_ip:" | awk '{print $2}')
        printf "\n\n*******************************************************\n"
@@ -859,7 +873,12 @@ function openshift3_installation_msg () {
        printf "\n\nIDM DNS Server login: https://${prefix}-dns01.${domain}\n"
        printf "     Username: admin\n"
        printf "     Password: <yourpassword>\n"
-       printf "IdM server IP: $IDM_IP\n"
+       printf "IdM server IP: $IDM_IP\n\n"
+       if [ "A${APP_STATUS}" == "A200" ]
+       then
+           printf " WARNING: Although the cluster appears to be up, the smoketest was not successfull.\n\n"
+           printf " Please check the health of your cluster.\n\n"
+       fi
        printf "*******************************************************\n"
    else
        echo  "FAILED to connect to Openshift Console URL:  ${web_console}"
