@@ -45,15 +45,7 @@ openshift4_qubinode_teardown () {
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
 
     # Delete VMS
-    for n in $(cat rhcos-install/node-list)
-    do
-        echo "Deleting VM $n..."
-        sudo virsh shutdown $n
-        sleep 10s
-        sudo virsh destroy $n
-        sudo virsh undefine $n
-        sudo rm -f /var/lib/libvirt/images/${n}.qcow2
-    done
+    cleanup
 
     test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
     test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
@@ -108,6 +100,24 @@ test -d "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playb
     echo "OCP4 deployment removed"
     exit 0
 }
+
+function cleanup(){
+    #clean up
+    sudo virsh destroy bootstrap; sudo virsh undefine bootstrap --remove-all-storage
+
+    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+    for i in {0..2}
+    do
+        sudo virsh destroy master-${i};sudo virsh undefine master-${i} --remove-all-storage
+    done
+
+    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+    for i in {0..1}
+    do
+        sudo virsh destroy compute-${i};sudo virsh undefine compute-${i} --remove-all-storage
+    done
+}
+
 
 openshift4_server_maintenance () {
     echo "Hello World"
