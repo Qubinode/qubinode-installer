@@ -34,9 +34,10 @@ rhsm_reg_method: ""
 # RHEL 7.6 was also tested and may work if you need to stay at 7.6
 rhel_release: 7.7
 
+# Ansible 2.6 is current working version
 # Ansible 2.7 is the current tested version.
 # Ansible 2.8 is currently being tested.
-ansible_repo: rhel-7-server-ansible-2.8-rpms
+ansible_repo: rhel-7-server-ansible-2.6-rpms
 
 # We leverage a bridge network for OCP3 installs
 # and other VMS. This sets the name of the bridge to be created and use when
@@ -117,8 +118,6 @@ logical_volumes:
     size: "+100%FREE"
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
     fstype: xfs
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
-vg_name: vg_qubi
 
 
 #################################
@@ -127,9 +126,8 @@ vg_name: vg_qubi
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images
-host_device: nvme0n1
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
-qubinode_bridge_name: qubibr0
 
 ###########################################
 # variables for swygue.edge_host_setup role

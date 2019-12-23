@@ -33,6 +33,11 @@ function openshift4_prechecks () {
         sudo firewall-cmd --add-port={80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
         sudo firewall-cmd --reload
     fi
+
+    curl -OL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+    sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
+
 }
 
 openshift4_qubinode_teardown () {
