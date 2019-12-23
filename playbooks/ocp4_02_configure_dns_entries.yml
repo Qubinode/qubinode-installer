@@ -188,9 +188,30 @@
         body:
           method: dnsrecord_add
           params:
-          - - ".{{ cluster_name }}.{{ idm_dns_forward_zone }}."
+          - - "{{ domain }}."
             - "{{ dns_wildcard }}"
           - a_part_ip_address: "{{ kvm_host_ip }}"
+            a_extra_create_reverse: false
+        body_format: json
+      when: not dns_teardown|bool
+      tags: idm
+
+    - name:  Create Wildcard for Applications
+      uri:
+        url: "https://{{ ipa_host }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ ipa_host }}/ipa"
+        body:
+          method: dnsrecord_add
+          params:
+          - - "{{ domain }}."
+            - "{{ dns_wildcard }}"
+          - a_part_ip_address: "{{ nat_gateway }}"
             a_extra_create_reverse: false
         body_format: json
       when: not dns_teardown|bool
