@@ -50,7 +50,6 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 
 ## Known issues
 
-this is a test
 ## Roadmap
 * OCP 4.x Container Native Storage
 * OCP 4.x and RHEV
