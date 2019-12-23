@@ -2,34 +2,34 @@
   vars:
     vm_name: "{{ preappend_host_name }}{{ outer_item.name }}{{ '%02x' |format(inner_item) }}"
     vm_group: "{{ outer_item.role_group }}"
-  shell: |
-      echo "Running on $(hostname)"
-      ping {{ vm_name }}.{{ domain }} -c 1
+  shell: ping {{ vm_name }}.{{ domain }} -c 1
   loop: "{{ range(1, outer_item.qty|int +1)|list }}"
   loop_control:
     loop_var: inner_item
     label: "{{ vm_name }}"
+  register: ping_nodes_result
+  changed_when: false
   ignore_errors: no
 
 - name: Check if registry.redhat.io resolves
   shell: |
-      dig -x registry.redhat.io
-  register: result
+      dig +short -t a registry.redhat.io| head -1
+  register: registry_redhat_io
   ignore_errors: no
+  changed_when: false
 
-
-- name: Check that the  dns wildcard resolves
-  shell: |
-      dig {{ dns_wildcard }}.{{ domain }}
-  register: result
-  ignore_errors: no
+#- name: Check that the dns wildcard resolves
+#  shell: |
+#      dig +short "{{ dns_wildcard }}.{{ domain }}"| head -1
+#  register: dns_wildcard
+#  ignore_errors: no
 
 - name: test connectivity to registry.redhat.io
   shell: |
-      ping  registry.redhat.io -c 1
-  register: result
-  until: ('0% packet loss' in result.stdout)
-  failed_when: ('100.0% packet loss' in result.stdout)
+      ping registry.redhat.io -c1
+  register: ping_registry_redhat_io
+  until: ('0% packet loss' in ping_registry_redhat_io.stdout)
+  failed_when: ('100.0% packet loss' in ping_registry_redhat_io.stdout)
   retries: 10
   delay: 3
 
@@ -37,9 +37,9 @@
   package_facts:
     manager: "auto"
 
-- name: Validate required packages are installed
-  fail:
-    msg: "{{ item }} not found"
-  when: "'item' not in ansible_facts.packages"
-  ignore_errors: no
-  loop: "{{ ocp_nodes_pkgs }}"
+#- name: Validate required packages are installed
+#  fail:
+#    msg: "{{ item }} not found"
+#  when: "'item' not in ansible_facts.packages"
+#  ignore_errors: no
+#  loop: "{{ ocp_nodes_pkgs }}"

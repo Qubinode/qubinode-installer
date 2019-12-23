@@ -90,7 +90,7 @@ function qubinode_maintenance_options () {
         qubinode_setup_kvm_host
     elif [ "${qubinode_maintenance_opt}" == "deploy_nodes" ]
     then
-        maintenance_deploy_nodes
+        deploy_openshift3_nodes
     elif [ "${qubinode_maintenance_opt}" == "undeploy" ]
     then
         #TODO: this should remove all VMs and clean up the project folder
