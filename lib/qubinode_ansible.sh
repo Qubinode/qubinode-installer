@@ -32,11 +32,6 @@ function qubinode_setup_ansible () {
     # install ansible
     if [ ! -f /usr/bin/ansible ];
     then
-      confirm "Will You be deploying OpenShift 3.11.x? yes/no"
-      if [ "A${response}" == "Ayes" ]
-      then
-          sed -i "s/ansible_repo:.*/ansible_repo: rhel-7-server-ansible-2.6-rpms/g" "${vars_file}"
-      fi
 
        ANSIBLE_REPO=$(awk '/ansible_repo:/ {print $2}' "${vars_file}")
        CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
