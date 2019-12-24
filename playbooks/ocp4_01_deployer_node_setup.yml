@@ -6,6 +6,8 @@
     - vars/vault.yml
     - vars/idm.yml
     - vars/ocp4.yml
+  handlers:
+  - import_tasks: handlers/main.yml
   become: yes
 
   tasks:
@@ -27,13 +29,14 @@
       regexp: '^IPForward='
     when: stat_result.stat.exists == True
 
-  - name: install podman,buildah and skopeo
+  - name: install podman,buildah, skopeo and  nfs-utils
     yum:
       name:
       - podman
       - buildah
       - skopeo
       - slirp4netns
+      - nfs-utils
       state: present
 
   - name: activate namespaces
@@ -96,7 +99,7 @@
 
   - name: Copy NFS export conf file
     copy:
-      src: ../files/nfs-exports
+      src: templates/nfs-exports
       dest: /etc/exports
     notify:
       - restart nfs

@@ -282,6 +282,40 @@ EOF
   # openshift-install --dir=ocp4 wait-for install-complete
 EOF
 
+echo "NFS Server mount directory information"
+ls -lath /export
+df -h /export
+
+echo "Configure nfs-provisioner?"
+confirm "Continue with a $DEPLOYMENT_SIZE type deployment? yes/no"
+if [ "A${response}" != "Ayes" ]
+then
+    oc get storageclass
+    bash lib/qubinode-nfs-provisioner-setup.sh
+     oc get storageclass || exit 1
+     cat >image-registry-storage.yaml<<YAML
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-registry-storage
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: nfs-storage-provisioner
+  resources:
+    requests:
+      storage: 80Gi
+YAML
+oc create -f image-registry-storage.yaml
+
+cat << EOF
+# Please Follow instructions located below for persistent registry storage
+# Link: https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html
+EOF
+else
+  echo "Skipping nfs-provisioning"
+  exit 0
+fi
 }
 
 openshift4_enterprise_deployment () {

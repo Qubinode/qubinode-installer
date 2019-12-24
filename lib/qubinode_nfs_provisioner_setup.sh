@@ -33,14 +33,14 @@ if oc get project ${nfsnamespace} -o jsonpath={.metadata.name} > /dev/null 2>&1 
 fi
 #
 ## If we are here; I can try and deploy
-oc new-project ${nfsnamespace}
-oc project ${nfsnamespace}
-oc create -f ${rbac}
-oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:${nfsnamespace}:nfs-client-provisioner
-oc create -f ${deploy} -n ${nfsnamespace}
-oc create -f ${sc}
-oc annotate storageclass nfs-storage-provisioner storageclass.kubernetes.io/is-default-class="true"
-oc project default
+oc new-project ${nfsnamespace} || exit 1
+oc project ${nfsnamespace}|| exit 1
+oc create -f ${rbac}|| exit 1
+oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:${nfsnamespace}:nfs-client-provisioner || exit 1
+oc create -f ${deploy} -n ${nfsnamespace} || exit 1
+oc create -f ${sc} || exit 1
+oc annotate storageclass nfs-storage-provisioner storageclass.kubernetes.io/is-default-class="true" || exit 1
+oc project default || exit 1
 #
 ## Show some info
 cat <<EOF
