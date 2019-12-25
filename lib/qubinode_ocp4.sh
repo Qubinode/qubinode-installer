@@ -265,34 +265,17 @@ post_deployment_steps (){
   # oc get clusteroperators
 EOF
 
-
-  echo "Configure registry to use empty directory"
-  echo "*****************************"
-  cat << EOF
-  # oc get pod -n openshift-image-registry
-  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
-  # oc get pod -n openshift-image-registry
-  # oc get clusteroperators
-EOF
-
-  echo "Check that OpenShift installation is complete"
-  echo "*****************************"
-  cat << EOF
-  # cd ~/qubinode-installer
-  # openshift-install --dir=ocp4 wait-for install-complete
-EOF
-
 echo "NFS Server mount directory information"
 ls -lath /export
 df -h /export
 
-echo "Configure nfs-provisioner?"
-confirm "Continue with a $DEPLOYMENT_SIZE type deployment? yes/no"
+confirm "Configure nfs-provisioner? yes/no"
 if [ "A${response}" != "Ayes" ]
 then
+  export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
     oc get storageclass
-    bash lib/qubinode-nfs-provisioner-setup.sh
-     oc get storageclass || exit 1
+    bash lib/qubinode_nfs_provisioner_setup.sh
+    oc get storageclass || exit 1
      cat >image-registry-storage.yaml<<YAML
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -314,8 +297,23 @@ cat << EOF
 EOF
 else
   echo "Skipping nfs-provisioning"
-  exit 0
+  echo "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
+  echo "*****************************"
+  cat << EOF
+  # oc get pod -n openshift-image-registry
+  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+  # oc get pod -n openshift-image-registry
+  # oc get clusteroperators
+EOF
 fi
+
+echo "Check that OpenShift installation is complete"
+echo "*****************************"
+cat << EOF
+# cd ~/qubinode-installer
+# openshift-install --dir=ocp4 wait-for install-complete
+EOF
+
 }
 
 openshift4_enterprise_deployment () {
