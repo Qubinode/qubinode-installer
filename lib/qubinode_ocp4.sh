@@ -108,13 +108,13 @@ function cleanup(){
     masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
     for  i in $(seq "$masters")
     do
-        sudo virsh destroy master-${i};sudo virsh undefine master-${i} --remove-all-storage
+        sudo virsh destroy master-$((i-1));sudo virsh undefine master-$((i-1)) --remove-all-storage
     done
 
     compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for  i in $(seq "$compute")
+    for i in $(seq "$compute")
     do
-        sudo virsh destroy compute-${i};sudo virsh undefine compute-${i} --remove-all-storage
+        sudo virsh destroy compute-$((i-1));sudo virsh undefine compute-$((i-1))} --remove-all-storage
     done
 }
 
