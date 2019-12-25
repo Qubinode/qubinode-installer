@@ -5,7 +5,7 @@ function qubinode_required_prereqs () {
     # Setup of the required paths
     # Sets up the inventory file
 
-    echo "Loading function qubinode_required_prereqs"
+    echo "Load function qubinode_required_prereqs"
     # setup required paths
     setup_required_paths
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
@@ -39,15 +39,21 @@ function qubinode_required_prereqs () {
     fi
 
     # copy sample ocp3 file to playbook/vars directory
-    if [ ! -f "${ocp3_vars_file}" ]
+    if [ "$A{qubinode_product_opt}" == "ocp3" ]
     then
-        cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
+        if [ ! -f "${ocp3_vars_file}" ]
+        then
+            cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
+        fi
     fi
 
     # copy sample okd3 file to playbook/vars directory
-    if [ ! -f "${okd3_vars_file}" ]
+    if [ "$A{qubinode_product_opt}" == "okd3" ]
     then
-        cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
+        if [ ! -f "${okd3_vars_file}" ]
+        then
+            cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
+        fi
     fi
 
     # create ansible inventory file
@@ -84,7 +90,7 @@ function setup_variables () {
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
 
-    # Pull variables from all.yml needed for the install
+    # pull domain from all.yml
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     echo ""
 
