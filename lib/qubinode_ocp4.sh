@@ -106,13 +106,13 @@ function cleanup(){
     sudo virsh destroy bootstrap; sudo virsh undefine bootstrap --remove-all-storage
 
     masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for i in {0..2}
+    for  i in $(seq "$masters")
     do
         sudo virsh destroy master-${i};sudo virsh undefine master-${i} --remove-all-storage
     done
 
     compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in {0..1}
+    for  i in $(seq "$compute")
     do
         sudo virsh destroy compute-${i};sudo virsh undefine compute-${i} --remove-all-storage
     done
