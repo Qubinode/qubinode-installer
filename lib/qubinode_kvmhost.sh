@@ -192,21 +192,21 @@ function qubinode_networking () {
     iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
     then
-        printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
+        #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
         sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${vars_file}"
     fi
 
     iSkvm_host_ip=$(awk '/^kvm_host_ip/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
     then
-        echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
+        #echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
         sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${vars_file}"
     fi
 
     iSkvm_host_gw=$(awk '/^kvm_host_gw/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
     then
-        echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
+        #echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
         sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${vars_file}"
     fi
 
@@ -220,7 +220,7 @@ function qubinode_networking () {
     iSkvm_host_interface=$(awk '/^kvm_host_interface/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_interface}" == "A" ]] || [[ "A${iSkvm_host_interface}" == 'A""' ]]
     then
-        echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
+        #echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
         sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${vars_file}"
     fi
 
@@ -228,11 +228,9 @@ function qubinode_networking () {
     if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
     then
         foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
-        echo "Updating the kvm_host_macaddr to ${foundmac}"
+        #echo "Updating the kvm_host_macaddr to ${foundmac}"
         sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${vars_file}"
     fi
-
-    #host_device
 }
 
 

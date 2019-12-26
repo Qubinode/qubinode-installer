@@ -69,21 +69,21 @@ function setup_variables () {
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
     then
-        echo "Adding inventory_dir variable"
+        #echo "Adding inventory_dir variable"
         sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
 
     # Set KVM project dir
     if grep '""' "${vars_file}"|grep -q project_dir
     then
-        echo "Adding project_dir variable"
+        #echo "Adding project_dir variable"
         sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
     fi
 
     # Setup admin user variable
     if grep '""' "${vars_file}"|grep -q admin_user
     then
-        echo "Updating ${vars_file} admin_user variable"
+        #echo "Updating ${vars_file} admin_user variable"
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
 

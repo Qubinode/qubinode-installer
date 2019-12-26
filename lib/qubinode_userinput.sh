@@ -46,7 +46,7 @@ function ask_for_vault_values () {
     then
         unset admin_user_password
         printf "\n Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created.\n"
-        print "%s\n" " Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
+        printf "%s\n" " Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
         read_sensitive_data
         admin_user_password="${sensitive_data}"
         sed -i "s/admin_user_password: \"\"/admin_user_password: "$admin_user_password"/g" "${vaultfile}"
