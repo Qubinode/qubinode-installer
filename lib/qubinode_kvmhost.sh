@@ -24,7 +24,7 @@ function ask_user_if_qubinode_setup () {
             printf "\n You can also choose not to if you do not have a NVME device"
             printf "\n to use for storing VM disks. \n\n"
 
-            confirm "${yel}Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
+            confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
 
             if [ "A${response}" == "Ayes" ]
             then
@@ -36,6 +36,7 @@ function ask_user_if_qubinode_setup () {
             fi
         fi
 
+        QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
         # Verify storage and network when no setting up Qubinode
         if [ "A${QUBINODE_SYSTEM}" == "no" ]
         then

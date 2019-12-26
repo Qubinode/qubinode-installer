@@ -31,7 +31,7 @@ function setup_sudoers () {
         elevate_cmd cp "${SUDOERS_TMP}" "/etc/sudoers.d/${CURRENT_USER}"
         sudo chmod 0440 "/etc/sudoers.d/${CURRENT_USER}"
     else
-        #printf "\n ${yel}${CURRENT_USER}${end} is setup for password-less sudo"
+        printf "\n ${yel}${CURRENT_USER}${end} is setup for password-less sudo"
     fi
 }
 
