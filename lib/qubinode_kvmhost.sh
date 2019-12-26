@@ -39,6 +39,8 @@ function ask_user_if_qubinode_setup () {
         # Verify storage and network when no setting up Qubinode
         if [ "A${QUBINODE_SYSTEM}" == "no" ]
         then
+
+            # Check libvirt storage
             LIBVIRT_POOLS=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn | wc -l)
            if [ $LIBVIRT_POOLS -gt 1 ]
            then
@@ -52,17 +54,86 @@ function ask_user_if_qubinode_setup () {
                POOL=($(echo "${selected_option}"))
 
                echo "Setting libvirt_pool_name to $POOL"
-               #sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
+               sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
            else
                POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
                if [ "A${POOL}" != "default" ]
                then
                    echo "Setting libvirt_pool_name to $POOL"
-                   #sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
+                   sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
                fi
            fi
+
+           # Check libvirt network
+           LIBVIRT_NETS=$(sudo virsh net-list --autostart | awk '/active/ {print $1}'| grep -v qubi|grep -v ocp42| wc -l)
+           if [ $LIBVIRT_NETS -gt 1 ]
+           then
+               printf "\n\n${mag}Libvirt Networks${end}"
+               printf "\n${mag}*************${end}"
+               printf "\n${mag}Found multiple libvirt networks${end}"
+               printf "\n${yel}Choose one to continue: ${end}\n\n"
+               declare -a all_networks=()
+               mapfile -t all_networks < <(sudo virsh net-list --autostart | awk '/active/ {print $1}'| grep -v qubi|grep -v ocp42)
+               createmenu "${all_networks[@]}"
+               NETWORK=($(echo "${selected_option}"))
+
+               echo "Setting libvirt_pool_name to $NETWORK"
+               sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$NETWORK"/g" "${vars_file}"
+           else
+               NETWORK=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+               if [ "A${NETWORK}" != "qubinet" ]
+               then
+                   echo "Setting libvirt_pool_name to $NETWORK"
+                   sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$NETWORK"/g" "${vars_file}"
+               fi
+           fi
+
         else
             # check for nvme
+            TOTAL_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|wc -l)
+            if ! lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -q nvme
+            then
+                printf "%s\n" "        ${yel}**NOTICE**${end}"
+                printf "%s\n\n" " ${red}Did not find a NVME device${end}"
+                printf "%s\n" " Qubinode recommends using a NVME device for"
+                printf "%s\n" " storing the VMs disk. The device will be paritioned and"
+                printf "%s\n\n" " a LVM volume created and mounted to /var/lib/libvirt/images."
+
+                if [ $TOTAL_DISKS -gt 1 ]
+                then
+                    printf "%s\n\n" " If you are using a none NVME device, please choose from the list below."
+                    declare -a all_disks=()
+                    mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v nvme)
+                    createmenu "${all_disks[@]}"
+                    disk=($(echo "${selected_option}"))
+
+                    confirm "${yel}Continue with $disk?${end} ${blu}yes/no${end}"
+                    if [ "A${response}" == "Ayes" ]
+                    then
+                         printf "%s\n\n" ""
+                         printf "%s\n\n" " ${mag}Using disk: $disk${end}"
+                         sed -i "s/host_device: */host_device: $disk/g" "${varsfile}"
+                    else
+                         printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
+                         exit 0
+                    fi
+                else
+                    printf "%s\n\n" " ${grn}No additional storage device found.${end}"
+                    printf "%s\n" " You can skip this and use the default"
+                    printf "%s\n\n" " disk where /var/lib/libvirt/images is mounted."
+
+                    confirm "${yel}Do you want to skip configuring additional storage?${end} ${blue}yes/no${end}"
+                    if [ "A${response}" == "Ayes" ]
+                    then
+                         printf "%s\n" ""
+                         printf "%s\n\n" "${mag} Setting create_lvm to no.${end}"
+                         #sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${varsfile}"
+                    else
+                        printf "%s\n\n" "${mag} There are no other options, exiting the install.${end}"
+                    fi
+
+                fi
+            fi
         fi
     else
         # Set varaible to configure storage and networking
