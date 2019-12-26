@@ -41,13 +41,13 @@ function ask_user_if_qubinode_setup () {
         if [ "A${QUBINODE_SYSTEM}" == "Ano" ]
         then
             printf "%s\n" " You choose not to peform the defaul Qubinode setup."
-            printf "%s\n" " Let's verify your storage and network details.\n\n"
+            printf "%s\n\n" " Let's verify your storage and network details."
 
             # Check libvirt storage
             LIBVIRT_POOLS=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn | wc -l)
            if [ $LIBVIRT_POOLS -gt 1 ]
            then
-               printf "%s\n\n" " ${mag}Libvirt Pools${end}"
+               printf "%s\n" " ${mag}Libvirt Pools${end}"
                printf "%s\n" " ${mag}*************${end}"
                printf "%s\n" " ${mag}Found multiple libvirt pools${end}"
                printf "%s\n" " ${yel}Choose one to continue: ${end}\n\n"
