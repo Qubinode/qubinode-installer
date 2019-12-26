@@ -95,7 +95,7 @@ function setup_variables () {
     echo ""
 
     # Check if we should setup qubinode
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    #QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
 
     # Satellite server vars file
     SATELLITE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.yml"

@@ -5,30 +5,68 @@ function ask_user_if_qubinode_setup () {
     # ensure all required variables are setup
     setup_variables
 
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
     if [ "A${openshift_auto_install}" != "Atrue" ]
     then
+ 
+        # Ask user if this system should be a qubinode
         if [ "A${QUBINODE_SYSTEM}" == "A" ]
         then
-            echo "This installer can setup your host as a KVM host and also a jumpbox for OpenShift install."
-            echo "This is the default setup. Enter no to skip setting up your system as KVM host."
-            echo "If you choose to install OpenShift, your host will be setup as a OpenShift jumpbox."
-            echo ""
-            echo ""
-            confirm "Continue setting up a qubinode host? yes/no"
+            printf "%s\n" "   ${yel}********************************************${end}"
+            printf "%s\n" "   ${yel}Networking, Storage and Subscription Manager${end}"
+            printf "\n The qubinode-installer configures your hardware as a KVM host"
+            printf "\n otherwise referred as ${grn}Qubinode${end}."
+
+            printf "\n\n You can choose not to configure this as a Qubinode if the following are true: "
+            printf "\n\n  ${mag}(*)${end} ${blu}A libvirt bridge network is already setup.${end}"
+            printf "\n  ${mag}(*)${end} ${blu}The system is already registered to Red Hat.${end}\n\n"
+
+            printf "\n You can also choose not to if you do not have a NVME device"
+            printf "\n to use for storing VM disks. \n\n"
+
+            confirm "${yel}Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
+
             if [ "A${response}" == "Ayes" ]
             then
-                #"Setting variabel to yes"
-                sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
-            elif [ "A${response}" == "Ano" ]
-            then
-                #"Setting variabel to no"
+                # Set varaible to configure storage and networking
                 sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
             else
-                echo "No action taken"
+                # Set varaible not to configure storage and networking
+                sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
             fi
         fi
+
+        # Verify storage and network when no setting up Qubinode
+        if [ "A${QUBINODE_SYSTEM}" == "no" ]
+        then
+            LIBVIRT_POOLS=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn | wc -l)
+           if [ $LIBVIRT_POOLS -gt 1 ]
+           then
+               printf "\n\n${mag}Libvirt Pools${end}"
+               printf "\n${mag}*************${end}"
+               printf "\n${mag}Found multiple libvirt pools${end}"
+               printf "\n${yel}Choose one to continue: ${end}\n\n"
+               declare -a all_pools=()
+               mapfile -t all_pools < <(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+               createmenu "${all_pools[@]}"
+               POOL=($(echo "${selected_option}"))
+
+               echo "Setting libvirt_pool_name to $POOL"
+               #sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
+           else
+               POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+               if [ "A${POOL}" != "default" ]
+               then
+                   echo "Setting libvirt_pool_name to $POOL"
+                   #sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
+               fi
+           fi
+        else
+            # check for nvme
+        fi
     else
-        #"Setting variabel to yes"
+        # Set varaible to configure storage and networking
+        response=yes
         sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
     fi
 }
@@ -44,11 +82,11 @@ function set_rhel_release () {
     then
         if [ "A${RELEASE}" != "A${CURRENT_RELEASE}" ]
         then
-            echo "Setting RHEL to the supported release: ${RHEL_RELEASE}"
+            printf "\n\nSetting RHEL to the supported release: ${RHEL_RELEASE}"
             sudo subscription-manager release --unset
             sudo subscription-manager release --set="${RHEL_RELEASE}"
         else
-            echo "RHEL release is set to the supported release: ${CURRENT_RELEASE}"
+            printf "\n\nRHEL release is set to the supported release: ${CURRENT_RELEASE}"
         fi
     fi
 }
