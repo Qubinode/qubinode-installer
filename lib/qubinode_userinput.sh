@@ -10,7 +10,7 @@ function ask_user_for_networking_info () {
     # ask user for DNS domain or use default
     if grep '""' "${varsfile}"|grep -q domain
     then
-        read -p "Enter your dns domain or press [ENTER] for the default [lab.example]: " domain
+        read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blu}[lab.example]: ${end}" domain
         domain=${domain:-lab.example}
         sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
     fi
@@ -18,7 +18,7 @@ function ask_user_for_networking_info () {
     # ask user to enter a upstream dns server or default to 1.1.1.1
     if grep '""' "${varsfile}"|grep -q dns_forwarder
     then
-        read -p "Enter a upstream DNS server or press [ENTER] for the default [1.1.1.1]: " dns_forwarder
+        read -p "${mag} Enter a upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
         dns_forwarder=${dns_forwarder:-1.1.1.1}
         sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
     fi
@@ -26,21 +26,11 @@ function ask_user_for_networking_info () {
     # ask user for their IP network and use the default
     if cat "${varsfile}"|grep -q changeme.in-addr.arpa
     then
-        read -p "Enter your IP Network or press [ENTER] for the default [$NETWORK]: " network
+        read -p " ${mag}Enter your IP Network or press${end} ${yel}[ENTER]${end} ${mag}for the default [$NETWORK]: ${end}" network
         network=${network:-"${NETWORK}"}
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
         sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${varsfile}"
     fi
-
-    # # ask user to choose which libvirt network to use
-    # if grep '""' "${varsfile}"|grep -q vm_libvirt_net
-    # then
-    #     declare -a networks=()
-    #     mapfile -t networks < <(sudo virsh net-list --name|sed '/^[[:space:]]*$/d')
-    #     createmenu "${networks[@]}"
-    #     network=($(echo "${selected_option}"))
-    #     sed -i "s/vm_libvirt_net: \"\"/vm_libvirt_net: "$network"/g" "${varsfile}"
-    # fi
 }
 
 function ask_for_vault_values () {
@@ -50,130 +40,53 @@ function ask_for_vault_values () {
     # decrypt ansible vault file
     decrypt_ansible_vault "${vaultfile}"
 
-    # Generate a ramdom password for IDM directory manager
-    # This will not prompt the user
-    if grep '""' "${vaultfile}"|grep -q idm_dm_pwd
-    then
-        idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
-        sed -i "s/idm_dm_pwd: \"\"/idm_dm_pwd: "$idm_dm_pwd"/g" "${vaultfile}"
-    fi
 
     # root user password to be set for virtual instances created
     if grep '""' "${vaultfile}"|grep -q admin_user_password
     then
         unset admin_user_password
-        echo "Your username ${CURRENT_USER} will be used to ssh into all the VMs created."
-        echo -n "Enter a password for ${CURRENT_USER} [ENTER]: "
+        printf "\n Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created.\n"
+        print "%s\n" " Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
         read_sensitive_data
         admin_user_password="${sensitive_data}"
         sed -i "s/admin_user_password: \"\"/admin_user_password: "$admin_user_password"/g" "${vaultfile}"
         echo ""
     fi
 
-    # This is the password used to log into the IDM server webconsole and also the admin user
-    if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
-    then
-        unset idm_admin_pwd
-        while [[ ${#idm_admin_pwd} -lt 8 ]]
-        do
-            echo "The qubinode-installer depends on IdM as the DNS server"
-            echo "If you are using a existing IdM server enter the password admin console login."
-            echo "If a new IdM server will be created, this password will be used."
-            echo -n 'Enter a password for the IDM server console and press [ENTER]: '
-            read_sensitive_data
-            idm_admin_pwd="${sensitive_data}"
-            if [ ${#idm_admin_pwd} -lt 8 ]
-            then
-                echo "Important: Password must be at least 8 characters long."
-                echo "Password must be at least 8 characters long"
-                echo "Please re-run the installer"
-            fi
-        done
-        sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
-        echo ""
-        #fi
-    fi
-
-    if grep '""' "${vars_file}"|grep -q rhsm_reg_method
-    then
-        echo ""
-        echo "Which option are you using to register the system? : "
-        rhsm_msg=("Activation Key" "Username and Password")
-        createmenu "${rhsm_msg[@]}"
-        rhsm_reg_method=($(echo "${selected_option}"))
-        sed -i "s/rhsm_reg_method: \"\"/rhsm_reg_method: "$rhsm_reg_method"/g" "${vars_file}"
-        if [ "A${rhsm_reg_method}" == "AUsername" ];
-        then
-            echo ""
-            decrypt_ansible_vault "${vault_vars_file}"
-            get_rhsm_user_and_pass
-            encrypt_ansible_vault "${vault_vars_file}"
-        elif [ "A${rhsm_reg_method}" == "AActivation" ];
-        then
-            if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-            then
-                echo ""
-                echo "We still need to get your RHSM username and password."
-                echo "We need this to pull containers for OpenShift Platform Installation."
-                echo ""
-                decrypt_ansible_vault "${vault_vars_file}"
-                get_rhsm_user_and_pass
-                encrypt_ansible_vault "${vault_vars_file}"
-                echo ""
-            fi
-
-            if grep '""' "${vault_vars_file}"|grep -q rhsm_activationkey
-            then
-                echo -n "Enter your RHSM activation key and press [ENTER]: "
-                read rhsm_activationkey
-                unset rhsm_org
-                sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vaultfile}"
-            fi
-            if grep '""' "${vault_vars_file}"|grep -q rhsm_org
-            then
-                echo -n 'Enter your RHSM ORG ID and press [ENTER]: '
-                read_sensitive_data
-                rhsm_org="${sensitive_data}"
-                sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vaultfile}"
-                echo ""
-            fi
-        fi
-    elif grep '""' "${vaultfile}"|grep -q rhsm_username
-    then
-        echo ""
-        decrypt_ansible_vault "${vault_vars_file}"
-        get_rhsm_user_and_pass
-        encrypt_ansible_vault "${vault_vars_file}"
-    else
-        echo "Credentials for RHSM is already collected."
-    fi
-
     # encrypt ansible vault
     encrypt_ansible_vault "${vaultfile}"
+
+    # Get RHSM credentials
+    ask_user_for_rhsm_credentials
 }
 
 function ask_user_input () {
     if [ "A${teardown}" != "Atrue" ]
     then 
-        printf "\n\n***************************\n"
-        printf "* Getting required inputs *\n"
-        printf "***************************\n\n"
+        printf "\n\n${yel}    ***************************${end}\n"
+        printf "${yel}    *   Interactive Session   *${end}\n"
+        printf "${yel}    ***************************${end}\n\n"
+
+
+        #if [ "A${qubinode_maintenance_opt}" == "Ahost" ] || [ "A${maintenance}" == "Akvmhost" ]
+        #then
+            ask_user_if_qubinode_setup
+        #fi
+
         ask_user_for_networking_info "${vars_file}"
         ask_for_vault_values "${vault_vars_file}"
 
-        if [ "A${qubinode_maintenance_opt}" == "Ahost" ] || [ "A${maintenance}" == "Akvmhost" ]
-        then
-            ask_user_if_qubinode_setup
-        fi
-
-        if [ "A${idm_ask_already}" != "Ayes" ]
-        then
-            if [ "A${deploy_idm_server}" == "Ayes" ]
-            then
-                ask_user_for_custom_idm_server
-                qubinode_idm_ask_ip_address
-                idm_ask_already=yes
-            fi
-        fi
+        # IdM server input
+        #if [ "A${idm_ask_already}" != "Ayes" ]
+        #then
+        #    if [ "A${deploy_idm_server}" == "Ayes" ]
+        #    then
+        #        ask_user_for_custom_idm_server
+        #        qubinode_idm_ask_ip_address
+        #        idm_ask_already=yes
+        #    fi
+        #fi
+        ask_user_for_custom_idm_server
+        ask_user_for_idm_password
     fi
 }

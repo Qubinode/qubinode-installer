@@ -9,8 +9,8 @@ function qubinode_setup_ansible () {
     HAS_SUDO=$(has_sudo)
     if [ "A${HAS_SUDO}" == "Ano_sudo" ]
     then
-        echo "You do not have sudo access"
-        echo "Please run qubinode-installer -m setup"
+        printf "%s\n" " ${red}You do not have sudo access${end}"
+        printf "%s\n" " Please run ${grn}qubinode-installer -m setup${end}"
         exit 1
     fi
 
@@ -22,11 +22,11 @@ function qubinode_setup_ansible () {
     # install python
     if [ ! -f /usr/bin/python ];
     then
-       echo "installing python"
+       printf "%s\n" " Installing python.."
        sudo yum clean all > /dev/null 2>&1
        sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
     else
-       echo "python is installed"
+       printf "%s\n" " python is installed"
     fi
 
     # install ansible
@@ -44,7 +44,7 @@ function qubinode_setup_ansible () {
        sudo yum clean all > /dev/null 2>&1
        sudo yum install -y -q -e 0 ansible git
     else
-       echo "ansible is installed"
+       printf "%s\n" " ${cyn}Ansible is installed${end}"
     fi
 
     # setup vault
@@ -52,29 +52,26 @@ function qubinode_setup_ansible () {
     then
         if [ ! -f "${vault_key_file}" ]
         then
-            echo "Create ansible-vault password file ${vault_key_file}"
+            printf "%s\n" " Create ansible-vault password file ${vault_key_file}"
             openssl rand -base64 512|xargs > "${vault_key_file}"
         fi
 
         if cat "${vaultfile}" | grep -q VAULT
         then
-            echo "${vaultfile} is encrypted"
+            printf "%s\n" " ${vaultfile} is encrypted"
         else
-            echo "Encrypting ${vaultfile}"
+            printf "%s\n" " Encrypting ${vaultfile}"
             ansible-vault encrypt "${vaultfile}"
         fi
 
         # Ensure roles are downloaded
-        echo ""
-        echo "Downloading required roles"
+        printf "%s\n" " Downloading required roles"
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
             ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
         else
             ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
         fi
-        echo ""
-        echo ""
 
         # Ensure required modules are downloaded
         if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
@@ -86,13 +83,14 @@ function qubinode_setup_ansible () {
             cd "${CURRENT_DIR}"
         fi
     else
-        echo "Ansible not found, please install and retry."
+        printf "%s\n" " Ansible not found, please install and retry."
         exit 1
     fi
 
-    printf "\n\n***************************\n"
-    printf "* Ansible Setup Complete *\n"
-    printf "***************************\n\n"
+    printf "\n\n${yel}    *******************************${end}\n"
+    printf "${yel}    *   Ansible Setup Complete   *${end}\n"
+    printf "${yel}    *******************************${end}\n\n"
+
 }
 
 function decrypt_ansible_vault () {

@@ -257,6 +257,19 @@ function check_for_openshift_subscription () {
     else
         echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
     fi
+
+    # Decrypt Ansible Vault
+    decrypt_ansible_vault "${vault_vars_file}"
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
+        printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
+        printf "%s\n\n" "username and password."
+
+        # Get RHSM username and password.
+        get_rhsm_user_and_pass
+    fi
+    # Encrypt Ansible Vault
+    encrypt_ansible_vault "${vault_vars_file}"
 }
 
 function validate_openshift_pool_id () {

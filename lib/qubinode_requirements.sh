@@ -5,7 +5,6 @@ function qubinode_required_prereqs () {
     # Setup of the required paths
     # Sets up the inventory file
 
-    echo "Load function qubinode_required_prereqs"
     # setup required paths
     setup_required_paths
     vault_key_file="/home/${CURRENT_USER}/.vaultkey"
@@ -19,7 +18,6 @@ function qubinode_required_prereqs () {
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
-    deploy_idm_server=$(awk '/deploy_idm_server:/ {print $2}' "${vars_file}")
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]

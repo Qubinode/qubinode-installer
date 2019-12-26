@@ -163,7 +163,6 @@ function set_rhel_release () {
 }
 
 function qubinode_networking () {
-    qubinode_required_prereqs
     KVM_HOST_IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -182,7 +181,6 @@ function qubinode_networking () {
     then
       KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
     else
-      echo "No bridge detected, using regular interface"
       KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
 
@@ -194,7 +192,7 @@ function qubinode_networking () {
     iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${vars_file}")
     if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
     then
-        echo "Updating the kvm_host_netmask to $KVM_HOST_NETMASK"
+        printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
         sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${vars_file}"
     fi
 
