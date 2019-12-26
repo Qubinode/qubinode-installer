@@ -6,6 +6,8 @@
     - vars/vault.yml
     - vars/idm.yml
     - vars/ocp4.yml
+  handlers:
+  - import_tasks: handlers/main.yml
   become: yes
 
   tasks:
@@ -27,13 +29,14 @@
       regexp: '^IPForward='
     when: stat_result.stat.exists == True
 
-  - name: install podman,buildah and skopeo
+  - name: install podman,buildah, skopeo and  nfs-utils
     yum:
       name:
       - podman
       - buildah
       - skopeo
       - slirp4netns
+      - nfs-utils
       state: present
 
   - name: activate namespaces
@@ -68,3 +71,76 @@
       content: |
         {{ lookup('env','USER') }}:100000:65536
     when: ssubgid_setting.stat.exists == True
+
+  - name: Open up firewall ports
+    firewalld:
+      permanent: yes
+      immediate: yes
+      state: enabled
+      port: "{{ item }}"
+    with_items:
+      - 80/tcp
+      - 443/tcp
+      - 6443/tcp
+      - 22623/tcp
+      - 32700/tcp
+      - 2049/tcp
+      - 2049/udp
+
+  - name: Create NFS export directory
+    file:
+      path: /export
+      state: directory
+      mode: 0777
+      owner: nfsnobody
+      group: nfsnobody
+    notify:
+      - restart nfs
+
+  - name: Copy NFS export conf file
+    copy:
+      src: templates/nfs-exports
+      dest: /etc/exports
+    notify:
+      - restart nfs
+
+  - name: Starting services
+    service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    with_items:
+      - rpcbind
+      - nfs-server
+      - nfs-lock
+      - nfs-idmap
+
+  - name: Copying over nfs-provisioner rbac
+    copy:
+      src: templates/nfs-provisioner-rbac.yaml
+      dest: /usr/local/src/nfs-provisioner-rbac.yaml
+      owner: root
+      group: root
+      mode: 0666
+
+  - name: Copying over nfs-provisioner deployment
+    template:
+      src: templates/nfs-provisioner-deployment.yaml.j2
+      dest: /usr/local/src/nfs-provisioner-deployment.yaml
+      owner: root
+      group: root
+      mode: 0666
+
+  - name: Copying over nfs-provisioner storageclass
+    copy:
+      src: templates/nfs-provisioner-sc.yaml
+      dest: /usr/local/src/nfs-provisioner-sc.yaml
+      owner: root
+      group: root
+      mode: 0666
+
+  - name: Copying over a sample PVC file for NFS
+    copy:
+      src: templates/registry-pvc.yaml
+      dest: /usr/local/src/registry-pvc.yaml
+      mode: '0555'

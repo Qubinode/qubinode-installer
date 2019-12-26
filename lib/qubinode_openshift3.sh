@@ -141,10 +141,11 @@ function set_openshift_production_variables () {
     then
         echo "Setting OpenShift version to ${openshift_product}"
         sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+        sed -i "s/openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/g" "${ocp3_vars_file}"
         if [[ ${openshift_product} == "ocp3" ]]
         then
             # ensure we are deploying openshift enterprise
-            sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+            sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${ocp3_vars_file}"
         elif [[ ${openshift_product} == "okd3" ]]
         then
             sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
@@ -405,6 +406,10 @@ function qubinode_deploy_openshift () {
     # run openshift installation
     if [[ ${product_in_use} == "ocp3" ]]
     then
+        if [[ ! -d ${openshift_ansible_dir} ]]; then
+          ansible-playbook ${openshift3_setup_deployer_node_playbook}
+        fi
+
         cd "${openshift_ansible_dir}"
         run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
         echo "Running OpenShift prerequisites"
@@ -514,7 +519,7 @@ function qubinode_autoinstall_openshift () {
     product_in_use="ocp3" # Tell the installer this is openshift3 installation
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
-    
+
     # Check current deployment size
     current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
 
@@ -630,7 +635,7 @@ function are_openshift_nodes_available () {
     then
         printf "\n\n Found all ${TOTAL_NODES} nodes required for the Cluster profile size ${openshift_deployment_size}.\n\n"
 
-        # Create a report of all nodes including their IP address and FQDN 
+        # Create a report of all nodes including their IP address and FQDN
         divider===============================
         divider=$divider$divider
         header="\n %-035s %010s\n"
@@ -721,15 +726,16 @@ function ensure_ocp_default_user () {
 function openshift_enterprise_deployment () {
     echo "Running openshift_enterprise_deployment"
     # This function is called by the menu option -p ocp3
-    # It's the primary function that starts the deployment 
+    # It's the primary function that starts the deployment
     # of the OCP3 cluster.
 
-    # Set global product variable to OpenShift 3 
+    # Set global product variable to OpenShift 3
     # This variable needs to be set before all else
     openshift_product=ocp3
     sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${ocp3_vars_file}"
+    sed -i "s/openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/g" "${ocp3_vars_file}"
 
-    # Load all global openshift variable 
+    # Load all global openshift variable
     set_openshift_production_variables
 
     # Check if OpenShift nodes are deployed
@@ -750,13 +756,13 @@ function openshift_enterprise_deployment () {
         ask_user_which_openshift_product
         are_openshift_nodes_available
         qubinode_deploy_openshift
-        
+
         # Wait for OpenShift Console to come up
         sleep 45s
 
         # Ensure the qubinode user is added to openshift
         ensure_ocp_default_user
-        
+
         # Report on OpenShift Installation
         openshift3_installation_msg
     else
@@ -839,11 +845,11 @@ function openshift3_server_maintenance () {
 }
 
 function check_webconsole_status () {
-    echo "Running check_webconsole_status"
+    #echo "Running check_webconsole_status"
     # This function checks to see if the openshift console up
     # It expects a return code of 200
-     
-    echo "Checking to see if Openshift is online."
+
+    #echo "Checking to see if Openshift is online."
     WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
     return $WEBCONSOLE_STATUS
 }
