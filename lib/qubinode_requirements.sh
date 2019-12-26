@@ -17,7 +17,6 @@ function qubinode_required_prereqs () {
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
-    domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -59,13 +58,13 @@ function qubinode_required_prereqs () {
     then
         cp "${project_dir}/samples/hosts" "${hosts_inventory_dir}/hosts"
     fi
+
+    # Get domain
+    domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
 }
 
 function setup_variables () {
     qubinode_required_prereqs
-
-    echo ""
-    #echo "Populating ${vars_file}"
 
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
