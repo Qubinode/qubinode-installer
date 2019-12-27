@@ -124,6 +124,8 @@ logical_volumes:
 kvm_host_libvirt_dir: /var/lib/libvirt/images
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
+vm_libvirt_net_check: yes
+libvirt_pool_name_check: yes
 
 ###########################################
 # variables for swygue.edge_host_setup role

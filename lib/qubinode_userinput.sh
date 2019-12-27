@@ -7,6 +7,7 @@ function ask_user_for_networking_info () {
     varsfile=$1
 
     qubinode_networking
+
     # ask user for DNS domain or use default
     if grep '""' "${varsfile}"|grep -q domain
     then
@@ -15,21 +16,15 @@ function ask_user_for_networking_info () {
         sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
     fi
 
-    # ask user to enter a upstream dns server or default to 1.1.1.1
-    if grep '""' "${varsfile}"|grep -q dns_forwarder
+    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
-        read -p "${mag} Enter a upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
-        dns_forwarder=${dns_forwarder:-1.1.1.1}
-        sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
-    fi
-
-    # ask user for their IP network and use the default
-    if cat "${varsfile}"|grep -q changeme.in-addr.arpa
-    then
-        read -p " ${mag}Enter your IP Network or press${end} ${yel}[ENTER]${end} ${mag}for the default [$NETWORK]: ${end}" network
-        network=${network:-"${NETWORK}"}
-        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
-        sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${varsfile}"
+        # ask user to enter a upstream dns server or default to 1.1.1.1
+        if grep '""' "${varsfile}"|grep -q dns_forwarder
+        then
+            read -p " ${mag}Enter a upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
+            dns_forwarder=${dns_forwarder:-1.1.1.1}
+            sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
+        fi
     fi
 }
 
@@ -68,24 +63,9 @@ function ask_user_input () {
         printf "${yel}    ***************************${end}\n\n"
 
 
-        #if [ "A${qubinode_maintenance_opt}" == "Ahost" ] || [ "A${maintenance}" == "Akvmhost" ]
-        #then
-            ask_user_if_qubinode_setup
-        #fi
-
+        ask_user_if_qubinode_setup
         ask_user_for_networking_info "${vars_file}"
         ask_for_vault_values "${vault_vars_file}"
-
-        # IdM server input
-        #if [ "A${idm_ask_already}" != "Ayes" ]
-        #then
-        #    if [ "A${deploy_idm_server}" == "Ayes" ]
-        #    then
-        #        ask_user_for_custom_idm_server
-        #        qubinode_idm_ask_ip_address
-        #        idm_ask_already=yes
-        #    fi
-        #fi
         ask_user_for_custom_idm_server
         ask_user_for_idm_password
     fi
