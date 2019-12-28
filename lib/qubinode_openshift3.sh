@@ -529,6 +529,10 @@ function qubinode_teardown_openshift () {
 
 
 function qubinode_autoinstall_openshift () {
+
+    # ensure all the required prequesties are setup
+    qubinode_base_requirements
+
     product_in_use="ocp3" # Tell the installer this is openshift3 installation
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true

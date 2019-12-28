@@ -164,13 +164,14 @@ function check_for_rhel_qcow_image () {
     os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
     if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
     then
-        echo "INSIDE FIRST BLOCK"
         if [ -f "${project_dir}/${os_qcow_image}" ]
         then
             sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
         else
-            echo "Could not find ${project_dir}/${os_qcow_image}, please download the ${os_qcow_image} to ${project_dir}."
-            echo "Please refer the documentation for additional information."
+            printf "%s\n\n" ""
+            printf "%s\n" " Could not find ${red}${project_dir}/${os_qcow_image}${end},"
+            printf "%s\n\n" " please download the ${yel}${os_qcow_image}${end} to ${blu}${project_dir}${end}."
+            printf "%s\n\n" " ${cyn}Please refer the documentation for additional information.${end}"
             exit 1
         fi
     fi
