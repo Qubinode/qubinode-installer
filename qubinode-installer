@@ -49,6 +49,7 @@ CURRENT_USER=$(whoami)
 setup_required_paths
 
 # Include all required functions
+source "${project_dir}/lib/qubinode_menu_welcome.sh"
 source "${project_dir}/lib/qubinode_installer_prereqs.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/qubinode_menu_options.sh"
@@ -126,13 +127,16 @@ shift "$((OPTIND-1))"
 # If not arguments pass, run default option to install OpenShift
 if (( $OPTIND == 1 )) 
 then
-    cat < "${project_dir}/lib/docs/default_message"
-    default_message=("Continue with the default installation" "Display the help menu")
+    #cat < "${project_dir}/lib/docs/default_message"
+    display_openshift_msg
+#    default_message=("${blu}Continue with the default installation${end}" "${blu}Display other options${end}")
+    default_message=("Continue with the default installation" "Display other options")
     createmenu "${default_message[@]}"
     result=($(echo "${selected_option}"))
     if [ "A${result}" == "ADisplay" ]
     then
-        display_help
+        #display_help
+        display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
         check_for_rhel_qcow_image
