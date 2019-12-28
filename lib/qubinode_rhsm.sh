@@ -38,18 +38,18 @@ function check_rhsm_status () {
             exit 1
         fi
 
-        # Decrypt Ansible Vault
-        decrypt_ansible_vault "${vault_vars_file}"
-        if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-        then
-            printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
-            printf "%s\n\n" "username and password."
-               
-            # Get RHSM username and password.
-            get_rhsm_user_and_pass     
-        fi
-        # Encrypt Ansible Vault
-        encrypt_ansible_vault "${vault_vars_file}"
+        ## Decrypt Ansible Vault
+        #decrypt_ansible_vault "${vault_vars_file}"
+        #if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+        #then
+        #    printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
+        #    printf "%s\n\n" "username and password."
+        #       
+        #    # Get RHSM username and password.
+        #    get_rhsm_user_and_pass     
+        #fi
+        ## Encrypt Ansible Vault
+        #encrypt_ansible_vault "${vault_vars_file}"
     fi
 }
 
@@ -99,8 +99,12 @@ function ask_user_for_rhsm_credentials () {
         fi
     elif grep '""' "${vaultfile}"|grep -q rhsm_username
     then
+        rhsm_reg_method=$(awk '/rhsm_reg_method/ {print $2}' "${vars_file}")
         decrypt_ansible_vault "${vault_vars_file}"
-        get_rhsm_user_and_pass
+        if [ "A${rhsm_reg_method}" != "AActivation" ]
+        then
+            get_rhsm_user_and_pass
+        fi
         encrypt_ansible_vault "${vault_vars_file}"
     else
         printf "%s\n\n" " Credentials for RHSM is already collected."
@@ -184,18 +188,20 @@ function qubinode_rhsm_register () {
         fi
     fi
 
+    sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"
     printf "\n\n${yel}    *********************************${end}\n"
     printf "${yel}    *   RHSM registration complete  *${end}\n"
     printf "${yel}    *********************************${end}\n\n"
 }
     
-    function get_rhsm_user_and_pass () {
-        if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-        then
+function get_rhsm_user_and_pass () {
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
         echo -n " ${blu}Enter your RHSM username and press${end} ${grn}[ENTER]${end}: "
         read rhsm_username
         sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaulted_file}"
     fi
+
     if grep '""' "${vault_vars_file}"|grep -q rhsm_password
     then
         unset rhsm_password

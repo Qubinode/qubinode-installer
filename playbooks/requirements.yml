@@ -36,3 +36,6 @@
 
 - src: https://github.com/flyemsafe/satellite-day-two-ops.git
   varsion: master
+
+- src: https://github.com/flyemsafe/swygue.ansible-tower.git
+  varsion: master

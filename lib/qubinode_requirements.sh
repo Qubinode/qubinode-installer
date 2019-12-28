@@ -99,43 +99,63 @@ function setup_variables () {
 
     VM_DATA_DIR=$(awk '/^vm_data_dir:/ {print $2}' ${vars_file}|tr -d '"')
     ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
+
+    setup_completed=$(awk '/qubinode_installer_setup_completed:/ {print $2;exit}' "${vars_file}")
+    rhsm_completed=$(awk '/qubinode_installer_rhsm_completed:/ {print $2;exit}' "${vars_file}")
+    ansible_completed=$(awk '/qubinode_installer_ansible_completed:/ {print $2;exit}' "${vars_file}")
+    host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' "${vars_file}")
+    base_setup_completed=$(awk '/qubinode_base_reqs_completed:/ {print $2;exit}' "${vars_file}")
+}
+
+function qubinode_base_requirements () {
+# Ensures the system is ready for VM deployment.
+
+    setup_variables
+    # Ensure ./qubinode-installer -m setup is completed
+    if [ "A${setup_completed}" == "Ano" ]
+    then
+       qubinode_installer_setup
+    fi
+
+    # Ensure ./qubinode-installer -m rhsm is completed
+    if [ "A${rhsm_completed}" == "Ano" ]
+    then
+       qubinode_rhsm_register
+    fi
+
+    # Ensure ./qubinode-installer -m ansible is completed
+    if [ "A${ansible_completed}" == "Ano" ]
+    then
+       qubinode_setup_ansible
+    fi
+
+    sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
 }
 
 function qubinode_vm_deployment_precheck () {
-   # This function ensure that the host is setup as a KVM host.
-   # It ensures the foundation is set to allow ansible playbooks can run
-   # and the products can be deployed.
-   qubinode_required_prereqs
-   setup_variables
-   ask_user_input
-   echo "Running VM deployment prechecks"
-   if [ "A${teardown}" != "Atrue" ]
-   then
-       # Ensure the setup function as was executed
-       if [ ! -f "${vars_file}" ]
-       then
-           qubinode_installer_preflight
-       fi
+# Ensures the system is ready for VM deployment.
 
-       # Check if KVM HOST is ready
-       echo "Verifying KVM host is setup"
-       qubinode_check_kvmhost
-
-       # Ensure the ansible function has bee executed
-       if [ ! -f /usr/bin/ansible ]
-       then
-           qubinode_setup_ansible
-       else
-           STATUS=$(ansible-galaxy list | grep deploy-kvm-vm >/dev/null 2>&1; echo $?)
-           if [ "A${STATUS}" != "A0" ]
-           then
-               qubinode_setup_ansible
-           fi
-       fi
-
-       # Check for required Qcow image
-       check_for_rhel_qcow_image
+    qubinode_base_requirements
+    # Ensure the ansible function has bee executed
+    if [ ! -f /usr/bin/ansible ]
+    then
+        qubinode_setup_ansible
+    else
+        STATUS=$(ansible-galaxy list | grep deploy-kvm-vm >/dev/null 2>&1; echo $?)
+        if [ "A${STATUS}" != "A0" ]
+        then
+            qubinode_setup_ansible
+        fi
     fi
+
+    # Ensure ./qubinode-installer -m host is completed
+    if [ "A${host_completed}" == "Ano" ]
+    then
+       qubinode_setup_kvm_host
+    fi
+
+    # Check for required Qcow image
+    check_for_rhel_qcow_image
 }
 
 function check_for_rhel_qcow_image () {

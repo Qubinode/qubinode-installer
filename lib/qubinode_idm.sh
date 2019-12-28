@@ -19,7 +19,6 @@ function display_idmsrv_unavailable () {
 }
 
 function ask_user_for_idm_password () {
-
     # decrypt ansible vault file
     decrypt_ansible_vault "${vaultfile}"
 
@@ -29,17 +28,15 @@ function ask_user_for_idm_password () {
         unset idm_admin_pwd
         while [[ ${#idm_admin_pwd} -lt 8 ]]
         do
-
-           printf "%s\n\n" " If a new IdM server will be created, this password will be used."
            echo -n " Enter a password for the IDM server console and press ${grn}[ENTER]${end}: "
-            read_sensitive_data
-            idm_admin_pwd="${sensitive_data}"
-            if [ ${#idm_admin_pwd} -lt 8 ]
-            then
-                printf "%s\n" "    ${yel}**IMPORTANT**${end}"
-                printf "%s\n" " The password must be at least ${yel}8${end} characters long."
-                printf "%s\n" " Please re-run the installer"
-            fi
+           read_sensitive_data
+           idm_admin_pwd="${sensitive_data}"
+           if [ ${#idm_admin_pwd} -lt 8 ]
+           then
+               printf "%s\n" "    ${yel}**IMPORTANT**${end}"
+               printf "%s\n" " The password must be at least ${yel}8${end} characters long."
+               printf "%s\n" " Please re-run the installer"
+           fi
         done
         sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
         echo ""
@@ -87,6 +84,17 @@ function ask_user_for_custom_idm_server () {
                 printf "%s\n" ""
                 printf "%s\n" " ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
             fi
+
+            printf "%s\n\n" ""
+            read -p " What is the username for the existing IdM server admin user? " $IDM_USER
+            idm_admin_user=$IDM_USER
+            confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
+                printf "%s\n" ""
+            fi
+            
 
             # Tell installer not to deploy IdM server
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: no/g" "${idm_vars_file}"

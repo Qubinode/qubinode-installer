@@ -3,6 +3,29 @@
 # this function make sure Ansible is installed
 # along with any other dependancy the project
 # depends on
+
+function ensure_supported_ansible_version () {
+    ANSIBLE_VERSION="2.6.20"
+    ANSIBLE_RELEASE="2.6"
+    ANSIBLE_RPM="ansible-2.6.20-1.el7ae.noarch"
+    CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
+    ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
+    AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+
+    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
+    then
+        if [ "A${AVAILABLE_VERSION}" != "A" ]
+        then
+            sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+        else
+            printf "%s\n" " Could not find any available version of ansible greater than the"
+            printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
+            exit 1
+        fi
+    fi
+}
+
+
 function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
@@ -26,7 +49,8 @@ function qubinode_setup_ansible () {
        sudo yum clean all > /dev/null 2>&1
        sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
     else
-       printf "%s\n" " python is installed"
+       PYTHON=yes
+       #printf "%s\n" " python is installed"
     fi
 
     # install ansible
@@ -43,8 +67,10 @@ function qubinode_setup_ansible () {
        fi
        sudo yum clean all > /dev/null 2>&1
        sudo yum install -y -q -e 0 ansible git
+       ensure_supported_ansible_version
     else
-       printf "%s\n" " ${cyn}Ansible is installed${end}"
+       ensure_supported_ansible_version
+       #printf "%s\n" " ${cyn}Ansible is installed${end}"
     fi
 
     # setup vault
@@ -60,16 +86,17 @@ function qubinode_setup_ansible () {
         then
             printf "%s\n" " ${vaultfile} is encrypted"
         else
-            printf "%s\n" " Encrypting ${vaultfile}"
-            ansible-vault encrypt "${vaultfile}"
+            #printf "%s\n" " Encrypting ${vaultfile}"
+            ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi
 
         # Ensure roles are downloaded
-        printf "%s\n" " Downloading required roles"
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
+            printf "%s\n" " Downloading required roles overwriting existing"
             ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
         else
+            printf "%s\n" " Downloading required roles"
             ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
         fi
 
@@ -87,6 +114,7 @@ function qubinode_setup_ansible () {
         exit 1
     fi
 
+    sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
     printf "\n\n${yel}    *******************************${end}\n"
     printf "${yel}    *   Ansible Setup Complete   *${end}\n"
     printf "${yel}    *******************************${end}\n\n"

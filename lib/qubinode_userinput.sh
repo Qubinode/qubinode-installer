@@ -40,8 +40,11 @@ function ask_for_vault_values () {
     if grep '""' "${vaultfile}"|grep -q admin_user_password
     then
         unset admin_user_password
-        printf "\n Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created.\n"
-        printf "%s\n" " Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
+        printf "%s\n\n" " Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created."
+        printf "%s\n" " Next we will need the password for this use. When entering the password, do not ${yel}Backspace${end}."
+        printf "%s\n\n" " Just ${yel}Ctrl-c${end} to cancel then run the installer again."
+        
+        printf "%s" " Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
         read_sensitive_data
         admin_user_password="${sensitive_data}"
         sed -i "s/admin_user_password: \"\"/admin_user_password: "$admin_user_password"/g" "${vaultfile}"
@@ -61,8 +64,9 @@ function ask_user_input () {
         printf "\n\n${yel}    ***************************${end}\n"
         printf "${yel}    *   Interactive Session   *${end}\n"
         printf "${yel}    ***************************${end}\n\n"
-
-
+        printf "%s\n" " If you've made an mistake you can restart the install by"
+        printf "%s\n" " hitting ${yel}Ctrl-c${end} then running ${grn}./qubinode-installer -m clean${end}."
+        printf "%s\n\n" " This will remove all configuration data"
         ask_user_if_qubinode_setup
         ask_user_for_networking_info "${vars_file}"
         ask_for_vault_values "${vault_vars_file}"

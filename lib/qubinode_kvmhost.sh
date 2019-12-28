@@ -13,14 +13,14 @@ function ask_user_if_qubinode_setup () {
         if [ "A${QUBINODE_SYSTEM}" == "A" ]
         then
             printf "%s\n" "   ${yel}********************************************${end}"
-            printf "%s\n" "   ${yel}Networking, Storage and Subscription Manager${end}"
+            printf "%s\n\n" "   ${yel}Networking, Storage and Subscription Manager${end}"
             printf "%s\n" " The qubinode-installer configures your hardware as a KVM host"
-            printf "%s\n" " otherwise referred as ${grn}Qubinode${end}."
+            printf "%s\n\n" " otherwise referred as ${grn}Qubinode${end}."
 
-            printf "%s\n\n" " You can choose not to configure this as a Qubinode if the following are true: "
-            printf "%s\n\n" "  ${mag}(*)${end} ${blu}A libvirt bridge network is already setup.${end}"
-            printf "%s\n\n" "  ${mag}(*)${end} ${blu}The system is already setup to function as a KVM host.${end}"
-            printf "%s\n"  " ${mag}(*)${end} ${blu}The system is already registered to Red Hat.${end}\n\n"
+            printf "%s\n" " You can choose not to configure this as a Qubinode if the following are true: "
+            printf "%s\n" "  ${mag}(*)${end} ${blu}A libvirt bridge network is already setup.${end}"
+            printf "%s\n" "  ${mag}(*)${end} ${blu}The system is already setup to function as a KVM host.${end}"
+            printf "%s\n\n" "  ${mag}(*)${end} ${blu}The system is already registered to Red Hat.${end}"
 
             confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
 
@@ -36,21 +36,21 @@ function ask_user_if_qubinode_setup () {
 
         # Verify storage and network when not setting up Qubinode
         QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+        CHECK_LIBVIRT_POOL=$(awk '/libvirt_pool_name_check:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+        CHECK_LIBVIRT_NET=$(awk '/vm_libvirt_net_check:/ {print $2; exit}' "${vars_file}" | tr -d '"')
         if [ "A${QUBINODE_SYSTEM}" == "Ano" ]
         then
-            printf "%s\n" " You choose not to peform the defaul Qubinode setup."
+            printf "%s\n" " You choose not to perform the default Qubinode setup."
             printf "%s\n\n" " Let's verify your storage and network details."
 
-            if [ "A${libvirt_pool_name_check}" == "Ayes" ]
+            if [ "A${CHECK_LIBVIRT_POOL}" == "Ayes" ]
             then
                 # Check libvirt storage
                 LIBVIRT_POOLS=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn | wc -l)
                 if [ $LIBVIRT_POOLS -gt 1 ]
                 then
-                    printf "%s\n" " ${mag}Libvirt Pools${end}"
-                    printf "%s\n" " ${mag}*************${end}"
-                    printf "%s\n" " ${mag}Found multiple libvirt pools${end}"
-                    printf "%s\n" " ${yel}Choose one to continue: ${end}\n\n"
+                    printf "%s\n\n" " ${mag}Found multiple libvirt pools${end}"
+                    printf "%s\n" " ${yel}Choose one to continue: ${end}"
                     declare -a all_pools=()
                     mapfile -t all_pools < <(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
                     createmenu "${all_pools[@]}"
@@ -70,16 +70,14 @@ function ask_user_if_qubinode_setup () {
                 fi
             fi
 
-            if [ "A${vm_libvirt_net_check}" == "Ayes" ]
+            if [ "A${CHECK_LIBVIRT_NET}" == "Ayes" ]
             then
                 # Check libvirt network
                LIBVIRT_NETS=$(sudo virsh net-list --autostart | awk '/active/ {print $1}'| grep -v qubi|grep -v ocp42| wc -l)
                if [ $LIBVIRT_NETS -gt 1 ]
                then
-                   printf "%s\n\n" " ${mag}Libvirt Networks${end}"
-                   printf "%s\n" " ${mag}*************${end}"
-                   printf "%s\n" " ${mag}Found multiple libvirt networks${end}"
-                   printf "%s\n" "${yel}Choose one to continue: ${end}\n\n"
+                   printf "%s\n\n" " ${mag}Found multiple libvirt networks${end}"
+                   printf "%s\n" "${yel} Choose one to continue: ${end}"
                    declare -a all_networks=()
                    mapfile -t all_networks < <(sudo virsh net-list --autostart | awk '/active/ {print $1}'| grep -v qubi|grep -v ocp42)
                    createmenu "${all_networks[@]}"
@@ -184,7 +182,7 @@ function qubinode_networking () {
     then
         #read -p " ${mag}Enter your IP Network or press${end} ${yel}[ENTER]${end} ${mag}for the default [$NETWORK]: ${end}" network
         #network=${network:-"${NETWORK}"}
-        network="${NETWORK}"}
+        network="${NETWORK}"
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
         sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${varsfile}"
     fi
@@ -251,6 +249,9 @@ function qubinode_networking () {
         #echo "Updating the kvm_host_macaddr to ${foundmac}"
         sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${vars_file}"
     fi
+
+    # Check Network
+    #qubinode_check_libvirt_net
 }
 
 
@@ -259,7 +260,8 @@ function qubinode_check_libvirt_net () {
 
     if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
     then
-        printf "%s\n" " Using the defined libvirt network: ${DEFINED_LIBVIRT_NETWORK}"
+        NONOTHING=yes
+        #printf "%s\n" " Using the defined libvirt network: ${DEFINED_LIBVIRT_NETWORK}"
     else
         printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
         printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"
@@ -294,18 +296,16 @@ function qubinode_check_libvirt_net () {
 
 
 function qubinode_setup_kvm_host () {
-    echo " Running qubinode_setup_kvm_host function"
-
     # set variable to enable prompting user if they want to
     # setup host as a qubinode
     qubinode_maintenance_opt="host"
 
-    # run functions
-    qubinode_required_prereqs
+    # Ensure the base setup is done
     setup_variables
-    setup_sudoers
-    ask_user_input
-    setup_user_ssh_key
+    if [ "A${base_setup_completed}" == "Ano" ]
+    then
+       qubinode_base_requirements
+    fi    
 
     # Check if we should setup qubinode
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
@@ -317,64 +317,27 @@ function qubinode_setup_kvm_host () {
 
     if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
     then
-        qubinode_networking
-        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
-        then
-            qubinode_rhsm_register
-        fi
-        qubinode_setup_ansible
-
-       # check for host inventory file
-       if [ ! -f "${hosts_inventory_dir}/hosts" ]
-       then
-           echo " Inventory file ${hosts_inventory_dir}/hosts is missing"
-           echo " Please run qubinode-installer -m setup"
-           echo ""
-           exit 1
-       fi
-
-       # check for inventory directory
-       if [ -f "${vars_file}" ]
-       then
-           if grep '""' "${vars_file}"|grep -q inventory_dir
-           then
-               echo " No value set for inventory_dir in ${vars_file}"
-               echo " Please run qubinode-installer -m setup"
-               echo ""
-               exit 1
-           fi
-        else
-           echo "${vars_file} is missing"
-           echo " Please run qubinode-installer -m setup"
-           echo ""
-           exit 1
-        fi
-
        # Check for ansible and required role
        check_for_required_role swygue.edge_host_setup
 
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
-           echo "Setting up qubinode system"
+           printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           qubinode_check_libvirt_net
+           #qubinode_check_libvirt_net
        else
-           echo "not qubinode system"
-           qubinode_check_libvirt_net
+           printf "%s\n" " ${blu}not qubinode system${end}"
+           #qubinode_check_libvirt_net
        fi
     else
-       echo "Some other option"
-        qubinode_setup_ansible
-        qubinode_check_libvirt_net
         echo "Installing required packages"
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
     fi
 
+    sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${vars_file}"
     printf "\n\n${yel}    ***************************${end}\n"
     printf "${yel}    *   KVM Host Setup Complete   *${end}\n"
     printf "${yel}    ***************************${end}\n\n"
-
-
 }
 
 
