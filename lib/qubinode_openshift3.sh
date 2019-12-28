@@ -545,10 +545,8 @@ function qubinode_autoinstall_openshift () {
     # it does not get overwritten
     if [ "A${current_deployment_size}" == 'A""' ]
     then
-        echo "Setting Openshift deployment size to standard."
+        #echo "Setting Openshift deployment size to standard."
         sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-    else
-        echo "OpenShift 3 deployment size is $current_deployment_size"
     fi
 
     printf "\n\n***************************\n"
