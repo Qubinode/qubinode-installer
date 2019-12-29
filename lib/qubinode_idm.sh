@@ -74,16 +74,30 @@ function ask_user_for_custom_idm_server () {
             set_idm_static_ip
 
             printf "%s\n\n" ""
-            read -p " ${yel}What is the FQDN of the existing IdM server?${end} " IDM_NAME
+            read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
             idm_hostname="${IDM_NAME}"
             confirm " ${blu}You entered${end} ${yel}$idm_hostname${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
                 sed -i "s/idm_hostname:.*/idm_hostname: "$idm_hostname"/g" "${idm_vars_file}"
-                sed -i "s/ipa_host:.*/ipa_host: "$idm_hostname"/g" "${idm_vars_file}"
                 printf "%s\n" ""
                 printf "%s\n" " ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
             fi
+
+            # ask user for DNS domain or use default
+            if grep '""' "${varsfile}"|grep -q domain
+            then
+                read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end}: " domain
+                domain=${domain:-lab.example}
+                confirm " ${blu}You entered${end} ${yel}$domain${end}${blu}, is this correct?${end}${yel}yes/no${end}"
+                if [ "A${response}" == "Ayes" ]
+                then
+                    sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
+                fi
+            fi
+            #TODO:
+            #  - Ask the user for the IP address of the DNS server
+            # - ping the dns server to ensure it is up
 
             printf "%s\n\n" ""
             read -p " What is the username for the existing IdM server admin user? " $IDM_USER
