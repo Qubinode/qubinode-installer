@@ -258,6 +258,19 @@ function check_for_openshift_subscription () {
     else
         echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
     fi
+
+    # Decrypt Ansible Vault
+    decrypt_ansible_vault "${vault_vars_file}"
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
+        printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
+        printf "%s\n\n" "username and password."
+
+        # Get RHSM username and password.
+        get_rhsm_user_and_pass
+    fi
+    # Encrypt Ansible Vault
+    encrypt_ansible_vault "${vault_vars_file}"
 }
 
 function validate_openshift_pool_id () {
@@ -517,32 +530,34 @@ function qubinode_teardown_openshift () {
 
 function qubinode_autoinstall_openshift () {
     product_in_use="ocp3" # Tell the installer this is openshift3 installation
+    openshift_product="${product_in_use}"
+    qubinode_product_opt="${product_in_use}"
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
 
+    printf "\n\n ${yel}*************************${end}\n"
+    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
+    printf " ${yel}*************************${end}\n\n"
+
+    # ensure all the required prequesties are setupa
+    pre_check_for_rhel_qcow_image
+    qubinode_base_requirements
+
     # Check current deployment size
     current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
-
     # The default openshift size is stanadard
     # This ensures that if the size is already set
     # it does not get overwritten
     if [ "A${current_deployment_size}" == 'A""' ]
     then
-        echo "Setting Openshift deployment size to standard."
+        #echo "Setting Openshift deployment size to standard."
         sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-    else
-        echo "OpenShift 3 deployment size is $current_deployment_size"
     fi
-
-    printf "\n\n***************************\n"
-    printf "* Running qubinode perquisites *\n"
-    printf "******************************\n\n"
-    qubinode_installer_setup
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
-    qubinode_rhsm_register
+    #qubinode_rhsm_register
 
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
@@ -552,7 +567,7 @@ function qubinode_autoinstall_openshift () {
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    qubinode_setup_kvm_host
+    #qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy IdM DNS Server    *\n"
@@ -562,6 +577,7 @@ function qubinode_autoinstall_openshift () {
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
+    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
     openshift_enterprise_deployment
     openshift3_installation_msg
@@ -724,7 +740,6 @@ function ensure_ocp_default_user () {
 }
 
 function openshift_enterprise_deployment () {
-    echo "Running openshift_enterprise_deployment"
     # This function is called by the menu option -p ocp3
     # It's the primary function that starts the deployment
     # of the OCP3 cluster.
@@ -732,8 +747,6 @@ function openshift_enterprise_deployment () {
     # Set global product variable to OpenShift 3
     # This variable needs to be set before all else
     openshift_product=ocp3
-    sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${ocp3_vars_file}"
-    sed -i "s/openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/g" "${ocp3_vars_file}"
 
     # Load all global openshift variable
     set_openshift_production_variables
