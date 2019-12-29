@@ -836,7 +836,7 @@ function openshift3_server_maintenance () {
         checkcluster)
             echo  "Running Cluster health check"
             MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
-            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
+            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${project_dir}/lib/qubinode_checkocp3_cluster_state.sh" both
             ;;
        *)
            echo "No arguement was passed"
