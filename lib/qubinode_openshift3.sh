@@ -533,24 +533,24 @@ function qubinode_autoinstall_openshift () {
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
 
-    printf "\n\n ${yel}******************************${end}\n"
-    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel}*${end}\n"
-    printf " ${yel}******************************${end}\n\n"
+    printf "\n\n ${yel}*************************${end}\n"
+    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
+    printf " ${yel}*************************${end}\n\n"
 
     # ensure all the required prequesties are setupa
     pre_check_for_rhel_qcow_image
     qubinode_base_requirements
 
     # Check current deployment size
-    current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
+    #current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
     # The default openshift size is stanadard
     # This ensures that if the size is already set
     # it does not get overwritten
-    if [ "A${current_deployment_size}" == 'A""' ]
-    then
-        #echo "Setting Openshift deployment size to standard."
-        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-    fi
+    #if [ "A${current_deployment_size}" == 'A""' ]
+    #then
+    #    #echo "Setting Openshift deployment size to standard."
+    #    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
+    #fi
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"

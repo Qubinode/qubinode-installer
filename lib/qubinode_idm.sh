@@ -74,7 +74,7 @@ function ask_user_for_custom_idm_server () {
             set_idm_static_ip
 
             printf "%s\n\n" ""
-            read -p " ${yel}What is the FQDN of the existing IdM server?${end} " IDM_NAME 
+            read -p " ${yel}What is the FQDN of the existing IdM server?${end} " IDM_NAME
             idm_hostname="${IDM_NAME}"
             confirm " ${blu}You entered${end} ${yel}$idm_hostname${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
@@ -94,7 +94,7 @@ function ask_user_for_custom_idm_server () {
                 sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
                 printf "%s\n" ""
             fi
-            
+
 
             # Tell installer not to deploy IdM server
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: no/g" "${idm_vars_file}"
@@ -151,7 +151,7 @@ function qubinode_idm_ask_ip_address () {
     # Check on vailable IP
     IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
     MSGUK="The varaible idm_server_ip in $idm_vars_file is set to an unknown value of $CURRENT_IDM_IP"
-        
+
    if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
    then
        if [ "A${IDM_STATIC}" == "Ayes" ]
@@ -206,22 +206,25 @@ function qubinode_teardown_idm () {
 }
 
 function qubinode_deploy_idm_vm () {
-   qubinode_vm_deployment_precheck
-   isIdMrunning
-   IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-   SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
-
-   if [ "A${idm_running}" == "Afalse" ]
+   if grep qubinode_deploy_idm "${idm_vars_file}" | grep -q no
    then
-       echo "running playbook ${IDM_VM_PLAY}"
-       if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
+       isIdMrunning
+       qubinode_vm_deployment_precheck
+       IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+       SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+
+       if [ "A${idm_running}" == "Afalse" ]
        then
-           echo "Deploy with custom IP"
-           idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-           ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
-        else
-            echo "Deploy without custom IP"
-            ansible-playbook "${IDM_VM_PLAY}" || exit $?
+           echo "running playbook ${IDM_VM_PLAY}"
+           if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
+           then
+               echo "Deploy with custom IP"
+               idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+               ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
+            else
+                echo "Deploy without custom IP"
+                ansible-playbook "${IDM_VM_PLAY}" || exit $?
+            fi
         fi
     fi
 }
