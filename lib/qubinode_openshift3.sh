@@ -177,14 +177,20 @@ function qubinode_openshift3_nodes_postdeployment () {
        echo "Post configure ${openshift_product} VMs"
        # Run node post deployment check playbook
        ansible-playbook ${openshift3_post_deployment_checks_playbook}
+       node_validator
 
-       # Ensure DNS records and the post deploy playboo is executed
-       # Web cluster status is not up
-       if [ "A${STATUS}" !=  "A200" ] ; then
-           ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
-           ansible-playbook "${NODES_POST_PLAY}" || exit $?
-       fi
+      status=$?
+
+      if [ $status -ne 0 ] || [ "A${STATUS}" !=  "A200" ]; then
+       ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
+       ansible-playbook "${NODES_POST_PLAY}" || exit $?
+      fi
+
    fi
+}
+
+function node_validator(){
+    ansible-playbook ${openshift3_post_deployment_checks_playbook}
 }
 
 function qubinode_openshift_nodes () {
