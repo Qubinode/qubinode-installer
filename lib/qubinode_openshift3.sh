@@ -560,10 +560,16 @@ function qubinode_autoinstall_openshift () {
         sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
     fi
 
+
+    printf "\n\n***************************\n"
+    printf "* Running qubinode perquisites *\n"
+    printf "******************************\n\n"
+    qubinode_installer_setup
+
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
-    #qubinode_rhsm_register
+    qubinode_rhsm_register
 
     printf "\n\n*******************************************************\n"
     printf "* Ensure host system is setup as a ansible controller *\n"
@@ -573,7 +579,7 @@ function qubinode_autoinstall_openshift () {
     printf "\n\n*********************************************\n"
     printf     "* Ensure host system is setup as a KVM host *\n"
     printf     "*********************************************\n"
-    #qubinode_setup_kvm_host
+    qubinode_setup_kvm_host
 
     printf "\n\n****************************\n"
     printf     "* Deploy IdM DNS Server    *\n"
