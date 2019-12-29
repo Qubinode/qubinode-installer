@@ -72,6 +72,12 @@ dns_servers:
 
 public_domain: "{{ domain }}"
 
+qubinode_installer_setup_completed: no
+qubinode_installer_rhsm_completed: no
+qubinode_installer_ansible_completed: no
+qubinode_installer_host_completed: no
+qubinode_base_reqs_completed: no
+
 # use by funciton check_hardware_resources
 libvirt_pool_name: default
 
