@@ -529,17 +529,20 @@ function qubinode_teardown_openshift () {
 
 
 function qubinode_autoinstall_openshift () {
-
-    # ensure all the required prequesties are setup
-    qubinode_base_requirements
-
     product_in_use="ocp3" # Tell the installer this is openshift3 installation
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
 
+    printf "\n\n ${yel}******************************${end}\n"
+    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel}*${end}\n"
+    printf " ${yel}******************************${end}\n\n"
+
+    # ensure all the required prequesties are setupa
+    pre_check_for_rhel_qcow_image
+    qubinode_base_requirements
+
     # Check current deployment size
     current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
-
     # The default openshift size is stanadard
     # This ensures that if the size is already set
     # it does not get overwritten
@@ -548,11 +551,6 @@ function qubinode_autoinstall_openshift () {
         #echo "Setting Openshift deployment size to standard."
         sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
     fi
-
-    printf "\n\n***************************\n"
-    printf "* Running qubinode perquisites *\n"
-    printf "******************************\n\n"
-    qubinode_installer_setup
 
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"

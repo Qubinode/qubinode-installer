@@ -10,12 +10,12 @@ function elevate_cmd () {
         sudo $cmd
         ;;
     has_sudo__needs_pass)
-        #echo "Please supply sudo password for the following command: sudo $cmd"
+        printf "%s\n" " Please supply sudo password for the following command: ${grn}sudo $cmd${end}"
         sudo $cmd
         ;;
     *)
-        echo "Please supply root password for the following command: su -c \"$cmd\""
-        su -c "$cmd"
+        printf "%s\n" " Please supply root password for the following command: ${grn}su -c \"$cmd\""
+        su -c "$cmd${end}"
         ;;
     esac
 }
@@ -40,11 +40,11 @@ function has_sudo() {
 
     prompt=$(sudo -nv 2>&1)
     if [ $? -eq 0 ]; then
-    echo "has_sudo__pass_set"
+    printf "%s\n" " has_sudo__pass_set"
     elif echo $prompt | grep -q '^sudo:'; then
-    echo "has_sudo__needs_pass"
+    printf "%s\n" " has_sudo__needs_pass"
     else
-    echo "no_sudo"
+    printf "%s\n" " no_sudo"
     fi
 }
 

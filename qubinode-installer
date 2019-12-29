@@ -125,7 +125,7 @@ done
 shift "$((OPTIND-1))"
 
 # If not arguments pass, run default option to install OpenShift
-if (( $OPTIND == 1 )) 
+if (( $OPTIND == 1 ))
 then
     #cat < "${project_dir}/lib/docs/default_message"
     display_openshift_msg
@@ -139,7 +139,6 @@ then
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
-        check_for_rhel_qcow_image
         qubinode_autoinstall_openshift
     else
         echo $result

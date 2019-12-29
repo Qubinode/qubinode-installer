@@ -178,3 +178,19 @@ function check_for_rhel_qcow_image () {
 }
 
 
+function pre_check_for_rhel_qcow_image () {
+    # check for required OS qcow image and copy it to right location
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
+    os_qcow_image=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/samples/all.yml")
+    if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
+    then
+        if [ ! -f "${project_dir}/${os_qcow_image}" ]
+        then
+            printf "%s\n\n" ""
+            printf "%s\n" " Could not find ${red}${project_dir}/${os_qcow_image}${end},"
+            printf "%s\n\n" " please download the ${yel}${os_qcow_image}${end} to ${blu}${project_dir}${end}."
+            printf "%s\n\n" " ${cyn}Please refer the documentation for additional information.${end}"
+            exit 1
+        fi
+    fi
+}
