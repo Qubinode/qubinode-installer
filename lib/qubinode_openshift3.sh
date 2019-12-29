@@ -141,10 +141,11 @@ function set_openshift_production_variables () {
     then
         echo "Setting OpenShift version to ${openshift_product}"
         sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
+        sed -i "s/openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/g" "${ocp3_vars_file}"
         if [[ ${openshift_product} == "ocp3" ]]
         then
             # ensure we are deploying openshift enterprise
-            sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${vars_file}"
+            sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${ocp3_vars_file}"
         elif [[ ${openshift_product} == "okd3" ]]
         then
             sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
@@ -176,14 +177,20 @@ function qubinode_openshift3_nodes_postdeployment () {
        echo "Post configure ${openshift_product} VMs"
        # Run node post deployment check playbook
        ansible-playbook ${openshift3_post_deployment_checks_playbook}
+       node_validator
 
-       # Ensure DNS records and the post deploy playboo is executed
-       # Web cluster status is not up
-       if [ "A${STATUS}" !=  "A200" ] ; then
-           ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
-           ansible-playbook "${NODES_POST_PLAY}" || exit $?
-       fi
+      status=$?
+
+      if [ $status -ne 0 ] || [ "A${STATUS}" !=  "A200" ]; then
+       ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
+       ansible-playbook "${NODES_POST_PLAY}" || exit $?
+      fi
+
    fi
+}
+
+function node_validator(){
+    ansible-playbook ${openshift3_post_deployment_checks_playbook}
 }
 
 function qubinode_openshift_nodes () {
@@ -257,6 +264,19 @@ function check_for_openshift_subscription () {
     else
         echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
     fi
+
+    # Decrypt Ansible Vault
+    decrypt_ansible_vault "${vault_vars_file}"
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
+        printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
+        printf "%s\n\n" "username and password."
+
+        # Get RHSM username and password.
+        get_rhsm_user_and_pass
+    fi
+    # Encrypt Ansible Vault
+    encrypt_ansible_vault "${vault_vars_file}"
 }
 
 function validate_openshift_pool_id () {
@@ -405,6 +425,10 @@ function qubinode_deploy_openshift () {
     # run openshift installation
     if [[ ${product_in_use} == "ocp3" ]]
     then
+        if [[ ! -d ${openshift_ansible_dir} ]]; then
+          ansible-playbook ${openshift3_setup_deployer_node_playbook}
+        fi
+
         cd "${openshift_ansible_dir}"
         run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
         echo "Running OpenShift prerequisites"
@@ -512,22 +536,30 @@ function qubinode_teardown_openshift () {
 
 function qubinode_autoinstall_openshift () {
     product_in_use="ocp3" # Tell the installer this is openshift3 installation
+    openshift_product="${product_in_use}"
+    qubinode_product_opt="${product_in_use}"
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
-    
+
+    printf "\n\n ${yel}*************************${end}\n"
+    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
+    printf " ${yel}*************************${end}\n\n"
+
+    # ensure all the required prequesties are setupa
+    pre_check_for_rhel_qcow_image
+    qubinode_base_requirements
+
     # Check current deployment size
     current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
-
     # The default openshift size is stanadard
     # This ensures that if the size is already set
     # it does not get overwritten
     if [ "A${current_deployment_size}" == 'A""' ]
     then
-        echo "Setting Openshift deployment size to standard."
+        #echo "Setting Openshift deployment size to standard."
         sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-    else
-        echo "OpenShift 3 deployment size is $current_deployment_size"
     fi
+
 
     printf "\n\n***************************\n"
     printf "* Running qubinode perquisites *\n"
@@ -557,6 +589,7 @@ function qubinode_autoinstall_openshift () {
     printf "\n\n*********************\n"
     printf     "*Deploy ${product_in_use} cluster *\n"
     printf     "*********************\n"
+    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
     openshift_enterprise_deployment
     openshift3_installation_msg
@@ -630,7 +663,7 @@ function are_openshift_nodes_available () {
     then
         printf "\n\n Found all ${TOTAL_NODES} nodes required for the Cluster profile size ${openshift_deployment_size}.\n\n"
 
-        # Create a report of all nodes including their IP address and FQDN 
+        # Create a report of all nodes including their IP address and FQDN
         divider===============================
         divider=$divider$divider
         header="\n %-035s %010s\n"
@@ -719,17 +752,15 @@ function ensure_ocp_default_user () {
 }
 
 function openshift_enterprise_deployment () {
-    echo "Running openshift_enterprise_deployment"
     # This function is called by the menu option -p ocp3
-    # It's the primary function that starts the deployment 
+    # It's the primary function that starts the deployment
     # of the OCP3 cluster.
 
-    # Set global product variable to OpenShift 3 
+    # Set global product variable to OpenShift 3
     # This variable needs to be set before all else
     openshift_product=ocp3
-    sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${ocp3_vars_file}"
 
-    # Load all global openshift variable 
+    # Load all global openshift variable
     set_openshift_production_variables
 
     # Check if OpenShift nodes are deployed
@@ -750,13 +781,13 @@ function openshift_enterprise_deployment () {
         ask_user_which_openshift_product
         are_openshift_nodes_available
         qubinode_deploy_openshift
-        
+
         # Wait for OpenShift Console to come up
         sleep 45s
 
         # Ensure the qubinode user is added to openshift
         ensure_ocp_default_user
-        
+
         # Report on OpenShift Installation
         openshift3_installation_msg
     else
@@ -830,7 +861,7 @@ function openshift3_server_maintenance () {
         checkcluster)
             echo  "Running Cluster health check"
             MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
-            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
+            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${project_dir}/lib/qubinode_checkocp3_cluster_state.sh" both
             ;;
        *)
            echo "No arguement was passed"
@@ -839,11 +870,11 @@ function openshift3_server_maintenance () {
 }
 
 function check_webconsole_status () {
-    echo "Running check_webconsole_status"
+    #echo "Running check_webconsole_status"
     # This function checks to see if the openshift console up
     # It expects a return code of 200
-     
-    echo "Checking to see if Openshift is online."
+
+    #echo "Checking to see if Openshift is online."
     WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
     return $WEBCONSOLE_STATUS
 }

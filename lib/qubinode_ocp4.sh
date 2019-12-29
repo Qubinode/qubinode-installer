@@ -45,15 +45,7 @@ openshift4_qubinode_teardown () {
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
 
     # Delete VMS
-    for n in $(cat rhcos-install/node-list)
-    do
-        echo "Deleting VM $n..."
-        sudo virsh shutdown $n
-        sleep 10s
-        sudo virsh destroy $n
-        sudo virsh undefine $n
-        sudo rm -f /var/lib/libvirt/images/${n}.qcow2
-    done
+    cleanup
 
     test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
     test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
@@ -108,6 +100,24 @@ test -d "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playb
     echo "OCP4 deployment removed"
     exit 0
 }
+
+function cleanup(){
+    #clean up
+    sudo virsh destroy bootstrap; sudo virsh undefine bootstrap --remove-all-storage
+
+    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+    for  i in $(seq "$masters")
+    do
+        sudo virsh destroy master-$((i-1));sudo virsh undefine master-$((i-1)) --remove-all-storage
+    done
+
+    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+    for i in $(seq "$compute")
+    do
+        sudo virsh destroy compute-$((i-1));sudo virsh undefine compute-$((i-1))} --remove-all-storage
+    done
+}
+
 
 openshift4_server_maintenance () {
     echo "Hello World"
@@ -255,8 +265,39 @@ post_deployment_steps (){
   # oc get clusteroperators
 EOF
 
+echo "NFS Server mount directory information"
+ls -lath /export
+df -h /export
 
-  echo "Configure registry to use empty directory"
+confirm "Configure nfs-provisioner? yes/no"
+if [ "A${response}" != "Ayes" ]
+then
+  export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+    oc get storageclass
+    bash lib/qubinode_nfs_provisioner_setup.sh
+    oc get storageclass || exit 1
+     cat >image-registry-storage.yaml<<YAML
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-registry-storage
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: nfs-storage-provisioner
+  resources:
+    requests:
+      storage: 80Gi
+YAML
+oc create -f image-registry-storage.yaml
+
+cat << EOF
+# Please Follow instructions located below for persistent registry storage
+# Link: https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html
+EOF
+else
+  echo "Skipping nfs-provisioning"
+  echo "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
   echo "*****************************"
   cat << EOF
   # oc get pod -n openshift-image-registry
@@ -264,12 +305,13 @@ EOF
   # oc get pod -n openshift-image-registry
   # oc get clusteroperators
 EOF
+fi
 
-  echo "Check that OpenShift installation is complete"
-  echo "*****************************"
-  cat << EOF
-  # cd ~/qubinode-installer
-  # openshift-install --dir=ocp4 wait-for install-complete
+echo "Check that OpenShift installation is complete"
+echo "*****************************"
+cat << EOF
+# cd ~/qubinode-installer
+# openshift-install --dir=ocp4 wait-for install-complete
 EOF
 
 }
