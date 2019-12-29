@@ -327,4 +327,10 @@ else
     cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
 fi
 
+clear
+echo HERE
+echo "ocp_size=$ocp_size"
+
+exit
+
 exit 0

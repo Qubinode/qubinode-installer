@@ -36,7 +36,7 @@ function qubinode_required_prereqs () {
     fi
 
     # copy sample ocp3 file to playbook/vars directory
-    if [ "$A{qubinode_product_opt}" == "ocp3" ]
+    if [ "A${qubinode_product_opt}" == "Aocp3" ]
     then
         if [ ! -f "${ocp3_vars_file}" ]
         then
@@ -45,7 +45,7 @@ function qubinode_required_prereqs () {
     fi
 
     # copy sample okd3 file to playbook/vars directory
-    if [ "$A{qubinode_product_opt}" == "okd3" ]
+    if [ "A${qubinode_product_opt}" == "Aokd3" ]
     then
         if [ ! -f "${okd3_vars_file}" ]
         then
