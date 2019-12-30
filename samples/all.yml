@@ -38,6 +38,9 @@ rhel_release: 7.7
 # Ansible 2.7 is the current tested version.
 # Ansible 2.8 is currently being tested.
 ansible_repo: rhel-7-server-ansible-2.6-rpms
+ansible_version: 2.6.20
+ansible_release: 2.6
+ansible_rpm: ansible-2.6.20-1.el7ae.noarch
 
 # We leverage a bridge network for OCP3 installs
 # and other VMS. This sets the name of the bridge to be created and use when
