@@ -177,14 +177,20 @@ function qubinode_openshift3_nodes_postdeployment () {
        echo "Post configure ${openshift_product} VMs"
        # Run node post deployment check playbook
        ansible-playbook ${openshift3_post_deployment_checks_playbook}
+       node_validator
 
-       # Ensure DNS records and the post deploy playboo is executed
-       # Web cluster status is not up
-       if [ "A${STATUS}" !=  "A200" ] ; then
-           ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
-           ansible-playbook "${NODES_POST_PLAY}" || exit $?
-       fi
+      status=$?
+
+      if [ $status -ne 0 ] || [ "A${STATUS}" !=  "A200" ]; then
+       ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
+       ansible-playbook "${NODES_POST_PLAY}" || exit $?
+      fi
+
    fi
+}
+
+function node_validator(){
+    ansible-playbook ${openshift3_post_deployment_checks_playbook}
 }
 
 function qubinode_openshift_nodes () {
@@ -554,6 +560,12 @@ function qubinode_autoinstall_openshift () {
         sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
     fi
 
+
+    printf "\n\n***************************\n"
+    printf "* Running qubinode perquisites *\n"
+    printf "******************************\n\n"
+    qubinode_installer_setup
+
     printf "\n\n********************************************\n"
     printf "* Ensure host system is registered to RHSM *\n"
     printf "*********************************************\n\n"
@@ -572,7 +584,6 @@ function qubinode_autoinstall_openshift () {
     then
         qubinode_setup_kvm_host
     fi
-
     printf "\n\n****************************\n"
     printf     "* Deploy IdM DNS Server    *\n"
     printf     "****************************\n"
@@ -853,7 +864,7 @@ function openshift3_server_maintenance () {
         checkcluster)
             echo  "Running Cluster health check"
             MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
-            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${CHECK_STATE_CMD}" both
+            ssh -t  -o "StrictHostKeyChecking=no" $MASTER_NODE 'bash -s' < "${project_dir}/lib/qubinode_checkocp3_cluster_state.sh" both
             ;;
        *)
            echo "No arguement was passed"

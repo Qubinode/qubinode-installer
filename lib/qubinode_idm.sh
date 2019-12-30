@@ -12,15 +12,15 @@ idm_srv_hostname="$prefix-$suffix"
 idm_srv_fqdn="$prefix-$suffix.$domain"
 
 function display_idmsrv_unavailable () {
-        printf "%s\n" "${yel}Either the IdM server variable idm_public_ip is not set.${end}"
-        printf "%s\n" "${yel}Or the IdM server is not reachable.${end}"
-        printf "%s\n" "${yel}Ensure the IdM server is running, update the variable and try again.${end}"
-        exit 1
+    printf "%s\n" "${yel}Either the IdM server variable idm_public_ip is not set.${end}"
+    printf "%s\n" "${yel}Or the IdM server is not reachable.${end}"
+    printf "%s\n" "${yel}Ensure the IdM server is running, update the variable and try again.${end}"
+    exit 1
 }
 
 function ask_user_for_idm_password () {
     # decrypt ansible vault file
-    decrypt_ansible_vault "${vaultfile}"
+    decrypt_ansible_vault "${vaultfile}" > /dev/null
 
     # This is the password used to log into the IDM server webconsole and also the admin user
     if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
@@ -28,23 +28,22 @@ function ask_user_for_idm_password () {
         unset idm_admin_pwd
         while [[ ${#idm_admin_pwd} -lt 8 ]]
         do
-           echo -n " Enter a password for the IDM server console and press ${grn}[ENTER]${end}: "
-           read_sensitive_data
-           idm_admin_pwd="${sensitive_data}"
-           if [ ${#idm_admin_pwd} -lt 8 ]
-           then
-               printf "%s\n" "    ${yel}**IMPORTANT**${end}"
-               printf "%s\n" " The password must be at least ${yel}8${end} characters long."
-               printf "%s\n" " Please re-run the installer"
-           fi
+            echo -n " Enter a password for the IDM server console and press ${grn}[ENTER]${end}: "
+            read_sensitive_data
+            idm_admin_pwd="${sensitive_data}"
+            if [ ${#idm_admin_pwd} -lt 8 ]
+            then
+                printf "%s\n" "    ${yel}**IMPORTANT**${end}"
+                printf "%s\n" " The password must be at least ${yel}8${end} characters long."
+                printf "%s\n" " Please re-run the installer"
+            fi
         done
         sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
         echo ""
-        #fi
     fi
 
     # encrypt ansible vault
-    encrypt_ansible_vault "${vaultfile}"
+    encrypt_ansible_vault "${vaultfile}" > /dev/null
 
     # Generate a ramdom password for IDM directory manager
     # This will not prompt the user
@@ -66,51 +65,49 @@ function ask_user_for_custom_idm_server () {
         printf "%s\n" " The installer default action is deploy a local IdM server."
         printf "%s\n\n" " You can also choose to use an existing IdM server."
 
-        confirm " ${blu}Would you like to use an existing IdM server?${end} ${yel}yes/no${end}"
-        if [ "A${response}" == "Ayes" ]
-        then
-            static_ip_msg="Enter the ip address for the existing IdM server"
-            static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
-            set_idm_static_ip
-            sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
+      confirm " ${blu}Would you like to use an existing IdM server?${end} ${yel}yes/no${end}"
+      if [ "A${response}" == "Ayes" ]
+      then
+          static_ip_msg="Enter the ip address for the existing IdM server"
+          static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
+          set_idm_static_ip
+          sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
 
-            printf "%s\n\n" ""
-            read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
-            idm_hostname="${IDM_NAME}"
-            confirm " ${blu}You entered${end} ${yel}$idm_hostname${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
-            then
-                sed -i "s/idm_hostname:.*/idm_hostname: "$idm_hostname"/g" "${idm_vars_file}"
-                printf "%s\n" ""
-                printf "%s\n" " ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
-            fi
+          printf "%s\n\n" ""
+          read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
+          idm_hostname="${IDM_NAME}"
+          confirm " ${blu}You entered${end} ${yel}$idm_hostname${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+          if [ "A${response}" == "Ayes" ]
+          then
+              sed -i "s/idm_hostname:.*/idm_hostname: "$idm_hostname"/g" "${idm_vars_file}"
+              printf "%s\n" ""
+              printf "%s\n" " ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
+          fi
 
-            # ask user for DNS domain or use default
-            if grep '""' "${varsfile}"|grep -q domain
-            then
-                read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end}: " domain
-                domain=${domain:-lab.example}
-                confirm " ${blu}You entered${end} ${yel}$domain${end}${blu}, is this correct?${end}${yel}yes/no${end}"
-                if [ "A${response}" == "Ayes" ]
-                then
-                    sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
-                fi
-            fi
-            #TODO:
-            # - ping the dns server to ensure it is up
-            #- update {{ idm_server_ip | default('1.1.1.1') }} to point to the dns ip provided
+          # ask user for DNS domain or use default
+          if grep '""' "${varsfile}"|grep -q domain
+          then
+              read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end}: " domain
+              domain=${domain:-lab.example}
+              confirm " ${blu}You entered${end} ${yel}$domain${end}${blu}, is this correct?${end}${yel}yes/no${end}"
+              if [ "A${response}" == "Ayes" ]
+              then
+                  sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
+              fi
+          fi
+          #TODO:
+          # - ping the dns server to ensure it is up
+          #- update {{ idm_server_ip | default('1.1.1.1') }} to point to the dns ip provided
 
-            printf "%s\n\n" ""
-            read -p " What is the username for the existing IdM server admin user? " $IDM_USER
-            idm_admin_user=$IDM_USER
-            confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
-            then
-                sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
-                printf "%s\n" ""
-            fi
-
-
+          printf "%s\n\n" ""
+          read -p " What is the username for the existing IdM server admin user? " $IDM_USER
+          idm_admin_user=$IDM_USER
+          confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+          if [ "A${response}" == "Ayes" ]
+          then
+              sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
+              printf "%s\n" ""
+          fi
             # Tell installer not to deploy IdM server
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: no/g" "${idm_vars_file}"
         else
@@ -167,102 +164,108 @@ function qubinode_idm_ask_ip_address () {
     IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
     MSGUK="The varaible idm_server_ip in $idm_vars_file is set to an unknown value of $CURRENT_IDM_IP"
 
-   if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
-   then
-       if [ "A${IDM_STATIC}" == "Ayes" ]
-       then
-           if [ "A${CURRENT_IDM_IP}" == 'A""' ]
-           then
-               set_idm_static_ip
-           elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
-           then
-               echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
-               confirm "Do you want to change? yes/no"
-               if [ "A${response}" == "Ayes" ]
-               then
-                   set_idm_static_ip
-               fi
-           else
-               echo "${MSGUK}"
-               echo 'Please reset to "" and try again'
-               exit 1
-           fi
-       fi
-   fi
+    if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
+    then
+        if [ "A${IDM_STATIC}" == "Ayes" ]
+        then
+            if [ "A${CURRENT_IDM_IP}" == 'A""' ]
+            then
+                set_idm_static_ip
+            elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
+            then
+                 echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
+                 confirm "Do you want to change? yes/no"
+                 if [ "A${response}" == "Ayes" ]
+                 then
+                     set_idm_static_ip
+                 fi
+             else
+                 echo "${MSGUK}"
+                 echo 'Please reset to "" and try again'
+                 exit 1
+             fi
+         fi
+     fi
 }
 
 
 
 function isIdMrunning () {
-   if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
-   then
-       idm_running=false
-   elif curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
-   then
-       idm_running=true
-   else
-       idm_running=false
-   fi
+    if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
+    then
+        idm_running=false
+    elif curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
+    then
+        idm_running=true
+    else
+        idm_running=false
+    fi
+    return ${idm_running}
 }
 
 function qubinode_teardown_idm () {
-    IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-    if sudo virsh list --all |grep -q "${idm_srv_hostname}"
-    then
-        echo "Remove IdM VM"
-        ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-    fi
-    echo "Ensure IdM server deployment is cleaned up"
-    ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+     IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+     if sudo virsh list --all |grep -q "${idm_srv_hostname}"
+     then
+         echo "Remove IdM VM"
+         ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
+     fi
+     echo "Ensure IdM server deployment is cleaned up"
+     ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
 
-    printf "\n\n*************************\n"
-    printf "* IdM server VM deleted *\n"
-    printf "*************************\n\n"
+     printf "\n\n*************************\n"
+     printf "* IdM server VM deleted *\n"
+     printf "*************************\n\n"
 }
 
 function qubinode_deploy_idm_vm () {
-   if grep qubinode_deploy_idm "${idm_vars_file}" | grep -q no
-   then
-       isIdMrunning
-       qubinode_vm_deployment_precheck
-       IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-       SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+    if grep deploy_idm_server "${idm_vars_file}" | grep -q yes
+    then
+        qubinode_vm_deployment_precheck
+        isIdMrunning
 
-       if [ "A${idm_running}" == "Afalse" ]
-       then
-           echo "running playbook ${IDM_VM_PLAY}"
-           if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
-           then
-               echo "Deploy with custom IP"
-               idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-               ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
-            else
-                echo "Deploy without custom IP"
-                ansible-playbook "${IDM_VM_PLAY}" || exit $?
-            fi
-        fi
-    fi
+        IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+        SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+
+        if [ "A${idm_running}" == "Afalse" ]
+        then
+            echo "running playbook ${IDM_VM_PLAY}"
+            if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
+            then
+                echo "Deploy with custom IP"
+                idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+                ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
+             else
+                 echo "Deploy without custom IP"
+                 ansible-playbook "${IDM_VM_PLAY}" || exit $?
+             fi
+         fi
+     fi
 }
 
 function qubinode_install_idm () {
-   qubinode_vm_deployment_precheck
-   ask_user_input
-   IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
+    qubinode_vm_deployment_precheck
+    ask_user_input
+    IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
 
-   echo "Install and configure the IdM server"
-   idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-   ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
-   isIdMrunning
-   if [ "A${idm_running}" == "Atrue" ]
-   then
-     printf "\n\n*********************************************************************************\n"
-     printf "    **IdM server is installed**\n"
-     printf "         Url: https://${idm_srv_fqdn}/ipa \n"
-     printf "         Username: $(whoami) \n"
-     printf "         Password: the vault variable *admin_user_password* \n\n"
-     printf "Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
-     printf "*******************************************************************************\n\n"
-   fi
+    echo "Install and configure the IdM server"
+    idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+    echo "Current IP of IDM Server ${idm_server_ip}" || exit $?
+    ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+    isIdMrunning
+    if [ "A${idm_running}" == "Atrue" ]
+    then
+        printf "\n\n*********************************************************************************\n"
+        printf "    **IdM server is installed**\n"
+        printf "         Url: https://${idm_srv_fqdn}/ipa \n"
+        printf "         Username: $(whoami) \n"
+        printf "         Password: the vault variable *admin_user_password* \n\n"
+        printf "Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
+        printf "*******************************************************************************\n\n"
+     else
+        echo "IDM Server was not properly deployed please verify deployment."
+        exit 1
+     fi
 }
 
 function qubinode_deploy_idm () {
