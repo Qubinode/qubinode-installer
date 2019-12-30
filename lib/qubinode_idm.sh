@@ -72,6 +72,7 @@ function ask_user_for_custom_idm_server () {
             static_ip_msg="Enter the ip address for the existing IdM server"
             static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
             set_idm_static_ip
+            sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
 
             printf "%s\n\n" ""
             read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
@@ -96,8 +97,8 @@ function ask_user_for_custom_idm_server () {
                 fi
             fi
             #TODO:
-            #  - Ask the user for the IP address of the DNS server
             # - ping the dns server to ensure it is up
+            #- update {{ idm_server_ip | default('1.1.1.1') }} to point to the dns ip provided
 
             printf "%s\n\n" ""
             read -p " What is the username for the existing IdM server admin user? " $IDM_USER

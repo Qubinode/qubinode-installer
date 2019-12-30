@@ -1,5 +1,53 @@
 #!/bin/bash
 
+function check_additional_storage () {
+    TOTAL_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|wc -l)
+    if ! lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -q nvme
+  	then
+        printf "%s\n" "        ${yel}**NOTICE**${end}"
+        printf "%s\n\n" " ${red}Did not find a NVME device${end}"
+        printf "%s\n" " Qubinode recommends using a NVME device for"
+        printf "%s\n" " storing the VMs disk. The device will be paritioned and"
+        printf "%s\n\n" " a LVM volume created and mounted to /var/lib/libvirt/images."
+
+        if [ $TOTAL_DISKS -gt 1 ]
+        then
+            printf "%s\n\n" " If you are using a none NVME device, please choose from the list below."
+            declare -a all_disks=()
+            mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v nvme)
+            createmenu "${all_disks[@]}"
+            disk=($(echo "${selected_option}"))
+
+            confirm "${yel}Continue with $disk?${end} ${blu}yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                printf "%s\n\n" ""
+                printf "%s\n\n" " ${mag}Using disk: $disk${end}"
+                sed -i "s/host_device: */host_device: $disk/g" "${varsfile}"
+            else
+                printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
+                exit 0
+            fi
+        else
+            printf "%s\n\n" " ${grn}No additional storage device found.${end}"
+            printf "%s\n" " You can skip this and use the default"
+            printf "%s\n\n" " disk where /var/lib/libvirt/images is mounted."
+
+            confirm "${yel}Do you want to skip configuring additional storage?${end} ${blue}yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                printf "%s\n" ""
+                printf "%s\n\n" "${mag} Setting create_lvm to no.${end}"
+                sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${varsfile}"
+            else
+                printf "%s\n\n" "${mag} There are no other options, exiting the install.${end}"
+                exit
+            fi
+
+        fi
+    fi
+}
+
 # Ask if this host should be setup as a qubinode host
 function ask_user_if_qubinode_setup () {
     # ensure all required variables are setup
@@ -98,55 +146,13 @@ function ask_user_if_qubinode_setup () {
             fi
         else
             # check for nvme
-            TOTAL_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|wc -l)
-            if ! lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -q nvme
-            then
-                printf "%s\n" "        ${yel}**NOTICE**${end}"
-                printf "%s\n\n" " ${red}Did not find a NVME device${end}"
-                printf "%s\n" " Qubinode recommends using a NVME device for"
-                printf "%s\n" " storing the VMs disk. The device will be paritioned and"
-                printf "%s\n\n" " a LVM volume created and mounted to /var/lib/libvirt/images."
-
-                if [ $TOTAL_DISKS -gt 1 ]
-                then
-                    printf "%s\n\n" " If you are using a none NVME device, please choose from the list below."
-                    declare -a all_disks=()
-                    mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v nvme)
-                    createmenu "${all_disks[@]}"
-                    disk=($(echo "${selected_option}"))
-
-                    confirm "${yel}Continue with $disk?${end} ${blu}yes/no${end}"
-                    if [ "A${response}" == "Ayes" ]
-                    then
-                         printf "%s\n\n" ""
-                         printf "%s\n\n" " ${mag}Using disk: $disk${end}"
-                         sed -i "s/host_device: */host_device: $disk/g" "${varsfile}"
-                    else
-                         printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
-                         exit 0
-                    fi
-                else
-                    printf "%s\n\n" " ${grn}No additional storage device found.${end}"
-                    printf "%s\n" " You can skip this and use the default"
-                    printf "%s\n\n" " disk where /var/lib/libvirt/images is mounted."
-
-                    confirm "${yel}Do you want to skip configuring additional storage?${end} ${blue}yes/no${end}"
-                    if [ "A${response}" == "Ayes" ]
-                    then
-                         printf "%s\n" ""
-                         printf "%s\n\n" "${mag} Setting create_lvm to no.${end}"
-                         #sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${varsfile}"
-                    else
-                        printf "%s\n\n" "${mag} There are no other options, exiting the install.${end}"
-                    fi
-
-                fi
-            fi
+            check_additional_storage
         fi
     else
         # Set varaible to configure storage and networking
         response=yes
         sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+        check_additional_storage
     fi
 }
 

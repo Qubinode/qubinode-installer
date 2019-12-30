@@ -65,12 +65,12 @@ function canSSH () {
 
 function get_admin_user_password () {
     echo "Fetching OpenShift Admin Password. Please Enter Vault password to decrypt file."
-    ansible-vault decrypt "${vault_vars_file}"
+    decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_user_passowrd=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
-    ansible-vault encrypt "${vault_vars_file}"
+    encrypt_ansible_vault "${vaultfile}" >/dev/null
     if [ "A${admin_user_passowrd}" == "A" ]
     then
-        echo "Unable to retrieve $CURRENT_USER user password from the vault"
+        print "%s\n" " Unable to retrieve ${yel}$CURRENT_USER${end} user password from the vault"
         exit 1
     fi
 }
