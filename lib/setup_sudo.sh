@@ -39,12 +39,14 @@ function has_sudo() {
     local prompt
 
     prompt=$(sudo -nv 2>&1)
-    if [ $? -eq 0 ]; then
-    printf "%s\n" " has_sudo__pass_set"
-    elif echo $prompt | grep -q '^sudo:'; then
-    printf "%s\n" " has_sudo__needs_pass"
+    if [ $? -eq 0 ]
+    then
+        echo "has_sudo__pass_set"
+    elif echo $prompt | grep -q '^sudo:'
+    then
+        echo "has_sudo__needs_pass"
     else
-    printf "%s\n" " no_sudo"
+        echo "no_sudo"
     fi
 }
 
