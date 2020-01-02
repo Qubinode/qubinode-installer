@@ -21,14 +21,6 @@ openshift_release: "3.11"
 openshift_image_tag: v3.11.157
 openshift_pkg_version: -3.11.157
 
-# OpenShift deployment profiles
-openshift3_performance_memory: 131495372
-openshift3_standard_memory: 98304000
-openshift3_small_memory: 49152000
-openshift3_minimal_memory: 32768000
-openshift3_minimal_storage: 488141
-openshift3_recommended_storage: 976282
-
 # Openshift Repos
 openshift_repo: rhel-7-server-ose-3.11-rpms
 ocp_repos:

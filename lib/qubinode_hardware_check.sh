@@ -1,64 +1,80 @@
 #!/bin/bash
 
-function check_hardware_resources () {
-    validate_hardware_resources
-    select_openshift3_cluster_size
-}
-
-function validate_hardware_resources () {
-    if ! sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
-    then
-        printf "%s\n" " Libvirt Pool ${libvirt_pool_name} not found"
-        printf "%s\n" " Please verify the variable libvirt_pool_name value is correct"
-        exit 1
-    fi
-
-    PROJECTDIR=${project_dir}
-
-    # MEMORY
-    PERFORMANCE_MEMORY=$(awk '/openshift3_performance_memory:/ {print $2}' "${ocp3_vars_file}")
-    STANDARD_MEMORY=$(awk '/openshift3_standard_memory:/ {print $2}' "${ocp3_vars_file}")
-    SMALL_MEMORY=$(awk '/openshift3_small_memory:/ {print $2}' "${ocp3_vars_file}")
-    MINIMAL_MEMORY=$(awk '/openshift3_minimal_memory:/ {print $2}' "${ocp3_vars_file}")
-    AVAILABLE_MEMORY=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-    AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
-
+function check_disk_size () {
     # STORAGE
-    MIN_STORAGE=$(awk '/openshift3_minimal_storage:/ {print $2}' "${ocp3_vars_file}")
-    RECOMMENDED_STORAGE=$(awk '/openshift3_recommended_storage:/ {print $2}' "${ocp3_vars_file}")
-    AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
-    AVAILABLE_STORAGE_INT=${AVAILABLE_STORAGE%.*}
-    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
+    MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${vars_file}")
+    STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
+    PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
+    MIN_STORAGE=${MIN_STORAGE:-370}
+    STANDARD_STORAGE=${STANDARD_STORAGE:-900}
+    PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
 
-    # Check for available storage
-    if sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
+    if rpm -qf /bin/lsblk > /dev/null 2>&1
     then
-        if [[ ${AVAILABLE_STORAGE_INT} -ge ${RECOMMENDED_STORAGE} ]]
+        DISK_INFO=$(lsblk -dpb | grep $DISK)
+        CURRENT_DISK_SIZE=$(echo $DISK_INFO| awk '{print $4}')
+        
+        convertB_human $CURRENT_DISK_SIZE
+        if [[ $DISK_SIZE_COMPARE -ge $MIN_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $STANDARD_STORAGE ]]
         then
-            printf "%s\n" "Your available storage of ${AVAILABLE_HUMAN_STORAGE} meets the requirements."
-        elif [[ ${AVAILABLE_STORAGE_INT} -ge ${MIN_STORAGE} ]]
+            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the minimum storage requirement of $MIN_STORAGE GB"
+            STORAGE_PROFILE=minimal
+        elif [[ $DISK_SIZE_COMPARE -ge $STANDARD_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $PERFORMANCE_STORAGE ]]
         then
-             printf "%s\n" "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
-             printf "%s\n" "The installation will continue, but you may run out of storage depending on your workload."
+            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the standard storage requirement of $STANDARD_STORAGE GB"
+            STORAGE_PROFILE=standard
+        elif [[ $DISK_SIZE_COMPARE -ge $PERFORMANCE_STORAGE ]]
+        then
+            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the performance storage requirement of $PERFORMANCE_STORAGE GB"
+            STORAGE_PROFILE=performance
         else
-            printf "%s\n" "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet the requirements."
-            read -p "Do you want to continue with a minimal installation? y/n " -n 1 -r
-            echo "REPLY is $REPLY"
-            if [[ ! $REPLY =~ ^[Nn]$ ]]
-            then
-                printf "%s\n" "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
-                printf "%s\n" "The installation will continue, but you may run out of storage depending on your workload."
-            else
-                printf "%s\n" "Aborting installation, the minium supported storage is $MIN_STORAGE"
-                exit 1
-            fi
+           printf "%s\n" " The storage size $DISK_SIZE_HUMAN does not meet the minimum size of the $MIN_STORAGE GB"
+            STORAGE_PROFILE=notmet
         fi
     else
-        printf "%s\n" "Could not find the qubinode libvirt pool **${libvirt_pool_name}**"
-        printf "%s\n" "No storage check was performed, please ensure your pool has enough storage"
+        printf "%s\n" " The utility /bin/lsblk is missing. Please install the util-linux package."
+        exit 1
     fi
 }
+
+function check_memory_size () {
     
+    MINIMAL_MEMORY=$(awk '/qubinode_minimal_memory:/ {print $2}' "${vars_file}")
+    STANDARD_MEMORY=$(awk '/qubinode_standard_memory:/ {print $2}' "${vars_file}")
+    PERFORMANCE_MEMORY=$(awk '/qubinode_performance_memory:/ {print $2}' "${vars_file}")
+    
+    MINIMAL_MEMORY=${MINIMAL_MEMORY:-30}
+    STANDARD_MEMORY=${STANDARD_MEMORY:-80}
+    PERFORMANCE_MEMORY=${PERFORMANCE_MEMORY:-88}
+
+    TOTAL_MEMORY=$(free -g|awk '/^Mem:/{print $2}')
+    
+    if [[ $TOTAL_MEMORY -ge $MINIMAL_MEMORY ]] && [[ $TOTAL_MEMORY -lt $STANDARD_MEMORY ]]
+    then
+        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the minimum memory requirement of $MINIMAL_MEMORY GB"
+        MEMORY_PROFILE=minimal
+    elif [[ $TOTAL_MEMORY -ge $STANDARD_MEMORY ]] && [[ $TOTAL_MEMORY -lt $PERFORMANCE_MEMORY ]]
+    then
+        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the standard memory requirement of $STANDARD_MEMORY GB"
+        MEMORY_PROFILE=standard
+    elif [[ $TOTAL_MEMORY -ge $PERFORMANCE_MEMORY ]]
+    then
+        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the performance memory requirement of $PERFORMANCE_MEMORY GB"
+        MEMORY_PROFILE=performance
+    else
+       printf "%s\n" " The memory size $TOTAL_MEMORY GB does not meet the minimum size of the $MINIMAL_MEMORY GB"
+       MEMORY_PROFILE=notmet
+    fi
+}
+
+function check_hardware_resources () {
+    check_disk_size
+    sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
+
+    check_memory_size
+    sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+}
+
 function select_openshift3_cluster_size () {
     printf "%s\n" "${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY}"
     # Set OpenShift deployment size based on available memory

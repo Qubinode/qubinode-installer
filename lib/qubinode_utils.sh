@@ -14,7 +14,7 @@ function qubinode_project_cleanup () {
     fi
 
     # Delete OpenShift files
-    openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
     if [[ ${openshift_product} == "ocp3" ]]; then
       FILES=("${FILES[@]}" "$ocp3_vars_files")
     elif [[ ${openshift_product} == "okd3" ]]; then
@@ -85,3 +85,18 @@ function exit_status () {
         exit "${RESULT}"
     fi
 }
+
+
+convertB_human() {
+    # Thanks to https://bit.ly/39xomtN
+    NUMBER=$1
+    for DESIG in Bytes KB MB GB TB PB
+    do
+        [ $NUMBER -lt 1024 ] && break
+        let NUMBER=$NUMBER/1024
+    done
+
+    DISK_SIZE_HUMAN=$(printf "%d %s\n" $NUMBER $DESIG)
+    DISK_SIZE_COMPARE=$(printf "%d %s\n" $NUMBER)
+}
+
