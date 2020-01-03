@@ -30,7 +30,7 @@ function openshift4_prechecks () {
     if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
     then
         echo "Setting firewall rules"
-        sudo firewall-cmd --add-port={80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
+        sudo firewall-cmd --add-port={80/tcp,8080/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
         sudo firewall-cmd --reload
     fi
 
