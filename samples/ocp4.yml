@@ -3,8 +3,9 @@ dns_teardown: false
 vn_subnet: "{{ libvirt_host_networks[0].subnet }}"
 master_count: 3
 compute_count: 2
-dns_wildcard: "*.apps"
+dns_wildcard: "*.apps.ocp42"
 listen_address: "{{ kvm_host_ip }}"
+nat_gateway: "192.168.50.1"
 
 # OpenShift client  and install information
 ocp4_version: 4.2.10
