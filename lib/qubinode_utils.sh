@@ -2,7 +2,7 @@
 
 
 function qubinode_project_cleanup () {
-    # resets the project to a clean state by removing all vars files 
+    # resets the project to a clean state by removing all vars files
     # ensure requirements are in place
     qubinode_required_prereqs
 
@@ -64,6 +64,7 @@ function canSSH () {
 
 
 function get_admin_user_password () {
+    echo "Fetching OpenShift Admin Password. Please Enter Vault password to decrypt file."
     ansible-vault decrypt "${vault_vars_file}"
     admin_user_passowrd=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
     ansible-vault encrypt "${vault_vars_file}"
@@ -84,4 +85,3 @@ function exit_status () {
         exit "${RESULT}"
     fi
 }
-

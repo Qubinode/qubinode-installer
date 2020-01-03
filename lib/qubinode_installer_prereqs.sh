@@ -72,14 +72,14 @@ function check_for_dns () {
     then
         resolvedIP=$(dig +short "$record")
     else
-        echo "Can't find the dig or nslookup command, please resolved and run script again"
+        printf "%s\n" " Can't find the dig or nslookup command, please resolved and run script again"
         exit 1
     fi
 
     if [ "A${resolvedIP}" == "A" ]
     then
-        echo "DNS resolution for $record failed!"
-        echo "Please ensure you have access to the internet or /etc/resolv.conf has the correct entries"
+        printf "%s\n" " ${red}DNS resolution for ${end}${yel}$record failed!${end}"
+        printf "%s\n" " Please ensure you have access to the internet or /etc/resolv.conf has the correct entries"
         exit 1
     fi
 }
@@ -106,9 +106,9 @@ function does_file_exist () {
 function check_for_hash () {
     if [ -n $string ] && [ `expr "$string" : '[0-9a-fA-F]\{32\}\|[0-9a-fA-F]\{40\}'` -eq ${#string} ]
     then
-        echo "valid"
+        print "%s\n" "${grn}valid${end}"
     else
-        echo "invalid"
+        print "%s\n" "${red}invalid${end}"
     fi
 }
 
@@ -116,7 +116,7 @@ function setup_user_ssh_key () {
     HOMEDIR=$(eval echo ~${CURRENT_USER})
     if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
     then
-        echo "Setting up ssh keys for ${CURRENT_USER}"
+        print "%s\n" " Setting up ssh keys for ${yel}${CURRENT_USER}${end}"
         ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
     fi
 }
@@ -132,11 +132,11 @@ function confirm () {
             continue="yes"
         elif [[ $response =~ ^([nN][oO])$ ]]
         then
-            echo "You choose $response"
+            #echo "You choose $response"
             response="no"
             continue="yes"
         else
-            echo "Try again"
+            printf "%s\n" " ${blu}Try again!${end}"
         fi
     done
 }

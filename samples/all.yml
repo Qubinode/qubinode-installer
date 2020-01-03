@@ -44,10 +44,6 @@ ansible_repo: rhel-7-server-ansible-2.6-rpms
 # deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
 qubinode_bridge_name: qubibr0
 
-# The qubinode-installer depends on IdM as the DNS server.
-# If there is an existing Idm, then set this to no.
-deploy_idm_server: yes
-
 # All VMs created name will begin with this prefix.
 instance_prefix: qbn
 preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
@@ -118,8 +114,6 @@ logical_volumes:
     size: "+100%FREE"
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
     fstype: xfs
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
-vg_name: vg_qubi
 
 
 #################################
@@ -128,9 +122,10 @@ vg_name: vg_qubi
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images
-host_device: nvme0n1
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
-qubinode_bridge_name: qubibr0
+vm_libvirt_net_check: yes
+libvirt_pool_name_check: yes
 
 ###########################################
 # variables for swygue.edge_host_setup role

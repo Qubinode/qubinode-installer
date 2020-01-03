@@ -55,6 +55,8 @@ We are working as best we can to have better documentation. Contributions are we
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
 ## Day Two Operations
+- [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
+- [OpenShift v3.11 Day 2 Operations]()
 
 ## Training
 

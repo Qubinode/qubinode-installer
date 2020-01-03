@@ -21,15 +21,16 @@ function check_hardware_resources () {
     AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
 
     AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
+    AVAILABLE_STORAGE_INT=${AVAILABLE_STORAGE%.*}
     AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
 
     # Check for available storage
     if sudo virsh pool-list --details | grep -q "${libvirt_pool_name}"
     then
-        if [[ ${AVAILABLE_STORAGE} -ge ${RECOMMENDED_STORAGE} ]]
+        if [[ ${AVAILABLE_STORAGE_INT} -ge ${RECOMMENDED_STORAGE} ]]
         then
             echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} meets the requirements."
-        elif [[ ${AVAILABLE_STORAGE} -ge ${MIN_STORAGE} ]]
+        elif [[ ${AVAILABLE_STORAGE_INT} -ge ${MIN_STORAGE} ]]
         then
              echo "Your available storage of ${AVAILABLE_HUMAN_STORAGE} does not meet our recommend minimum of 1TB."
              echo "The installation will continue, but you may run out of storage depending on your workload."

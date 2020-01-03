@@ -57,7 +57,7 @@ dns_wildcard: "{{ openshift_dns_wildcard }}"
 
 # Use to setup http auth for openshift
 htpasswd_file_path: "{{ inventory_dir }}/passwordFile"
-openshift_deployment_type: "{{ openshift_product | default('openshift-enterprise') }}"
+openshift_deployment_type: "openshift-enterprise"
 openshift_ansible_rpms:
   - openshift-ansible-playbooks.noarch
   - openshift-ansible.noarch
