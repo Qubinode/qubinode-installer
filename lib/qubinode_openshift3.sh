@@ -21,19 +21,34 @@ function qubinode_autoinstall_openshift () {
     # Check if this will be a qubinode install
     ask_user_if_qubinode_setup
 
+    # Set the QUBINODE_SYSTEM variable based on user response
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+
     # Check if the device meets the minimum storage and memory requirement
     # and set the storage_profile and memory requirement value
     storage_profile=$(awk '/^storage_profile:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
     memory_profile=$(awk '/^memory_profile:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
 
-    if [[ "A${memory_profile}" == 'A""' ]] && [[ "A${storage_profile}" == 'A""' ]]
+    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
-        check_additional_storage
-        check_hardware_resources
+        if [[ "A${memory_profile}" == 'A""' ]] && [[ "A${storage_profile}" == 'A""' ]]
+        then
+            check_additional_storage
+            check_hardware_resources
+        fi
+    else
+        if [[ "A${memory_profile}" == 'A""' ]] && [[ "A${storage_profile}" == 'A""' ]]
+        then
+            check_libvirt_pool
+            check_libvirt_network
+            check_hardware_resources
+        fi
     fi
 
     # Check your hardware resources and determine the size of your openshift
     # cluster deployment
+    # TODO: add option to check if openshift is already deployed then choose
+    #skip this step if it.
     check_openshift3_size_yml
 
     #TODO: HERE

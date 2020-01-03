@@ -11,10 +11,19 @@ function check_disk_size () {
 
     if rpm -qf /bin/lsblk > /dev/null 2>&1
     then
-        DISK_INFO=$(lsblk -dpb | grep $DISK)
-        CURRENT_DISK_SIZE=$(echo $DISK_INFO| awk '{print $4}')
-        
-        convertB_human $CURRENT_DISK_SIZE
+        # If not setting system as a Qubinode then the
+        # variable POOL_CAPACITY should be defined. Use it to
+        # determine if there is enough storage to continue
+        if [ "A${POOL_CAPACITY}" != "A" ]
+        then
+            convertB_human $POOL_CAPACITY
+        else
+            DISK_INFO=$(lsblk -dpb | grep $DISK)
+            CURRENT_DISK_SIZE=$(echo $DISK_INFO| awk '{print $4}')
+            convertB_human $CURRENT_DISK_SIZE
+        fi
+
+        # Set the system storage profile based on disk or libvirt pool capacity
         if [[ $DISK_SIZE_COMPARE -ge $MIN_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $STANDARD_STORAGE ]]
         then
             printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the minimum storage requirement of $MIN_STORAGE GB"

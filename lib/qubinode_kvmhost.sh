@@ -97,7 +97,7 @@ function ask_user_if_qubinode_setup () {
     if [ "A${QUBINODE_SYSTEM}" == "A" ]
     then
         printf "%s\n" "   ${yel}********************************************${end}"
-        printf "%s\n\n" "   ${yel}Networking, Storage and Subscription Manager${end}"
+        printf "%s\n\n" "   ${yel}Qubinode Setup${end}"
         printf "%s\n" " The qubinode-installer configures your hardware as a KVM host"
         printf "%s\n\n" " otherwise referred as ${grn}Qubinode${end}."
 
@@ -115,6 +115,14 @@ function ask_user_if_qubinode_setup () {
         else
             # Set varaible not to configure storage and networking
             sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            printf "%s\n\n" ""
+            printf "%s\n" "${cyn} You choose not to setup this system as a Qubinode.${end}"
+            printf "%s\n" "${cyn} Please understand that by choosing this route you are${end}"
+            printf "%s\n" "${cyn} taking ownership of setting up the system to function as${end}"
+            printf "%s\n" "${cyn} kvm/libvirt host. Also, support for this setup is limited.${end}"
+            printf "%s\n" "${yel} However, pull request are very welcome.${end}"
+            printf "%s\n\n" "${cyn} We will now attempt to verify your libvirt storage and network.${end}"
+
         fi
     fi
 }
@@ -127,10 +135,11 @@ function check_libvirt_pool () {
     then
         # Check libvirt storage
         LIBVIRT_POOLS=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn | wc -l)
+        LIBVIRT_POOLS="${LIBVIRT_POOLS:-0}"
         if [ $LIBVIRT_POOLS -gt 1 ]
         then
-            printf "%s\n\n" " ${mag}Found multiple libvirt pools${end}"
-            printf "%s\n" " ${yel}Choose one to continue: ${end}"
+            #printf "%s\n\n" " ${mag}Found multiple libvirt pools${end}"
+            printf "%s\n" " ${yel}Found multiple libvirt pools, choose one to continue: ${end}"
             declare -a all_pools=()
             mapfile -t all_pools < <(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
             createmenu "${all_pools[@]}"
@@ -139,6 +148,10 @@ function check_libvirt_pool () {
             printf "%s\n" " Setting libvirt_pool_name to $POOL"
             sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
             sed -i "s/libvirt_pool_name_check:.*/libvirt_pool_name_check: no/g" "${vars_file}"
+        elif [ $LIBVIRT_POOLS -eq 0 ]
+        then
+            printf "%s\n\n" " ${red}No libvirt pool found, please resolve this issue and try again.${end}"
+            exit 2
         else
             POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
             if [ "A${POOL}" != "default" ]
@@ -148,35 +161,39 @@ function check_libvirt_pool () {
                 sed -i "s/libvirt_pool_name_check:.*/libvirt_pool_name_check: no/g" "${vars_file}"
             fi
         fi
+        # Check the pool capacity
+        POOL_CAPACITY=$(sudo virsh pool-dumpxml "${POOL}"| grep capacity | grep -Eo "[[:digit:]]{1,100}")
     fi
 }
 
 function check_libvirt_network () {
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
     CHECK_LIBVIRT_NET=$(awk '/vm_libvirt_net_check:/ {print $2; exit}' "${vars_file}" | tr -d '"')
-
     if [ "A${CHECK_LIBVIRT_NET}" == "Ayes" ]
     then
         # Check libvirt network
-        LIBVIRT_NETS=$(sudo virsh net-list --autostart | awk '/active/ {print $1}'| grep -v qubi|grep -v ocp42| wc -l)
+        LIBVIRT_NETS=$(sudo virsh net-list --autostart | awk '/active/ {print $1}'| wc -l)
+        LIBVIRT_NETS="${LIBVIRT_NETS:-0}"
         if [ $LIBVIRT_NETS -gt 1 ]
         then
-            printf "%s\n\n" " ${mag}Found multiple libvirt networks${end}"
-            printf "%s\n" "${yel} Choose one to continue: ${end}"
+            printf "%s\n" "${yel} Found multiple libvirt networks, choose one to continue: ${end}"
             declare -a all_networks=()
-            mapfile -t all_networks < <(sudo virsh net-list --autostart | awk '/active/ {print $1}'| grep -v qubi|grep -v ocp42)
+            mapfile -t all_networks < <(sudo virsh net-list --autostart | awk '/active/ {print $1}')
             createmenu "${all_networks[@]}"
             NETWORK=($(echo "${selected_option}"))
 
             printf "%s\n" " Setting vm_libvirt_net to $NETWORK"
             sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$NETWORK"/g" "${vars_file}"
             sed -i "s/vm_libvirt_net_check:.*/vm_libvirt_net_check: no/g" "${vars_file}"
+        elif [ $LIBVIRT_NETS -eq 0 ]
+        then
+            printf "%s\n\n" " ${red}No libvirt network found, please resolve this issue and try again.${end}"
+            exit 2
         else
-            NETWORK=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+            NETWORK=$(sudo virsh net-list --autostart | awk '/active/ {print $1}')
             if [ "A${NETWORK}" != "qubinet" ]
             then
                printf "%s\n" " Setting vm_libvirt_net to $NETWORK"
-               sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$NETWORK"/g" "${vars_file}"
+               sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: $NETWORK/g" "${vars_file}"
                sed -i "s/vm_libvirt_net_check:.*/vm_libvirt_net_check: no/g" "${vars_file}"
             fi
         fi

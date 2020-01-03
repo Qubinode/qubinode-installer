@@ -4,7 +4,10 @@
 #---------------------------------------------#
 openshift_product: ""
 openshift_deployment_size: ""
-deployment_type: "{{ openshift_deployment_size | default('standard') }}"
+
+# this variables appears not to be in use
+#deployment_type: "{{ openshift_deployment_size | default('standard') }}"
+
 openshift_pool_id: ""
 openshift_user: ""
 openshift_auto_install: ""
