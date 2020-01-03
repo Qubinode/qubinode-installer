@@ -5,9 +5,9 @@
 # depends on
 
 function ensure_supported_ansible_version () {
-    ANSIBLE_VERSION="awk '/ansible_version/ {print $2}' "${vars_file}""
-    ANSIBLE_RELEASE="awk '/ansible_release/ {print $2}' "${vars_file}""
-    ANSIBLE_RPM="awk '/ansible_rpm/ {print $2}' "${vars_file}""
+    ANSIBLE_VERSION=$(awk '/ansible_version/ {print $2}' "${vars_file}")
+    ANSIBLE_RELEASE=$(awk '/ansible_release/ {print $2}' "${vars_file}")
+    ANSIBLE_RPM=$(awk '/ansible_rpm/ {print $2}' "${vars_file}")
     CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
