@@ -58,6 +58,8 @@ We are working as best we can to have better documentation. Contributions are we
 ## Day Two Operations
 - [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
 - [OpenShift v3.11 Day 2 Operations]()
+- [OpenShift Project and User Management Guide](https://medium.com/@tcij1013/openshift-project-and-user-management-guide-612dd89af60b?)
+
 
 ## Training
 
