@@ -14,7 +14,7 @@ function qubinode_project_cleanup () {
     fi
 
     # Delete OpenShift files
-    openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
     if [[ ${openshift_product} == "ocp3" ]]; then
       FILES=("${FILES[@]}" "$ocp3_vars_files")
     elif [[ ${openshift_product} == "okd3" ]]; then
@@ -65,12 +65,12 @@ function canSSH () {
 
 function get_admin_user_password () {
     echo "Fetching OpenShift Admin Password. Please Enter Vault password to decrypt file."
-    ansible-vault decrypt "${vault_vars_file}"
+    decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_user_passowrd=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
-    ansible-vault encrypt "${vault_vars_file}"
+    encrypt_ansible_vault "${vaultfile}" >/dev/null
     if [ "A${admin_user_passowrd}" == "A" ]
     then
-        echo "Unable to retrieve $CURRENT_USER user password from the vault"
+        print "%s\n" " Unable to retrieve ${yel}$CURRENT_USER${end} user password from the vault"
         exit 1
     fi
 }
@@ -85,3 +85,18 @@ function exit_status () {
         exit "${RESULT}"
     fi
 }
+
+
+convertB_human() {
+    # Thanks to https://bit.ly/39xomtN
+    NUMBER=$1
+    for DESIG in Bytes KB MB GB TB PB
+    do
+        [ $NUMBER -lt 1024 ] && break
+        let NUMBER=$NUMBER/1024
+    done
+
+    DISK_SIZE_HUMAN=$(printf "%d %s\n" $NUMBER $DESIG)
+    DISK_SIZE_COMPARE=$(printf "%d %s\n" $NUMBER)
+}
+
