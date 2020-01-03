@@ -1,6 +1,24 @@
 # Qubinode Installer
 Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
+## APPLE Development BRANCH
+Target Release v2.3
+
+If you would like to Contribute to the qubinode project please see the documentation below.  
+[Qubinode WorkFlow Process](docs/git-workflow-process.adoc)  
+[Testing and Validation](test/README.md)  
+
+## Features that will be released in v2.3
+
+Feature  |  Status
+--|---
+Optimized Qubinode Menu  | In-Progress  |  
+OpenShift 4 menu option  | In-Progress  |  
+Ansible tower product  | NA  |  
+Satellite - Red Hat Satellite Server  | NA  |  
+OCP4 Smoke Test  | NA  |  
+OCP4 Cluster Verification  | NA  |  
+
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
