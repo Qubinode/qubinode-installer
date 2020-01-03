@@ -14,6 +14,7 @@ Feature  |  Status
 --|---
 Optimized Qubinode Menu  | In-Progress  |  
 OpenShift 4 menu option  | In-Progress  |  
+OpenShift 4 NFS storage  | Complete  |  
 Ansible tower product  | NA  |  
 Satellite - Red Hat Satellite Server  | NA  |  
 OCP4 Smoke Test  | NA  |  
