@@ -1,6 +1,6 @@
 # Qubinode Testing and Validation
 
-Qubinode has been tested and validated on the following systems. You you would like to add your system to this list please fork this branch, update the document and perform a pull request.
+Qubinode has been tested and validated on the following systems. You would like to add your system to this list please fork this branch, update the document and perform a pull request.
 
 ## KVM Role Validation
 MotherBoard  | Testing Status | Tester
@@ -20,7 +20,7 @@ Satellite - Red Hat Satellite Server  | NA  | NA
 IdM - Red Hat Identity Management  | NA  | NA  
 
 
-## Example Validation Report 
+## Example Validation Report
 **[Product Name](hardware_profiles/Product-Name)  Status** |-- |--
 --|---|--
 Product Name  |  Testing Status  | Tester
