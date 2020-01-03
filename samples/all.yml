@@ -38,6 +38,9 @@ rhel_release: 7.7
 # Ansible 2.7 is the current tested version.
 # Ansible 2.8 is currently being tested.
 ansible_repo: rhel-7-server-ansible-2.6-rpms
+ansible_version: 2.6.20
+ansible_release: 2.6
+ansible_rpm: ansible-2.6.20-1.el7ae.noarch
 
 # We leverage a bridge network for OCP3 installs
 # and other VMS. This sets the name of the bridge to be created and use when
@@ -71,6 +74,12 @@ dns_servers:
   - 8.8.8.8
 
 public_domain: "{{ domain }}"
+
+qubinode_installer_setup_completed: no
+qubinode_installer_rhsm_completed: no
+qubinode_installer_ansible_completed: no
+qubinode_installer_host_completed: no
+qubinode_base_reqs_completed: no
 
 # use by funciton check_hardware_resources
 libvirt_pool_name: default
@@ -126,6 +135,20 @@ host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
 vm_libvirt_net_check: yes
 libvirt_pool_name_check: yes
+
+# Hardware profiles
+qubinode_minimal_memory: 30
+qubinode_standard_memory: 80
+qubinode_performance_memory: 88
+
+# We are not enforcing acutal sizes at this time
+qubinode_minimal_storage: 370      # actual is 640
+qubinode_standard_storage: 900     # actual is 1160
+qubinode_performance_storage: 1340 # actual is 1340
+
+# your system profile
+storage_profile: ""
+memory_profile: ""
 
 ###########################################
 # variables for swygue.edge_host_setup role
