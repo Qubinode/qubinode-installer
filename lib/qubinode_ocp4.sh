@@ -30,7 +30,7 @@ function openshift4_prechecks () {
     if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
     then
         echo "Setting firewall rules"
-        sudo firewall-cmd --add-port={80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
+        sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
         sudo firewall-cmd --reload
     fi
 
@@ -117,6 +117,10 @@ function isvmRunning () {
     sudo virsh list |grep $vm|awk '/running/ {print $2}'
 }
 
+function isvmShutdown () {
+    sudo virsh list --all | grep $vm| awk '/shut/ {print $2}'
+}
+
 function remove_ocp4_vms () {
     #clean up
     all_vms=(bootstrap)
@@ -135,6 +139,8 @@ function remove_ocp4_vms () {
         vm="compute-$((i-1))"
         all_vms+=( "$vm" )
     done
+
+    #build_ocp4_vm_list
 
     for vm in "${all_vms[@]}"
     do
@@ -305,14 +311,17 @@ deploy_compute_nodes () {
     done
 }
 
-wait_for_nodes (){
-  i="$(sudo virsh list | grep running |wc -l)"
 
-  while [ $i -gt 1 ]
+
+wait_for_ocp4_nodes_shutdown () {
+  build_ocp4_vm_list
+  for vm in ${all_vms[@]}
   do
-    echo "waiting for coreos first boot to complete current count ${i}"
-    sleep 10s
-    i="$(sudo virsh list | grep running |wc -l)"
+      isvmRunning | while read VM
+      do
+          printf "%s\n" " waiting for $vm first boot shutdown to complete"
+          sleep 10s
+      done
   done
 }
 
@@ -359,21 +368,102 @@ EOF
 
 }
 
+function build_ocp4_vm_list () {
+    if [ -f $ocp4_vars_file ]
+    then
+        #clean up
+        all_vms=(bootstrap)
+        deleted_vms=()
+    
+        masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+        for  i in $(seq "$masters")
+        do
+            vm="master-$((i-1))"
+            all_vms+=( "$vm" )
+        done
+    
+        compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+        for i in $(seq "$compute")
+        do
+            vm="compute-$((i-1))"
+            all_vms+=( "$vm" )
+        done
+    fi
+}
+
 openshift4_enterprise_deployment () {
+
+    # declare variables
+    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
+    lb_name=$(awk '/^lb_name/ {print $2; exit}' "${ocp4_vars_file}")
+    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
+    lb_container_name="${lb_name}-${cluster_name}"
+
+    # Ensure all preqs before continuing
     openshift4_prechecks
+
+    # Setup the host system
     ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
+
+    # populate IdM with the dns entries required for OCP4
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
+
+    # deploy the load balancer container
     ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
-    sudo podman ps || exit 1
+    
+    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_container_name 2>/dev/null)
+    if [ "A${lb_container_status}" != "Atrue" ]
+    then
+        printf "%s\n" " The load balancer container ${cyn}$lb_container_name${end} did not deploy."
+        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
+        printf "%s\n" " Please investigate and try the intall again!"
+        exit 1
+    fi
+    
+    # Download the openshift 4 installer
+    #TODO: this playbook should be renamed to reflect what it actually does
     ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
+
+    # Create ignition files 
+    #TODO: check if the ignition files have been created longer than 24hrs
+    # regenerate if they have been
     ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
+
+    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
+    # - downloads the cores os qcow images
+    # - deploy httpd podman container
+    # - serve up the ignition files and cores qcow image over the web server
+    # TODO: make this idempotent, skips if the end state is already met
+    # /opt/qubinode_webserver/4.2/images/
     ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
+    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
+    if [ "A${httpd_container_status}" != "Atrue" ]
+    then
+        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
+        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
+        printf "%s\n" " Please investigate and try the intall again!"
+        exit 1
+    fi
+
+    # Get network information for ocp4 vms
     NODE_NETINFO=$(mktemp)
     sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
+
+    # Deploy the coreos nodes required
+    #TODO: playbook should not attempt to start VM's if they are already running
     deploy_bootstrap_node
     deploy_master_nodes
     deploy_compute_nodes
-    wait_for_nodes
+
+    # Ensure first boot is complete
+    # first boot is the initial deployment of the VMs 
+    # followed by a shutdown
+    wait_for_ocp4_nodes_shutdown
+
+    # Boot up the VM's starting the bootstrap node, followed by master, compute
+    # Then start the ignition process
     start_ocp4_deployment
+
+    # Show user post deployment steps to follow
     post_deployment_steps
 }

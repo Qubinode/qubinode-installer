@@ -137,6 +137,8 @@ qubinode_bridge_name: qubibr0
 
 
 # This is required for OpenShift 4
+# TODO: the codebase needs to up to look for this
+# variable under playbooks/var/ocp4.yml
 cluster_name: ocp42
 
 nat_network_name: "{{ cluster_name }}"
