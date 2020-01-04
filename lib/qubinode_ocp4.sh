@@ -45,68 +45,153 @@ openshift4_qubinode_teardown () {
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
 
     # Delete VMS
-    for n in $(cat rhcos-install/node-list)
+    test -f $ocp4_vars_file && remove_ocp4_vms
+
+    # Delete containers managed by systemd
+    for i in $(echo "lbocp42.service ocp4lb.service openshift-4-loadbalancer-ocp42.service")
     do
-        echo "Deleting VM $n..."
-        sudo virsh shutdown $n
-        sleep 10s
-        sudo virsh destroy $n
-        sudo virsh undefine $n
-        sudo rm -f /var/lib/libvirt/images/${n}.qcow2
+        if sudo sudo systemctl list-unit-files | grep -q $i
+        then
+            echo "Removing podman container $i"
+            sudo systemctl stop $i >/dev/null
+            sudo systemctl disable $i >/dev/null
+            sudo systemctl daemon-reload >/dev/null
+            sudo systemctl reset-failed >/dev/null
+            path="/etc/systemd/system/${i}"
+            test -f $path && sudo rm -f $path
+        fi
     done
 
-    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
-    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
 
-    if sudo podman ps -a| grep -q ocp4lb
+    # Delete the remaining containers and pruge their images
+    containers=( ocp4lb lbocp42 openshift-4-loadbalancer-ocp42 ocp4ignhttpd ignwebserver)
+    deleted_containers=()
+    for pod in ${containers[@]}
+    do
+        id=$(sudo podman ps -q -f name=$pod)
+        if [ "A${id}" != "A" ]
+        then
+            sudo podman container stop $id
+            sudo podman container rm -f $id
+        fi
+
+        if ! sudo podman container ls -a | grep -q $pod
+        then
+            deleted_containers+=( "$pod" )
+            containers=("${containers[@]/$pod/}")
+        fi
+    done
+
+    # purge all containers and their images
+    sudo podman container prune --force >/dev/null
+    sudo podman image prune --all >/dev/null
+
+    # Verify all containers have been deleted and exit otherwise
+    if [ "${#containers[@]}" -ne "${#deleted_containers[@]}" ]
     then
-        echo "Removing ocp4lb container."
-        sudo podman stop ocp4lb
-        sudo podman rm ocp4lb
+        printf "%s\n" " There is a total of ${#containers[@]}, ${#deleted_containers[@]} were deleted."
+        printf "%s\n" " The following could containers not be deleted. Please manually delete them and try again."
+
+        for i in "${containers[@]}"
+        do
+            printf "%s\n" "    ${i:-other}"|grep -v other
+        done
+        exit
     fi
 
-    if sudo podman ps -a| grep -q lbocp42
-    then
-        echo "Removing lbocp42 container."
-        sudo podman stop lbocp42
-        sudo podman rm lbocp42
-    fi
-
-    if sudo podman ps -a| grep -q openshift-4-loadbalancer-ocp42
-    then
-        echo "Removing openshift-4-loadbalancer-ocp42 container."
-        sudo podman stop openshift-4-loadbalancer-ocp42
-        sudo podman rm openshift-4-loadbalancer-ocp42
-    fi
-
-    if sudo podman ps -a| grep -q ocp4ignhttpd
-    then
-        sudo podman stop ocp4ignhttpd
-        sudo podman rm ocp4ignhttpd
-    fi
-
-    if sudo podman ps -a| grep -q ocp4ignhttpd
-    then
-        sudo podman stop openshift-4-loadbalancer-ocp42
-        sudo podman rm openshift-4-loadbalancer-ocp42
-    fi
-
+    # Remove downloaded ignitions files
     test -d /opt/qubinode_webserver/4.2/ignitions && \
          rm -rf /opt/qubinode_webserver/4.2/ignitions
+    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
+    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
+    test -f "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
 
-for i in $(echo "lbocp42.service ocp4lb.service openshift-4-loadbalancer-ocp42.service")
-do
-    echo "Removing podman container $i"
-    sudo systemctl stop $i
-    sudo systemctl disable $i
-    sudo systemctl daemon-reload
-    sudo systemctl reset-failed
-done
-
-test -d "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
-    echo ""
-    echo "OCP4 deployment removed"
+    printf "%s\n\n" ""
+    printf "%s\n" " ${yel}************************${end}"
+    printf "%s\n" " OCP4 deployment removed"
+    printf "%s\n\n" " ${yel}************************${end}"
     exit 0
+}
+
+function isvmRunning () {
+    sudo virsh list |grep $vm|awk '/running/ {print $2}'
+}
+
+function remove_ocp4_vms () {
+    #clean up
+    all_vms=(bootstrap)
+    deleted_vms=()
+
+    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+    for  i in $(seq "$masters")
+    do
+        vm="master-$((i-1))"
+        all_vms+=( "$vm" )
+    done
+
+    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+    for i in $(seq "$compute")
+    do
+        vm="compute-$((i-1))"
+        all_vms+=( "$vm" )
+    done
+
+    for vm in "${all_vms[@]}"
+    do
+        if sudo virsh list --all | grep -q $vm
+        then
+            state=$(sudo virsh list --all | grep $vm|awk '{print $3}')
+            if [ "A${state}" == "Arunning" ]
+            then
+                isvmRunning | while read VM
+                do
+                    sudo virsh shutdown $vm
+                    sleep 3
+                done
+                sudo virsh destroy $vm
+                sudo virsh undefine $vm --remove-all-storage
+                if ! sudo virsh list --all | grep -q $vm
+                then
+                    printf "%s\n" " $vm has was powered off and removed"
+                    deleted_vms+=( "$vm" )
+                    all_vms=("${all_vms[@]/$vm/}")
+                fi
+            elif [ "A${state}" == "Ashut" ]
+            then
+                sudo virsh undefine $vm --remove-all-storage
+                if ! sudo virsh list --all | grep -q $vm
+                then
+                    printf "%s\n" " $vm was already powered, it has been removed"
+                    deleted_vms+=( "$vm" )
+                    all_vms=("${all_vms[@]/$vm/}")
+                fi
+            else
+                sudo virsh destroy $vm
+                sudo virsh undefine $vm --remove-all-storage
+                if ! sudo virsh list --all | grep -q $vm
+                then
+                    printf "%s\n" " $vm state was ${state}, it has been removed"
+                    deleted_vms+=( "$vm" )
+                    all_vms=("${all_vms[@]/$vm/}")
+                fi
+            fi
+        else
+            printf "%s\n" " $vm has been removed"
+            deleted_vms+=( "$vm" )
+            all_vms=("${all_vms[@]/$vm/}")
+        fi
+    done
+
+    if [ "${#all_vms[@]}" -ne "${#deleted_vms[@]}" ]
+    then
+        printf "%s\n" " There is a total of ${#all_vms[@]}, ${#deleted_vms[@]} were deleted."
+        printf "%s\n" " The following VMs could not be deleted. Please manually delete them and try again."
+        for i in "${all_vms[@]}"
+        do
+            printf "%s\n" "    ${i:-other}"|grep -v other
+        done
+        exit
+    fi
 }
 
 openshift4_server_maintenance () {
