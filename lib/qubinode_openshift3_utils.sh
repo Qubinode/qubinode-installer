@@ -53,25 +53,6 @@ function openshift3_variables () {
     fi
 }
 
-#function check_openshift3_size_yml () {
-#    openshift3_variables
-#    if [ ! -f "${openshift_deployment_size_yml}" ]
-#    then
-#        echo "Running Hardware Check"
-#        check_hardware_resources
-#    else
-#        if [ "A${openshift_auto_install}" != "Atrue" ]
-#        then
-#            echo ""
-#            confirm "Continue with a $DEPLOYMENT_SIZE type deployment? yes/no"
-#            if [ "A${response}" != "Ayes" ]
-#            then
-#                check_hardware_resources
-#            fi
-#        fi
-#    fi
-#}
-
 function check_openshift3_size_yml () {
     storage_profile=$(awk '/^storage_profile:/ {print $2}' "${vars_file}")
     memory_profile=$(awk '/^memory_profile:/ {print $2}' "${vars_file}")
@@ -198,15 +179,14 @@ function qubinode_openshift3_nodes_postdeployment () {
            echo "Remove ${openshift_product} will be removed"
        fi
    else
-       echo "Post configure ${openshift_product} VMs"
-       # Run node post deployment check playbook
-       ansible-playbook ${openshift3_post_deployment_checks_playbook}
-
        # Ensure DNS records and the post deploy playboo is executed
        # Web cluster status is not up
        if [ "A${STATUS}" !=  "A200" ] ; then
+           echo " Post configure ${openshift_product} VMs"
            ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
            ansible-playbook "${NODES_POST_PLAY}" || exit $?
+           # Run node post deployment check playbook
+           ansible-playbook ${openshift3_post_deployment_checks_playbook}
        fi
    fi
 }
@@ -429,8 +409,12 @@ function qubinode_deploy_openshift () {
     fi
 
     # skips these steps if OCP cluster is responding
+    # Run the node post deployment to ensure things like
+    # the system is properly subscribe.
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
+        # Run the node post deployment checks
+        qubinode_openshift3_nodes_postdeployment
         # run openshift pre deployment checks
         echo "Running Qubi node openshift deployment checks."
         run_cmd="ansible-playbook -i ${INVENTORYFILE} ${openshift3_pre_deployment_checks_playbook}"
@@ -552,64 +536,64 @@ function qubinode_teardown_openshift () {
 }
 
 
-function qubinode_autoinstall_openshift () {
-    product_in_use="ocp3" # Tell the installer this is openshift3 installation
-    openshift_product="${product_in_use}"
-    qubinode_product_opt="${product_in_use}"
-    openshift_auto_install=true # Tells the installer to use defaults options
-    update_variable=true
-
-    printf "\n\n ${yel}*************************${end}\n"
-    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
-    printf " ${yel}*************************${end}\n\n"
-
-    # ensure all the required prequesties are setupa
-    pre_check_for_rhel_qcow_image
-    qubinode_base_requirements
-
-    # Check current deployment size
-    current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
-    # The default openshift size is stanadard
-    # This ensures that if the size is already set
-    # it does not get overwritten
-    if [ "A${current_deployment_size}" == 'A""' ]
-    then
-        #echo "Setting Openshift deployment size to standard."
-        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-    fi
-
-    printf "\n\n********************************************\n"
-    printf "* Ensure host system is registered to RHSM *\n"
-    printf "*********************************************\n\n"
-    qubinode_rhsm_register
-
-    printf "\n\n*******************************************************\n"
-    printf "* Ensure host system is setup as a ansible controller *\n"
-    printf "*******************************************************\n\n"
-    test ! -f /usr/bin/ansible && qubinode_setup_ansible
-
-    printf "\n\n*********************************************\n"
-    printf     "* Ensure host system is setup as a KVM host *\n"
-    printf     "*********************************************\n"
-    ping_nodes
-    if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
-    then
-        qubinode_setup_kvm_host
-    fi
-
-    printf "\n\n****************************\n"
-    printf     "* Deploy IdM DNS Server    *\n"
-    printf     "****************************\n"
-    qubinode_deploy_idm
-
-    printf "\n\n*********************\n"
-    printf     "*Deploy ${product_in_use} cluster *\n"
-    printf     "*********************\n"
-    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
-    sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
-    openshift_enterprise_deployment
-    openshift3_installation_msg
-}
+#function qubinode_autoinstall_openshift () {
+#    product_in_use="ocp3" # Tell the installer this is openshift3 installation
+#    openshift_product="${product_in_use}"
+#    qubinode_product_opt="${product_in_use}"
+#    openshift_auto_install=true # Tells the installer to use defaults options
+#    update_variable=true
+#
+#    printf "\n\n ${yel}*************************${end}\n"
+#    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
+#    printf " ${yel}*************************${end}\n\n"
+#
+#    # ensure all the required prequesties are setupa
+#    pre_check_for_rhel_qcow_image
+#    qubinode_base_requirements
+#
+#    # Check current deployment size
+#    current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
+#    # The default openshift size is stanadard
+#    # This ensures that if the size is already set
+#    # it does not get overwritten
+#    if [ "A${current_deployment_size}" == 'A""' ]
+#    then
+#        #echo "Setting Openshift deployment size to standard."
+#        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
+#    fi
+#
+#    printf "\n\n********************************************\n"
+#    printf "* Ensure host system is registered to RHSM *\n"
+#    printf "*********************************************\n\n"
+#    qubinode_rhsm_register
+#
+#    printf "\n\n*******************************************************\n"
+#    printf "* Ensure host system is setup as a ansible controller *\n"
+#    printf "*******************************************************\n\n"
+#    test ! -f /usr/bin/ansible && qubinode_setup_ansible
+#
+#    printf "\n\n*********************************************\n"
+#    printf     "* Ensure host system is setup as a KVM host *\n"
+#    printf     "*********************************************\n"
+#    ping_nodes
+#    if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
+#    then
+#        qubinode_setup_kvm_host
+#    fi
+#
+#    printf "\n\n****************************\n"
+#    printf     "* Deploy IdM DNS Server    *\n"
+#    printf     "****************************\n"
+#    qubinode_deploy_idm
+#
+#    printf "\n\n*********************\n"
+#    printf     "*Deploy ${product_in_use} cluster *\n"
+#    printf     "*********************\n"
+#    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
+#    sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
+#    openshift_enterprise_deployment
+#    openshift3_installation_msg
+#}
 
 function ping_nodes () {
     echo "Running ping_nodes"
