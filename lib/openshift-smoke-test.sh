@@ -35,14 +35,21 @@ done
 
 echo "Testing external route to application"
 APP_URL=$(oc get routes | grep nodejs | awk '{print $2}')
-curl -vs http://$APP_URL > /dev/null 2>&1 || exit 1
-
+APP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "http://$APP_URL")
 
 oc delete all --selector app=nodejs-mongo-persistent > /dev/null 2>&1
 oc delete project validate > /dev/null 2>&1
 
-echo "******************************************"
-echo "*** SMOKE TESTS COMPLTED SUCCESSFULLY  ***"
-echo "******************************************"
+if [ "A${APP_STATUS}" == "A200" ]
+then
+    echo "******************************************"
+    echo "*** SMOKE TESTS COMPLETED SUCCESSFULLY ***"
+    echo "******************************************"
+    exit 0
+else
+    echo "******************************************"
+    echo "*** SMOKE TESTS FAILED                 ***"
+    echo "******************************************"
+    exit 1
+fi
 
-exit 0

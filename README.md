@@ -18,7 +18,7 @@ The installer supports installing Red Hat OpenShift (OCP) or The Origin Communit
 * Server With at least 1 TB of Secondary Hard Drive
 * Ansible version 2.6 and up
 * RHEL7
-* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.  
+* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.
 * For [OpenShift Origin](https://www.okd.io/) (OKD) a subscription is not needed.
 
 ## Supported Versions
@@ -37,6 +37,8 @@ We are working as best we can to have better documentation. Contributions are we
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
 ## Day Two Operations
+- [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
+- [OpenShift v3.11 Day 2 Operations]()
 
 ## Training
 
@@ -60,6 +62,6 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [Jooho](https://github.com/Jooho)
 
 ## Author
-Tosin Akinosho - [tosin2013](https://github.com/tosin2013)  
-Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)  
-Abnerson Malivert - [amalivert](https://github.com/amalivert)  
+Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
+Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
+Abnerson Malivert - [amalivert](https://github.com/amalivert)
