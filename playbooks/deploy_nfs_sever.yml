@@ -1,0 +1,39 @@
+- name: Deploy NFS server VM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/nfs_server.yml
+  vars:
+    vm_name: "{{ nfs_server_vm.nfs_name }}"
+    vm_cpu: "{{ nfs_server_vm.nfs_vcpu }}"
+    vm_memory: "{{ nfs_server_vm.nfs_memory }}"
+    vm_root_disk_size: "{{ nfs_server_vm.nfs_root_disk_size }}"
+    vm_teardown: "{{ nfs_server_vm.nfs_teardown }}"
+    vm_recreate: "{{ nfs_server_vm.nfs_recreate }}"
+    inventory_group: "{{ nfs_server_vm.nfs_group }}"
+    extra_storage: "{{ nfs_server_vm.nfs_extra_storage }}"
+    enable: "{{ nfs_server_vm.nfs_enable }}"
+  environment:
+    IPA_HOST: "{{ ipa_host }}"
+    IPA_USER: "{{ idm_admin_user }}"
+    IPA_PASS: "{{ idm_admin_pwd }}"
+
+  tasks:
+    - name: Create KVM VM for nfs_serveer Server Server
+      include_role:
+        name: deploy-kvm-vm
+      tags: nfs_serveer_vm
+
+    - name: include create_dns_entries.yml
+      include_tasks: create_dns_entries.yml
+
+    - name: REMOVE|ensure {{ vm_name }} is removed from inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      when: vm_teardown|bool

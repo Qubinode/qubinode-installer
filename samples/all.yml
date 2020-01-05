@@ -118,8 +118,6 @@ logical_volumes:
     size: "+100%FREE"
     mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
     fstype: xfs
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
-vg_name: vg_qubi
 
 
 #################################
@@ -128,15 +126,16 @@ vg_name: vg_qubi
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images
-host_device: nvme0n1
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
-qubinode_bridge_name: qubibr0
 
 ###########################################
 # variables for swygue.edge_host_setup role
 
 
 # This is required for OpenShift 4
+# TODO: the codebase needs to up to look for this
+# variable under playbooks/var/ocp4.yml
 cluster_name: ocp42
 
 nat_network_name: "{{ cluster_name }}"
