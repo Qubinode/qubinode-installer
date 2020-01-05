@@ -40,8 +40,9 @@ idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 public_domain: "{{ domain }}"
 
 # Load Balancer
-lb_name: qbn-lb
 libvirt_network_name: "{{ cluster_name }}"
+lb_name_prefix: qbn-lb
+lb_name: "{{ lb_name_prefix }}-{{ cluster_name}}"
 
 # Web server
 webserver_directory: /opt/qubinode_webserver
