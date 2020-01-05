@@ -132,11 +132,9 @@ function qubinode_setup_ansible () {
 function decrypt_ansible_vault () {
     vaulted_file="$1"
     grep -q VAULT "${vaulted_file}"
-    if [ "A$?" == "A1" ]
+    if [ "A$?" == "A0" ]
     then
-        #echo "${vaulted_file} is not encrypted"
-        :
-    else
+        cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
         ansible_encrypt=yes
     fi
@@ -146,6 +144,7 @@ function encrypt_ansible_vault () {
     vaulted_file="$1"
     if [ "A${ansible_encrypt}" == "Ayes" ]
     then
+        cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaulted_file}"
     fi
 }
