@@ -334,6 +334,7 @@ start_ocp4_deployment () {
     bash $install_cmd
 }
 
+
 post_deployment_steps (){
   echo "Shutdown bootstrap node"
   echo "*****************************"
@@ -349,8 +350,39 @@ post_deployment_steps (){
   # oc get clusteroperators
 EOF
 
+echo "NFS Server mount directory information"
+ls -lath /export
+df -h /export
 
-  echo "Configure registry to use empty directory"
+confirm "Configure nfs-provisioner? yes/no"
+if [ "A${response}" != "Ayes" ]
+then
+  export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+    oc get storageclass
+    bash lib/qubinode_nfs_provisioner_setup.sh
+    oc get storageclass || exit 1
+     cat >image-registry-storage.yaml<<YAML
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-registry-storage
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: nfs-storage-provisioner
+  resources:
+    requests:
+      storage: 80Gi
+YAML
+oc create -f image-registry-storage.yaml
+
+cat << EOF
+# Please Follow instructions located below for persistent registry storage
+# Link: https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html
+EOF
+else
+  echo "Skipping nfs-provisioning"
+  echo "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
   echo "*****************************"
   cat << EOF
   # oc get pod -n openshift-image-registry
@@ -358,37 +390,15 @@ EOF
   # oc get pod -n openshift-image-registry
   # oc get clusteroperators
 EOF
+fi
 
-  echo "Check that OpenShift installation is complete"
-  echo "*****************************"
-  cat << EOF
-  # cd ~/qubinode-installer
-  # openshift-install --dir=ocp4 wait-for install-complete
+echo "Check that OpenShift installation is complete"
+echo "*****************************"
+cat << EOF
+# cd ~/qubinode-installer
+# openshift-install --dir=ocp4 wait-for install-complete
 EOF
 
-}
-
-function build_ocp4_vm_list () {
-    if [ -f $ocp4_vars_file ]
-    then
-        #clean up
-        all_vms=(bootstrap)
-        deleted_vms=()
-    
-        masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-        for  i in $(seq "$masters")
-        do
-            vm="master-$((i-1))"
-            all_vms+=( "$vm" )
-        done
-    
-        compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-        for i in $(seq "$compute")
-        do
-            vm="compute-$((i-1))"
-            all_vms+=( "$vm" )
-        done
-    fi
 }
 
 openshift4_enterprise_deployment () {
@@ -410,7 +420,7 @@ openshift4_enterprise_deployment () {
 
     # deploy the load balancer container
     ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
-    
+
     lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_container_name 2>/dev/null)
     if [ "A${lb_container_status}" != "Atrue" ]
     then
@@ -419,12 +429,12 @@ openshift4_enterprise_deployment () {
         printf "%s\n" " Please investigate and try the intall again!"
         exit 1
     fi
-    
+
     # Download the openshift 4 installer
     #TODO: this playbook should be renamed to reflect what it actually does
     ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
 
-    # Create ignition files 
+    # Create ignition files
     #TODO: check if the ignition files have been created longer than 24hrs
     # regenerate if they have been
     ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
@@ -456,7 +466,7 @@ openshift4_enterprise_deployment () {
     deploy_compute_nodes
 
     # Ensure first boot is complete
-    # first boot is the initial deployment of the VMs 
+    # first boot is the initial deployment of the VMs
     # followed by a shutdown
     wait_for_ocp4_nodes_shutdown
 
