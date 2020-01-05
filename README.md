@@ -1,24 +1,6 @@
 # Qubinode Installer
 Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
-## APPLE Development BRANCH
-Target Release v2.3
-
-If you would like to Contribute to the qubinode project please see the documentation below.  
-[Qubinode WorkFlow Process](docs/git-workflow-process.adoc)  
-[Testing and Validation](test/README.md)  
-
-## Features that will be released in v2.3
-
-Feature  |  Status
---|---
-Optimized Qubinode Menu  | In-Progress  |  
-OpenShift 4 menu option  | In-Progress  |  
-Ansible tower product  | NA  |  
-Satellite - Red Hat Satellite Server  | NA  |  
-OCP4 Smoke Test  | NA  |  
-OCP4 Cluster Verification  | NA  |  
-
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
@@ -36,7 +18,7 @@ The installer supports installing Red Hat OpenShift (OCP) or The Origin Communit
 * Server With at least 1 TB of Secondary Hard Drive
 * Ansible version 2.6 and up
 * RHEL7
-* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.  
+* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.
 * For [OpenShift Origin](https://www.okd.io/) (OKD) a subscription is not needed.
 
 ## Supported Versions
@@ -80,6 +62,6 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [Jooho](https://github.com/Jooho)
 
 ## Author
-Tosin Akinosho - [tosin2013](https://github.com/tosin2013)  
-Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)  
-Abnerson Malivert - [amalivert](https://github.com/amalivert)  
+Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
+Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
+Abnerson Malivert - [amalivert](https://github.com/amalivert)
