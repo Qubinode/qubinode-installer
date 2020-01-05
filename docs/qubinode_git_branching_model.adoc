@@ -1,0 +1,38 @@
+= Qubinode Git branching and releasing workflow
+:toc: 
+
+== Introduction
+
+This document illustrates the git branching and releasing strategy for the Qubinode project. These instructions must be followed by all core and community developers to ensure project stability.
+
+== Branching and releasing
+
+- *master* holds the latest production ready code
+* Rules:
+** Should be the same for every Git user
+
+- *develop* holds latest changes for next release
+* Rules:
+** Merge to *master* when all codes are stable 
+** Tag *master* branch with new release number after merging from *develop*
+
+
+- *feature* holds code for developed new features that will be merged in the next or future Qubinode release
+* Rules:
+** May branch off from the *develop* branch
+** Must merge back to the *develop* branch
+** Exists on developer's repository only
+** Discarded once all code are merged to *develop* bramch
+
+- *release* support preparation of a new production release. Use for minor changes or bugfixes 
+* Rules:
+** May branch off from the *develop* branch
+** Must merge back to the *develop* and *master* branch
+** Exists on developer's repository only
+
+- *hotfix* Use to push a fix for an error in the *master* branch
+* Rules:
+** May branch off from *master*
+** Must be merged back into *master* and *develop* branch
+
+
