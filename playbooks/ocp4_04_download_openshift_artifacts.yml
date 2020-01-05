@@ -1,5 +1,5 @@
 ---
-- name: Download OpenShift Artifacts
+- name: Download OpenShift 4 installer
   hosts: localhost
   vars_files:
     - vars/all.yml
@@ -12,21 +12,26 @@
   - name: Remove openshift client cli
     command: rm -rf /usr/local/bin/oc
     when: remove_oc_tool
+
   - name: Remove  openshift installer
     command: rm -rf  /usr/local/bin/openshift-install
     when: remove_oc_tool
+
   - name: Download OpenShift 4 client
     get_url:
       url: "{{ ocp4_release_url }}/{{ ocp4_client }}"
       dest: "/tmp/{{ ocp4_client }}"
+
   - name: Download OpenShift 4 installer
     get_url:
       url: "{{ ocp4_release_url }}/{{ ocp4_installer }}"
       dest: "/tmp/{{ ocp4_installer }}"
+
   - name: Extract ocp client  into /usr/local/bin/oc
     unarchive:
       src: "/tmp/{{ ocp4_client }}"
       dest: /usr/local/bin
+
   - name: Extract openshift installer into /usr/local/bin/openshift-install
     unarchive:
       src:  "/tmp/{{ ocp4_installer }}"
