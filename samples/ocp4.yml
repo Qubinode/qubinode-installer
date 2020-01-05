@@ -17,6 +17,10 @@ ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
 openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
 
+cluster_name: ocp42
+lb_container_name: "{{ lb_name }}-{{ cluster_name}}"
+podman_webserver: qbn-httpd
+
 # set when you want to remove an old version of openshift tools
 remove_oc_tool: false
 # OpenShift install directory
@@ -36,7 +40,7 @@ idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 public_domain: "{{ domain }}"
 
 # Load Balancer
-lb_name: "lb{{ cluster_name }}"
+lb_name: qbn-lb
 libvirt_network_name: "{{ cluster_name }}"
 
 # Web server
