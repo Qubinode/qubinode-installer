@@ -37,7 +37,7 @@ The installer supports installing Red Hat OpenShift (OCP) or The Origin Communit
 * Server With at least 1 TB of Secondary Hard Drive
 * Ansible version 2.6 and up
 * RHEL7
-* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.  
+* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.
 * For [OpenShift Origin](https://www.okd.io/) (OKD) a subscription is not needed.
 
 ## Supported Versions
@@ -83,6 +83,6 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [Jooho](https://github.com/Jooho)
 
 ## Author
-Tosin Akinosho - [tosin2013](https://github.com/tosin2013)  
-Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)  
-Abnerson Malivert - [amalivert](https://github.com/amalivert)  
+Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
+Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
+Abnerson Malivert - [amalivert](https://github.com/amalivert)
