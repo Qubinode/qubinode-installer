@@ -39,6 +39,7 @@ This guide contains all the information needed to become a contributor on the Qu
 
 == Scenerios
 === Adding a new feature
+
 A developer wants to add a new menu item as part of the current release
 
 . switch to the develop branch:
