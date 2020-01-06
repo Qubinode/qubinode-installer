@@ -64,4 +64,4 @@ Code the new menu, finished features are merged back into develop branch
 . push changes to the develop branch
  `$ git push origin develop`
 
-
+- do a merge request to the Qubinode repository
