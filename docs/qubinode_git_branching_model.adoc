@@ -58,9 +58,7 @@ $ git fetch develop
 $ git checkout -b feature-new-menu develop
 ....
 
-Code the new menu, finished features are merged back into develop branch
-
-. checkout the develop branch
+. after coding new feature, checkout the develop branch
 +
 ....
 $ git checkout develop
