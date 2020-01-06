@@ -39,7 +39,7 @@ This guide contains all the information needed to become a contributor on the Qu
 
 == Scenerios
 === Adding a new feature
-[start=1]
+
 . switch to the develop branch:
 +
 ....
@@ -71,17 +71,19 @@ $ git checkout develop
 ....
 $ git merge --no-ff feature-new-menu
 ....
-[start=6]
+
 . delete the feature branch
++
 ....
 $ git branch -d feature-new-menu
 ....
-[start=7]
+
 . push changes to the develop branch
++
 ....
 $ git push origin develop
 ....
-[start=8]
+
 . do a merge request to the Qubinode repository
 
 === HotFixes
