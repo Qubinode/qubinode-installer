@@ -78,4 +78,4 @@ $ git branch -d feature-new-menu
 $ git push origin develop
 ....
 
-- do a merge request to the Qubinode repository
+. do a merge request to the Qubinode repository
