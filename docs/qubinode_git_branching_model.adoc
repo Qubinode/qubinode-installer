@@ -46,42 +46,42 @@ This guide contains all the information needed to become a contributor on the Qu
 $ git checkout develop
 ....
 
-. fetch the latest code from the develop branch code:
+. Fetch the latest code from the develop branch code:
 +
 ....
 $ git fetch develop
 ....
 
-. create new feature branch using nomenclature feature-<feature_description>
+. Create new feature branch using nomenclature feature-<feature_description>
 +
 ....
 $ git checkout -b feature-new-menu develop
 ....
 
-. after coding new feature, checkout the develop branch
+. After coding new feature, checkout the develop branch
 +
 ....
 $ git checkout develop
 ....
 
-. merge the new feature to the develop branch
+. Merge the new feature to the develop branch
 +
 ....
 $ git merge --no-ff feature-new-menu
 ....
 
-. delete the feature branch
+. Delete the feature branch
 +
 ....
 $ git branch -d feature-new-menu
 ....
 
-. push changes to the develop branch
+. Push changes to the develop branch
 +
 ....
 $ git push origin develop
 ....
 
-. do a merge request to the Qubinode repository
+. Submit a merge request to the Qubinode repository
 
 === HotFixes
