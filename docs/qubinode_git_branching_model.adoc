@@ -1,9 +1,11 @@
-= Qubinode Git branching and releasing workflow
-:toc: 
-
+// NOTE: Qubinode git branching strategey 
+= Qubinode Git branching  strategy
+:toc: preamble
+:numbered!:
+[abstract]
 == Introduction
 
-This document illustrates the git branching and releasing strategy for the Qubinode project. These instructions must be followed by all core and community developers to ensure project stability.
+This guide contains all the information needed to become a contributor on the Qubinode project. Please follow our git branching model so that everyone will have a pleasant experience contributing to this project.
 
 == Branching and releasing
 
@@ -13,8 +15,8 @@ This document illustrates the git branching and releasing strategy for the Qubin
 
 - *develop* holds latest changes for next release
 * Rules:
-** Merge to *master* when all codes are stable 
-** Tag *master* branch with new release number after merging from *develop*
+** Merge to *master*  branch when all codes are stable 
+** Tag *master* branch with new release number after merging from *develop* branch
 
 
 - *feature* holds code for developed new features that will be merged in the next or future Qubinode release
@@ -32,7 +34,34 @@ This document illustrates the git branching and releasing strategy for the Qubin
 
 - *hotfix* Use to push a fix for an error in the *master* branch
 * Rules:
-** May branch off from *master*
+** May branch off from *master* branch
 ** Must be merged back into *master* and *develop* branch
+
+== Scenerios
+=== Adding a new feature
+A developer wants to add a new menu item as part of the current release
+
+. switch to the develop branch:
+`$ git checkout develop`
+
+. fetch the latest code from the develop branch code:
+`$ git fetch develop`
+
+. create new feature branch using nomenclature feature-<feature_description>
+`$ git checkout -b feature-new-menu develop`
+
+Code the new menu, finished features are merged back into develop branch
+
+. checkout the develop branch
+`$ git checkout develop`
+
+. merge the new feature to the develop branch
+`$ git merge --no-ff feature-new-menu`
+
+. delete the feature branch
+`$ git branch -d feature-new-menu`
+
+. push changes to the develop branch
+`$ git push origin develop`
 
 
