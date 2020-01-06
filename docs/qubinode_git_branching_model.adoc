@@ -41,41 +41,41 @@ This guide contains all the information needed to become a contributor on the Qu
 === Adding a new feature
 A developer wants to add a new menu item as part of the current release
 
-1. switch to the develop branch:
+. switch to the develop branch:
 ....
 $ git checkout develop
 ....
 
-2. fetch the latest code from the develop branch code:
+. fetch the latest code from the develop branch code:
 ....
 $ git fetch develop
 ....
 
-3. create new feature branch using nomenclature feature-<feature_description>
+. create new feature branch using nomenclature feature-<feature_description>
 ....
 $ git checkout -b feature-new-menu develop
 ....
 
 Code the new menu, finished features are merged back into develop branch
 
-4. checkout the develop branch
+. checkout the develop branch
 ....
 $ git checkout develop
 ....
 
-5. merge the new feature to the develop branch
+. merge the new feature to the develop branch
 ....
 $ git merge --no-ff feature-new-menu
 ....
 
-6. delete the feature branch
+. delete the feature branch
 ....
 $ git branch -d feature-new-menu
 ....
 
-7. push changes to the develop branch
+. push changes to the develop branch
 ....
 $ git push origin develop
 ....
 
-8. do a merge request to the Qubinode repository
+. do a merge request to the Qubinode repository
