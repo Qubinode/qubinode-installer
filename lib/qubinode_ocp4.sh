@@ -117,14 +117,6 @@ openshift4_qubinode_teardown () {
     exit 0
 }
 
-function isvmRunning () {
-    sudo virsh list |grep $vm|awk '/running/ {print $2}'
-}
-
-function isvmShutdown () {
-    sudo virsh list --all | grep $vm| awk '/shut/ {print $2}'
-}
-
 function remove_ocp4_vms () {
     #clean up
     all_vms=(bootstrap)
