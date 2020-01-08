@@ -67,7 +67,7 @@ function canSSH () {
 
 
 function get_admin_user_password () {
-    echo " Fetching the Admin user password."
+    #echo " Fetching the Admin user password."
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_user_passowrd=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
     encrypt_ansible_vault "${vaultfile}" >/dev/null

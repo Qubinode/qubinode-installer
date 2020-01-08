@@ -8,109 +8,46 @@ function qubinode_autoinstall_openshift () {
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
 
+    # load required files from samples to playbooks/vars/
+    qubinode_required_prereqs
+
+    # Check if the OpenShift cluster is already deployed
+    printf "%s\n\n" ""
+    #printf "%s\n" "  Checking if the OpenShift 3 Cluster is already deployed.."
+    ping_openshift3_nodes
+    check_webconsole_status
+    if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -eq 200 ]]
+    then
+        printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
+        openshift3_installation_msg
+        exit 0
+    fi
+
+    if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -ne 200 ]]
+    then
+        tput cup $(stty size|awk '{print int($1/2);}') 0 && tput ed
+        printf "%s" "  ${cyn}$OCP3_NODES_STATUS_MSG${end}"
+        cat $VM_REPORT
+        printf "%s\n\n" ""
+    fi
+
     printf "\n\n ${yel}*************************${end}\n"
     printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
     printf " ${yel}*************************${end}\n\n"
-
-    # Ensure configuration files from samples/ are copied to playbooks/vars/
-    qubinode_required_prereqs
-
-    # Ensure the RHEL qcow image exists
-    pre_check_for_rhel_qcow_image
-
-    # Check if this will be a qubinode install
-    ask_user_if_qubinode_setup
-
-    # Set the QUBINODE_SYSTEM variable based on user response
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
-
-    # Check if the device meets the minimum storage and memory requirement
-    # and set the storage_profile and memory requirement value
-    storage_profile=$(awk '/^storage_profile:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-    memory_profile=$(awk '/^memory_profile:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-
-    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
-    then
-        if [[ "A${memory_profile}" == 'A""' ]] && [[ "A${storage_profile}" == 'A""' ]]
-        then
-            check_additional_storage
-            check_hardware_resources
-        fi
-    else
-        if [[ "A${memory_profile}" == 'A""' ]] && [[ "A${storage_profile}" == 'A""' ]]
-        then
-            check_libvirt_pool
-            check_libvirt_network
-            check_hardware_resources
-        fi
-    fi
-
-    # Check your hardware resources and determine the size of your openshift
-    # cluster deployment
-    # TODO: add option to check if openshift is already deployed then choose
-    #skip this step if it.
-    check_openshift3_size_yml
-
-    #TODO: HERE
-    # - ensure the user isn't prompted for information they have already provided
-    # - validate how things work up to this point if user choose not to do a qubinode install
-
+    
     # Add current user to sudoers, setup global variables, run additional
     # prereqs, setup current user ssh key, ask user if they want to
     # deploy a qubinode system.
     qubinode_installer_setup
-
-    # Ensure global variables are setup, system registered to Red Hat,
-    # and ansible is installed.
-    qubinode_base_requirements
-
-    # Check OpenShift deployment size and change if it needs to be
-
-    # Check current deployment size
-    current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
-    # The default openshift size is stanadard
-    # This ensures that if the size is already set
-    # it does not get overwritten
-    if [ "A${current_deployment_size}" == 'A""' ]
-    then
-        #echo "Setting Openshift deployment size to standard."
-        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-    fi
-
-
-    printf "\n\n***************************\n"
-    printf "* Running qubinode perquisites *\n"
-    printf "******************************\n\n"
-    qubinode_installer_setup
-
-    printf "\n\n********************************************\n"
-    printf "* Ensure host system is registered to RHSM *\n"
-    printf "*********************************************\n\n"
-    qubinode_rhsm_register
-
-    printf "\n\n*******************************************************\n"
-    printf "* Ensure host system is setup as a ansible controller *\n"
-    printf "*******************************************************\n\n"
-    test ! -f /usr/bin/ansible && qubinode_setup_ansible
-
-    printf "\n\n*********************************************\n"
-    printf     "* Ensure host system is setup as a KVM host *\n"
-    printf     "*********************************************\n"
-    ping_nodes
-    if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
-    then
-        qubinode_setup_kvm_host
-    fi
+    
+    # Ensure host system is setup as a KVM host
+    qubinode_setup_kvm_host
     printf "\n\n****************************\n"
     printf     "* Deploy IdM DNS Server    *\n"
     printf     "****************************\n"
     qubinode_deploy_idm
-
-    printf "\n\n*********************\n"
-    printf     "*Deploy ${product_in_use} cluster *\n"
-    printf     "*********************\n"
+    
     sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
     openshift_enterprise_deployment
-    openshift3_installation_msg
 }
