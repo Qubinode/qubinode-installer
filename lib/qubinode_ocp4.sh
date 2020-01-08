@@ -197,7 +197,27 @@ function remove_ocp4_vms () {
 }
 
 openshift4_server_maintenance () {
-    echo "Hello World"
+    case ${product_maintenance} in
+       diag)
+           echo "Perparing to run full Diagnostics: : not implemented yet"
+           ;;
+       smoketest)
+           echo  "Running smoke test on environment: : not implemented yet"
+              ;;
+        shutdown)
+            echo  "Shutting down cluster"
+            bash "${project_dir}/openshift4_server_maintenance"
+            ;;
+        startup)
+            echo  "Starting up Cluster: not implemented yet"
+            ;;
+        checkcluster)
+            echo  "Running Cluster health check: : not implemented yet"
+            ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
 }
 
 is_node_up () {
