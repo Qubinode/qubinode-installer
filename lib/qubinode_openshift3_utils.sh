@@ -386,8 +386,11 @@ function qubinode_deploy_openshift3 () {
                 exit 1
             fi
         fi
+
         # Set the OpenShift inventory file
         INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+ 
+        # Set path to inventory/passwordFile
         if [ "A${INVENTORYFILE}" != "A" ]
         then
             HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
@@ -396,11 +399,14 @@ function qubinode_deploy_openshift3 () {
             exit 1
         fi
 
+        # Ensure htpassfile is created and setup
+        ensure_ocp3_basic_auth_file
+
         # Ensure the inventory file exists
-        if [ ! -f "${INVENTORYFILE}" ]
+        if [ ! -f "${HTPASSFILE}" ]
         then
-            echo "Installation aborted: cannot find the inventory file ${INVENTORYFILE}"
-            exit
+            echo "Installation aborted: cannot the basic auth file ${HTPASSFILE}"
+            exit 1
         fi
 
         # Load functions
@@ -456,8 +462,6 @@ function qubinode_deploy_openshift3 () {
             ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
         fi
     fi
-
-
 
     # ensure htpassword file is created and populated
     ensure_ocp3_basic_auth_file
