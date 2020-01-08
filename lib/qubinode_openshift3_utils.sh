@@ -649,7 +649,7 @@ function are_openshift3_nodes_available () {
 
     if [ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]
     then
-        print "%s\n"  " ${yel}OpenShift Cluster Already running${end}"
+        printf "%s\n"  " ${yel}OpenShift Cluster Already running${end}"
         sleep 1s
         openshift3_installation_msg
         exit 0
