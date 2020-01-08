@@ -145,7 +145,7 @@ $ git branch -d hotfix-<issue number>
 
 === Pushing out a new release
 
-*After coding all features, hotfixes, and meet the requirement for the next Qubinode release, we will create a release branch that's tagged with a code name based on the next alphabetically available fruit ( i.e. apple, banana)*
+After coding all features, hotfixes, and meet the requirement for the next Qubinode release, we will create a release branch that's tagged with a code name based on the next alphabetically available fruit ( i.e. apple, banana)
 
 . Create new release branch using the fruit nomenclature 
 +
