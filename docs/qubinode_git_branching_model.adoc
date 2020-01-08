@@ -24,7 +24,7 @@ The following are the only branches that will exists on the official Qubinode pr
 
 === Qubinode supporting branches
 
-*The supporting branches will only exist on the developer's repository. Once the code is ready to be pushed to either the master or develop branch. Once the merge request is accepted, the developer can delete the supporting branch.*
+The supporting branches will only exist on the developer's repository. Once the code is ready to be pushed to either the master or develop branch. Once the merge request is accepted, the developer can delete the supporting branch.
 
 - *feature* holds code for developed new features that will be merged in the next or future Qubinode release
 * Rules:
@@ -150,13 +150,13 @@ After coding all features, hotfixes, and meet the requirement for the next Qubin
 . Create new release branch using the fruit nomenclature 
 +
 ....
-git checkout -b release-<fruit nomenclature, i.e apple> develop
+$ git checkout -b release-<fruit nomenclature, i.e apple> develop
 ....
 
 . Tag the release branch
 +
 ....
-$ git tag -a apple
+$ git tag -a <fruit nomenclature, i.e apple> 
 ....
 
 . Commit all changes to release branch
