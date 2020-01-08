@@ -25,10 +25,10 @@ function ensure_supported_ansible_version () {
         fi
     fi
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" == "AYES" ]
+    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
     then
         printf "%s\n" ""
-        printf "%s\n" " %{cyn}**WARNING**${end}"
+        printf "%s\n" " ${cyn}**WARNING**${end}"
         printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is later than the tested version of $ANSIBLE_VERSION"
     fi
 }
@@ -90,10 +90,9 @@ function qubinode_setup_ansible () {
             openssl rand -base64 512|xargs > "${vault_key_file}"
         fi
 
-        if cat "${vaultfile}" | grep -q VAULT
+        #if cat "${vaultfile}" | grep -q VAULT
+        if ! ansible-vault view "${vaultfile}" > /dev/null
         then
-            printf "%s\n" " ${vaultfile} is encrypted"
-        else
             #printf "%s\n" " Encrypting ${vaultfile}"
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi

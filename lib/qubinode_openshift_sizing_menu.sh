@@ -18,7 +18,6 @@ cyn=$'\e[1;36m'
 end=$'\e[0m'
 
 
-ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
 
 function config_err_msg () {
     cat << EOH >&2
@@ -51,6 +50,7 @@ source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 
 qubinode_required_prereqs
 auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${ocp3_vars_file}")
+ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
 
 
 if [[ -z $1 ]]; then
@@ -94,7 +94,7 @@ show_menus() {
 }
 
 function continue_with_selected_install () {
-            printf "%s\n" " Setting OpenShift Deployment size to $ocp_size"
+            printf "%s\n" ""
             sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
             openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
             cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}

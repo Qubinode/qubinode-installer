@@ -1,55 +1,39 @@
 #!/bin/bash
 
+# this function just make sure the script
+# knows the full path to the project directory
+# and runs the config_err_msg if it can't determine
+# that start_deployment.conf can find the project directory
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+setup_required_paths
+
+source "${project_dir}/lib/qubinode_openshift3_utils.sh"
+
 web_console="$1"
 ocp_user="$2"
 ocp_user_password="$3"
+SMOKE_TEST_RETURN_CODE=0
 
-oc login ${web_console} --username=${ocp_user} --password=$ocp_user_password --insecure-skip-tls-verify=true
-if [ $? -eq 1 ]
-then
-    echo "Log to $web_console failed as user $ocp_user"
-    exit 1
-else
-    echo "Log into to $web_console as user $ocp_user"
-fi
+openshift3_smoke_test $web_console $ocp_user $ocp_user_password
+openshift3_smoke_test_return 
+printf "%s\n" "${SMOKE_MSG}"
 
-oc new-project validate > /dev/null 2>&1
-oc new-app nodejs-mongo-persistent > /dev/null 2>&1
 
-NODEJS_MONGO_STATUS=$( oc get pods | grep "nodejs-mongo-persistent" | grep -v build | awk '{print $3}')
-MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')
-COUNTER=0
-while [[ $COUNTER -lt 10  ]]; do
-  echo "STATUS: ${NODEJS_MONGO_STATUS}  ${MONGO_STATUS} "
-  if [[ "$NODEJS_MONGO_STATUS" == 'Running'  &&  "$MONGO_STATUS" == "Running" ]]; then
-    echo "Pods Deployed Successfully"
-    oc get pods > /dev/null 2>&1
-    break
-  fi
-  echo "Waiting for pod to launch."
-  sleep 10s
-  NODEJS_MONGO_STATUS=$( oc get pods | grep "nodejs-mongo-persistent" | grep -v build |  awk '{print $3}')
-  MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')
-  let COUNTER=COUNTER+1
-done
+exit 0
 
-echo "Testing external route to application"
-APP_URL=$(oc get routes | grep nodejs | awk '{print $2}')
-APP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "http://$APP_URL")
-
-oc delete all --selector app=nodejs-mongo-persistent > /dev/null 2>&1
-oc delete project validate > /dev/null 2>&1
-
-if [ "A${APP_STATUS}" == "A200" ]
-then
-    echo "******************************************"
-    echo "*** SMOKE TESTS COMPLETED SUCCESSFULLY ***"
-    echo "******************************************"
-    exit 0
-else
-    echo "******************************************"
-    echo "*** SMOKE TESTS FAILED                 ***"
-    echo "******************************************"
-    exit 1
-fi
-
+2 oc login failed
+3 creating project failed
+4 smoke test app success
+5 smoke test app failed
