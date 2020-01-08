@@ -841,9 +841,6 @@ function openshift_enterprise_deployment () {
 
         # Ensure the qubinode user is added to openshift
         ensure_ocp_default_user
-
-        # Report on OpenShift Installation
-        openshift3_installation_msg
     else
         # Ensure the qubinode user is added to openshift
         ensure_ocp_default_user
@@ -851,9 +848,6 @@ function openshift_enterprise_deployment () {
         # Report on OpenShift Installation
         openshift3_installation_msg
     fi
-
-    qubinode_openshift_nodes
-    validate_opeshift3_nodes_deployment
 }
 
 
