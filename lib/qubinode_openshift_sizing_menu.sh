@@ -18,6 +18,7 @@ cyn=$'\e[1;36m'
 end=$'\e[0m'
 
 
+ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
 
 function config_err_msg () {
     cat << EOH >&2
@@ -50,7 +51,6 @@ source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 
 qubinode_required_prereqs
 auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${ocp3_vars_file}")
-ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
 
 
 if [[ -z $1 ]]; then

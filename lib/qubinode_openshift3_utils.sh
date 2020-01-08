@@ -632,11 +632,11 @@ function ping_openshift3_nodes () {
             OCP3_NODES_STATUS_MSG="The expected nodes for an ${OCP3_CLUSTER_SIZE} appears to in an unknow state!"
             ARE_OCP3_NODES_UP=unknown
         fi
-    else
-        printf "%s\n"
-        printf "%s\n" " There appears to be some ocp3 vms deployed, however the state is unknown!"
-        printf "%s\n" " Please investigate and try the installation again!"
-        exit 1
+#    else #TODO this needs some better logic
+#        printf "%s\n"
+#        printf "%s\n" " There appears to be some ocp3 vms deployed, however the state is unknown!"
+#        printf "%s\n" " Please investigate and try the installation again!"
+#        exit 1
     fi
 }
 
