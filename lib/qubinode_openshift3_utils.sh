@@ -371,9 +371,38 @@ function qubinode_deploy_openshift3 () {
     # Check if the cluster is reponding
     WEBCONSOLE_STATUS=$(check_webconsole_status)
 
+
     # skips these steps if OCP cluster is responding
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
+        # Check for openshift user
+        if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
+        then
+            echo "Setting openshift_user variable to $CURRENT_USER in ${ocp3_vars_file}"
+            sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${ocp3_vars_file}"
+            if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
+            then
+                echo "Could not determine the openshift_user variable, please resolve and try again"
+                exit 1
+            fi
+        fi
+        # Set the OpenShift inventory file
+        INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+        if [ "A${INVENTORYFILE}" != "A" ]
+        then
+            HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+        else
+            echo "Could not find the openshift inventory file inventory.3.11.rhel under ${hosts_inventory_dir}"
+            exit 1
+        fi
+
+        # Ensure the inventory file exists
+        if [ ! -f "${INVENTORYFILE}" ]
+        then
+            echo "Installation aborted: cannot find the inventory file ${INVENTORYFILE}"
+            exit
+        fi
+
         # Load functions
         validate_openshift_pool_id # ensure it's attached to the ocp pool
 
@@ -428,34 +457,7 @@ function qubinode_deploy_openshift3 () {
         fi
     fi
 
-    # Check for openshift user
-    if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
-    then
-        echo "Setting openshift_user variable to $CURRENT_USER in ${ocp3_vars_file}"
-        sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${ocp3_vars_file}"
-        if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
-        then
-            echo "Could not determine the openshift_user variable, please resolve and try again"
-            exit 1
-        fi
-    fi
 
-    # Ensure the inventory file exists
-    if [ ! -f "${INVENTORYFILE}" ]
-    then
-        echo "Installation aborted: cannot find the inventory file ${INVENTORYFILE}"
-        exit
-    fi
-
-    # Set the OpenShift inventory file
-    INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
-    if [ "A${INVENTORYFILE}" != "A" ]
-    then
-        HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
-    else
-        echo "Could not find the openshift inventory file inventory.3.11.rhel under ${hosts_inventory_dir}"
-        exit 1
-    fi
 
     # ensure htpassword file is created and populated
     ensure_ocp3_basic_auth_file
