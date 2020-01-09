@@ -48,7 +48,7 @@ We are working as best we can to have better documentation. Contributions are we
 
 
 ## Training
-* [Qubibnode for Beginners](docs/beginners.adoc)
+* [Qubinode for Beginners](docs/beginners.adoc)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
