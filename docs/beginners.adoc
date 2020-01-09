@@ -2,42 +2,38 @@
 Below are a list of resources help understand different tools that and products Qubinode uses.
 
 == Open Source
-link:https://training.linuxfoundation.org/resources/free-courses/beginner-guide-to-oss-development/[A Beginner’s Guide to Open Source Software Development]
-link:https://www.redhat.com/en/about/videos/default-open-story-open-source-and-red-hat[Default to open: The story of open source and Red Hat]
-link:index.html[Docs]
-link:index.html[Docs]
+link:https://training.linuxfoundation.org/resources/free-courses/beginner-guide-to-oss-development/[A Beginner’s Guide to Open Source Software Development]  
+link:https://www.redhat.com/en/about/videos/default-open-story-open-source-and-red-hat[Default to open: The story of open source and Red Hat]  
+link:https://www.redhat.com/en/about/videos/why-does-open-source-development-model-matter[Why does the open source development model matter?]  
 
-[]()
-[()
-[Why does the open source development model matter?](https://www.redhat.com/en/about/videos/why-does-open-source-development-model-matter)
 
 == Git
-[git - the simple guide](http://up1.github.io/git-guide/index.html)
-[Git Started with GitHub](https://www.udemy.com/course/git-started-with-github/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-.bZFecwMwT1Q7sID5_zvnw)
-[Learn Git](https://www.codecademy.com/learn/learn-git)
-[The Ultimate GIT 5-day Challenge](https://www.udemy.com/course/the-ultimate-git-5-day-challenge/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-TNDYYjklBd_4OJ.xrTYC0w)
-[Git: Become an Expert in Git & GitHub in 4 Hours](https://www.udemy.com/course/git-expert-4-hours/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-PMFh_pACYptdCuqEXKOn2Q)
-[Learn Git Branching](https://learngitbranching.js.org/)
-[Git and GitHub - Step by Step for Beginners](https://www.udemy.com/course/git-and-github-step-by-step-for-beginners/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-Yag1VYn0DmU_zN2oAsj4QQ)
+link:http://up1.github.io/git-guide/index.html[git - the simple guide]  
+link:https://www.udemy.com/course/git-started-with-github/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-.bZFecwMwT1Q7sID5_zvnw[Git Started with GitHub]  
+link:Learn Git[https://www.codecademy.com/learn/learn-git]  
+link:The Ultimate GIT 5-day Challenge]https://www.udemy.com/course/the-ultimate-git-5-day-challenge/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-TNDYYjklBd_4OJ.xrTYC0w]
+link:Git: Become an Expert in Git & GitHub in 4 Hours[https://www.udemy.com/course/git-expert-4-hours/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-PMFh_pACYptdCuqEXKOn2Q]
+link:Learn Git Branching[https://learngitbranching.js.org/]
+link:Git and GitHub - Step by Step for Beginners[https://www.udemy.com/course/git-and-github-step-by-step-for-beginners/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-Yag1VYn0DmU_zN2oAsj4QQ]  
 
 == Learn Linux
-[Introduction to Linux](https://training.linuxfoundation.org/resources/free-courses/introduction-to-linux/)
-[Fundamentals of Red Hat Enterprise Linux](https://www.edx.org/course/fundamentals-of-red-hat-enterprise-linux)
-[Fundamentals of Containers, Kubernetes, and Red Hat OpenShift](https://www.edx.org/course/fundamentals-of-containers-kubernetes-and-red-hat)
-[Red Hat Certified System Administrator (RHCSA) exam (EX200)](https://www.redhat.com/en/services/training/ex200-red-hat-certified-system-administrator-rhcsa-exam)
-[Red Hat Certified Engineer (RHCE) exam for Red Hat Enterprise Linux 7 (EX300)](https://www.redhat.com/en/services/training/ex300-red-hat-certified-engineer-rhce-exam-red-hat-enterprise-linux-7)
+link:Introduction to Linux[https://training.linuxfoundation.org/resources/free-courses/introduction-to-linux/]  
+link:Fundamentals of Red Hat Enterprise Linux[https://www.edx.org/course/fundamentals-of-red-hat-enterprise-linux]  
+link:Fundamentals of Containers, Kubernetes, and Red Hat OpenShift[https://www.edx.org/course/fundamentals-of-containers-kubernetes-and-red-hat]  
+link:Red Hat Certified System Administrator (RHCSA) exam (EX200)[https://www.redhat.com/en/services/training/ex200-red-hat-certified-system-administrator-rhcsa-exam]  
+link:Red Hat Certified Engineer (RHCE) exam for Red Hat Enterprise Linux 7 (EX300)[https://www.redhat.com/en/services/training/ex300-red-hat-certified-engineer-rhce-exam-red-hat-enterprise-linux-7]
 
 == Ansible
-[Red Hat Certified Specialist in Ansible Automation](https://www.redhat.com/en/services/certification/rhcs-ansible-automation)
+link:Red Hat Certified Specialist in Ansible Automation[https://www.redhat.com/en/services/certification/rhcs-ansible-automation]
 
 == IDM
 
 
 == OpenShift
-* [learn.openshift.com](https://learn.openshift.com/)
-* [Introduction to Containers, Kubernetes, and Red Hat OpenShift](https://www.redhat.com/en/services/training/do180-introduction-containers-kubernetes-red-hat-openshift)
-* [Red Hat OpenShift Administration I (DO280)](https://www.redhat.com/en/services/training/do280-red-hat-openshift-administration-i)
-* [Red Hat OpenShift Administration II (DO380)](https://www.redhat.com/en/services/training/do380-red-hat-openshift-administration-ii-high-availability)
+* link:learn.openshift.com[https://learn.openshift.com/]  
+* link:Introduction to Containers, Kubernetes, and Red Hat OpenShift[https://www.redhat.com/en/services/training/do180-introduction-containers-kubernetes-red-hat-openshift]  
+* link:Red Hat OpenShift Administration I (DO280)[https://www.redhat.com/en/services/training/do280-red-hat-openshift-administration-i]  
+* link:Red Hat OpenShift Administration II (DO380]  [https://www.redhat.com/en/services/training/do380-red-hat-openshift-administration-ii-high-availability]  
 
 == DevOps
-[Introduction to Site Reliability Engineering and DevOps](https://training.linuxfoundation.org/resources/free-courses/introduction-to-site-reliability-engineering-and-devops/)
+link:Introduction to Site Reliability Engineering and DevOps[https://training.linuxfoundation.org/resources/free-courses/introduction-to-site-reliability-engineering-and-devops/]  
