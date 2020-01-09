@@ -12,7 +12,7 @@ Below are a list of resources help understand different tools that and products 
 * link:https://www.udemy.com/course/git-started-with-github/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-.bZFecwMwT1Q7sID5_zvnw[Git Started with GitHub]  
 * link:https://www.codecademy.com/learn/learn-git[Learn Git] 
 * link:https://www.udemy.com/course/the-ultimate-git-5-day-challenge/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-TNDYYjklBd_4OJ.xrTYC0w[The Ultimate GIT 5-day Challenge]
-* link:https://www.udemy.com/course/git-expert-4-hours/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-PMFh_pACYptdCuqEXKOn2Q[Git: Become an Expert in Git & GitHub in 4 Hours[]
+* link:https://www.udemy.com/course/git-expert-4-hours/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-PMFh_pACYptdCuqEXKOn2Q[Git: Become an Expert in Git & GitHub in 4 Hours]
 * link:https://learngitbranching.js.org/[Learn Git Branching]
 * link:https://www.udemy.com/course/git-and-github-step-by-step-for-beginners/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-Yag1VYn0DmU_zN2oAsj4QQ[Git and GitHub - Step by Step for Beginners]  
 
