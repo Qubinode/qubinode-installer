@@ -2,8 +2,13 @@
 Below are a list of resources help understand different tools that and products Qubinode uses.
 
 == Open Source
-[A Beginner’s Guide to Open Source Software Development](https://training.linuxfoundation.org/resources/free-courses/beginner-guide-to-oss-development/)
-[Default to open: The story of open source and Red Hat](https://www.redhat.com/en/about/videos/default-open-story-open-source-and-red-hat)
+link:https://training.linuxfoundation.org/resources/free-courses/beginner-guide-to-oss-development/[A Beginner’s Guide to Open Source Software Development]
+link:https://www.redhat.com/en/about/videos/default-open-story-open-source-and-red-hat[Default to open: The story of open source and Red Hat]
+link:index.html[Docs]
+link:index.html[Docs]
+
+[]()
+[()
 [Why does the open source development model matter?](https://www.redhat.com/en/about/videos/why-does-open-source-development-model-matter)
 
 == Git
