@@ -24,10 +24,10 @@ Below are a list of resources help understand different tools that and products 
 * link:https://www.redhat.com/en/services/training/ex300-red-hat-certified-engineer-rhce-exam-red-hat-enterprise-linux-7[Red Hat Certified Engineer (RHCE) exam for Red Hat Enterprise Linux 7 (EX300)]
 
 == Ansible
-* link:ttps://www.redhat.com/en/services/certification/rhcs-ansible-automation[Red Hat Certified Specialist in Ansible Automation]
+* link:https://www.redhat.com/en/services/certification/rhcs-ansible-automation[Red Hat Certified Specialist in Ansible Automation]
 
 == IDM
-
+* link:https://www.redhat.com/en/services/training/rh362-red-hat-security-identity-management-and-active-directory-integration[Red Hat Security: Identity Management and Active Directory Integration]
 
 == OpenShift
 * link:https://learn.openshift.com/[learn.openshift.com]  
