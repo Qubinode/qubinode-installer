@@ -28,20 +28,20 @@
     tags:
       - pkgs
 
-  - name: check if the openshift enterprise installer packages are installed
-    block:
-      - name: get info for each ansible rpm package
-        yum:
-          list: "{{ item }}"
-        loop: "{{ openshift_ansible_rpms }}"
-        register: openshift_jumphost_pkgs
-
-      - name: create list of install packages
-        set_fact:
-          installed_pkgs: "{{ installed_pkgs }} + [ '{{ item.item }}' ]"
-        loop: "{{ openshift_jumphost_pkgs.results }}"
-        when: item | selectattr("yumstate", "match", "installed")
-    when: openshift_deployment_type == 'openshift-enterprise'
+#  - name: check if the openshift enterprise installer packages are installed
+#    block:
+#      - name: get info for each ansible rpm package
+#        yum:
+#          list: "{{ item }}"
+#        loop: "{{ openshift_ansible_rpms }}"
+#        register: openshift_jumphost_pkgs
+#
+#      - name: create list of install packages
+#        set_fact:
+#          installed_pkgs: "{{ installed_pkgs }} + [ '{{ item.item }}' ]"
+#        loop: "{{ openshift_jumphost_pkgs.results }}"
+#        when: item | selectattr("yumstate", "match", "installed")
+#    when: openshift_deployment_type == 'openshift-enterprise'
 
   - name: install the openshift enterprise packages when not installed
     block:
@@ -83,7 +83,7 @@
         changed_when: pkg_installed.stdout == 'yes'
         tags:
           - pkgs
-    when: (openshift_deployment_type == 'openshift-enterprise') and (installed_pkgs | list | length < 5)
+    when: openshift_deployment_type == 'openshift-enterprise'
 
   - name: check if the okd installer packages are installed
     block:

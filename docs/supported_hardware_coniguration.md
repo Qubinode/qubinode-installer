@@ -1,9 +1,9 @@
-# Supported Hardware Specs For Qubinode
+# Hardware Specs For Qubinode
 
 The qubinode-installer supports deploying multiple Red Hat products, such as IdM and Satellite. 
 The primary products that we focus on are OCP4, OCP3 and IdM.
 
-The table below defines what is need for an OpenShift Deployment.
+The table below defines what is needed for an OpenShift Deployment.
 
 ## OpenShift Single Node Hardware Spec Table
 
@@ -21,7 +21,7 @@ However, the recommended should work for both OCP3 and OCP4.
 
 Here are some hardware we recommend for standing up an OCP cluster on a single node.
 We have validated that the below is enough to deploy a production like OCP cluster.
-That will be sufficient for a operator needing to learn OpenShift and also validated 
+That will be sufficient for a operator needing to learn OpenShift and also validate
 some production type deployment. The hardware may not be sufficient to run some workloads.
 We have not yet explore the limits in terms of what sorts of apps you can run with reasonable performance.
 
@@ -96,3 +96,7 @@ This is not a portable option. However, if you have the space, looking for somet
 |  PCI to NVME Adapter | M.2 NVMe SSD NGFF to PCIE 3.0 X16 /X4 Adapter M Key Interface Card Support PCI Express 3.0 x4 2230-2280 Size m.2 Full Speed (Black Gold | $13.99 | 1 | $13.99 | https://amzn.to/33HbZYD |  |
 |  SSD | WD Blue 3D NAND 500GB Internal PC SSD - SATA III 6 Gb/s, 2.5"/7mm, Up to 560 MB/s - WDS500G2B0A | $63.99 | 1 | $63.99 | https://amzn.to/2P0JXDh |  |
 |   |  | **Subtotal** |  | $1,681.79 |  |  |
+
+### Other Options
+
+ - Recent reddit r/homelab thread [Mini-ITX Server build: AMD EPYC 3251 with Noctua C14S CPU Cooler, 256 GB RAM ECC + 2 x 2TB Samsung 970 EVO NVMe storage](https://www.reddit.com/r/homelab/comments/elg5ti/miniitx_server_build_amd_epyc_3251_with_noctua/)
