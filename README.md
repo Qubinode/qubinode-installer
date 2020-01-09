@@ -5,8 +5,8 @@ Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s sui
 Target Release 2.3
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
-[Qubinode WorkFlow Process](docs/git-workflow-process.adoc)  
-[Testing and Validation](test/README.md)  
+* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
+* [Testing and Validation](test/README.md)  
 
 ## Features that will be released in v2.3
 
@@ -105,7 +105,7 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
 
-## Author
-Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
-Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
-Abnerson Malivert - [amalivert](https://github.com/amalivert)
+## Authors
+* Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
+* Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
+* Abnerson Malivert - [amalivert](https://github.com/amalivert)
