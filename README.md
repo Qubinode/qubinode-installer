@@ -9,7 +9,7 @@ Qubinode is for users wanting to stand up an OpenShift cluster in a secure and c
 * OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
 
 The installer supports installing Red Hat OpenShift (OCP) or The Origin Community Distribution of Kubernetes (OKD).
- - Current state is support only exist for OKD3. Installing OCP3 or OCP4 will require a Red Hat subscription.
+ - Current state is the installer primarly supports deploying OKD3, OCP3, and OCP4. Installing OCP3 or OCP4 will require a Red Hat subscription. The installer also supports deploying other Red Hat products.
  - Installing OCP3 or OCP4 will requires a Red Hat OpenShift subscription. Please contact Red Hat slaes.
  - The base OS is RHEL. If you are installing OKD3 you can take advantage of the no-cost RHEL subscription available at developers.redhat.com.
 
