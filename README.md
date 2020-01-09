@@ -1,5 +1,5 @@
 # Qubinode Installer
-Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
+Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
@@ -9,7 +9,7 @@ Qubinode is for users wanting to stand up an OpenShift cluster in a secure and c
 * OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
 
 **The installer supports installing (OCP) or (OKD)**
- - Current state is the installer primarly supports deploying OKD3, OCP3, and OCP4. Installing OCP3 or OCP4 will require a Red Hat subscription. 
+ - Current state is the installer primarly supports deploying OKD 3.11.x, OCP 3.11.x, and OCP4 4.2 builds. Installing OCP3 or OCP4 will require a Red Hat subscription. 
 
 ## Requirements
 
@@ -37,19 +37,14 @@ We are working as best we can to have better documentation. Contributions are we
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
-# Release Information
+**Day Two Operations**
+- [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
 
+## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
 |     Release 2.2     | 2.6               | 2.2 |
-
-## Supported Versions
-The Qubinode installer currently supports OpenShift 3.11.x and 4.2 builds.
-
-
-## Day Two Operations
-- [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
 
 
 ## Training
