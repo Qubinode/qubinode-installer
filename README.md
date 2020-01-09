@@ -50,6 +50,11 @@ We are working as best we can to have better documentation. Contributions are we
 ## Contribute
 [Communications](docs/communication.adoc)
 
+
+If you would like to Contribute to the qubinode project please see the documentation below.  
+[Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
+[Testing and Validation](test/README.md)  
+
 ## Support
 If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
 
