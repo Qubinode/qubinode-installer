@@ -21,6 +21,13 @@ The installer supports installing Red Hat OpenShift (OCP) or The Origin Communit
 * For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.  
 * For [OpenShift Origin](https://www.okd.io/) (OKD) a subscription is not needed.
 
+# Release Information
+
+
+| Qubinode Version  | Ansible version | Tag |
+| ------------- | ----------------- |-----------------|
+|     Release 2.2     | 2.6               | 2.2 |
+
 ## Supported Versions
 The Qubinode installer currently supports OpenShift 3.11.x and 4.2 builds.
 
