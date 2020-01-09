@@ -1,8 +1,8 @@
 # Qubinode Installer
-Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
+Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 ## APPLE Development BRANCH
-Target Release v2.3
+Target Release 2.3
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
 [Qubinode WorkFlow Process](docs/git-workflow-process.adoc)  
@@ -24,29 +24,30 @@ OCP4 Cluster Verification  | NA  |
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
 ## What is OpenShift?
-* OCP - is Red Hat's on-premises private platform as a service product, built around a core of application containers powered by Docker, with orchestration and management provided by Kubernetes, on a foundation of Red Hat Enterprise Linux.
+* Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
 * OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
 
-The installer supports installing Red Hat OpenShift (OCP) or The Origin Community Distribution of Kubernetes (OKD).
- - Current state is support only exist for OKD3. Installing OCP3 or OCP4 will require a Red Hat subscription.
- - Installing OCP3 or OCP4 will requires a Red Hat OpenShift subscription. Please contact Red Hat slaes.
- - The base OS is RHEL. If you are installing OKD3 you can take advantage of the no-cost RHEL subscription available at developers.redhat.com.
+**The installer supports installing (OCP) or (OKD)**
+ - Current state is the installer primarly supports deploying OKD 3.11.x, OCP 3.11.x, and OCP4 4.2 builds. Installing OCP3 or OCP4 will require a Red Hat subscription.
 
 ## Requirements
-* Server with at least 64 GB Memory
-* Server With at least 1 TB of Secondary Hard Drive
-* Ansible version 2.6 and up
-* RHEL7
-* For [OpenShift Enterprise](https://www.openshift.com/products) (OCP)  a subscription is needed with Red Hat.
-* For [OpenShift Origin](https://www.okd.io/) (OKD) a subscription is not needed.
 
-## Supported Versions
-The Qubinode installer currently supports OpenShift 3.11.x and 4.2 builds.
+**Baremetal Hardware**
+* At least 32 GB of memory, 128 GB is recommended.
+* At least 300 GB SSD or NVME dedicated storage, 1TB is recomneded.
 
-## Recommended Hardware
-[Supported Hardware](docs/supported_hardware_coniguration.md)
+_[Recommend Hardware](docs/supported_hardware_coniguration.md)_
 
-## OpenShift Architecture
+**Software**
+* Red Hat Enteprise Linux 7.7 installed
+
+**Subscriptions**
+
+_Required_
+* Red Hat Enteprise Linux [no-cost Red Hat Enterprise Linux Developer Subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/).
+
+_Optional_
+* For deploying Red Hat OpenShift Container Platform (OCP) you can obtain a [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
 ## Installation
 
@@ -55,14 +56,38 @@ We are working as best we can to have better documentation. Contributions are we
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
-## Day Two Operations
+**Day Two Operations**
 - [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
-- [OpenShift v3.11 Day 2 Operations]()
+
+## Qubinode Release Information
+
+| Qubinode Version  | Ansible version | Tag |
+| ------------- | ----------------- |-----------------|
+|     Release 2.2     | 2.6               | 2.2 |
+
 
 ## Training
+* [Qubinode for Beginners](docs/beginners.adoc)
+* [learn.openshift.com](https://learn.openshift.com/)
+
+**Red Hat Courses**
+
+_OpenShift_
+* [Introduction to Containers, Kubernetes, and Red Hat OpenShift](https://www.redhat.com/en/services/training/do180-introduction-containers-kubernetes-red-hat-openshift)
+* [Red Hat OpenShift Administration I (DO280)](https://www.redhat.com/en/services/training/do280-red-hat-openshift-administration-i)
+* [Red Hat OpenShift Administration II (DO380)](https://www.redhat.com/en/services/training/do380-red-hat-openshift-administration-ii-high-availability)
+
+_Ansible_
+- [Ansible Essentials: Free Technical Overview (low-level introduction)](https://www.redhat.com/en/services/training/do007-ansible-essentials-simplicity-automation-technical-overview)
+- [(RH294) Linux Automation with Ansible](https://www.redhat.com/en/services/training/rh294-red-hat-system-administration-iii-linux-automation)
 
 ## Contribute
-[Communications](docs/communication.adoc)
+* [Communications](docs/communication.adoc)
+
+
+If you would like to Contribute to the qubinode project please see the documentation below.  
+* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
+* [Testing and Validation](test/README.md)  
 
 ## Support
 If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
