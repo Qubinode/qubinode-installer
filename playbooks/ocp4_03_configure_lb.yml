@@ -83,7 +83,7 @@
 
     - name: check if  Loadbalancer SystemD service exists
       stat:
-        path: "/etc/systemd/system/openshift-4-loadbalancer-{{ cluster_name }}.service"
+        path: "/etc/systemd/system/{{ lb_name }}.service"
       register: lb_service
 
     - name: destroy old service
@@ -91,7 +91,7 @@
         name: openshift-4-loadbalancer
         tasks_from: destroy.yml
       vars:
-        lb_name: "openshift-4-loadbalancer-{{ cluster_name }}"
+        #lb_name: "{{ lb_name }}"
         lb_api: "{{ tmp_api | join(',') }}"
         lb_api_listen: "{{ tmp_api_listen | join(',') }}"
         lb_ingress_http: "{{ tmp_ingress_http | join(',') }}"
@@ -107,7 +107,7 @@
         name: openshift-4-loadbalancer
         tasks_from: create.yml
       vars:
-        lb_name: "openshift-4-loadbalancer-{{ cluster_name }}"
+        #lb_name: "{{ lb_name }}"
         lb_api: "{{ tmp_api | join(',') }}"
         lb_api_listen: "{{ tmp_api_listen | join(',') }}"
         lb_ingress_http: "{{ tmp_ingress_http | join(',') }}"

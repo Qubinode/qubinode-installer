@@ -179,15 +179,14 @@ function qubinode_openshift3_nodes_postdeployment () {
            echo "Remove ${openshift_product} will be removed"
        fi
    else
-       echo "Post configure ${openshift_product} VMs"
-       # Run node post deployment check playbook
-       ansible-playbook ${openshift3_post_deployment_checks_playbook}
-
        # Ensure DNS records and the post deploy playboo is executed
        # Web cluster status is not up
        if [ "A${STATUS}" !=  "A200" ] ; then
+           echo " Post configure ${openshift_product} VMs"
            ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
            ansible-playbook "${NODES_POST_PLAY}" || exit $?
+           # Run node post deployment check playbook
+           ansible-playbook ${openshift3_post_deployment_checks_playbook}
        fi
    fi
 }
@@ -410,8 +409,12 @@ function qubinode_deploy_openshift () {
     fi
 
     # skips these steps if OCP cluster is responding
+    # Run the node post deployment to ensure things like
+    # the system is properly subscribe.
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
+        # Run the node post deployment checks
+        qubinode_openshift3_nodes_postdeployment
         # run openshift pre deployment checks
         echo "Running Qubi node openshift deployment checks."
         run_cmd="ansible-playbook -i ${INVENTORYFILE} ${openshift3_pre_deployment_checks_playbook}"

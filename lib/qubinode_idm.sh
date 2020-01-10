@@ -200,7 +200,6 @@ function isIdMrunning () {
     else
         idm_running=false
     fi
-    return ${idm_running}
 }
 
 function qubinode_teardown_idm () {
