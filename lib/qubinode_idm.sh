@@ -28,7 +28,10 @@ function ask_user_for_idm_password () {
         unset idm_admin_pwd
         while [[ ${#idm_admin_pwd} -lt 8 ]]
         do
-            echo -n " Enter a password for the IDM server console and press ${grn}[ENTER]${end}: "
+            printf "%s\n" ""
+            printf "%s\n" " The Qubinode runs a Red Hat Identity Manager (IdM)."
+            printf "%s\n" " Your username ${yel}${CURRENT_USER}${end} will be use as the admin user."
+            printf "%s" " Enter a password to be set for the IdM admin user and press ${grn}[ENTER]${end}: "
             read_sensitive_data
             idm_admin_pwd="${sensitive_data}"
             if [ ${#idm_admin_pwd} -lt 8 ]

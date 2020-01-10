@@ -5,10 +5,10 @@ This deploys 3 masters and 3 computes.
 
 **Download files for qubinode installation**
 ```
-wget https://github.com/Qubinode/qubinode-installer/archive/releasev2.2.zip
-unzip releasev2.2.zip
-mv qubinode-installer-releasev2.2 qubinode-installer
-rm -f releasev2.2.zip
+wget https://github.com/Qubinode/qubinode-installer/archive/2.2.zip
+unzip 2.2.zip
+mv qubinode-installer-2.2 qubinode-installer
+rm -f 2.2.zip
 cd qubinode-installer/
 ```
 **setup playbooks vars and user sudoers**  

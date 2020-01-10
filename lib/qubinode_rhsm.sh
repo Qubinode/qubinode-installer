@@ -22,8 +22,8 @@ function check_rhsm_status () {
         status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
         if [ "A${status}" != "ACurrent" ]
         then
-            sudo subscription-manager refresh
-            sudo subscription-manager attach --auto
+            sudo subscription-manager refresh > /dev/null 2>&1
+            sudo subscription-manager attach --auto > /dev/null 2>&1
         fi
 
         #check again
@@ -37,25 +37,12 @@ function check_rhsm_status () {
             printf "%s\n\n" " Please resolved and try again"
             exit 1
         fi
-
-        ## Decrypt Ansible Vault
-        #decrypt_ansible_vault "${vault_vars_file}"
-        #if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-        #then
-        #    printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
-        #    printf "%s\n\n" "username and password."
-        #       
-        #    # Get RHSM username and password.
-        #    get_rhsm_user_and_pass     
-        #fi
-        ## Encrypt Ansible Vault
-        #encrypt_ansible_vault "${vault_vars_file}"
     fi
 }
 
 function ask_user_for_rhsm_credentials () {
     # decrypt ansible vault file
-    decrypt_ansible_vault "${vaultfile}"
+    decrypt_ansible_vault "${vaultfile}" >/dev/null
     if grep '""' "${vars_file}"|grep -q rhsm_reg_method
     then
         printf "%s\n" " ${cyn}Red Hat Subscription Manager Credentials${end}"
@@ -77,9 +64,9 @@ function ask_user_for_rhsm_credentials () {
         sed -i "s/rhsm_reg_method: \"\"/rhsm_reg_method: "$rhsm_reg_method"/g" "${vars_file}"
         if [ "A${rhsm_reg_method}" == "AUsername" ];
         then
-            decrypt_ansible_vault "${vault_vars_file}"
+            decrypt_ansible_vault "${vault_vars_file}" >/dev/null
             get_rhsm_user_and_pass
-            encrypt_ansible_vault "${vault_vars_file}"
+            encrypt_ansible_vault "${vault_vars_file}" >/dev/null
         elif [ "A${rhsm_reg_method}" == "AActivation" ];
         then
             if grep '""' "${vault_vars_file}"|grep -q rhsm_activationkey
@@ -100,18 +87,18 @@ function ask_user_for_rhsm_credentials () {
     elif grep '""' "${vaultfile}"|grep -q rhsm_username
     then
         rhsm_reg_method=$(awk '/rhsm_reg_method/ {print $2}' "${vars_file}")
-        decrypt_ansible_vault "${vault_vars_file}"
+        decrypt_ansible_vault "${vault_vars_file}" > /dev/bull
         if [ "A${rhsm_reg_method}" != "AActivation" ]
         then
             get_rhsm_user_and_pass
         fi
-        encrypt_ansible_vault "${vault_vars_file}"
+        encrypt_ansible_vault "${vault_vars_file}" >/dev/null
     else
         printf "%s\n\n" " Credentials for RHSM is already collected."
     fi
 
     # encrypt ansible vault
-    encrypt_ansible_vault "${vaultfile}"
+    encrypt_ansible_vault "${vaultfile}" >/dev/null
 }
 
 
@@ -139,7 +126,7 @@ function qubinode_rhsm_register () {
         sudo subscription-manager identity > "${IS_REGISTERED_tmp}" 2>&1
     
         # decrypt ansible vault
-        decrypt_ansible_vault "${vault_vars_file}"
+        decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     
         # Gather subscription infomration
         rhsm_reg_method=$(awk '/rhsm_reg_method/ {print $2}' "${vars_file}")
@@ -163,7 +150,7 @@ function qubinode_rhsm_register () {
         fi
     
         #encrupt vault file
-        encrypt_ansible_vault "${vault_vars_file}"
+        encrypt_ansible_vault "${vault_vars_file}" >/dev/null
     
         IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")
         if [ "A${IS_REGISTERED}" == "AThis system is not yet registered" ]

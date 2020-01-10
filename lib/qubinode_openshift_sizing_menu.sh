@@ -94,7 +94,7 @@ show_menus() {
 }
 
 function continue_with_selected_install () {
-            printf "%s\n" " Setting OpenShift Deployment size to $ocp_size"
+            printf "%s\n" ""
             sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
             openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
             cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}

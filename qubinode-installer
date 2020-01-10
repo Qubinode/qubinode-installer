@@ -11,6 +11,20 @@ mag=$'\e[1;35m'
 cyn=$'\e[1;36m'
 end=$'\e[0m'
 
+# define formatting
+txend=$(tput sgr0)   # reset attributes
+txb=$(tput bold)   # bold
+txu=$(tput smul)   # underline
+txuend=$(tput rmul)   # exit underline
+
+# Define Header
+divider===============================
+divider=$divider$divider
+header="\n %-035s %010s\n"
+format=" %-035s %010s\n"
+width=50
+
+
 # Uncomment for debugging
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x

@@ -96,8 +96,7 @@ function ask_user_if_qubinode_setup () {
     # Ask user if this system should be a qubinode
     if [ "A${QUBINODE_SYSTEM}" == "A" ]
     then
-        printf "%s\n" "   ${yel}********************************************${end}"
-        printf "%s\n\n" "   ${yel}Qubinode Setup${end}"
+        printf "%s\n" "   ${yel}Qubinode Setup${end}"
         printf "%s\n" " The qubinode-installer configures your hardware as a KVM host"
         printf "%s\n\n" " otherwise referred as ${grn}Qubinode${end}."
 
