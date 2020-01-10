@@ -6,6 +6,8 @@ labels: ''
 assignees: ''
 
 ---
+**Qubinode Version**  
+Qubinode releasevX.X  
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -23,4 +25,8 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Additional context**
-Add any other context about the problem here.
+Add any other context about the problem here.  
+
+**Hardware Profile infomation**  
+Please paste the result of the script found under lib//qubinode_hardware_profile.sh  
+If script is not on your machine use the following link [lib/qubinode_hardware_profile.sh](https://github.com/Qubinode/qubinode-installer/blob/post_release/lib/qubinode_hardware_profile.sh)  
