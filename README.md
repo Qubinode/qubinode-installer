@@ -1,9 +1,10 @@
 # Qubinode Installer
 Qubinode is a single node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
-## APPLE Development BRANCH
+## Pre-Release Branch
 Target Release v2.3
 
+This branch contains stable code from the developer branch. This can be used for testing future releases. There is limited support for this branch.
 If you would like to Contribute to the qubinode project please see the documentation below.  
 [Qubinode WorkFlow Process](docs/git-workflow-process.adoc)  
 [Testing and Validation](test/README.md)  
