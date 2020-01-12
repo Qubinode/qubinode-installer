@@ -59,6 +59,8 @@ function ask_for_vault_values () {
 }
 
 function ask_user_input () {
+    idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+    idm_check_static_ip=$(awk '/idm_check_static_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
     if [ "A${teardown}" != "Atrue" ]
     then 
         printf "\n\n" ""
