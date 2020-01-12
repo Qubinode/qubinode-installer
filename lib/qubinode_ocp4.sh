@@ -4,6 +4,10 @@ function openshift4_variables () {
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
+    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp4_vars_file}")
+    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
+    lb_name="${lb_name_prefix}-${cluster_name}"
 }
 
 function openshift4_prechecks () {
@@ -30,7 +34,7 @@ function openshift4_prechecks () {
     if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
     then
         echo "Setting firewall rules"
-        sudo firewall-cmd --add-port={80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
+        sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
         sudo firewall-cmd --reload
     fi
 
@@ -45,82 +49,175 @@ openshift4_qubinode_teardown () {
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
 
     # Delete VMS
-    cleanup
+    test -f $ocp4_vars_file && remove_ocp4_vms
 
-    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
-    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
+    # Delete containers managed by systemd
+    for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
+    do
+        if sudo sudo systemctl list-unit-files | grep -q $i
+        then
+            echo "Removing podman container $i"
+            sudo systemctl stop $i >/dev/null
+            sudo systemctl disable $i >/dev/null
+            sudo systemctl daemon-reload >/dev/null
+            sudo systemctl reset-failed >/dev/null
+            path="/etc/systemd/system/${i}"
+            test -f $path && sudo rm -f $path
+        fi
+    done
 
-    if sudo podman ps -a| grep -q ocp4lb
+
+    # Delete the remaining containers and pruge their images
+    containers=( ocp4lb lbocp42 openshift-4-loadbalancer-ocp42 ocp4ignhttpd ignwebserver)
+    deleted_containers=()
+    for pod in ${containers[@]}
+    do
+        id=$(sudo podman ps -q -f name=$pod)
+        if [ "A${id}" != "A" ]
+        then
+            sudo podman container stop $id
+            sudo podman container rm -f $id
+        fi
+
+        if ! sudo podman container ls -a | grep -q $pod
+        then
+            deleted_containers+=( "$pod" )
+            containers=("${containers[@]/$pod/}")
+        fi
+    done
+
+    # purge all containers and their images
+    sudo podman container prune --force >/dev/null
+    sudo podman image prune --all >/dev/null
+
+    # Verify all containers have been deleted and exit otherwise
+    if [ "${#containers[@]}" -ne "${#deleted_containers[@]}" ]
     then
-        echo "Removing ocp4lb container."
-        sudo podman stop ocp4lb
-        sudo podman rm ocp4lb
+        printf "%s\n" " There is a total of ${#containers[@]}, ${#deleted_containers[@]} were deleted."
+        printf "%s\n" " The following could containers not be deleted. Please manually delete them and try again."
+
+        for i in "${containers[@]}"
+        do
+            printf "%s\n" "    ${i:-other}"|grep -v other
+        done
+        exit
     fi
 
-    if sudo podman ps -a| grep -q lbocp42
-    then
-        echo "Removing lbocp42 container."
-        sudo podman stop lbocp42
-        sudo podman rm lbocp42
-    fi
-
-    if sudo podman ps -a| grep -q openshift-4-loadbalancer-ocp42
-    then
-        echo "Removing openshift-4-loadbalancer-ocp42 container."
-        sudo podman stop openshift-4-loadbalancer-ocp42
-        sudo podman rm openshift-4-loadbalancer-ocp42
-    fi
-
-    if sudo podman ps -a| grep -q ocp4ignhttpd
-    then
-        sudo podman stop ocp4ignhttpd
-        sudo podman rm ocp4ignhttpd
-    fi
-
-    if sudo podman ps -a| grep -q ocp4ignhttpd
-    then
-        sudo podman stop openshift-4-loadbalancer-ocp42
-        sudo podman rm openshift-4-loadbalancer-ocp42
-    fi
-
+    # Remove downloaded ignitions files
     test -d /opt/qubinode_webserver/4.2/ignitions && \
          rm -rf /opt/qubinode_webserver/4.2/ignitions
+    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
+    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
+    test -f "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
 
-for i in $(echo "lbocp42.service ocp4lb.service openshift-4-loadbalancer-ocp42.service")
-do
-    echo "Removing podman container $i"
-    sudo systemctl stop $i
-    sudo systemctl disable $i
-    sudo systemctl daemon-reload
-    sudo systemctl reset-failed
-done
-
-test -d "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
-    echo ""
-    echo "OCP4 deployment removed"
+    printf "%s\n\n" ""
+    printf "%s\n" " ${yel}************************${end}"
+    printf "%s\n" " OCP4 deployment removed"
+    printf "%s\n\n" " ${yel}************************${end}"
     exit 0
 }
 
-function cleanup(){
+function remove_ocp4_vms () {
     #clean up
-    sudo virsh destroy bootstrap; sudo virsh undefine bootstrap --remove-all-storage
+    all_vms=(bootstrap)
+    deleted_vms=()
 
     masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
     for  i in $(seq "$masters")
     do
-        sudo virsh destroy master-$((i-1));sudo virsh undefine master-$((i-1)) --remove-all-storage
+        vm="master-$((i-1))"
+        all_vms+=( "$vm" )
     done
 
     compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
     for i in $(seq "$compute")
     do
-        sudo virsh destroy compute-$((i-1));sudo virsh undefine compute-$((i-1))} --remove-all-storage
+        vm="compute-$((i-1))"
+        all_vms+=( "$vm" )
     done
+
+    #build_ocp4_vm_list
+
+    for vm in "${all_vms[@]}"
+    do
+        if sudo virsh list --all | grep -q $vm
+        then
+            state=$(sudo virsh list --all | grep $vm|awk '{print $3}')
+            if [ "A${state}" == "Arunning" ]
+            then
+                isvmRunning | while read VM
+                do
+                    sudo virsh shutdown $vm
+                    sleep 3
+                done
+                sudo virsh destroy $vm
+                sudo virsh undefine $vm --remove-all-storage
+                if ! sudo virsh list --all | grep -q $vm
+                then
+                    printf "%s\n" " $vm has was powered off and removed"
+                    deleted_vms+=( "$vm" )
+                    all_vms=("${all_vms[@]/$vm/}")
+                fi
+            elif [ "A${state}" == "Ashut" ]
+            then
+                sudo virsh undefine $vm --remove-all-storage
+                if ! sudo virsh list --all | grep -q $vm
+                then
+                    printf "%s\n" " $vm was already powered, it has been removed"
+                    deleted_vms+=( "$vm" )
+                    all_vms=("${all_vms[@]/$vm/}")
+                fi
+            else
+                sudo virsh destroy $vm
+                sudo virsh undefine $vm --remove-all-storage
+                if ! sudo virsh list --all | grep -q $vm
+                then
+                    printf "%s\n" " $vm state was ${state}, it has been removed"
+                    deleted_vms+=( "$vm" )
+                    all_vms=("${all_vms[@]/$vm/}")
+                fi
+            fi
+        else
+            printf "%s\n" " $vm has been removed"
+            deleted_vms+=( "$vm" )
+            all_vms=("${all_vms[@]/$vm/}")
+        fi
+    done
+
+    if [ "${#all_vms[@]}" -ne "${#deleted_vms[@]}" ]
+    then
+        printf "%s\n" " There is a total of ${#all_vms[@]}, ${#deleted_vms[@]} were deleted."
+        printf "%s\n" " The following VMs could not be deleted. Please manually delete them and try again."
+        for i in "${all_vms[@]}"
+        do
+            printf "%s\n" "    ${i:-other}"|grep -v other
+        done
+        exit
+    fi
 }
 
-
 openshift4_server_maintenance () {
-    echo "Hello World"
+    case ${product_maintenance} in
+       diag)
+           echo "Perparing to run full Diagnostics: : not implemented yet"
+           ;;
+       smoketest)
+           echo  "Running smoke test on environment: : not implemented yet"
+              ;;
+        shutdown)
+            echo  "Shutting down cluster"
+            bash "${project_dir}/openshift4_server_maintenance"
+            ;;
+        startup)
+            echo  "Starting up Cluster: not implemented yet"
+            ;;
+        checkcluster)
+            echo  "Running Cluster health check: : not implemented yet"
+            ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
 }
 
 is_node_up () {
@@ -230,14 +327,17 @@ deploy_compute_nodes () {
     done
 }
 
-wait_for_nodes (){
-  i="$(sudo virsh list | grep running |wc -l)"
 
-  while [ $i -gt 1 ]
+
+wait_for_ocp4_nodes_shutdown () {
+  build_ocp4_vm_list
+  for vm in ${all_vms[@]}
   do
-    echo "waiting for coreos first boot to complete current count ${i}"
-    sleep 10s
-    i="$(sudo virsh list | grep running |wc -l)"
+      isvmRunning | while read VM
+      do
+          printf "%s\n" " waiting for $vm first boot shutdown to complete"
+          sleep 10s
+      done
   done
 }
 
@@ -249,6 +349,7 @@ start_ocp4_deployment () {
     echo "openshift-install --dir=${ignition_dir} wait-for bootstrap-complete --log-level debug" > $install_cmd
     bash $install_cmd
 }
+
 
 post_deployment_steps (){
   echo "Shutdown bootstrap node"
@@ -270,13 +371,13 @@ ls -lath /export
 df -h /export
 
 confirm "Configure nfs-provisioner? yes/no"
-if [ "A${response}" != "Ayes" ]
+if [ "A${response}" == "Ayes" ]
 then
-  export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+    export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
     oc get storageclass
     bash lib/qubinode_nfs_provisioner_setup.sh
     oc get storageclass || exit 1
-     cat >image-registry-storage.yaml<<YAML
+    cat >image-registry-storage.yaml<<YAML
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -317,20 +418,73 @@ EOF
 }
 
 openshift4_enterprise_deployment () {
+
+
+    # Ensure all preqs before continuing
     openshift4_prechecks
+
+    # Setup the host system
     ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
+
+    # populate IdM with the dns entries required for OCP4
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
+
+    # deploy the load balancer container
     ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
-    sudo podman ps || exit 1
+
+    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
+    if [ "A${lb_container_status}" != "Atrue" ]
+    then
+        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
+        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
+        printf "%s\n" " Please investigate and try the intall again!"
+        exit 1
+    fi
+
+    # Download the openshift 4 installer
+    #TODO: this playbook should be renamed to reflect what it actually does
     ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
+
+    # Create ignition files
+    #TODO: check if the ignition files have been created longer than 24hrs
+    # regenerate if they have been
     ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
+
+    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
+    # - downloads the cores os qcow images
+    # - deploy httpd podman container
+    # - serve up the ignition files and cores qcow image over the web server
+    # TODO: make this idempotent, skips if the end state is already met
+    # /opt/qubinode_webserver/4.2/images/
     ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
+    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
+    if [ "A${httpd_container_status}" != "Atrue" ]
+    then
+        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
+        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
+        printf "%s\n" " Please investigate and try the intall again!"
+        exit 1
+    fi
+
+    # Get network information for ocp4 vms
     NODE_NETINFO=$(mktemp)
     sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
+
+    # Deploy the coreos nodes required
+    #TODO: playbook should not attempt to start VM's if they are already running
     deploy_bootstrap_node
     deploy_master_nodes
     deploy_compute_nodes
-    wait_for_nodes
+
+    # Ensure first boot is complete
+    # first boot is the initial deployment of the VMs
+    # followed by a shutdown
+    wait_for_ocp4_nodes_shutdown
+
+    # Boot up the VM's starting the bootstrap node, followed by master, compute
+    # Then start the ignition process
     start_ocp4_deployment
+
+    # Show user post deployment steps to follow
     post_deployment_steps
 }

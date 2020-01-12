@@ -126,7 +126,7 @@ sudo yum update -y
 ./qubinode-installer -p idm
 ```
 
-**To delete and remove idm**
+**If for any reason you need to remove the idm vm run this command**
 ```
 ./qubinode-installer -p idm  -d
 ```

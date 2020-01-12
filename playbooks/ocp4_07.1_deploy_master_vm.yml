@@ -11,6 +11,7 @@
       vm_type: master
       coreos_vm_hd_size: 120G
       coreos_vm_memory_size: 16192
+      coreos_vm_cpu_size: 4
 
     tasks:
     - name: Deploy Master node

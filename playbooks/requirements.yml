@@ -1,14 +1,17 @@
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
-  version: master
+  version: v1.0.0
 
-- src: https://github.com/tosin2013/swygue.edge_host_setup.git
-  version: ocp4
+- src: https://github.com/Qubinode/swygue.edge_host_setup.git
+  version: v1.0.0
 
 - src: https://github.com/flyemsafe/ansible-idm.git
-  version: master
+  version: v1.0.0
 
 - src: https://github.com/flyemsafe/swygue-redhat-subscription.git
-  version: master
+  version: v1.0.0
+
+- src: https://github.com/flyemsafe/swygue-lvm.git
+  version: v1.0.0
 
 - src: https://github.com/ahuffman/ansible-resolv.git
   version: master
@@ -18,9 +21,6 @@
 
 - src: https://github.com/amalivert/edge_hosts_validate.git
   version: master
-
-- src: https://github.com/flyemsafe/swygue-lvm.git
-  version: dev
 
 - src: https://github.com/tosin2013/ocp-power-management.git
   version: master
@@ -35,4 +35,10 @@
   version: master
 
 - src: https://github.com/flyemsafe/satellite-day-two-ops.git
-  varsion: master
+  version: master
+
+- src: https://github.com/flyemsafe/swygue.ansible-tower.git
+  version: master
+
+- src: https://github.com/tosin2013/nfs-provisioner-role.git
+  version: master
