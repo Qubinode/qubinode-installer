@@ -78,10 +78,22 @@ function check_memory_size () {
 
 function check_hardware_resources () {
     check_disk_size
-    sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
-
     check_memory_size
-    sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+
+    if [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" != minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
+    then
+        local PROFILE=standard
+        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
+    elif [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" == minimal ]] || [[ "$MEMORY_PROFILE" == minimal ]]
+    then
+        local PROFILE=minimal
+        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
+    else
+        sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+    fi
 }
 
 function select_openshift3_cluster_size () {
