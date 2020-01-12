@@ -79,7 +79,7 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 
 ## Roadmap
 * OCP 4.x Container Native Storage
-* OCP 4.x and RHEV
+* OCP 4.x on RHEV
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
