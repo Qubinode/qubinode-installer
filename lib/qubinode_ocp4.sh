@@ -4,6 +4,10 @@ function openshift4_variables () {
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
+    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp4_vars_file}")
+    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
+    lb_name="${lb_name_prefix}-${cluster_name}"
 }
 
 function openshift4_prechecks () {
@@ -48,7 +52,7 @@ openshift4_qubinode_teardown () {
     test -f $ocp4_vars_file && remove_ocp4_vms
 
     # Delete containers managed by systemd
-    for i in $(echo "lbocp42.service ocp4lb.service openshift-4-loadbalancer-ocp42.service")
+    for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
     do
         if sudo sudo systemctl list-unit-files | grep -q $i
         then
@@ -111,14 +115,6 @@ openshift4_qubinode_teardown () {
     printf "%s\n" " OCP4 deployment removed"
     printf "%s\n\n" " ${yel}************************${end}"
     exit 0
-}
-
-function isvmRunning () {
-    sudo virsh list |grep $vm|awk '/running/ {print $2}'
-}
-
-function isvmShutdown () {
-    sudo virsh list --all | grep $vm| awk '/shut/ {print $2}'
 }
 
 function remove_ocp4_vms () {
@@ -201,7 +197,27 @@ function remove_ocp4_vms () {
 }
 
 openshift4_server_maintenance () {
-    echo "Hello World"
+    case ${product_maintenance} in
+       diag)
+           echo "Perparing to run full Diagnostics: : not implemented yet"
+           ;;
+       smoketest)
+           echo  "Running smoke test on environment: : not implemented yet"
+              ;;
+        shutdown)
+            echo  "Shutting down cluster"
+            bash "${project_dir}/openshift4_server_maintenance"
+            ;;
+        startup)
+            echo  "Starting up Cluster: not implemented yet"
+            ;;
+        checkcluster)
+            echo  "Running Cluster health check: : not implemented yet"
+            ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
 }
 
 is_node_up () {
@@ -355,13 +371,13 @@ ls -lath /export
 df -h /export
 
 confirm "Configure nfs-provisioner? yes/no"
-if [ "A${response}" != "Ayes" ]
+if [ "A${response}" == "Ayes" ]
 then
-  export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+    export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
     oc get storageclass
     bash lib/qubinode_nfs_provisioner_setup.sh
     oc get storageclass || exit 1
-     cat >image-registry-storage.yaml<<YAML
+    cat >image-registry-storage.yaml<<YAML
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -403,11 +419,6 @@ EOF
 
 openshift4_enterprise_deployment () {
 
-    # declare variables
-    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
-    lb_name=$(awk '/^lb_name/ {print $2; exit}' "${ocp4_vars_file}")
-    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
-    lb_container_name="${lb_name}-${cluster_name}"
 
     # Ensure all preqs before continuing
     openshift4_prechecks
@@ -421,10 +432,10 @@ openshift4_enterprise_deployment () {
     # deploy the load balancer container
     ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
 
-    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_container_name 2>/dev/null)
+    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
     if [ "A${lb_container_status}" != "Atrue" ]
     then
-        printf "%s\n" " The load balancer container ${cyn}$lb_container_name${end} did not deploy."
+        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
         printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
         printf "%s\n" " Please investigate and try the intall again!"
         exit 1

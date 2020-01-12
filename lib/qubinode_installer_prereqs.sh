@@ -116,7 +116,7 @@ function setup_user_ssh_key () {
     HOMEDIR=$(eval echo ~${CURRENT_USER})
     if [ ! -f "${HOMEDIR}/.ssh/id_rsa.pub" ]
     then
-        print "%s\n" " Setting up ssh keys for ${yel}${CURRENT_USER}${end}"
+        printf "%s\n" " Setting up ssh keys for ${yel}${CURRENT_USER}${end}"
         ssh-keygen -f "${HOMEDIR}/.ssh/id_rsa" -q -N ''
     fi
 }
