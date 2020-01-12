@@ -10,6 +10,7 @@ prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
 suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 idm_srv_hostname="$prefix-$suffix"
 idm_srv_fqdn="$prefix-$suffix.$domain"
+idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 
 function display_idmsrv_unavailable () {
     printf "%s\n" "${yel}Either the IdM server variable idm_public_ip is not set.${end}"
@@ -55,8 +56,11 @@ function ask_user_for_idm_password () {
 }
 
 function ask_user_for_custom_idm_server () {
+    deploy_idm_server=$(awk '/deploy_idm_server:/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+    ask_use_existing_idm=$(awk '/ask_use_existing_idm:/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
+
     # Ask if this host should be setup as a qubinode host
-    if [ "A${DNS_SERVER_NAME}" == "Anone" ]
+    if [ "A${ask_use_existing_idm}" == 'Ayes' ]
     then
         printf "%s\n" "    ${cyn}Red Hat Identity Management (IdM)${end}"
         printf "%s\n\n" "    ${cyn}*********************************${end}"
@@ -64,71 +68,88 @@ function ask_user_for_custom_idm_server () {
         printf "%s\n" " To provide DNS resolutions for the services deployed."
         printf "%s\n" " The installer default action is deploy a local IdM server."
         printf "%s\n\n" " You can also choose to use an existing IdM server."
-
-      confirm " ${blu}Would you like to use an existing IdM server?${end} ${yel}yes/no${end}"
-      if [ "A${response}" == "Ayes" ]
-      then
-          static_ip_msg="Enter the ip address for the existing IdM server"
-          static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
-          set_idm_static_ip
-          sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
-
-          printf "%s\n\n" ""
-          read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
-          idm_hostname="${IDM_NAME}"
-          confirm " ${blu}You entered${end} ${yel}$idm_hostname${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
-          if [ "A${response}" == "Ayes" ]
-          then
-              sed -i "s/idm_hostname:.*/idm_hostname: "$idm_hostname"/g" "${idm_vars_file}"
-              printf "%s\n" ""
-              printf "%s\n" " ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
-          fi
-
-          # ask user for DNS domain or use default
-          if grep '""' "${varsfile}"|grep -q domain
-          then
-              read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end}: " domain
-              domain=${domain:-lab.example}
-              confirm " ${blu}You entered${end} ${yel}$domain${end}${blu}, is this correct?${end}${yel}yes/no${end}"
-              if [ "A${response}" == "Ayes" ]
-              then
-                  sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
-              fi
-          fi
-          #TODO:
-          # - ping the dns server to ensure it is up
-          #- update {{ idm_server_ip | default('1.1.1.1') }} to point to the dns ip provided
-
-          printf "%s\n\n" ""
-          read -p " What is the username for the existing IdM server admin user? " $IDM_USER
-          idm_admin_user=$IDM_USER
-          confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
-          if [ "A${response}" == "Ayes" ]
-          then
-              sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
-              printf "%s\n" ""
-          fi
-            # Tell installer not to deploy IdM server
-            sed -i "s/deploy_idm_server:.*/deploy_idm_server: no/g" "${idm_vars_file}"
-        else
-            # Tell installer to deploy IdM server
-            sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
-
-            # Setting default IdM server name
-            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
-
-            printf "%s\n" " The IdM server will be assigned a dynamic ip address from"
-            printf "%s\n\n" " your network. You can assign a static ip address instead."
-            confirm " ${blu}Would you like to assign a static ip address to the IdM server?${end} ${yel}yes/no${end}"
+    
+        confirm " ${blu}Would you like to use an existing IdM server?${end} ${yel}yes/no${end}"
+        if [ "A${response}" == "Ayes" ]
+        then
+            static_ip_msg="Enter the ip address for the existing IdM server"
+            static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
+            set_idm_static_ip
+            sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
+    
+            printf "%s\n\n" ""
+            read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
+            idm_hostname="${IDM_NAME}"
+            confirm " ${blu}You entered${end} ${yel}$idm_hostname${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                static_ip_msg="Enter the ip address you would like to assign to the IdM server"
-                static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
-                set_idm_static_ip
+                sed -i "s/idm_hostname:.*/idm_hostname: "$idm_hostname"/g" "${idm_vars_file}"
+                printf "%s\n" ""
+                printf "%s\n" " ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
             fi
+
+            printf "%s\n\n" ""
+            read -p " What is the username for the existing IdM server admin user? " $IDM_USER
+            idm_admin_user=$IDM_USER
+            confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
+                printf "%s\n" ""
+            fi
+
+            # Tell installer not to deploy IdM server
+            sed -i "s/deploy_idm_server:.*/deploy_idm_server: no/g" "${idm_vars_file}"
+            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
+        else
+#            printf "%s\n" "    ${cyn}Red Hat Identity Management (IdM)${end}"
+#            printf "%s\n\n" "    ${cyn}*********************************${end}"
+#            printf "%s\n" " The Qubinode depends on IdM as the DNS server."
+#            printf "%s\n" " To provide DNS resolutions for the services deployed."
+#            printf "%s\n\n" " The installer default action is deploy a local IdM server."
+    
+            # Ask user if they want to give the IdM server a static IP
+            if grep '""' "${idm_vars_file}"|grep -q "idm_check_static_ip:"
+            then
+                printf "%s\n" " The IdM server will be assigned a dynamic ip address from"
+                printf "%s\n\n" " your network. You can assign a static ip address instead."
+                confirm " ${blu}Would you like to assign a static ip address to the IdM server?${end} ${yel}yes/no${end}"
+                if [ "A${response}" == "Ayes" ]
+                then
+                    static_ip_msg="Enter the ip address you would like to assign to the IdM server"
+                    static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
+                    set_idm_static_ip
+                fi
+            fi
+    
+            # Tell installer to deploy IdM server
+            sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
+    
+            # Tell installer to skip asking about existing IdM server
+            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
+    
+            # Setting default IdM server name
+            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
         fi
     fi
+
+    # ask user for DNS domain or use default
+    if grep '""' "${vars_file}"|grep -q domain
+    then
+        read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end}: " domain
+        domain=${domain:-lab.example}
+        confirm " ${blu}You entered${end} ${yel}$domain${end}${blu}, is this correct?${end}${yel}yes/no${end}"
+        if [ "A${response}" == "Ayes" ]
+        then
+            sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
+        fi
+    fi
+    #TODO:
+    # - ping the dns server to ensure it is up
+    #- update {{ idm_server_ip | default('1.1.1.1') }} to point to the dns ip provided
+
 }
+
 
 function set_idm_static_ip () {
     printf "%s\n" ""
@@ -138,6 +159,7 @@ function set_idm_static_ip () {
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/idm_server_ip:.*/idm_server_ip: "$USER_IDM_SERVER_IP"/g" "${idm_vars_file}"
+        sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" ${idm_vars_file}
         printf "%s\n" " ${blu}$static_ip_result_msg${end} ${yel}$idm_server_ip${end}"
     fi
 }

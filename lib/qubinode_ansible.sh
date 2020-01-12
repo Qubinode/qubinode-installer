@@ -28,7 +28,7 @@ function ensure_supported_ansible_version () {
     if [ "A${ANSIBLE_VERSION_GOOD}" == "AYES" ]
     then
         printf "%s\n" ""
-        printf "%s\n" " %{cyn}**WARNING**${end}"
+        printf "%s\n" " ${cyn}**WARNING**${end}"
         printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is later than the tested version of $ANSIBLE_VERSION"
     fi
 }
