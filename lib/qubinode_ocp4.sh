@@ -336,7 +336,7 @@ wait_for_ocp4_nodes_shutdown () {
       isvmRunning | while read VM
       do
           printf "%s\n" " waiting for $vm first boot shutdown to complete"
-          sleep 10s
+          sleep 60s
       done
   done
 }
@@ -501,7 +501,7 @@ function qubinode_autoinstall_openshift4 (){
     # prereqs, setup current user ssh key, ask user if they want to
     # deploy a qubinode system.
     qubinode_installer_setup
-    
+
     # Ensure host system is setup as a KVM host
     qubinode_setup_kvm_host
     printf "\n\n****************************\n"

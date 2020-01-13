@@ -143,7 +143,7 @@ shift "$((OPTIND-1))"
 if (( $OPTIND == 1 ))
 then
     #cat < "${project_dir}/lib/docs/default_message"
-    display_openshift_msg
+    display_openshift_msg_ocp4
 #    default_message=("${blu}Continue with the default installation${end}" "${blu}Display other options${end}")
     default_message=("Continue with the default installation" "Display other options")
     createmenu "${default_message[@]}"
@@ -154,7 +154,7 @@ then
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
-        qubinode_autoinstall_openshift
+        qubinode_autoinstall_openshift4
     else
         echo $result
         echo "Unknown issue, please run the installer again"
