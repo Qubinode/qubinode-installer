@@ -301,7 +301,7 @@ deploy_bootstrap_node () {
     BOOTSTRAP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
     COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap  | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
     ansible-playbook playbooks/ocp4_07_deploy_bootstrap_vm.yml  -e vm_mac_address=${BOOTSTRAP} -e coreos_host_ip=${COREOS_IP}
-    sleep 10s
+    sleep 30s
 }
 
 deploy_master_nodes () {
@@ -311,7 +311,7 @@ deploy_master_nodes () {
         MASTER=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
         COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
         ansible-playbook playbooks/ocp4_07.1_deploy_master_vm.yml  -e vm_mac_address=${MASTER}   -e vm_name=master-${i} -e coreos_host_ip=${COREOS_IP}
-        sleep 10s
+        sleep 30s
     done
 
 }
@@ -330,15 +330,24 @@ deploy_compute_nodes () {
 
 
 wait_for_ocp4_nodes_shutdown () {
-  build_ocp4_vm_list
-  for vm in ${all_vms[@]}
+  i="$(sudo virsh list | grep running | grep master |wc -l)"
+
+  while [ $i -ne 0 ]
   do
-      isvmRunning | while read VM
-      do
-          printf "%s\n" " waiting for $vm first boot shutdown to complete"
-          sleep 60s
-      done
+    echo "waiting master nodes to shutdown ${i}"
+    sleep 10s
+    i="$(sudo virsh list | grep running | grep master  |wc -l)"
   done
+
+  w="$(sudo virsh list | grep running | grep compute |wc -l)"
+
+  while [ $w -ne 0 ]
+  do
+    echo "waiting compute nodes to shutdown ${w}"
+    sleep 10s
+    w="$(sudo virsh list | grep running | grep compute  |wc -l)"
+  done
+
 }
 
 start_ocp4_deployment () {
@@ -487,28 +496,4 @@ openshift4_enterprise_deployment () {
 
     # Show user post deployment steps to follow
     post_deployment_steps
-}
-
-function qubinode_autoinstall_openshift4 (){
-    product_in_use="ocp4" # Tell the installer this is openshift3 installation
-    openshift_product="${product_in_use}"
-    qubinode_product_opt="${product_in_use}"
-
-    # load required files from samples to playbooks/vars/
-    qubinode_required_prereqs
-
-    # Add current user to sudoers, setup global variables, run additional
-    # prereqs, setup current user ssh key, ask user if they want to
-    # deploy a qubinode system.
-    qubinode_installer_setup
-
-    # Ensure host system is setup as a KVM host
-    qubinode_setup_kvm_host
-    printf "\n\n****************************\n"
-    printf     "* Deploy IdM DNS Server    *\n"
-    printf     "****************************\n"
-    qubinode_deploy_idm
-
-    openshift4_enterprise_deployment
-
 }
