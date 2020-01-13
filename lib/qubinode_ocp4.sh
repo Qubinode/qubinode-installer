@@ -1,8 +1,6 @@
 #!/bin/bash
 
 function openshift4_variables () {
-    ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
-    ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
     cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp4_vars_file}")
@@ -11,11 +9,13 @@ function openshift4_variables () {
 }
 
 function openshift4_prechecks () {
-    openshift4_variables
+    ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+    ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     if [ ! -f "${ocp4_vars_file}" ]
     then
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
+    openshift4_variables
 
     #check for pull secret
     if [ ! -f "${ocp4_pull_secret}" ]
