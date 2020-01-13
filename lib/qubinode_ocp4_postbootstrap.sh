@@ -1,5 +1,36 @@
 #!/bin/bash
 
+function config_err_msg () {
+    cat << EOH >&2
+    printf "%s\n\n" " ${red}There was an error finding the full path to the qubinode-installer project directory.${end}"
+EOH
+}
+
+# this function just make sure the script
+# knows the full path to the project directory
+# and runs the config_err_msg if it can't determine
+# that start_deployment.conf can find the project directory
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+setup_required_paths
+source "${project_dir}/lib/qubinode_installer_prereqs.sh"
+source "${project_dir}/lib/qubinode_utils.sh"
+source "${project_dir}/lib/qubinode_requirements.sh"
+
+
+export KUBECONFIG="${project_dir}/ocp4/auth/kubeconfig"
+
 #compute-0.ocp42.lunchnet.example Ready worker 42m v1.14.6+8e46c0036
 oc get nodes --no-headers=true | while read line
 do
