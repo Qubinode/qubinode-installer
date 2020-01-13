@@ -18,9 +18,13 @@ display_openshift_msg () {
 
 display_other_options () {
     printf "%s\n\n" ""
-    other_options=("${cyn}OCP4${end} - OpenShift 4" "${cyn}OKD3${end} - Origin Community Distribution" "${cyn}Tower${end} - Ansible Tower" "${cyn}Satellite${end} - Red Hat Satellite Server" "${cyn}IdM${end} - Red Hat Identity Management" "${cyn}Display the help menu${end}")
+    #other_options=("${cyn}OCP4${end} - OpenShift 4" "${cyn}OKD3${end} - Origin Community Distribution" "${cyn}Tower${end} - Ansible Tower" "${cyn}Satellite${end} - Red Hat Satellite Server" "${cyn}IdM${end} - Red Hat Identity Management" "${cyn}Display the help menu${end}")
+
+    other_options=("OCP4 - OpenShift 4" "OKD3 - Origin Community Distribution" "Tower - Ansible Tower" "Satellite - Red Hat Satellite Server" "IdM - Red Hat Identity Management" "Display the help menu")
+
     createmenu "${other_options[@]}"
     result=($(echo "${selected_option}"))
+
     if [ "A${result}" == "ADisplay" ]
     then
         display_help
@@ -40,7 +44,6 @@ display_other_options () {
     then
         qubinode_deploy_idm
     else
-        echo $result
         echo "Unknown issue, please run the installer again"
     fi
 }

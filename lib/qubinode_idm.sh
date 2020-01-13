@@ -279,15 +279,15 @@ function qubinode_install_idm () {
     isIdMrunning
     if [ "A${idm_running}" == "Atrue" ]
     then
-        printf "\n\n*********************************************************************************\n"
-        printf "    **IdM server is installed**\n"
+        printf "\n\n ${yel}*********************************************************************************${end}\n"
+        printf " ${yel}**${end}   IdM server is installed                                                   ${yel}**${end}\n"
         printf "         Url: https://${idm_srv_fqdn}/ipa \n"
         printf "         Username: $(whoami) \n"
         printf "         Password: the vault variable *admin_user_password* \n\n"
-        printf "Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
-        printf "*******************************************************************************\n\n"
+        printf "     Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
+        printf " ${yel}*******************************************************************************${end}\n\n"
      else
-        echo "IDM Server was not properly deployed please verify deployment."
+        printf "%s\n" " ${red}IDM Server was not properly deployed please verify deployment.${end}"
         exit 1
      fi
 }
