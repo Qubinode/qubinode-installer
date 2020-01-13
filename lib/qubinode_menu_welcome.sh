@@ -30,7 +30,7 @@ display_other_options () {
         display_help
     elif [ "A${result}" == "AOCP4" ]
     then
-        openshift4_enterprise_deployment
+        qubinode_autoinstall_openshift4
     elif [ "A${result}" == "AOKD3" ]
     then
         echo "Not implemented yet!"
