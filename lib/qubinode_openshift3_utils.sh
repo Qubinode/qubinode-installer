@@ -979,6 +979,7 @@ function openshift3_installation_msg () {
             printf "%s\n" "      IdM server IP: $IDM_IP"
             printf "%s\n\n" " ${yel}*******************************************************${end}"
         fi
+       echo "SMOKE_TEST_RETURN_CODE=$SMOKE_TEST_RETURN_CODE"
    else
        printf "%s\n" "${SMOKE_MSG}"
        exit 1
