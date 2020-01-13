@@ -61,6 +61,7 @@ done
 
 EXPECTED_OPERATORS=27
 EXPECTED_DOWN='image-registry'
+AVAILABLE_OPERATORS=()
 oc get clusteroperators --no-headers=true| while read line
 do
     name=$(echo $line | awk '{print $1}')
@@ -76,12 +77,41 @@ do
        printf "%s\n" " $name is $status and current state is $state"
        exit 1
     fi
+
+    # Count
 done
 
+oc get clusteroperators --no-headers=true| while read line
+do
+    name=$(echo $line | awk '{print $1}')
+    version=$(echo $line | awk '{print $2}')
+    status=$(echo $line | awk '{print $3}')
+    in_progress=$(echo $line | awk '{print $4}')
+    state=$(echo $line | awk '{print $5}')
+    uptime=$(echo $line | awk '{print $6}')
 
+    if [[ "A${status}" == 'AFalse' ]] && [[ "A${name}" != "A${EXPECTED_DOWN}" ]]
+    then
+       printf "%s\n" " The $EXPECTED_DOWN is the only operator expected to be down."
+       printf "%s\n" " $name is $status and current state is $state"
+       exit 1
+    fi
+
+    # Count
+done
+
+# A. Deploy nfs-provisioner
 # At this point add the nfs-provisioner
 # 1. check if it's already added, in case this script is being re-run
 # 2. add the nfs-provisioner
 # 3. validate is has been added
 
+
+# B. Complete OpenShift install
+# 1. do a until loop until all the expected operators are up
+# 2. run openshift-install --dir=ocp4 wait-for install-complete
+
+# C. print status about the cluster
+
+exit 0
 
