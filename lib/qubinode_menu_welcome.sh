@@ -25,14 +25,38 @@ display_hardware_profile_msg () {
 }
 
 display_openshift_msg_ocp4 () {
-    printf "%s\n" "${yel}    ****************************************************************************${end}"
-    printf "%s\n" "${mag}    The default product option is to install Red Hat Openshift Container${end}"
-    printf "%s\n" "${mag}    Platform 4 (OCP4)."
-    printf "%s\n" ""
-    printf "%s\n\n" "${blu}    To deploy OCP4 you will need to meet standard hardware profile.${end}"
-    printf "%s\n" "${mag}    If you wish to continue with the deployment of a OCP3 cluster, choose option 2${end}"
-    printf "%s\n" "${cyn}    Continue with the default installation${end}. ${mag}Otherwise choose${end} ${cyn}Display other options.${end}"
-    printf "%s\n\n" "${yel}    ****************************************************************************${end}"
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
+    printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 4 (OCP4)${txend}${end}"
+    printf "%s\n" "    The default product option is to install OCP4. The deployment consists of"
+    printf "%s\n" "    3 masters and 2 computes. The ${txb}standard hardware profile is the minimum${txend}"
+    printf "%s\n" "    hardware profile required for the installation. In addition to meeting the"
+    printf "%s\n" "    minimum hardware profile requirement, the installation requires a valid"
+    printf "%s\n" "    pull-secret. If you are unable to obtain a pull-secret, exit the install"
+    printf "%s\n\n" "    and choose OKD3 from the menu option."
+    printf "%s\n" "    Hardware profiles are defined as:"
+    display_hardware_profile_msg
+    printf "%s\n\n" "  ${yel}****************************************************************************${end}"
+
+    default_message=("Continue with the default installation" "Display other options")
+    createmenu "${default_message[@]}"
+    result=($(echo "${selected_option}"))
+    if [ "A${result}" == "ADisplay" ]
+    then
+        display_other_options
+    elif [ "A${result}" == "AContinue" ]
+    then
+        qubinode_autoinstall_openshift4
+        #confirm "  Proceed with ocp4 install? yes/no"
+        #if [ "A${response}" == "Ayes" ]
+        #then
+        #    echo qubinode_autoinstall_openshift4
+        #    #openshift4_enterprise_deployment
+        #else
+        #    display_other_options
+        #fi
+    else
+        print "%s\n" " ${red}Unknown issue, please run the installer again${end}"
+    fi
 }
 
 

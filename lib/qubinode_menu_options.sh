@@ -21,8 +21,6 @@ function qubinode_product_deployment () {
               fi
               ;;
           ocp4)
-              openshift4_prechecks
-              openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
