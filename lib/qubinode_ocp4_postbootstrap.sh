@@ -104,8 +104,13 @@ done
 # At this point add the nfs-provisioner
 # 1. check if it's already added, in case this script is being re-run
 # 2. add the nfs-provisioner
-# 3. validate is has been added
 
+# 3. validate is has been added
+if ! oc describe configs.imageregistry.operator.openshift.io | grep -q 'Claim:   image-registry-storage'
+then
+    # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+    oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"pvc":{ "claim": " image-registry-storage"}}}}'
+fi
 
 # B. Complete OpenShift install
 # 1. do a until loop until all the expected operators are up
