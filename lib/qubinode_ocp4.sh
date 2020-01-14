@@ -68,7 +68,7 @@ openshift4_qubinode_teardown () {
 
 
     # Delete the remaining containers and pruge their images
-    containers=( ocp4lb lbocp42 openshift-4-loadbalancer-ocp42 ocp4ignhttpd ignwebserver)
+    containers=(ocp4lb lbocp42 openshift-4-loadbalancer-ocp42 ocp4ignhttpd ignwebserver qbn-httpd)
     deleted_containers=()
     for pod in ${containers[@]}
     do
