@@ -4,6 +4,7 @@ Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s sui
 ## APPLE Development BRANCH
 Target Release 2.3
 
+This branch contains stable code from the developer branch. This can be used for testing future releases. There is limited support for this branch.
 If you would like to Contribute to the qubinode project please see the documentation below.  
 * [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
 * [Testing and Validation](test/README.md)  

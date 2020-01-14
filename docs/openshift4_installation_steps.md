@@ -34,6 +34,7 @@ sudo yum update -y
 ```
 ./qubinode-installer -m host
 ```
+
 **Download qcow images for idmserver**
 ```
 copy rhel-server-7.7-update-2-x86_64-kvm.qcow2 to qubinode-installer directory
