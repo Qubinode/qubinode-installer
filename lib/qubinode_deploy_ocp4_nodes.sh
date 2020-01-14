@@ -26,6 +26,6 @@ i="$(sudo virsh list | grep running |wc -l)"
 while [ $i -gt 1 ]
 do
   echo "waiting for coreos first boot to complete current count ${i}"
-  sleep 10s
+  sleep 60s
   i="$(sudo virsh list | grep running |wc -l)"
 done

@@ -1,4 +1,4 @@
-display_openshift_msg () {
+display_openshift_msg_ocp3 () {
     printf "%s\n" "${yel}    ****************************************************************************${end}"
     printf "%s\n" "${mag}    The default product option is to install Red Hat Openshift Container${end}"
     printf "%s\n" "${mag}    Platform 3 (OCP3). An subscription for OCP3 is required. If you do ${end}"
@@ -16,6 +16,18 @@ display_openshift_msg () {
     printf "%s\n\n" "${yel}    ****************************************************************************${end}"
 }
 
+display_openshift_msg_ocp4 () {
+    printf "%s\n" "${yel}    ****************************************************************************${end}"
+    printf "%s\n" "${mag}    The default product option is to install Red Hat Openshift Container${end}"
+    printf "%s\n" "${mag}    Platform 4 (OCP4)."
+    printf "%s\n" ""
+    printf "%s\n\n" "${blu}    To deploy OCP4 you will need to meet standard hardware profile.${end}"
+    printf "%s\n" "${mag}    If you wish to continue with the deployment of a OCP3 cluster, choose option 2${end}"
+    printf "%s\n" "${cyn}    Continue with the default installation${end}. ${mag}Otherwise choose${end} ${cyn}Display other options.${end}"
+    printf "%s\n\n" "${yel}    ****************************************************************************${end}"
+}
+
+
 display_other_options () {
     printf "%s\n\n" ""
     #other_options=("${cyn}OCP4${end} - OpenShift 4" "${cyn}OKD3${end} - Origin Community Distribution" "${cyn}Tower${end} - Ansible Tower" "${cyn}Satellite${end} - Red Hat Satellite Server" "${cyn}IdM${end} - Red Hat Identity Management" "${cyn}Display the help menu${end}")
@@ -28,9 +40,10 @@ display_other_options () {
     if [ "A${result}" == "ADisplay" ]
     then
         display_help
-    elif [ "A${result}" == "AOCP4" ]
+    elif [ "A${result}" == "AOCP3" ]
     then
-        openshift4_enterprise_deployment
+        display_openshift_msg_ocp3
+        qubinode_autoinstall_openshift
     elif [ "A${result}" == "AOKD3" ]
     then
         echo "Not implemented yet!"
