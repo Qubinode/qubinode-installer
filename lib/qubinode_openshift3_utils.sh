@@ -387,10 +387,18 @@ function qubinode_deploy_openshift3 () {
             fi
         fi
 
-        # Set the OpenShift inventory file
+        # Check if the openshift inventory file has been generated
         INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
  
-        # Set path to inventory/passwordFile
+        # Generate inventory file if it does not exist
+        if [ "A${INVENTORYFILE}" == "A" ]
+        then
+            run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
+            $run_cmd || exit_status "$run_cmd" $LINENO
+            INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+        fi
+       
+        # Set HTPASSFILE variable if inventory file exist 
         if [ "A${INVENTORYFILE}" != "A" ]
         then
             HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
@@ -401,8 +409,7 @@ function qubinode_deploy_openshift3 () {
 
         # Ensure htpassfile is created and setup
         ensure_ocp3_basic_auth_file
-
-        # Ensure the inventory file exists
+        # Verify basic auth file was setup
         if [ ! -f "${HTPASSFILE}" ]
         then
             echo "Installation aborted: cannot the basic auth file ${HTPASSFILE}"
@@ -422,9 +429,6 @@ function qubinode_deploy_openshift3 () {
             exit 1
         fi
 
-        # Generate the openshift inventory
-        run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
-        $run_cmd || exit_status "$run_cmd" $LINENO
 
         # Run the node post deployment checks
         qubinode_openshift3_nodes_postdeployment
