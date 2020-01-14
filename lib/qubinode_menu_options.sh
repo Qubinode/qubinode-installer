@@ -21,7 +21,6 @@ function qubinode_product_deployment () {
               fi
               ;;
           ocp4)
-              openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
@@ -69,7 +68,7 @@ function qubinode_product_deployment () {
               exit 1
               ;;
     esac
-           
+
 }
 
 function qubinode_maintenance_options () {
@@ -103,4 +102,3 @@ function qubinode_maintenance_options () {
         display_help
     fi
 }
-
