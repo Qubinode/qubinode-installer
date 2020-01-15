@@ -45,12 +45,16 @@ function openshift4_prechecks () {
 }
 
 openshift4_qubinode_teardown () {
+
+    # Ensure all preqs before continuing
+    openshift4_prechecks
+
     # delete dns entries
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
 
     # Delete VMS
     test -f $ocp4_vars_file && remove_ocp4_vms
-
+    
     # Delete containers managed by systemd
     for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
     do
@@ -359,34 +363,38 @@ start_ocp4_deployment () {
     bash $install_cmd
 }
 
-
-post_deployment_steps (){
-  echo "Shutdown bootstrap node"
-  echo "*****************************"
-  echo "sudo virsh shutdown bootstrap"
-
-  echo "Check openshift enviornment and monitor clusteroperator status"
-  echo "*****************************"
+function empty_directory_msg () {
   cat << EOF
-  # export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
-  # oc whoami
-  # oc get nodes
-  # oc get csr
+  # oc get pod -n openshift-image-registry
+  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+  # oc get pod -n openshift-image-registry
   # oc get clusteroperators
 EOF
+}
 
-echo "NFS Server mount directory information"
-ls -lath /export
-df -h /export
+post_deployment_steps () {
 
-confirm "Configure nfs-provisioner? yes/no"
-if [ "A${response}" == "Ayes" ]
-then
-    export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
-    oc get storageclass
-    bash lib/qubinode_nfs_provisioner_setup.sh
-    oc get storageclass || exit 1
-    cat >image-registry-storage.yaml<<YAML
+    printf "%s\n" "Registry storage for bate metal is required to complete the ocp4 cluster install."
+    printf "%s\n" "Additional informaiton is available here:"
+    printf "%s\n\n" "https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html"
+    printf "%s\n" "The installer will attempt to configure storage."
+    
+    if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
+    then
+        printf "%s\n\n" ""
+        printf "%s\n" " NFS Server is configured and can be used for persistent storage."
+        confirm " Do you want to configure nfs-provisioner? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            export KUBECONFIG="${project_dir}/ocp4/auth/kubeconfig"
+            if ! oc get storageclass | grep -q nfs-storage
+            then
+                bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
+            fi
+    
+            if oc get storageclass | grep -q nfs-storage
+            then
+cat >image-registry-storage.yaml<<YAML
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -399,36 +407,36 @@ spec:
     requests:
       storage: 80Gi
 YAML
-oc create -f image-registry-storage.yaml
+                oc create -f image-registry-storage.yaml
+            else
+                printf "%s\n" " ${red}Unable to add nfs storage provisioner, please investigate.${end}"
+                empty_directory_msg
+            fi
+         fi
+    else
+      printf "%s\n" " Skipping nfs-provisioning"
+      printf "%s\n\n" "*****************************"
+      printf "%s\n" "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
+      empty_directory_msg
+    fi
 
-cat << EOF
-# Please Follow instructions located below for persistent registry storage
-# Link: https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html
-EOF
-else
-  echo "Skipping nfs-provisioning"
-  echo "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
-  echo "*****************************"
-  cat << EOF
-  # oc get pod -n openshift-image-registry
-  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
-  # oc get pod -n openshift-image-registry
-  # oc get clusteroperators
-EOF
-fi
-
-echo "Check that OpenShift installation is complete"
-echo "*****************************"
-cat << EOF
-# cd ~/qubinode-installer
-# openshift-install --dir=ocp4 wait-for install-complete
-EOF
-
+    printf "%s\n" " ${yel}*****************************${end}"
+    printf "%s\n\n" " ${cyn}   Post Bootstrap Steps ${end}"
+    printf "%s\n" " (1) Shutdown the bootstrap node."
+    printf "%s\n\n" "       ${grn}sudo virsh shutdown bootstrap${end}"
+    printf "%s\n" " (2) Ensure all nodes are up."
+    printf "%s\n" "         ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
+    printf "%s\n\n" "       ${grn}oc get nodes${end}"
+    printf "%s\n" " (3) Ensure there are no pending CSR."
+    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
+    printf "%s\n" " (4) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
+    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
+    printf "%s\n" " (4) If all the above checks out, complete the installation by running."
+    printf "%s\n" "       ${grn}cd ${project_dir}${end}"
+    printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
 }
 
 openshift4_enterprise_deployment () {
-
-
     # Ensure all preqs before continuing
     openshift4_prechecks
 
