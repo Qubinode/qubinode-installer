@@ -54,7 +54,7 @@ openshift4_qubinode_teardown () {
 
     # Delete VMS
     test -f $ocp4_vars_file && remove_ocp4_vms
-    
+
     # Delete containers managed by systemd
     for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
     do
@@ -378,7 +378,7 @@ post_deployment_steps () {
     printf "%s\n" "Additional informaiton is available here:"
     printf "%s\n\n" "https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html"
     printf "%s\n" "The installer will attempt to configure storage."
-    
+
     if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
     then
         printf "%s\n\n" ""
@@ -391,7 +391,7 @@ post_deployment_steps () {
             then
                 bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
             fi
-    
+
             if oc get storageclass | grep -q nfs-storage
             then
 cat >image-registry-storage.yaml<<YAML
@@ -434,6 +434,62 @@ YAML
     printf "%s\n" " (4) If all the above checks out, complete the installation by running."
     printf "%s\n" "       ${grn}cd ${project_dir}${end}"
     printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
+}
+
+function check_webconsole_status () {
+    #echo "Running check_webconsole_status"
+    # This function checks to see if the openshift console up
+    # It expects a return code of 200
+
+    # load required variables
+    openshift4_variables
+    #echo "Checking to see if Openshift is online."
+    WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
+    return $WEBCONSOLE_STATUS
+}
+
+function pingreturnstatus() {
+  ping -q -c3 $1 > /dev/null
+
+  if [ $? -eq 0 ]
+  then
+    true
+  else
+    false
+  fi
+  }
+
+function ping_openshift4_nodes () {
+    IS_OPENSHIFT4_NODES=no
+    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+    for  i in $(seq "$masters")
+    do
+        vm="master-$((i-1))"
+        if  pingreturnstatus ${vm}.ocp42.${domain}; then
+          echo "${vm}.ocp42.lab.example is online"
+          IS_OPENSHIFT4_NODES=yes
+        else
+          echo "${vm}.ocp42.lab.example is offline"
+          IS_OPENSHIFT4_NODES=no
+          break
+        fi
+    done
+
+    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+    for i in $(seq "$compute")
+    do
+        vm="compute-$((i-1))"
+        if  pingreturnstatus ${vm}.ocp42.${domain}; then
+          echo "${vm}.ocp42.lab.example is online"
+          IS_OPENSHIFT4_NODES=yes
+        else
+          echo "${vm}.ocp42.lab.example is offline"
+          IS_OPENSHIFT4_NODES=no
+          break
+        fi
+    done
+    IS_OPENSHIFT4_NODES=yes
+    return $IS_OPENSHIFT4_NODES
 }
 
 openshift4_enterprise_deployment () {

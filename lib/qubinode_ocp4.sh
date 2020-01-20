@@ -13,12 +13,26 @@ function qubinode_autoinstall_openshift4 (){
     # deploy a qubinode system.
     qubinode_installer_setup
 
-    # Ensure host system is setup as a KVM host
-    qubinode_setup_kvm_host
+    ping_openshift4_nodes
+    check_webconsole_status
 
-    # Deploy IdM Server
-    qubinode_deploy_idm
- 
-    # Deploy OCP4
-    openshift4_enterprise_deployment
+    if [[ "A${IS_OPENSHIFT4_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -eq 200 ]]
+    then
+      printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
+      printf "%s\n\n" " ${grn}Access the OpenShift web-console here: https://console-openshift-console.apps.ocp42.${domain}${end}"
+      printf "%s\n\n" " ${grn}Login to the console with user: kubeadmin, password:$(cat ocp4/auth/kubeadmin-password)${end}"
+    else
+
+        # Ensure host system is setup as a KVM host
+        qubinode_setup_kvm_host
+
+        # Deploy IdM Server
+        qubinode_deploy_idm
+
+        # Deploy OCP4
+        openshift4_enterprise_deployment
+        exit 0
+    fi
+
+
 }
