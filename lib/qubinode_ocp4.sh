@@ -13,6 +13,8 @@ function qubinode_autoinstall_openshift4 (){
     # deploy a qubinode system.
     qubinode_installer_setup
 
+    openshift4_prechecks
+    
     ping_openshift4_nodes
     check_webconsole_status
 

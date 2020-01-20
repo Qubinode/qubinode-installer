@@ -444,6 +444,7 @@ function check_webconsole_status () {
     # load required variables
     openshift4_variables
     #echo "Checking to see if Openshift is online."
+    web_console="https://console-openshift-console.apps.ocp42.${domain}"
     WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
     return $WEBCONSOLE_STATUS
 }
