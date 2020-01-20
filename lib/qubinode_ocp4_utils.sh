@@ -9,8 +9,9 @@ function openshift4_variables () {
 }
 
 function openshift4_prechecks () {
-    vars_file="${playbooks_dir}/playbooks/vars/all.yml"
-    ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+    playbooks_dir="${project_dir}/playbooks"
+    vars_file="${playbooks_dir}/vars/all.yml"
+    ocp4_vars_file="${playbooks_dir}/vars/ocp4.yml"
     idm_vars_file="${playbooks_dir}/vars/idm.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     if [ ! -f "${ocp4_vars_file}" ]
@@ -535,10 +536,10 @@ function ping_openshift4_nodes () {
     do
         vm="master-$((i-1))"
         if  pingreturnstatus ${vm}.ocp42.${domain}; then
-          echo "${vm}.ocp42.lab.example is online"
+          #echo "${vm}.ocp42.lab.example is online"
           IS_OPENSHIFT4_NODES=yes
         else
-          echo "${vm}.ocp42.lab.example is offline"
+          #echo "${vm}.ocp42.lab.example is offline"
           IS_OPENSHIFT4_NODES=no
           break
         fi
@@ -549,10 +550,10 @@ function ping_openshift4_nodes () {
     do
         vm="compute-$((i-1))"
         if  pingreturnstatus ${vm}.ocp42.${domain}; then
-          echo "${vm}.ocp42.lab.example is online"
+          #echo "${vm}.ocp42.lab.example is online"
           IS_OPENSHIFT4_NODES=yes
         else
-          echo "${vm}.ocp42.lab.example is offline"
+          #echo "${vm}.ocp42.lab.example is offline"
           IS_OPENSHIFT4_NODES=no
           break
         fi
