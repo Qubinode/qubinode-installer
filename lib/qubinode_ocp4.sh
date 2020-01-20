@@ -14,7 +14,7 @@ function qubinode_autoinstall_openshift4 (){
     qubinode_installer_setup
 
     openshift4_prechecks
-    
+
     ping_openshift4_nodes
     check_webconsole_status
 
@@ -26,10 +26,16 @@ function qubinode_autoinstall_openshift4 (){
     else
 
         # Ensure host system is setup as a KVM host
-        qubinode_setup_kvm_host
+        openshift4_kvm_health_check
+        if [[ "A${KVM_IN_GOOD_HEALTH}" == "Ano"  ]]; then
+          qubinode_setup_kvm_host
+        fi
 
         # Deploy IdM Server
-        qubinode_deploy_idm
+        openshift4_idm_health_check
+        if [[  "A${IDM_IN_GOOD_HEALTH}" == "Ano"  ]]; then
+          qubinode_deploy_idm
+        fi
 
         # Deploy OCP4
         openshift4_enterprise_deployment

@@ -9,7 +9,9 @@ function openshift4_variables () {
 }
 
 function openshift4_prechecks () {
+    vars_file="${playbooks_dir}/vars/all.yml"
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+    idm_vars_file="${playbooks_dir}/vars/idm.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     if [ ! -f "${ocp4_vars_file}" ]
     then
@@ -42,6 +44,72 @@ function openshift4_prechecks () {
     current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
+}
+
+openshift4_kvm_health_check (){
+  KVM_IN_GOOD_HEALTH=yes
+
+  requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+  if sudo virsh net-list | grep -q $requested_brigde; then
+    echo "$requested_brigde is configured"
+  else
+      KVM_IN_GOOD_HEALTH=no
+  fi
+
+  requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+  if sudo virsh net-list | grep -q $requested_nat; then
+    echo "$requested_nat is configured"
+  else
+      KVM_IN_GOOD_HEALTH=no
+  fi
+
+  if sudo lsblk | grep -q nvme0n1; then
+    echo "Checking for vg name "
+    vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
+    if sudo vgdisplay | grep -q $vg_name; then
+      echo "$vg_name is configured"
+    else
+        KVM_IN_GOOD_HEALTH=no
+    fi
+  else
+      echo "Skipping mount path check"
+  fi
+
+  check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+  if [[ -d $check_image_path ]]; then
+    echo "$check_image_path exists"
+  else
+    KVM_IN_GOOD_HEALTH=no
+  fi
+
+  return $KVM_IN_GOOD_HEALTH
+}
+
+openshift4_idm_health_check () {
+IDM_IN_GOOD_HEALTH=yes
+
+if [[ -f $idm_vars_file ]]; then
+  echo "$idm_vars_file exists"
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
+if pingreturnstatus ${idm_ipaddress}; then
+  echo "IDM Server is connected $idm_ipaddress"
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+if [[ ! -z $dns_query ]]; then
+  echo "IDM Server is able to resolve qbn-dns01.${domain}"
+  echo $dns_query
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+echo $IDM_IN_GOOD_HEALTH
 }
 
 openshift4_qubinode_teardown () {
