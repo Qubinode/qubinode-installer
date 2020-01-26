@@ -1,0 +1,56 @@
+- set_fact:
+    stdout_lines: []
+
+- name: Test if api-int OpenShift Entries Exist
+  command: "dig +short @{{ idm_server_ip }} api-int.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
+  register: validate_entry
+
+- set_fact:
+    stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
+
+- name: Test if api OpenShift Entries Exist
+  command: "dig +short @{{ idm_server_ip }} api.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
+  register: validate_entry
+
+- set_fact:
+    stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
+
+- name: Test if application endpoint for OpenShift  Exist
+  command: "dig +short @{{ idm_server_ip }} test.apps.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
+  register: validate_entry
+
+- set_fact:
+    stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
+
+- name: Test if OpenShift master node Entries Exist
+  command: "dig +short @{{ idm_server_ip }} master-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
+  register: validate_entry
+  with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
+
+- debug:
+    var: validate_entry
+    verbosity: 2
+
+- set_fact:
+    stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
+  with_items: "{{ validate_entry.results }}"
+
+- name: Test if OpenShift compute nodes Entries Exist
+  command: "dig +short @{{ idm_server_ip }} compute-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
+  register: validate_entry
+  with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
+
+- debug:
+    var: validate_entry
+    verbosity: 2
+
+- set_fact:
+    stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
+  with_items: "{{ validate_entry.results }}"
+
+- debug:
+    msg: "IP {{ item }} is registed in IDM"
+  with_items: "{{ stdout_lines }}"
+
+- meta: end_play
+  when: (stdout_lines|length == ( compute_count|int +  master_count|int + 4))
