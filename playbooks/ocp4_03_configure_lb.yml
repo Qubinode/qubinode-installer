@@ -9,6 +9,16 @@
     - vars/ocp4.yml
 
   tasks:
+    - name: check if loadbalancer has port 6443 open
+      shell: ss -tp state listening sport = :6443 | grep https
+      register: result
+      ignore_errors: yes
+
+    - debug: msg={{ result.stdout }}
+
+    - meta: end_play
+      when: result.stdout != ""
+
     - name: Setting Ingress information and machine configuration  for bootsrap nodes and other machines
       set_fact:
         tmp_api: "[ 'bootstrap={{ vn_subnet.split('.')[:3] | join('.')}}.2:6443' ]"
