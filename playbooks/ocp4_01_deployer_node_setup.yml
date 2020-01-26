@@ -11,6 +11,14 @@
   become: yes
 
   tasks:
+  - name: Verifiy podman is installed
+    stat:
+      path: "/usr/bin/podman"
+    register: podman_is_installed
+
+  - meta: end_play
+    when: "podman_is_installed.stat.exists"
+
   - name: Enable rhel-7-server-extras-rpms repository
     rhsm_repository:
       name: rhel-7-server-extras-rpms
