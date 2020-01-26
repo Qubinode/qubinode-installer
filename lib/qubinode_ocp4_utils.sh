@@ -420,6 +420,16 @@ spec:
       storage: 80Gi
 YAML
                 oc create -f image-registry-storage.yaml
+                sleep .5s
+                # Add pvc claim for registry storage
+                oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'
+
+                # Verify claim
+                sleep .5s
+                if oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage | grep -q image-registry-storage
+                then
+                    printf "%sn" " Registry pvc claim created successfully"
+                fi
             else
                 printf "%s\n" " ${red}Unable to add nfs storage provisioner, please investigate.${end}"
                 empty_directory_msg
@@ -467,71 +477,71 @@ EOF
 }
 
 openshift4_enterprise_deployment () {
-#    # Ensure all preqs before continuing
-#    openshift4_prechecks
-#
-#    # Setup the host system
-#    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
-#
-#    # populate IdM with the dns entries required for OCP4
-#    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
-#
-#    # deploy the load balancer container
-#    ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
-#
-#    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
-#    if [ "A${lb_container_status}" != "Atrue" ]
-#    then
-#        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
-#        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
-#        printf "%s\n" " Please investigate and try the intall again!"
-#        exit 1
-#    fi
-#
-#    # Download the openshift 4 installer
-#    #TODO: this playbook should be renamed to reflect what it actually does
-#    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
-#
-#    # Create ignition files
-#    #TODO: check if the ignition files have been created longer than 24hrs
-#    # regenerate if they have been
-#    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
-#
-#    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
-#    # - downloads the cores os qcow images
-#    # - deploy httpd podman container
-#    # - serve up the ignition files and cores qcow image over the web server
-#    # TODO: make this idempotent, skips if the end state is already met
-#    # /opt/qubinode_webserver/4.2/images/
-#    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
-#    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
-#    if [ "A${httpd_container_status}" != "Atrue" ]
-#    then
-#        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
-#        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
-#        printf "%s\n" " Please investigate and try the intall again!"
-#        exit 1
-#    fi
-#
-#    # Get network information for ocp4 vms
-#    NODE_NETINFO=$(mktemp)
-#    sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
-#
-#    # Deploy the coreos nodes required
-#    #TODO: playbook should not attempt to start VM's if they are already running
-#    deploy_bootstrap_node
-#    deploy_master_nodes
-#    deploy_compute_nodes
-#
-#    # Ensure first boot is complete
-#    # first boot is the initial deployment of the VMs
-#    # followed by a shutdown
-#    wait_for_ocp4_nodes_shutdown
-#
-#    # Boot up the VM's starting the bootstrap node, followed by master, compute
-#    # Then start the ignition process
-#    start_ocp4_deployment
-#
-#    # Show user post deployment steps to follow
+    # Ensure all preqs before continuing
+    openshift4_prechecks
+
+    # Setup the host system
+    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
+
+    # populate IdM with the dns entries required for OCP4
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
+
+    # deploy the load balancer container
+    ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
+
+    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
+    if [ "A${lb_container_status}" != "Atrue" ]
+    then
+        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
+        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
+        printf "%s\n" " Please investigate and try the intall again!"
+        exit 1
+    fi
+
+    # Download the openshift 4 installer
+    #TODO: this playbook should be renamed to reflect what it actually does
+    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
+
+    # Create ignition files
+    #TODO: check if the ignition files have been created longer than 24hrs
+    # regenerate if they have been
+    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
+
+    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
+    # - downloads the cores os qcow images
+    # - deploy httpd podman container
+    # - serve up the ignition files and cores qcow image over the web server
+    # TODO: make this idempotent, skips if the end state is already met
+    # /opt/qubinode_webserver/4.2/images/
+    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
+    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
+    if [ "A${httpd_container_status}" != "Atrue" ]
+    then
+        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
+        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
+        printf "%s\n" " Please investigate and try the intall again!"
+        exit 1
+    fi
+
+    # Get network information for ocp4 vms
+    NODE_NETINFO=$(mktemp)
+    sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
+
+    # Deploy the coreos nodes required
+    #TODO: playbook should not attempt to start VM's if they are already running
+    deploy_bootstrap_node
+    deploy_master_nodes
+    deploy_compute_nodes
+
+    # Ensure first boot is complete
+    # first boot is the initial deployment of the VMs
+    # followed by a shutdown
+    wait_for_ocp4_nodes_shutdown
+
+    # Boot up the VM's starting the bootstrap node, followed by master, compute
+    # Then start the ignition process
+    start_ocp4_deployment
+
+    # Show user post deployment steps to follow
     post_deployment_steps
 }
