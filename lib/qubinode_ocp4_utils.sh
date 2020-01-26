@@ -374,10 +374,22 @@ EOF
 
 post_deployment_steps () {
 
-    printf "%s\n" "Registry storage for bate metal is required to complete the ocp4 cluster install."
-    printf "%s\n" "Additional informaiton is available here:"
-    printf "%s\n\n" "https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html"
-    printf "%s\n" "The installer will attempt to configure storage."
+    # ugly hack to install the jq command from the ocp 4.2 repo
+    # when we move ocp3 to jumpbox, this no longer needs to be a hack
+    if ! rpm -qa | grep -q 'jq-'
+    then
+        sudo subscription-manager repos --enable rhel-7-server-ose-4.2-rpms
+        rpmdir=$(mktemp -d)
+        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
+        sudo subscription-manager repos --disable rhel-7-server-ose-4.2-rpms
+        sudo yum -y install ${rpmdir}/*.rpm
+     fi
+
+    printf "%s\n\n" ""
+    printf "%s\n" " Registry storage for bate metal is required to complete the ocp4 cluster install."
+    printf "%s\n" " Additional informaiton is available here:"
+    printf "%s\n\n" " https://red.ht/2QVJpPK"
+    printf "%s\n" " The installer will attempt to configure storage."
     
     if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
     then
@@ -419,89 +431,107 @@ YAML
       printf "%s\n" "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
       empty_directory_msg
     fi
-
     printf "%s\n" " ${yel}*****************************${end}"
-    printf "%s\n\n" " ${cyn}   Post Bootstrap Steps ${end}"
+    printf "%s\n" " ${cyn}   Post Bootstrap Steps ${end}"
+    printf "%s\n\n" " ${yel}*****************************${end}"
     printf "%s\n" " (1) Shutdown the bootstrap node."
     printf "%s\n\n" "       ${grn}sudo virsh shutdown bootstrap${end}"
     printf "%s\n" " (2) Ensure all nodes are up."
-    printf "%s\n" "         ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
+    printf "%s\n" "       ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
     printf "%s\n\n" "       ${grn}oc get nodes${end}"
     printf "%s\n" " (3) Ensure there are no pending CSR."
+    printf "%s\n\n" "       ${grn}oc get csr${end}"
+    printf "%s\n" " (4) Ensure a storage claim exist for the imageregistry"
+    printf "%s\n" "       ${grn}oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage${end}"
+    printf "%s\n" " The above command output should return:"
+cat << EOF
+                    {
+                      "pvc": {
+                        "claim": "image-registry-storage"
+                      }
+                    }
+EOF
+    printf "%s\n" " If the output differs you can delete whats there."
+    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type json -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'${end}"
+    printf "%s\n" " Then try adding the nfs storage, then check again if the output matches."
+    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'${end}"
+    printf "%s\n" " If there's still no match the imageregistry operator is still down (step 5). Try setting it to a emptydir."
+    printf "%s\n\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"emptyDir\":{}}}}'${end}"
+    printf "%s\n" " (5) Ensure the image-registry operator ${yel}AVAILABLE${end} shows ${yel}True${end}."
+    printf "%s\n\n" "       ${grn}oc get clusteroperators image-registry${end}"
+    printf "%s\n" " (6) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
     printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
-    printf "%s\n" " (4) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
-    printf "%s\n" " (4) If all the above checks out, complete the installation by running."
+    printf "%s\n" " (7) If all the above checks out, complete the installation by running."
     printf "%s\n" "       ${grn}cd ${project_dir}${end}"
     printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
 }
 
 openshift4_enterprise_deployment () {
-    # Ensure all preqs before continuing
-    openshift4_prechecks
-
-    # Setup the host system
-    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
-
-    # populate IdM with the dns entries required for OCP4
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
-
-    # deploy the load balancer container
-    ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
-
-    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
-    if [ "A${lb_container_status}" != "Atrue" ]
-    then
-        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
-        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
-        printf "%s\n" " Please investigate and try the intall again!"
-        exit 1
-    fi
-
-    # Download the openshift 4 installer
-    #TODO: this playbook should be renamed to reflect what it actually does
-    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
-
-    # Create ignition files
-    #TODO: check if the ignition files have been created longer than 24hrs
-    # regenerate if they have been
-    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
-
-    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
-    # - downloads the cores os qcow images
-    # - deploy httpd podman container
-    # - serve up the ignition files and cores qcow image over the web server
-    # TODO: make this idempotent, skips if the end state is already met
-    # /opt/qubinode_webserver/4.2/images/
-    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
-    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
-    if [ "A${httpd_container_status}" != "Atrue" ]
-    then
-        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
-        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
-        printf "%s\n" " Please investigate and try the intall again!"
-        exit 1
-    fi
-
-    # Get network information for ocp4 vms
-    NODE_NETINFO=$(mktemp)
-    sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
-
-    # Deploy the coreos nodes required
-    #TODO: playbook should not attempt to start VM's if they are already running
-    deploy_bootstrap_node
-    deploy_master_nodes
-    deploy_compute_nodes
-
-    # Ensure first boot is complete
-    # first boot is the initial deployment of the VMs
-    # followed by a shutdown
-    wait_for_ocp4_nodes_shutdown
-
-    # Boot up the VM's starting the bootstrap node, followed by master, compute
-    # Then start the ignition process
-    start_ocp4_deployment
-
-    # Show user post deployment steps to follow
+#    # Ensure all preqs before continuing
+#    openshift4_prechecks
+#
+#    # Setup the host system
+#    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
+#
+#    # populate IdM with the dns entries required for OCP4
+#    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
+#
+#    # deploy the load balancer container
+#    ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
+#
+#    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
+#    if [ "A${lb_container_status}" != "Atrue" ]
+#    then
+#        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
+#        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
+#        printf "%s\n" " Please investigate and try the intall again!"
+#        exit 1
+#    fi
+#
+#    # Download the openshift 4 installer
+#    #TODO: this playbook should be renamed to reflect what it actually does
+#    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
+#
+#    # Create ignition files
+#    #TODO: check if the ignition files have been created longer than 24hrs
+#    # regenerate if they have been
+#    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
+#
+#    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
+#    # - downloads the cores os qcow images
+#    # - deploy httpd podman container
+#    # - serve up the ignition files and cores qcow image over the web server
+#    # TODO: make this idempotent, skips if the end state is already met
+#    # /opt/qubinode_webserver/4.2/images/
+#    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
+#    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
+#    if [ "A${httpd_container_status}" != "Atrue" ]
+#    then
+#        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
+#        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
+#        printf "%s\n" " Please investigate and try the intall again!"
+#        exit 1
+#    fi
+#
+#    # Get network information for ocp4 vms
+#    NODE_NETINFO=$(mktemp)
+#    sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
+#
+#    # Deploy the coreos nodes required
+#    #TODO: playbook should not attempt to start VM's if they are already running
+#    deploy_bootstrap_node
+#    deploy_master_nodes
+#    deploy_compute_nodes
+#
+#    # Ensure first boot is complete
+#    # first boot is the initial deployment of the VMs
+#    # followed by a shutdown
+#    wait_for_ocp4_nodes_shutdown
+#
+#    # Boot up the VM's starting the bootstrap node, followed by master, compute
+#    # Then start the ignition process
+#    start_ocp4_deployment
+#
+#    # Show user post deployment steps to follow
     post_deployment_steps
 }
