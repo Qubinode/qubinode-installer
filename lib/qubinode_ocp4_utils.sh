@@ -54,7 +54,7 @@ openshift4_qubinode_teardown () {
 
     # Delete VMS
     test -f $ocp4_vars_file && remove_ocp4_vms
-    
+
     # Delete containers managed by systemd
     for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
     do
@@ -251,6 +251,31 @@ is_node_up () {
     fi
 }
 
+function check_webconsole_status () {
+    #echo "Running check_webconsole_status"
+    # This function checks to see if the openshift console up
+    # It expects a return code of 200
+
+    # load required variables
+    openshift4_variables
+    #echo "Checking to see if Openshift is online."
+    web_console="https://console-openshift-console.apps.ocp42.${domain}"
+    WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
+    return $WEBCONSOLE_STATUS
+}
+
+function pingreturnstatus() {
+  ping -q -c3 $1 > /dev/null
+
+  if [ $? -eq 0 ]
+  then
+    true
+  else
+    false
+  fi
+  }
+
+
 function ignite_node () {
     NODE_PLAYBOOK="playbooks/${1}"
     NODE_LIST="${project_dir}/rhcos-install/node-list"
@@ -390,7 +415,7 @@ post_deployment_steps () {
     printf "%s\n" " Additional informaiton is available here:"
     printf "%s\n\n" " https://red.ht/2QVJpPK"
     printf "%s\n" " The installer will attempt to configure storage."
-    
+
     if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
     then
         printf "%s\n\n" ""
@@ -403,7 +428,7 @@ post_deployment_steps () {
             then
                 bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
             fi
-    
+
             if oc get storageclass | grep -q nfs-storage
             then
 cat >image-registry-storage.yaml<<YAML
@@ -475,6 +500,107 @@ EOF
     printf "%s\n" "       ${grn}cd ${project_dir}${end}"
     printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
 }
+
+openshift4_kvm_health_check (){
+  KVM_IN_GOOD_HEALTH=yes
+
+  requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+  if sudo virsh net-list | grep -q $requested_brigde; then
+    echo "$requested_brigde is configured"
+  else
+      KVM_IN_GOOD_HEALTH=no
+  fi
+
+  requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+  if sudo virsh net-list | grep -q $requested_nat; then
+    echo "$requested_nat is configured"
+  else
+      KVM_IN_GOOD_HEALTH=no
+  fi
+
+  if sudo lsblk | grep -q nvme0n1; then
+    echo "Checking for vg name "
+    vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
+    if sudo vgdisplay | grep -q $vg_name; then
+      echo "$vg_name is configured"
+    else
+        KVM_IN_GOOD_HEALTH=no
+    fi
+  else
+      echo "Skipping mount path check"
+  fi
+
+  check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+  if [[ -d $check_image_path ]]; then
+    echo "$check_image_path exists"
+  else
+    KVM_IN_GOOD_HEALTH=no
+  fi
+
+  return $KVM_IN_GOOD_HEALTH
+}
+
+openshift4_idm_health_check () {
+IDM_IN_GOOD_HEALTH=yes
+
+if [[ -f $idm_vars_file ]]; then
+  echo "$idm_vars_file exists"
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
+if pingreturnstatus ${idm_ipaddress}; then
+  echo "IDM Server is connected $idm_ipaddress"
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+if [[ ! -z $dns_query ]]; then
+  echo "IDM Server is able to resolve qbn-dns01.${domain}"
+  echo $dns_query
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+echo $IDM_IN_GOOD_HEALTH
+}
+
+
+function ping_openshift4_nodes () {
+    IS_OPENSHIFT4_NODES=no
+    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+    for  i in $(seq "$masters")
+    do
+        vm="master-$((i-1))"
+        if  pingreturnstatus ${vm}.ocp42.${domain}; then
+          echo "${vm}.ocp42.lab.example is online"
+          IS_OPENSHIFT4_NODES=yes
+        else
+          echo "${vm}.ocp42.lab.example is offline"
+          IS_OPENSHIFT4_NODES=no
+          break
+        fi
+    done
+
+    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+    for i in $(seq "$compute")
+    do
+        vm="compute-$((i-1))"
+        if  pingreturnstatus ${vm}.ocp42.${domain}; then
+          echo "${vm}.ocp42.lab.example is online"
+          IS_OPENSHIFT4_NODES=yes
+        else
+          echo "${vm}.ocp42.lab.example is offline"
+          IS_OPENSHIFT4_NODES=no
+          break
+        fi
+    done
+    IS_OPENSHIFT4_NODES=yes
+    return $IS_OPENSHIFT4_NODES
+}
+
 
 openshift4_enterprise_deployment () {
     # Ensure all preqs before continuing
