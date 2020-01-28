@@ -1,56 +1,103 @@
-- set_fact:
-    stdout_lines: []
+- name: define a empty list to store all OCP4 validated DNS entries
+  set_fact:
+    ocp4_dns_entries: []
 
-- name: Test if api-int OpenShift Entries Exist
+- name: Test for api-int A record dns entries
   command: "dig +short @{{ idm_server_ip }} api-int.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-  register: validate_entry
+  register: validate_api_int_entry
+  changed_when: false
+  ignore_errors: yes
 
-- set_fact:
-    stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
+- name: set api-int status to true if exist and false if not
+  set_fact:
+    api_int_status: "{{ true if validate_api_int_entry.rc == 0 else false }}"
 
-- name: Test if api OpenShift Entries Exist
+- name: append api-int result to ocp4_dns_entries
+  set_fact:
+    ocp4_dns_entries: "{{ ocp4_dns_entries + validate_api_int_entry.stdout_lines }}"
+  when: validate_api_int_entry.rc == 0
+
+- name: Test for api A record dns entries
   command: "dig +short @{{ idm_server_ip }} api.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-  register: validate_entry
+  register: validate_api_entry
+  changed_when: false
 
-- set_fact:
-    stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
+- name: append api results to ocp4_dns_entries
+  set_fact:
+    ocp4_dns_entries: "{{ ocp4_dns_entries + validate_api_entry.stdout_lines }}"
+  when: validate_api_entry.rc == 0
 
-- name: Test if application endpoint for OpenShift  Exist
+- name: set api status to true if exist and false if not
+  set_fact:
+    api_status: "{{ true if validate_api_entry.rc == 0 else false }}"
+
+- name: Test for applicaiton end-point dns A record
   command: "dig +short @{{ idm_server_ip }} test.apps.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-  register: validate_entry
+  register: validate_app_endpoint_entry
+  changed_when: false
 
-- set_fact:
-    stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
+- name: append applicaiton end-point results to ocp4_dns_entries
+  set_fact:
+    ocp4_dns_entries: "{{ ocp4_dns_entries + validate_app_endpoint_entry.stdout_lines }}"
+  when: validate_app_endpoint_entry.rc == 0
+
+- name: set application end-point status to true if exist and false if not
+  set_fact:
+    api_app_end_status: "{{ true if validate_app_endpoint_entry.rc == 0 else false }}"
+
+- name: set master and worker nodes default status
+  set_fact:
+    master_node_status: True
+    compute_node_status: False
 
 - name: Test if OpenShift master node Entries Exist
   command: "dig +short @{{ idm_server_ip }} master-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-  register: validate_entry
+  register: validate_master_node_entry
   with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
+  changed_when: false
 
 - debug:
-    var: validate_entry
+    var: validate_master_node_entry
     verbosity: 2
 
-- set_fact:
-    stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
-  with_items: "{{ validate_entry.results }}"
+- name: set master node status to false if any of the DNS entries does not exist
+  set_fact:
+    master_node_status: False
+  with_items: "{{ validate_master_node_entry.results }}"
+  when: item.stdout == ''
+
+- name: append master node results to ocp4_dns_entries
+  set_fact:
+    ocp4_dns_entries: "{{ ocp4_dns_entries + item.stdout_lines }}"
+  with_items: "{{ validate_master_node_entry.results }}"
+  when: item.rc == 0
 
 - name: Test if OpenShift compute nodes Entries Exist
   command: "dig +short @{{ idm_server_ip }} compute-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-  register: validate_entry
+  register: validate_compute_nodes_entry
   with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
+  changed_when: false
 
 - debug:
-    var: validate_entry
+    var: validate_compute_nodes_entry
     verbosity: 2
 
-- set_fact:
-    stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
-  with_items: "{{ validate_entry.results }}"
+- name: append compute node result to ocp4_dns_entries
+  set_fact:
+    ocp4_dns_entries: "{{ ocp4_dns_entries + item.stdout_lines }}"
+  with_items: "{{ validate_compute_nodes_entry.results }}"
+  when: item.rc == 0
+
+- name: set compute node status to false if any of the DNS entries does not exist
+  set_fact:
+    compute_node_status: False
+  with_items: "{{ validate_compute_nodes_entry.results }}"
+  when: item.stdout == ''
 
 - debug:
     msg: "IP {{ item }} is registed in IDM"
-  with_items: "{{ stdout_lines }}"
+  with_items: "{{ ocp4_dns_entries }}"
 
-- meta: end_play
-  when: (stdout_lines|length == ( compute_count|int +  master_count|int + 4))
+- name: end play if all the masters, computes and a the additional 4 dns entries exist
+  meta: end_play
+  when: (ocp4_dns_entries|length == ( compute_count|int +  master_count|int + 4))

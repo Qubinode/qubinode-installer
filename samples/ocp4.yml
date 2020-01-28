@@ -1,26 +1,37 @@
 # OpenShift 4.x Variables used for deployment
 dns_teardown: false
+tear_down: false
 vn_subnet: "{{ libvirt_host_networks[0].subnet }}"
 master_count: 3
-compute_count: 2
+compute_count: 3
 dns_wildcard: "*.apps.ocp42"
 listen_address: "{{ kvm_host_ip }}"
 nat_gateway: "192.168.50.1"
 
 # OpenShift client  and install information
 ocp4_version: 4.3.0
-ocp4_image_version: 4.3.0
 ocp4_release: latest
-ocp4_dependencies_version: 4.3
+ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
+ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
+ocp4_release: latest
+
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}/"
 ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
 openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
+dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
+webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
+webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
+
+coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
+coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
 coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
 
 cluster_name: ocp42
 lb_container_name: "{{ lb_name }}-{{ cluster_name}}"
 podman_webserver: qbn-httpd
+coreos_tmp_dir: /tmp/build_coreos_container
+virtinstall_dir: "{{ project_dir }}/rhcos-install/"
 
 # set when you want to remove an old version of openshift tools
 remove_oc_tool: false
