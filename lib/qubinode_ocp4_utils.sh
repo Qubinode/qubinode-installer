@@ -38,8 +38,10 @@ function openshift4_prechecks () {
         sudo firewall-cmd --reload
     fi
 
-    curl -OL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
-    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+    # Check the openshift version
+    RELEASE_TXT=$(mktemp)
+    curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt -o ${RELEASE_TXT}
+    current_version=$(cat "${RELEASE_TXT}" | grep Name:  |  awk '{print $2}')
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
 }
@@ -119,6 +121,9 @@ openshift4_qubinode_teardown () {
     printf "%s\n" " OCP4 deployment removed"
     printf "%s\n\n" " ${yel}************************${end}"
     exit 0
+
+    # remove all client and install tools
+    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml -e tear_down=true
 }
 
 function remove_ocp4_vms () {
