@@ -36,14 +36,41 @@ function update_satellite_ip () {
 }
 
 function satellite_install_msg () {
-    printf "\n\n********************************************************************\n"
-    printf "* The Satellite server VM appears to be deployed and in good state *\n\n"
-    printf "    Web Url: https://${SATELLITE_SERVER_NAME}.${domain} \n"
-    printf "    Username: $(whoami) \n"
-    printf "    Password: the vault variable *admin_user_password* \n\n"
-    printf "Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n"
-    printf "*******************************************************************************\n\n"
+    printf "\n\n ${yel}*******************************************************************************${end}\n"
+    printf " ${yel}*${end}  The Satellite server has been deployed with login details below.      ${yel}*${end}\n\n"
+    printf "      Web Url: https://${SATELLITE_SERVER_NAME}.${domain} \n"
+    printf "      Username: $(whoami) \n"
+    printf "      Password: the vault variable *admin_user_password* \n\n"
+    printf "      Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n\n"
+    printf " ${satellite_server_setup_msg} \n"
+    printf " ${yel}*******************************************************************************${end}\n\n"
 }
+
+function qubinode_setup_satellite () {
+    ANSIBLE_VERSION="2.8"
+    CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
+    ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
+    local error_msg="${red}The configuration of the Satellite server was unsuccessful.${end}"
+    local success_msg="${cyn}The configuration of the Satellite server was successful.${end}"
+    if [ "A${ANSIBLE_VERSION_GOOD}" == "AYES" ]
+    then
+        if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml
+        then
+            SATELLITE_SETUP=success
+            satellite_server_setup_msg="${success_msg}"
+        else
+            SATELLITE_SETUP=failed
+            satellite_server_setup_msg="${error_msg}"
+        fi
+    else
+        SATELLITE_SETUP=failed
+        satellite_server_setup_msg="${error_msg}"
+        printf "%s\n" " The version of Ansible needs to be at least $ANSIBLE_VERSION for setting up Satellite."
+        printf "%s\n" " Your current Ansible version is $CURRENT_ANSIBLE_VERSION."
+    fi
+}
+
+
 
 function qubinode_deploy_satellite () {
    if [ "A${product_maintenance}" != "A" ]
@@ -108,7 +135,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-               ansible-playbook playbooks/satellite_server_setup.yml
+               qubinode_setup_satellite
                satellite_install_msg
            elif [ "A${SATELLITE_SERVER_DNS}" == "A" ]
            then
@@ -117,7 +144,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-               ansible-playbook playbooks/satellite_server_setup.yml
+               qubinode_setup_satellite
                satellite_install_msg
            else
                # need to add a check to verify login to the satellite server then
@@ -125,7 +152,7 @@ function qubinode_deploy_satellite () {
                ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                update_satellite_ip
                ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-               ansible-playbook playbooks/satellite_server_setup.yml
+               qubinode_setup_satellite
                satellite_install_msg
            fi
        else
@@ -134,7 +161,7 @@ function qubinode_deploy_satellite () {
            ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
            update_satellite_ip
            ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-           ansible-playbook playbooks/satellite_server_setup.yml
+           qubinode_setup_satellite
            satellite_install_msg
        fi
    fi

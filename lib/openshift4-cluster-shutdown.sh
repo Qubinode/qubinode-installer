@@ -17,7 +17,7 @@ REGISTER_STATUS=$(oc get clusteroperators | awk '/image-registry/ {print $3}')
 CLUSTER_UPTIME=$(oc get clusteroperators | awk '/authentication/ {print $6}')
 CLUSTER_UUID=$(oc get clusterversions.config.openshift.io version -o jsonpath='{.spec.clusterID}{"\n"}')
 INFRA_ID=$(oc get infrastructures.config.openshift.io cluster -o jsonpath='{.status.infrastructureName}{"\n"}')
-HOURS_RUNNING=$(oc get clusteroperators | awk '/authentication/ {print $6}'|tr -d 'h')
+HOURS_RUNNING=$(oc get clusteroperators | awk '/authentication/ {print $6}'|tr -d 'h'|tr -d 'd')
 BKUP_CMD="sudo /usr/local/bin/etcd-snapshot-backup.sh ./assets/backup/snapshot.db"
 NODE_USER="core"
 SSH_USER=$(whoami)

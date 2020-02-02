@@ -182,8 +182,24 @@ function qubinode_openshift3_nodes_postdeployment () {
        # Ensure DNS records and the post deploy playboo is executed
        # Web cluster status is not up
        if [ "A${STATUS}" !=  "A200" ] ; then
-           echo " Post configure ${openshift_product} VMs"
-           ansible-playbook "${NODES_DNS_RECORDS}" || exit $?
+
+           # the node dns record playbook tend to fail with a message stating
+           # the dns zone could not be found. This until statement is in place
+           # to retry the playbok up to 5 times, then exit if still unsuccessful
+           echo " Configure ${openshift_product} VMs DNS records"
+           n=0
+           until [ $n -ge 5 ]
+           do
+               ansible-playbook "${NODES_DNS_RECORDS}"
+               if [ $? -eq 0 ]
+               then
+                   break
+               else
+                   n=$[$n+1]
+                   sleep 2s
+               fi
+           done
+
            ansible-playbook "${NODES_POST_PLAY}" || exit $?
            # Run node post deployment check playbook
            ansible-playbook ${openshift3_post_deployment_checks_playbook}
@@ -194,7 +210,8 @@ function qubinode_openshift3_nodes_postdeployment () {
 function qubinode_openshift_nodes () {
    # This functions deploys OpenShift nodes or undeploys them
    # This function is called by are_nodes_deployed
-   qubinode_vm_deployment_precheck  #Ensure the host is setup correctly
+   #qubinode_vm_deployment_precheck  #Ensure the host is setup correctly
+
    openshift3_variables
    check_for_required_role deploy-kvm-vm
 
@@ -228,6 +245,10 @@ function qubinode_openshift_nodes () {
 
 
 function check_for_openshift_subscription () {
+
+    # Make sure the Qubinode is registered
+    qubinode_rhsm_register
+
     # This function trys to find a subscription that mataches the OpenShift product
     # then saves the pool id for that function and updates the varaibles file.
     AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
@@ -264,7 +285,7 @@ function check_for_openshift_subscription () {
     fi
 
     # Decrypt Ansible Vault
-    decrypt_ansible_vault "${vault_vars_file}"
+    decrypt_ansible_vault "${vault_vars_file}" >/dev/null
     if grep '""' "${vault_vars_file}"|grep -q rhsm_username
     then
         printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
@@ -274,7 +295,7 @@ function check_for_openshift_subscription () {
         get_rhsm_user_and_pass
     fi
     # Encrypt Ansible Vault
-    encrypt_ansible_vault "${vault_vars_file}"
+    encrypt_ansible_vault "${vault_vars_file}" >/dev/null
 }
 
 function validate_openshift_pool_id () {
@@ -340,7 +361,9 @@ function get_all_nodes () {
     done < $inventory_file
 }
 
-function qubinode_deploy_openshift () {
+function qubinode_deploy_openshift3 () {
+    # This function deploys ocp3 or okd3
+
     # Load function variables
     setup_variables
     openshift3_variables
@@ -348,35 +371,54 @@ function qubinode_deploy_openshift () {
     # Check if the cluster is reponding
     WEBCONSOLE_STATUS=$(check_webconsole_status)
 
+
     # skips these steps if OCP cluster is responding
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
-        # Load functions
-        qubinode_rhsm_register  # ensure system is registered
-        validate_openshift_pool_id # ensure it's attached to the ocp pool
-    fi
-
-    if [ ! -f "${openshift_deployment_size_yml}" ]
-    then
-        echo "Running check_openshift3_size_yml"
-        check_openshift3_size_yml
-    fi
-
-    # Check for openshift user
-    if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
-    then
-        echo "Setting openshift_user variable to $CURRENT_USER in ${ocp3_vars_file}"
-        sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${ocp3_vars_file}"
+        # Check for openshift user
         if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
         then
-            echo "Could not determine the openshift_user variable, please resolve and try again"
+            echo "Setting openshift_user variable to $CURRENT_USER in ${ocp3_vars_file}"
+            sed -i "s#openshift_user:.*#openshift_user: "$CURRENT_USER"#g" "${ocp3_vars_file}"
+            if grep '""' "${ocp3_vars_file}"|grep -q openshift_user
+            then
+                echo "Could not determine the openshift_user variable, please resolve and try again"
+                exit 1
+            fi
+        fi
+
+        # Check if the openshift inventory file has been generated
+        INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+ 
+        # Generate inventory file if it does not exist
+        if [ "A${INVENTORYFILE}" == "A" ]
+        then
+            run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
+            $run_cmd || exit_status "$run_cmd" $LINENO
+            INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
+        fi
+       
+        # Set HTPASSFILE variable if inventory file exist 
+        if [ "A${INVENTORYFILE}" != "A" ]
+        then
+            HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
+        else
+            echo "Could not find the openshift inventory file inventory.3.11.rhel under ${hosts_inventory_dir}"
             exit 1
         fi
-    fi
 
-    # skips these steps if OCP cluster is responding
-    if [[ $WEBCONSOLE_STATUS -ne 200 ]]
-    then
+        # Ensure htpassfile is created and setup
+        ensure_ocp3_basic_auth_file
+        # Verify basic auth file was setup
+        if [ ! -f "${HTPASSFILE}" ]
+        then
+            echo "Installation aborted: cannot the basic auth file ${HTPASSFILE}"
+            exit 1
+        fi
+
+        # Load functions
+        validate_openshift_pool_id # ensure it's attached to the ocp pool
+
         # ensure KVMHOST is setup as a jumpbox
         run_cmd="ansible-playbook ${openshift3_setup_deployer_node_playbook}"
         $run_cmd || exit_status "$run_cmd" $LINENO
@@ -386,71 +428,50 @@ function qubinode_deploy_openshift () {
             echo "Ensure the openshift installer is installed and try again."
             exit 1
         fi
-     fi
 
-    # Generate the openshift inventory
-    run_cmd="ansible-playbook ${openshift3_inventory_generator_playbook}"
-    $run_cmd || exit_status "$run_cmd" $LINENO
-    # Set the OpenShift inventory file
-    INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
-    if [ "A${INVENTORYFILE}" != "A" ]
-    then
-        HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
-    else
-        echo "Could not find the openshift inventory file inventory.3.11.rhel under ${hosts_inventory_dir}"
-        exit 1
-    fi
 
-    # Ensure the inventory file exists
-    if [ ! -f "${INVENTORYFILE}" ]
-    then
-        echo "Installation aborted: cannot find the inventory file ${INVENTORYFILE}"
-        exit
-    fi
-
-    # skips these steps if OCP cluster is responding
-    # Run the node post deployment to ensure things like
-    # the system is properly subscribe.
-    if [[ $WEBCONSOLE_STATUS -ne 200 ]]
-    then
         # Run the node post deployment checks
         qubinode_openshift3_nodes_postdeployment
-        # run openshift pre deployment checks
-        echo "Running Qubi node openshift deployment checks."
-        run_cmd="ansible-playbook -i ${INVENTORYFILE} ${openshift3_pre_deployment_checks_playbook}"
-        $run_cmd || exit_status "$run_cmd" $LINENO
+
+        # run installationt to install either OpenShift3 or OKD3
+        if [[ ${product_in_use} == "ocp3" ]]
+        then
+            if [[ ! -d ${openshift_ansible_dir} ]]; then
+              printf "%s\n" ""
+              printf "%s\n" " It appears the system is not setup as a openshift bastion host."
+              printf "%s\n" " Running ${openshift3_setup_deployer_node_playbook} "
+              printf "%s\n" ""
+              ansible-playbook ${openshift3_setup_deployer_node_playbook}
+            fi
+   
+            # Run the OpenShift 3 prerequisites playbook 
+            cd "${openshift_ansible_dir}"
+            run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
+            printf "%s\n" "Running OpenShift prerequisites $run_cmd"
+            $run_cmd || exit_status "$run_cmd" $LINENO
+
+            printf "\n\n ************************************************\n"
+            printf     " * OpenShift prerequisites playbook run completed *\n"
+            printf     " ************************************************\n\n"
+   
+            # Run the OpenShift 3 installation 
+            run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/deploy_cluster.yml"
+            printf "%s\n" " ${grn}Deploying OpenShift Cluster${end}"
+            printf "%s\n" " $run_cmd"
+            $run_cmd || exit_status "$run_cmd" $LINENO
+        elif [[ ${product_in_use} == "okd3" ]]
+        then
+            cd ${HOME}/openshift-ansible
+            ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
+            ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
+        fi
     fi
 
     # ensure htpassword file is created and populated
     ensure_ocp3_basic_auth_file
 
-    # run openshift installation
-    if [[ ${product_in_use} == "ocp3" ]]
-    then
-        if [[ ! -d ${openshift_ansible_dir} ]]; then
-          ansible-playbook ${openshift3_setup_deployer_node_playbook}
-        fi
-
-        cd "${openshift_ansible_dir}"
-        run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
-        echo "Running OpenShift prerequisites"
-        $run_cmd || exit_status "$run_cmd" $LINENO
-        echo "Running OpenShift prerequisites"
-        printf "\n\n************************************************\n"
-        printf     "* OpenShift prerequisites playbook run completed *\n"
-        printf     "************************************************\n\n"
-
-        echo "Deploying OpenShift Cluster"
-        run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/deploy_cluster.yml"
-        $run_cmd || exit_status "$run_cmd" $LINENO
-
-        openshift3_installation_msg
-    elif [[ ${product_in_use} == "okd3" ]]
-    then
-        cd ${HOME}/openshift-ansible
-        ansible-playbook -i  $INVENTORYFILE playbooks/prerequisites.yml || exit $?
-        ansible-playbook -i  $INVENTORYFILE playbooks/deploy_cluster.yml || exit $?
-    fi
+    # display openshift installation message
+    openshift3_installation_msg
 }
 
 function qubinode_uninstall_openshift() {
@@ -536,154 +557,151 @@ function qubinode_teardown_openshift () {
 }
 
 
-#function qubinode_autoinstall_openshift () {
-#    product_in_use="ocp3" # Tell the installer this is openshift3 installation
-#    openshift_product="${product_in_use}"
-#    qubinode_product_opt="${product_in_use}"
-#    openshift_auto_install=true # Tells the installer to use defaults options
-#    update_variable=true
-#
-#    printf "\n\n ${yel}*************************${end}\n"
-#    printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
-#    printf " ${yel}*************************${end}\n\n"
-#
-#    # ensure all the required prequesties are setupa
-#    pre_check_for_rhel_qcow_image
-#    qubinode_base_requirements
-#
-#    # Check current deployment size
-#    current_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
-#    # The default openshift size is stanadard
-#    # This ensures that if the size is already set
-#    # it does not get overwritten
-#    if [ "A${current_deployment_size}" == 'A""' ]
-#    then
-#        #echo "Setting Openshift deployment size to standard."
-#        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: standard/g" "${ocp3_vars_file}"
-#    fi
-#
-#    printf "\n\n********************************************\n"
-#    printf "* Ensure host system is registered to RHSM *\n"
-#    printf "*********************************************\n\n"
-#    qubinode_rhsm_register
-#
-#    printf "\n\n*******************************************************\n"
-#    printf "* Ensure host system is setup as a ansible controller *\n"
-#    printf "*******************************************************\n\n"
-#    test ! -f /usr/bin/ansible && qubinode_setup_ansible
-#
-#    printf "\n\n*********************************************\n"
-#    printf     "* Ensure host system is setup as a KVM host *\n"
-#    printf     "*********************************************\n"
-#    ping_nodes
-#    if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
-#    then
-#        qubinode_setup_kvm_host
-#    fi
-#
-#    printf "\n\n****************************\n"
-#    printf     "* Deploy IdM DNS Server    *\n"
-#    printf     "****************************\n"
-#    qubinode_deploy_idm
-#
-#    printf "\n\n*********************\n"
-#    printf     "*Deploy ${product_in_use} cluster *\n"
-#    printf     "*********************\n"
-#    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
-#    sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
-#    openshift_enterprise_deployment
-#    openshift3_installation_msg
-#}
-
-function ping_nodes () {
-    echo "Running ping_nodes"
-    openshift3_variables
-    HOSTS=$(awk -v pattern="$openshift_product" '$0~pattern{print $1}' "${inventory_file}")
+function ping_openshift3_nodes () {
+    INVENTORY_HOSTS=( $(awk -v pattern="$openshift_product" '$0~pattern{print $1}' "${inventory_file}") )
+    VMS_RUNNING=()
+    VMS_SHUTDOWN=()
+    MASTER_NODES=()
+    APP_NODES=()
+    INFRA_NODES=()
+    LB_NODES=()
+    TOTAL_NODES=()
+    VM_REPORT=$(mktemp)
     TEMP_INVENTORY=$(mktemp)
-    PING_RESULTS=$(mktemp)
-    echo "[all]" > $TEMP_INVENTORY
-    for host in $(echo $HOSTS)
-    do
-        echo "${host}.${domain}" >> $TEMP_INVENTORY
-        ansible ${host}.${domain} -i $TEMP_INVENTORY -m ping 2>&1 | tee -a $PING_RESULTS >/dev/null
-    done
-    # Exit if total available host does not match what is expected
-   PINGED_NODES_TOTAL=$(awk '/ok=1/ {print $1}' "${PING_RESULTS}"|wc -l)
-   PINGED_NODES=$(awk '/ok=1/ {print $1}' "${PING_RESULTS}")
-   PINGED_FAILED_NODES=$(awk '/ok=0/ {print $1}' "${PING_RESULTS}")
-   PINGED_MASTER=$(echo "${PINGED_NODES}" |grep master|wc -l)
+    PINGED_HOST=()
+    IS_OPENSHIFT3_NODES=no
+    ARE_OCP3_NODES_UP=no
+    fmt="%-40s%-15s%-8s%-5s\n"
+    headfmt="\n %-40s%-15s%-8s%-5s\n"
 
-   if [ "A${openshift_deployment_size}" == "Aminimal" ]
-   then
-       TOTAL_NODES=3
-       MASTERS=1
-   elif [ "A${openshift_deployment_size}" == "Asmall" ]
-   then
-       TOTAL_NODES=5
-       MASTERS=1
-    elif [ "A${openshift_deployment_size}" == "Astandard" ]
+    if [ -f ${project_dir}/playbooks/vars/openshift3_size_*.yml ]
     then
-        TOTAL_NODES=5
-        MASTERS=1
-    elif [ "A${openshift_deployment_size}" == "Aperformance" ]
-    then
-        TOTAL_NODES=8
-        MASTERS=3
+        openshift_size_vars_file="$(ls ${project_dir}/playbooks/vars/openshift3_size_*.yml)"
     else
-        echo "The OpenShift deployment size of **${openshift_deployment_size}** is unknown"
-        echo "Installation aborted"
-        exit 1
+        openshift_size_vars_file=""
+    fi
+
+    echo "[all]" > $TEMP_INVENTORY
+    printf "$headfmt" " Node                          " "IP           " "Role"  "Status"> $VM_REPORT
+    printf "$fmt" " ----------------------------------" "-------------" "-----" "------">> $VM_REPORT
+
+    OCP3_VMS=( $(sudo virsh list --all |grep $openshift_product) )
+    if [ "A${INVENTORY_HOSTS}" != "A" ]
+    then
+        IS_OPENSHIFT3_NODES=yes
+        if [ -f "${openshift_size_vars_file}" ]
+        then
+            OCP3_CLUSTER_SIZE=$(ls "${openshift_size_vars_file}"|awk -F"_" '{print $3}'|cut -d\. -f1)
+            OCP3_EXPECTED_NODE_COUNT=$(awk -F: '/qty/ {print $2}' "${openshift_size_vars_file}"|paste -sd+|bc)
+        else
+            OCP3_CLUSTER_SIZE=Unknown
+            OCP3_EXPECTED_NODE_COUNT=0
+        fi
+
+        for host in ${INVENTORY_HOSTS[@]}
+        do
+            PING_RESULTS=$(mktemp)
+            ip=$(awk -v pattern=$host '$0~pattern{print $2}' $inventory_file | awk -F= '{print $2}')
+            vm=$host
+            fqdn="${vm}.${domain}"
+            role=$(echo $host | awk -F"-" '{print $3}'|grep -o "[a-z]*")
+            VMS_RUNNING+=( $(isvmRunning) )
+            VMS_SHUTDOWN+=( $(isvmShutdown) )
+            MASTER_NODES+=( $(echo $vm | grep master) )
+            APP_NODES+=( $(echo $vm | grep node) )
+            INFRA_NODES+=( $(echo $vm | grep infra) )
+            LB_NODES+=( $(echo $vm | grep lb) )
+        
+            echo "${fqdn}" >> $TEMP_INVENTORY
+            ansible ${fqdn} -i $TEMP_INVENTORY -m ping 2>&1 | tee -a $PING_RESULTS >/dev/null
+            PINGED_RESULT=$(awk '/ok=/ {print $5}' "${PING_RESULTS}")
+            if [ "A${PINGED_RESULT}" == 'Aunreachable=0' ]
+            then
+                status=up
+                PINGED_HOST+=( $vm )
+            elif [ "A${PINGED_RESULT}" == 'Aunreachable=1' ]
+            then
+                status=down
+            else
+                status=unknown
+            fi
+            
+            PINGED_FAILED=$(awk '/ok=0/ {print $1}' "${PING_RESULTS}")
+            printf "$fmt" " ${fqdn}"  "${ip}" "${role}" "${status}">> $VM_REPORT
+        done 
+
+        if [ "${#PINGED_HOST[@]}" -ge "${OCP3_EXPECTED_NODE_COUNT}" ]
+        then
+            OCP3_NODES_STATUS_MSG="All the nodes for an ${OCP3_CLUSTER_SIZE} size deployment appears to be up!"
+            ARE_OCP3_NODES_UP=yes
+        elif [ "${#PINGED_HOST[@]}" -le "${OCP3_EXPECTED_NODE_COUNT}" ]
+        then
+            OCP3_NODES_STATUS_MSG="Not all the nodes for an ${OCP3_CLUSTER_SIZE} size deployment appears to be up!"
+            ARE_OCP3_NODES_UP=maybe
+        else
+            OCP3_NODES_STATUS_MSG="The expected nodes for an ${OCP3_CLUSTER_SIZE} appears to in an unknow state!"
+            ARE_OCP3_NODES_UP=unknown
+        fi
+#    else #TODO this needs some better logic
+#        printf "%s\n"
+#        printf "%s\n" " There appears to be some ocp3 vms deployed, however the state is unknown!"
+#        printf "%s\n" " Please investigate and try the installation again!"
+#        exit 1
     fi
 }
 
 
-function are_openshift_nodes_available () {
-    echo "Running are_openshift_nodes_available"
-
+function are_openshift3_nodes_available () {
+    #TODO: this function should be replaced and removed
     # Check for connectivity to nodes and retun TOTAL_NODES
     # and PINGED_NODES_TOTAL variables.
-    ping_nodes
+    ping_openshift3_nodes
 
-    # Check if the right number of nodes are deployed
-    # and master nodes are deployed and return DEPLOY_OPENSHIFT_NODES
-    if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
+    if [ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]
     then
-        printf "\n\n The ocp3 installation profile of ${openshift_deployment_size} requires\
-                \n a total of ${TOTAL_NODES} nodes, found $PINGED_NODES_TOTAL nodes.\n\n"
+        printf "%s\n"  " ${yel}OpenShift Cluster Already running${end}"
+        sleep 1s
+        openshift3_installation_msg
+        exit 0
+    else
+        # Check if the right number of nodes are deployed
+        # and master nodes are deployed and return DEPLOY_OPENSHIFT_NODES
+        # a value of 1 indicated true and 0 false.
+        if [ "A${PINGED_NODES_TOTAL}" != "A${TOTAL_NODES}" ]
+        then
+            printf "\n\n The ocp3 installation profile of ${openshift_deployment_size} requires\
+                    \n a total of ${TOTAL_NODES} nodes, found $PINGED_NODES_TOTAL nodes.\n\n"
 
-        DEPLOY_OPENSHIFT_NODES=1
-    elif [ "A${PINGED_MASTER}" != "A${MASTERS}" ]
-    then
-        DEPLOY_OPENSHIFT_NODES=1
-     else
-        DEPLOY_OPENSHIFT_NODES=0
-     fi
-
-    if [ "A${DEPLOY_OPENSHIFT_NODES}" != "A1" ]
-    then
-        printf "\n\n Found all ${TOTAL_NODES} nodes required for the Cluster profile size ${openshift_deployment_size}.\n\n"
+            DEPLOY_OPENSHIFT_NODES=1
+        elif [ "A${PINGED_MASTER}" != "A${MASTERS}" ]
+        then
+            DEPLOY_OPENSHIFT_NODES=1
+         else
+            DEPLOY_OPENSHIFT_NODES=0
+         fi
 
         # Create a report of all nodes including their IP address and FQDN
-        divider===============================
-        divider=$divider$divider
-        header="\n %-035s %010s\n"
-        format=" %-035s %010s\n"
-        width=50
+        if [ "A${DEPLOY_OPENSHIFT_NODES}" != "A1" ]
+        then
+            printf "\n\n Found all ${TOTAL_NODES} nodes required for the Cluster profile size ${openshift_deployment_size}.\n\n"
+            CLEANSTATE=${mktemp}
+        else
+            printf "\n\n  Could not find ${PINGED_FAILED_NODES} of the ${TOTAL_NODES} total nodes required for the Cluster profile size ${openshift_deployment_size}.\n\n"
+        fi
+
         printf "$header" "OCP3 Cluster Nodes" "IP Address" >"${project_dir}/openshift_nodes"
         printf "%$width.${width}s\n" "$divider" >>"${project_dir}/openshift_nodes"
         for host in $(echo "${PINGED_NODES}")
         do
             IP=$(host "${host}" | awk '{print $4}')
-            cleanStaleKnownHost "${ADMIN_USER}" "${host}" "${IP}"
             printf "$format" "${host}"  "${IP}" >> "${project_dir}/openshift_nodes"
+            test -f $CLEANSTATE && cleanStaleKnownHost "${ADMIN_USER}" "${host}" "${IP}"
         done
-
     fi
 }
 
 function deploy_openshift3_nodes () {
     # Deploys nodes for openshift 3
-    ask_user_which_openshift_product
     qubinode_openshift_nodes
     validate_opeshift3_nodes_deployment
 }
@@ -692,7 +710,7 @@ function validate_opeshift3_nodes_deployment () {
     # Validate OpenShift nodes deployment
     # check connectivity to nodes and return
     # DEPLOY_OPENSHIFT_NODES variable
-    are_openshift_nodes_available
+    are_openshift3_nodes_available
 
     # exit when nodes fail to deploy
     if [ "A${DEPLOY_OPENSHIFT_NODES}" == "A1" ]
@@ -751,6 +769,55 @@ function ensure_ocp_default_user () {
     fi
 }
 
+function openshift3_smoke_test () {
+    local web_console="$1"
+    local ocp_user="$2"
+    local ocp_user_password="$3"
+
+    #echo "${web_console} --username=${ocp_user} --password=$ocp_user_password"
+    oc login ${web_console} --username=${ocp_user} --password=$ocp_user_password --insecure-skip-tls-verify=true >/dev/null 2>&1
+    if [ $? -ne 0 ]
+    then
+        SMOKE_TEST_RETURN_CODE=2
+    fi
+
+    oc new-project validate > /dev/null 2>&1 && oc new-app nodejs-mongo-persistent > /dev/null 2>&1
+    if [ $? -ne 0 ]
+    then
+        SMOKE_TEST_RETURN_CODE=3
+    else
+        NODEJS_MONGO_STATUS=$( oc get pods | grep "nodejs-mongo-persistent" | grep -v build | awk '{print $3}')
+        MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')
+        COUNTER=0
+        while [[ $COUNTER -lt 10  ]]; do
+          #printf "%s\n" " STATUS: ${NODEJS_MONGO_STATUS}  ${MONGO_STATUS} "
+          if [[ "$NODEJS_MONGO_STATUS" == 'Running'  &&  "$MONGO_STATUS" == "Running" ]]; then
+            #printf "%s\n" " Pods Deployed Successfully"
+            oc get pods > /dev/null 2>&1
+            break
+          fi
+          #printf "%s\n" " Waiting for pod to launch."
+          sleep 10s
+          NODEJS_MONGO_STATUS=$( oc get pods | grep "nodejs-mongo-persistent" | grep -v build |  awk '{print $3}')
+          MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')
+          let COUNTER=COUNTER+1
+        done
+ 
+        #printf "%s\n" " Testing external route to application"
+        APP_URL=$(oc get routes | grep nodejs | awk '{print $2}')
+        APP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "http://$APP_URL")
+ 
+        oc delete all --selector app=nodejs-mongo-persistent > /dev/null 2>&1
+        oc delete project validate > /dev/null 2>&1
+        if [ "A${APP_STATUS}" == "A200" ]
+        then
+            SMOKE_TEST_RETURN_CODE=4
+        else
+            SMOKE_TEST_RETURN_CODE=5
+        fi
+    fi
+}
+
 function openshift_enterprise_deployment () {
     # This function is called by the menu option -p ocp3
     # It's the primary function that starts the deployment
@@ -763,33 +830,27 @@ function openshift_enterprise_deployment () {
     # Load all global openshift variable
     set_openshift_production_variables
 
-    # Check if OpenShift nodes are deployed
-    # and return the variable DEPLOY_OPENSHIFT_NODES
-    are_openshift_nodes_available
-
     # Deploy OpenShift Nodes if they are not deployed
-    if [ "A${DEPLOY_OPENSHIFT_NODES}" == "A1" ]
+    ping_openshift3_nodes
+
+    # Check if the OCP3 cluster is already deployed
+    check_webconsole_status
+    if [[ "A${IS_OPENSHIFT3_NODES}" != "Ayes" ]]
     then
         deploy_openshift3_nodes
     fi
 
-    # Check if the OCP3 cluster is already deployed
-    check_webconsole_status
-
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
-        ask_user_which_openshift_product
-        are_openshift_nodes_available
-        qubinode_deploy_openshift
+        #ask_user_which_openshift_product #this function should be deleted
+        #are_openshift3_nodes_available  #this function should be deleted
+        qubinode_deploy_openshift3
 
         # Wait for OpenShift Console to come up
         sleep 45s
 
         # Ensure the qubinode user is added to openshift
         ensure_ocp_default_user
-
-        # Report on OpenShift Installation
-        openshift3_installation_msg
     else
         # Ensure the qubinode user is added to openshift
         ensure_ocp_default_user
@@ -873,47 +934,53 @@ function check_webconsole_status () {
     #echo "Running check_webconsole_status"
     # This function checks to see if the openshift console up
     # It expects a return code of 200
-
+    
+    # load required variables
+    openshift3_variables
     #echo "Checking to see if Openshift is online."
     WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
     return $WEBCONSOLE_STATUS
 }
 
 function openshift3_installation_msg () {
-   # check connectivity to webconsole
+
+   # Check if the web console is available
    check_webconsole_status
 
-   # Setup variables for smoketest
+   # Get the admin user password
    get_admin_user_password
+
+   # Run a smoketest to verify the state of the OCP cluster 
    SMOKETEST="${project_dir}/lib/openshift-smoke-test.sh"
 
    if [[ $WEBCONSOLE_STATUS -eq 200 ]]
    then
        # Run smoketest to ensure cluster is up
-       echo "Running post installation test"
-       bash "${SMOKETEST}" "${web_console}" "${OCUSER}" "${admin_user_passowrd}"
+       printf "%s\n" " ${grn}Running OpenShift Cluster Smoke Test${end}"
+       #SMOKE_RESULT=$(bash "${SMOKETEST}" "${web_console}" "${OCUSER}" "${admin_user_passowrd}")
+       openshift3_smoke_test "${web_console}" "${OCUSER}" "${admin_user_passowrd}"
 
-       MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
-       IDM_IP=$(cat "${idm_vars_file}" | grep "idm_server_ip:" | awk '{print $2}')
-       printf "\n\n*******************************************************\n"
-       printf "\nDeployment steps for ${product} cluster is complete.\n"
-       printf "\nCluster login: ${web_console}\n"
-       printf "     Username: ${OCUSER}\n"
-       printf "     Password: <yourpassword>\n\n"
-       cat "${project_dir}/openshift_nodes"
-       printf "\n\nIDM DNS Server login: https://${prefix}-dns01.${domain}\n"
-       printf "     Username: admin\n"
-       printf "     Password: <yourpassword>\n"
-       printf "IdM server IP: $IDM_IP\n\n"
-       if [ "A${APP_STATUS}" == "A200" ]
-       then
-           printf " WARNING: Although the cluster appears to be up, the smoketest was not successfull.\n\n"
-           printf " Please check the health of your cluster.\n\n"
-       fi
-       printf "*******************************************************\n"
+        if [ $SMOKE_TEST_RETURN_CODE -eq 4 ]
+        then
+            MASTER_NODE=$(cat "${project_dir}/inventory/hosts" | grep "master01" | awk '{print $1}')
+            IDM_IP=$(cat "${idm_vars_file}" | grep "idm_server_ip:" | awk '{print $2}')
+            printf "%s\n\n" ""
+            printf "%s\n" " ${yel}*******************************************************${end}"
+            printf "%s\n" " ${cyn}Deployment steps for ${end}${yel}${product}${end}${cyn} cluster is complete.${end}"
+            printf "%s\n" "     Cluster login: ${web_console}"
+            printf "%s\n" "     Username: ${OCUSER}"
+            printf "%s\n\n" "     Password: <yourpassword>"
+            cat $VM_REPORT
+            printf "%s\n" ""
+            printf "%s\n" " ${yel}*******************************************************${end}"
+            printf "%s\n" "  IDM DNS Server login: https://${prefix}-dns01.${domain}"
+            printf "%s\n" "      Username: admin"
+            printf "%s\n" "      Password: <yourpassword>"
+            printf "%s\n" "      IdM server IP: $IDM_IP"
+            printf "%s\n\n" " ${yel}*******************************************************${end}"
+        fi
    else
-       echo  "FAILED to connect to Openshift Console URL:  ${web_console}"
-       printf "\n\n*********************\n"
+       printf "%s\n" "${SMOKE_MSG}"
        exit 1
    fi
 }
@@ -978,3 +1045,46 @@ cat << EOF
      - Gluster: ${mag}True${end}
 EOF
 }
+
+function web_console_auth_msg () {
+    printf "%s\n" ""
+    printf "%s\n" " The Cluster Webconsole ${grn}$web_console${end} appears to be up."
+    printf "%s\n\n" " However loggining in as the admin user ${yel}$ocp_user${end} failed."
+}
+
+
+openshift3_smoke_test_return () {
+    if [ $SMOKE_TEST_RETURN_CODE -eq 4 ]
+    then
+        SMOKE_MSG=$(openshift3_smoke_test_success)
+        SMOKE_TEST_RETURN_CODE=$SMOKE_TEST_RETURN_CODE
+    elif [ $SMOKE_TEST_RETURN_CODE -eq 5 ]
+    then
+        SMOKE_MSG=$(openshift3_smoke_test_fail)
+        SMOKE_TEST_RETURN_CODE=$SMOKE_TEST_RETURN_CODE
+    elif [ $SMOKE_TEST_RETURN_CODE -eq 3 ]
+    then
+        SMOKE_MSG=" Creating new project and new app failed."
+        SMOKE_TEST_RETURN_CODE=$SMOKE_TEST_RETURN_CODE
+    elif [ $SMOKE_TEST_RETURN_CODE -eq 2 ]
+    then
+        SMOKE_MSG=" $(web_console_auth_msg)"
+        SMOKE_TEST_RETURN_CODE=$SMOKE_TEST_RETURN_CODE
+    else
+        SMOKE_MSG=" Unknown state"
+        SMOKE_TEST_RETURN_CODE=$SMOKE_TEST_RETURN_CODE
+    fi
+}
+
+openshift3_smoke_test_success () {
+    printf "%s\n" " ******************************************"
+    printf "%s\n" " *** SMOKE TESTS COMPLETED SUCCESSFULLY ***"
+    printf "%s\n" " ******************************************"
+}
+
+openshift3_smoke_test_fail () {
+        printf "%s\n" " ******************************************"
+        printf "%s\n" " *** SMOKE TESTS FAILED                 ***"
+        printf "%s\n" " ******************************************"
+}
+

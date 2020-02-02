@@ -6,37 +6,60 @@
     - vars/vault.yml
     - vars/idm.yml
     - vars/ocp4.yml
+  vars:
+    - ocp4_install_cmd: /usr/local/bin/openshift-install
+    - ocp_client_cmd: /usr/local/bin/oc
   become: yes
 
   tasks:
-  - name: Remove openshift client cli
-    command: rm -rf /usr/local/bin/oc
-    when: remove_oc_tool
+  - name: check if openshift-install cmd exists
+    stat:
+      path: "{{ ocp4_install_cmd }}"
+    register: ocp4_install_cmd_status
 
-  - name: Remove  openshift installer
-    command: rm -rf  /usr/local/bin/openshift-install
-    when: remove_oc_tool
+  - name: check if openshift client cmd exists
+    stat:
+      path: "{{ ocp_client_cmd }}"
+    register: ocp_client_cmd_status
+
+  - name: Remove openshift client cli
+    command: rm -rf "{{ ocp_client_cmd }}"
+    when: tear_down|bool and ocp_client_cmd_status.stat.exists == True
+
+  - name: Remove openshift installer
+    command: rm -rf  "{{ ocp4_install_cmd }}"
+    when: tear_down|bool and ocp4_install_cmd_status.stat.exists == True
 
   - name: Download OpenShift 4 client
     get_url:
       url: "{{ ocp4_release_url }}/{{ ocp4_client }}"
       dest: "/tmp/{{ ocp4_client }}"
+    when: ocp_client_cmd_status.stat.exists == False
 
   - name: Download OpenShift 4 installer
     get_url:
       url: "{{ ocp4_release_url }}/{{ ocp4_installer }}"
       dest: "/tmp/{{ ocp4_installer }}"
+    when: ocp4_install_cmd_status.stat.exists == False
 
-  - name: Extract ocp client  into /usr/local/bin/oc
+  - name: Extract ocp client to {{ ocp_client_cmd }}
     unarchive:
       src: "/tmp/{{ ocp4_client }}"
       dest: /usr/local/bin
+    register: extracted_client_cmd
+    when: ocp_client_cmd_status.stat.exists == False
 
-  - name: Extract openshift installer into /usr/local/bin/openshift-install
+  - name: Extract openshift installer into {{ ocp4_install_cmd }}
     unarchive:
       src:  "/tmp/{{ ocp4_installer }}"
       dest:  /usr/local/bin
+    register: extracted_install_cmd
+    when: ocp4_install_cmd_status.stat.exists == False
+
   - name: Remove openshift client tar file
     command: rm -rf "/tmp/{{ ocp4_client }}"
-  - name: Remove openshift installer  tar file
+    when: extracted_client_cmd.changed
+
+  - name: Remove openshift installer tar file
     command: rm -rf "/tmp/{{ ocp4_installer }}"
+    when: ocp4_install_cmd_status.changed

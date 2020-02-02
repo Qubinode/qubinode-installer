@@ -16,6 +16,9 @@
     - fail: msg="Bailing out. this play requires 'idm_server_ip'  your idm server ip"
       when: idm_server_ip |length == 0
 
+    - name: validate ocp4 dns entries
+      include_tasks: ocp4_02.1_check_dns_entries.yml
+
     - name: set dns record state
       set_fact:
         record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"

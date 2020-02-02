@@ -48,7 +48,7 @@ function update_tower_password () {
     # Load variables
     tower_variables
     # decrypt ansible vault file
-    decrypt_ansible_vault "${vault_vars_file}"
+    decrypt_ansible_vault "${vault_vars_file}" > /dev/null
 
     # Generate a ramdom passwords
     if grep '""' "${vault_vars_file}"|grep -q tower_pg_password
@@ -64,7 +64,7 @@ function update_tower_password () {
     fi
     
     # encrypt vault password
-    encrypt_ansible_vault "${vault_vars_file}"
+    encrypt_ansible_vault "${vault_vars_file}" >/dev/null
 }
 
 function deploy_tower_vm () {
