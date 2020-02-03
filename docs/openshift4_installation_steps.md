@@ -5,12 +5,26 @@ This deploys 3 masters and 3 computes.
 
 **Download files for qubinode installation**
 ```
-wget https://github.com/Qubinode/qubinode-installer/archive/2.2.zip
-unzip 2.2.zip
-mv qubinode-installer-2.2 qubinode-installer
-rm -f 2.2.zip
+wget https://github.com/Qubinode/qubinode-installer/archive/2.3.zip
+unzip 2.3.zip
+mv qubinode-installer-2.3 qubinode-installer
+rm -f 2.3.zip
 cd qubinode-installer/
 ```
+
+## Quick start
+```
+./qubinode-installer
+```
+### Select Option 1
+**This will perform the following**
+* Configure server for KVM.
+* Deploy an idm server to be used as DNS.
+* Deploy OpenShift 4.
+* Optional: Configure NFS Provisioner
+
+## Advanced installation
+### Use this when you would like to step thru the installation process.
 **setup playbooks vars and user sudoers**  
 ```
 ./qubinode-installer -m setup
@@ -66,3 +80,9 @@ and save it as /home/admin/qubinode-installer/pull-secret.txt
 ```
 ./qubinode-installer  -p ocp4 -d
 ```
+
+## Deployment Post Steps
+#### How to access OpenShift Cluster
+* Option 1: Add dns server to /etc/resolv.conf on your computer.
+  - Or run script found under lib/qubinode_dns_configurator.sh
+* Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
