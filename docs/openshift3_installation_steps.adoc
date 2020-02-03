@@ -44,10 +44,10 @@ ssh <your-user>@<your-system-ip-address>
 . Download the qubinode-installer project
 
 ```
-wget https://github.com/Qubinode/qubinode-installer/archive/2.2.zip
-unzip 2.2.zip
-mv qubinode-installer-2.2 qubinode-installer
-rm -f 2.2.zip
+wget https://github.com/Qubinode/qubinode-installer/archive/2.3.zip
+unzip 2.3.zip
+mv qubinode-installer-2.3 qubinode-installer
+rm -f 2.3.zip
 cd qubinode-installer/
 ```
 
@@ -302,6 +302,7 @@ To uninstall Openshift across all hosts in the cluster.
 == Deployment Post Steps
 ==== How to access OpenShift Cluster
 - Option 1: add dns server to /etc/resolv.conf on your computer
+  - Or run script found under lib/qubinode_dns_configurator.sh
 - Option 2: add dns server to router so all machines can access the OpenShift Cluster
 
 ==== Testing the Deployment
