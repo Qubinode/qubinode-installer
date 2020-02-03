@@ -1,7 +1,6 @@
 # Qubinode Installer
 Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
-
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
@@ -10,7 +9,7 @@ Qubinode is for users wanting to stand up an OpenShift cluster in a secure and c
 * OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
 
 **The installer supports installing (OCP) or (OKD)**
- - Current state is the installer primarly supports deploying OKD 3.11.x, OCP 3.11.x, and OCP4 4.2 builds. Installing OCP3 or OCP4 will require a Red Hat subscription.
+ - Current state is the installer primarly supports deploying OKD 3.11.x, OCP 3.11.x, and OCP4 4.3 builds. Installing OCP3 or OCP4 will require a Red Hat subscription.
 
 ## Requirements
 
@@ -45,8 +44,14 @@ We are working as best we can to have better documentation. Contributions are we
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.2     | 2.6               | 2.2 |
+|     Release 2.3     | 2.6               | 2.3 |
 
+New Feature |
+-- |
+OpenShift 4.3 |
+Optimized Qubinode Menu  |
+OpenShift 4 menu option  |
+OpenShift 4 NFS storage  |
 
 ## Training
 * [Qubinode for Beginners](docs/beginners.adoc)
@@ -79,7 +84,9 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 ## Known issues
 
 ## Roadmap
+* Ansible 2.9 Compatibility
 * OCP 4.x Container Native Storage
+* Additional Ansible Roles
 * OCP 4.x on RHEV
 
 ## Acknowledgments
@@ -87,7 +94,7 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
 
-## Author
-Tosin Akinosho - [tosin2013](https://github.com/tosin2013)  
-Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)  
-Abnerson Malivert - [amalivert](https://github.com/amalivert)  
+## Authors
+* Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
+* Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
+* Abnerson Malivert - [amalivert](https://github.com/amalivert)

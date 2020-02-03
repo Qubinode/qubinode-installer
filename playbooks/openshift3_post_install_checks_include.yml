@@ -11,6 +11,7 @@
   changed_when: false
   ignore_errors: no
 
+
 - name: Check if registry.redhat.io resolves
   shell: |
       dig +short -t a registry.redhat.io| head -1
@@ -33,13 +34,21 @@
   retries: 10
   delay: 3
 
-- name: "Check if all required packages are installed"
-  package_facts:
-    manager: "auto"
+- name: "Check that all required packages are installed"
+  shell: yum list installed | awk '{print $1}'  | cut -f1 -d"."
+  register: pkg_result
 
-#- name: Validate required packages are installed
-#  fail:
-#    msg: "{{ item }} not found"
-#  when: "'item' not in ansible_facts.packages"
-#  ignore_errors: no
-#  loop: "{{ ocp_nodes_pkgs }}"
+- local_action: copy content={{ pkg_result.stdout  }} dest=/tmp/{{ inventory_hostname }}
+
+- name: confirm required packages are installed on nodes
+  vars:
+    vm_name: "{{ preappend_host_name }}{{ outer_item.name }}0{{ item.1 }}"
+    vm_group: "{{ outer_item.role_group }}"
+  shell: "cat /tmp/{{ vm_name }} | grep {{ item.0 }}"
+  register: pkg_install_status
+  changed_when: false
+  with_nested:
+    - "{{ ocp_nodes_pkgs }}"
+    - "{{ range(1, outer_item.qty|int +1)|list }}"
+  ignore_errors: no
+  delegate_to: localhost

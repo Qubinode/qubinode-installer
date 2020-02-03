@@ -2,6 +2,29 @@
 set -E
 set -o functrace
 
+# Define colours
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+yel=$'\e[1;33m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+end=$'\e[0m'
+
+# define formatting
+txend=$(tput sgr0)   # reset attributes
+txb=$(tput bold)   # bold
+txu=$(tput smul)   # underline
+txuend=$(tput rmul)   # exit underline
+
+# Define Header
+divider===============================
+divider=$divider$divider
+header="\n %-035s %010s\n"
+format=" %-035s %010s\n"
+width=50
+
+
 # Uncomment for debugging
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
@@ -40,6 +63,7 @@ CURRENT_USER=$(whoami)
 setup_required_paths
 
 # Include all required functions
+source "${project_dir}/lib/qubinode_menu_welcome.sh"
 source "${project_dir}/lib/qubinode_installer_prereqs.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/qubinode_menu_options.sh"
@@ -52,8 +76,10 @@ source "${project_dir}/lib/qubinode_kvmhost.sh"
 source "${project_dir}/lib/qubinode_idm.sh"
 source "${project_dir}/lib/qubinode_ansible.sh"
 source "${project_dir}/lib/qubinode_rhsm.sh"
+source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 source "${project_dir}/lib/qubinode_openshift3.sh"
 source "${project_dir}/lib/qubinode_ocp4.sh"
+source "${project_dir}/lib/qubinode_ocp4_utils.sh"
 source "${project_dir}/lib/qubinode_hardware_check.sh"
 source "${project_dir}/lib/qubinode_openshift3_powermgt.sh"
 source "${project_dir}/lib/qubinode_satellite.sh"
@@ -115,23 +141,9 @@ done
 shift "$((OPTIND-1))"
 
 # If not arguments pass, run default option to install OpenShift
-if (( $OPTIND == 1 )) 
+if (( $OPTIND == 1 ))
 then
-    cat < "${project_dir}/lib/docs/default_message"
-    default_message=("Continue with the default installation" "Display the help menu")
-    createmenu "${default_message[@]}"
-    result=($(echo "${selected_option}"))
-    if [ "A${result}" == "ADisplay" ]
-    then
-        display_help
-    elif [ "A${result}" == "AContinue" ]
-    then
-        check_for_rhel_qcow_image
-        qubinode_autoinstall_openshift
-    else
-        echo $result
-        echo "Unknown issue, please run the installer again"
-    fi
+    display_openshift_msg_ocp4
 elif [ "A${qubinode_product}" == "Atrue" ] && [ "A${qubinode_maintenance}" == "Atrue" ]
 then
     product_maintenance="${qubinode_maintenance_opt}"

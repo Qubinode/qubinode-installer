@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: qbnodes:!*.{{domain}}
   become: yes
   gather_facts: yes
   vars_files:

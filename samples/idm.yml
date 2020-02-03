@@ -2,6 +2,11 @@
 # IDM DNS Server  #
 ###################
 
+# The qubinode-installer depends on IdM as the DNS server.
+# If there is an existing Idm, then set this to no.
+deploy_idm_server: yes
+ask_use_existing_idm: yes
+
 # IDM server attributes
 idm_server_ip: ""
 idm_public_ip: ""
