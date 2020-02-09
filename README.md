@@ -1,4 +1,5 @@
-# Qubinode Installer
+# Qubinode Installer V2
+
 Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 ## Motivation
