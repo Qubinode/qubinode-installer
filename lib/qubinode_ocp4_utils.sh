@@ -597,7 +597,7 @@ function ping_openshift4_nodes () {
           break
         fi
     done
-    IS_OPENSHIFT4_NODES=yes
+
     return $IS_OPENSHIFT4_NODES
 }
 
