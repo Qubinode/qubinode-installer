@@ -244,7 +244,7 @@ function qubinode_networking () {
         #read -p " ${mag}Enter your IP Network or press${end} ${yel}[ENTER]${end} ${mag}for the default [$NETWORK]: ${end}" network
         #network=${network:-"${NETWORK}"}
         network="${NETWORK}"
-        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
+        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
         sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${vars_file}"
     fi
 
