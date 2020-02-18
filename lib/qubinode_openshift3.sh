@@ -11,11 +11,16 @@ function qubinode_autoinstall_openshift () {
     # load required files from samples to playbooks/vars/
     qubinode_required_prereqs
 
+    # Add current user to sudoers, setup global variables, run additional
+    # prereqs, setup current user ssh key, ask user if they want to
+    # deploy a qubinode system.
+    qubinode_installer_setup
+
     # Check if the OpenShift cluster is already deployed
     printf "%s\n\n" ""
     #printf "%s\n" "  Checking if the OpenShift 3 Cluster is already deployed.."
     ping_openshift3_nodes
-    check_webconsole_status
+    check_webconsole_status_ocp3
     if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -eq 200 ]]
     then
         printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
@@ -34,19 +39,19 @@ function qubinode_autoinstall_openshift () {
     printf "\n\n ${yel}*************************${end}\n"
     printf " ${yel}*${end} ${cyn}Deploying OpenShift 3${end}${yel} *${end}\n"
     printf " ${yel}*************************${end}\n\n"
-    
+
     # Add current user to sudoers, setup global variables, run additional
     # prereqs, setup current user ssh key, ask user if they want to
     # deploy a qubinode system.
     qubinode_installer_setup
-    
+
     # Ensure host system is setup as a KVM host
     qubinode_setup_kvm_host
     printf "\n\n****************************\n"
     printf     "* Deploy IdM DNS Server    *\n"
     printf     "****************************\n"
     qubinode_deploy_idm
-    
+
     sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
     openshift_enterprise_deployment

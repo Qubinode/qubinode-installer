@@ -236,7 +236,7 @@ function qubinode_networking () {
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$KVM_HOST_IPADDR/ {print \$1}")
-    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/0.//g')
+    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g')
 
     # ask user for their IP network and use the default
     if cat "${vars_file}"|grep -q changeme.in-addr.arpa
@@ -366,7 +366,7 @@ function qubinode_setup_kvm_host () {
     if [ "A${base_setup_completed}" == "Ano" ]
     then
        qubinode_base_requirements
-    fi    
+    fi
 
     # Check if we should setup qubinode
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
