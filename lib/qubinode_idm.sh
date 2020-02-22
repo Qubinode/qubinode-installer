@@ -140,6 +140,10 @@ function ask_user_for_custom_idm_server () {
 
             # Setting default IdM server name
             sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
+
+            # Setting default IdM server name
+            CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')
+            sed -i 's#  - "{{ qubinode_ptr }}"#  - '$CHANGE_PTR'#g'  "${idm_vars_file}"
         fi
     fi
 
