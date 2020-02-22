@@ -46,11 +46,16 @@ function qubinode_autoinstall_openshift () {
     qubinode_installer_setup
 
     # Ensure host system is setup as a KVM host
-    qubinode_setup_kvm_host
-    printf "\n\n****************************\n"
-    printf     "* Deploy IdM DNS Server    *\n"
-    printf     "****************************\n"
-    qubinode_deploy_idm
+    openshift4_kvm_health_check
+    if [[ "A${KVM_IN_GOOD_HEALTH}" == "Ano"  ]]; then
+      qubinode_setup_kvm_host
+    fi
+
+    # Deploy IdM Server
+    openshift4_idm_health_check
+    if [[  "A${IDM_IN_GOOD_HEALTH}" == "Ano"  ]]; then
+      qubinode_deploy_idm
+    fi
 
     sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
     sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
