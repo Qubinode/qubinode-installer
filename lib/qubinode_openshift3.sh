@@ -21,14 +21,14 @@ function qubinode_autoinstall_openshift () {
     #printf "%s\n" "  Checking if the OpenShift 3 Cluster is already deployed.."
     ping_openshift3_nodes
     check_webconsole_status_ocp3
-    if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -eq 200 ]]
+    if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] &&  [ $WEBCONSOLE_STATUS -eq 200 ]
     then
         printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
         openshift3_installation_msg
         exit 0
     fi
 
-    if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -ne 200 ]]
+    if [[ "A${IS_OPENSHIFT3_NODES}" == "Ayes" ]] && [ $WEBCONSOLE_STATUS -eq 200 ]
     then
         tput cup $(stty size|awk '{print int($1/2);}') 0 && tput ed
         printf "%s" "  ${cyn}$OCP3_NODES_STATUS_MSG${end}"
