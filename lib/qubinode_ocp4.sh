@@ -18,7 +18,7 @@ function qubinode_autoinstall_openshift4 (){
     ping_openshift4_nodes
     check_webconsole_status
 
-    if [[ "A${IS_OPENSHIFT4_NODES}" == "Ayes" ]] && [[ $WEBCONSOLE_STATUS -eq 200 ]]
+    if [[ "A${IS_OPENSHIFT4_NODES}" == "Ayes" ]] && [ $WEBCONSOLE_STATUS -eq 200 ]
     then
       printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
       printf "%s\n\n" " ${grn}Access the OpenShift web-console here: https://console-openshift-console.apps.ocp42.${domain}${end}"

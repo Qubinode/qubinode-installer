@@ -66,7 +66,7 @@ function check_openshift3_size_yml () {
             printf "%s\n" " Your hardware does not meet our recommended sizing."
             printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
             printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
-            printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow." 
+            printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
             confirm " Do you want to proceed with a minimal install?"
             if [ "A${response}" == "Ayes" ]
             then
@@ -369,7 +369,7 @@ function qubinode_deploy_openshift3 () {
     openshift3_variables
 
     # Check if the cluster is reponding
-    WEBCONSOLE_STATUS=$(check_webconsole_status)
+    WEBCONSOLE_STATUS=$(check_webconsole_status_ocp3)
 
 
     # skips these steps if OCP cluster is responding
@@ -389,7 +389,7 @@ function qubinode_deploy_openshift3 () {
 
         # Check if the openshift inventory file has been generated
         INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
- 
+
         # Generate inventory file if it does not exist
         if [ "A${INVENTORYFILE}" == "A" ]
         then
@@ -397,8 +397,8 @@ function qubinode_deploy_openshift3 () {
             $run_cmd || exit_status "$run_cmd" $LINENO
             INVENTORYFILE=$(find "${hosts_inventory_dir}" -name inventory.3.11.rhel* -print)
         fi
-       
-        # Set HTPASSFILE variable if inventory file exist 
+
+        # Set HTPASSFILE variable if inventory file exist
         if [ "A${INVENTORYFILE}" != "A" ]
         then
             HTPASSFILE=$(cat $INVENTORYFILE | grep openshift_master_htpasswd_file= | awk '{print $2}')
@@ -443,8 +443,8 @@ function qubinode_deploy_openshift3 () {
               printf "%s\n" ""
               ansible-playbook ${openshift3_setup_deployer_node_playbook}
             fi
-   
-            # Run the OpenShift 3 prerequisites playbook 
+
+            # Run the OpenShift 3 prerequisites playbook
             cd "${openshift_ansible_dir}"
             run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/prerequisites.yml"
             printf "%s\n" "Running OpenShift prerequisites $run_cmd"
@@ -453,8 +453,8 @@ function qubinode_deploy_openshift3 () {
             printf "\n\n ************************************************\n"
             printf     " * OpenShift prerequisites playbook run completed *\n"
             printf     " ************************************************\n\n"
-   
-            # Run the OpenShift 3 installation 
+
+            # Run the OpenShift 3 installation
             run_cmd="ansible-playbook -i $INVENTORYFILE playbooks/deploy_cluster.yml"
             printf "%s\n" " ${grn}Deploying OpenShift Cluster${end}"
             printf "%s\n" " $run_cmd"
@@ -611,7 +611,7 @@ function ping_openshift3_nodes () {
             APP_NODES+=( $(echo $vm | grep node) )
             INFRA_NODES+=( $(echo $vm | grep infra) )
             LB_NODES+=( $(echo $vm | grep lb) )
-        
+
             echo "${fqdn}" >> $TEMP_INVENTORY
             ansible ${fqdn} -i $TEMP_INVENTORY -m ping 2>&1 | tee -a $PING_RESULTS >/dev/null
             PINGED_RESULT=$(awk '/ok=/ {print $5}' "${PING_RESULTS}")
@@ -625,10 +625,10 @@ function ping_openshift3_nodes () {
             else
                 status=unknown
             fi
-            
+
             PINGED_FAILED=$(awk '/ok=0/ {print $1}' "${PING_RESULTS}")
             printf "$fmt" " ${fqdn}"  "${ip}" "${role}" "${status}">> $VM_REPORT
-        done 
+        done
 
         if [ "${#PINGED_HOST[@]}" -ge "${OCP3_EXPECTED_NODE_COUNT}" ]
         then
@@ -802,11 +802,11 @@ function openshift3_smoke_test () {
           MONGO_STATUS=$(oc get pods | grep "mongodb" | awk '{print $3}')
           let COUNTER=COUNTER+1
         done
- 
+
         #printf "%s\n" " Testing external route to application"
         APP_URL=$(oc get routes | grep nodejs | awk '{print $2}')
         APP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "http://$APP_URL")
- 
+
         oc delete all --selector app=nodejs-mongo-persistent > /dev/null 2>&1
         oc delete project validate > /dev/null 2>&1
         if [ "A${APP_STATUS}" == "A200" ]
@@ -834,7 +834,7 @@ function openshift_enterprise_deployment () {
     ping_openshift3_nodes
 
     # Check if the OCP3 cluster is already deployed
-    check_webconsole_status
+    check_webconsole_status_ocp3
     if [[ "A${IS_OPENSHIFT3_NODES}" != "Ayes" ]]
     then
         deploy_openshift3_nodes
@@ -930,11 +930,11 @@ function openshift3_server_maintenance () {
     esac
 }
 
-function check_webconsole_status () {
-    #echo "Running check_webconsole_status"
+function check_webconsole_status_ocp3 () {
+    #echo "Running check_webconsole_status_ocp3"
     # This function checks to see if the openshift console up
     # It expects a return code of 200
-    
+
     # load required variables
     openshift3_variables
     #echo "Checking to see if Openshift is online."
@@ -945,12 +945,12 @@ function check_webconsole_status () {
 function openshift3_installation_msg () {
 
    # Check if the web console is available
-   check_webconsole_status
+   check_webconsole_status_ocp3
 
    # Get the admin user password
    get_admin_user_password
 
-   # Run a smoketest to verify the state of the OCP cluster 
+   # Run a smoketest to verify the state of the OCP cluster
    SMOKETEST="${project_dir}/lib/openshift-smoke-test.sh"
 
    if [[ $WEBCONSOLE_STATUS -eq 200 ]]
@@ -1087,4 +1087,3 @@ openshift3_smoke_test_fail () {
         printf "%s\n" " *** SMOKE TESTS FAILED                 ***"
         printf "%s\n" " ******************************************"
 }
-
