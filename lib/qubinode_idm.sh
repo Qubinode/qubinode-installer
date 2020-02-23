@@ -71,7 +71,7 @@ function ask_user_for_custom_idm_server () {
         printf "%s\n" " To provide DNS resolutions for the services deployed."
         printf "%s\n" " The installer default action is deploy a local IdM server."
         printf "%s\n\n" " You can also choose to use an existing IdM server."
-    
+
         confirm " ${blu}Would you like to use an existing IdM server?${end} ${yel}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
         then
@@ -79,7 +79,7 @@ function ask_user_for_custom_idm_server () {
             static_ip_result_msg="The qubinode-installer will connect to the IdM server on"
             set_idm_static_ip
             sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
-    
+
             printf "%s\n\n" ""
             read -p " ${yel}What is the hostname without the domain of the existing IdM server?${end} " IDM_NAME
             idm_hostname="${IDM_NAME}"
@@ -110,7 +110,7 @@ function ask_user_for_custom_idm_server () {
 #            printf "%s\n" " The Qubinode depends on IdM as the DNS server."
 #            printf "%s\n" " To provide DNS resolutions for the services deployed."
 #            printf "%s\n\n" " The installer default action is deploy a local IdM server."
-    
+
             # Ask user if they want to give the IdM server a static IP
             if grep '""' "${idm_vars_file}"|grep -q "idm_check_static_ip:"
             then
@@ -124,15 +124,27 @@ function ask_user_for_custom_idm_server () {
                     set_idm_static_ip
                 fi
             fi
-    
+
+            confirm " ${blu}Would you like to enable allow-zone-overlap? Default option should be no unless needed for specific purpose. yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                sed -i "s/idm_zone_overlap:.*/idm_zone_overlap: true/g" "${idm_vars_file}"
+                printf "%s\n" ""
+            fi
+
             # Tell installer to deploy IdM server
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
-    
+
             # Tell installer to skip asking about existing IdM server
             sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
-    
+
             # Setting default IdM server name
             sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
+
+            # Setting default IdM server name
+            CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')
+            sed -i 's#  - "{{ qubinode_ptr }}"#  - '$CHANGE_PTR'#g'  "${idm_vars_file}"
+            sed -i 's#  - "{{ qubinode_ptr_two }}"#  - 50.168.192.in-addr.arpa#g'  "${idm_vars_file}"
         fi
     fi
 
