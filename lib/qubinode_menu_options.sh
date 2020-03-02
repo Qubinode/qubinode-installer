@@ -20,6 +20,18 @@ function qubinode_product_deployment () {
                   openshift_enterprise_deployment
               fi
               ;;
+          okd3)
+              openshift3_variables
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_teardown_openshift
+              elif [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  openshift3_server_maintenance
+              else
+                  okd3_deployment
+              fi
+              ;;
           ocp4)
               if [ "A${teardown}" == "Atrue" ]
               then
