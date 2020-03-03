@@ -14,7 +14,6 @@ ocp4_release: latest
 ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
 ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
 ocp4_release: latest
-
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}/"
 ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
