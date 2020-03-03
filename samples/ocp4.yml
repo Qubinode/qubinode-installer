@@ -10,7 +10,6 @@ nat_gateway: "192.168.50.1"
 
 # OpenShift client  and install information
 ocp4_version: 4.3.0
-ocp4_release: latest
 ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
 ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
 ocp4_release: latest
