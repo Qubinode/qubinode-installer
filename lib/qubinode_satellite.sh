@@ -52,7 +52,6 @@ function satellite_configure_msg () {
     printf "      Username: $(whoami) \n"
     printf "      Password: the vault variable *admin_user_password* \n\n"
     printf "      Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n\n"
-    printf " ${satellite_server_setup_msg} \n"
     printf " ${yel}*******************************************************************************${end}\n\n"
 }
 
@@ -105,11 +104,9 @@ function qubinode_setup_satellite () {
         source "${project_dir}/python-env/ansible2.9.5/bin/activate"
         if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml -e "install_apypie=yes"
         then
-            SATELLITE_SETUP=success
-            satellite_server_setup_msg="${success_msg}"
+            satellite_configure_msg
         else
-            SATELLITE_SETUP=failed
-            satellite_server_setup_msg="${error_msg}"
+            printf "%s\n" "The configuration of Satellite was not completely successful."
         fi
         deactivate
     fi
