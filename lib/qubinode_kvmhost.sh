@@ -96,17 +96,22 @@ function ask_user_if_qubinode_setup () {
     # Ask user if this system should be a qubinode
     if [ "A${QUBINODE_SYSTEM}" == "A" ]
     then
-        printf "%s\n" "   ${yel}Qubinode Setup${end}"
-        printf "%s\n" " The qubinode-installer configures your hardware as a KVM host"
-        printf "%s\n\n" " otherwise referred as ${grn}Qubinode${end}."
+        printf "%s\n" "     ${yel}******************${end}"
+        printf "%s\n" "     ${yel}*${end} ${cyn}Qubinode Setup${end} ${yel}*${end}"
+        printf "%s\n" "     ${yel}******************${end}"
+        printf "%s\n" "   The qubinode-installer configures your hardware as a KVM host"
+        printf "%s\n\n" "   otherwise referred as ${grn}Qubinode${end}."
 
-        printf "%s\n" " You can choose not to configure this as a Qubinode if the following are true: "
+        printf "%s\n" " You can choose ${yel}no${end} if all the following are true: "
         printf "%s\n" "  ${mag}(*)${end} ${blu}A libvirt bridge network is already setup.${end}"
         printf "%s\n" "  ${mag}(*)${end} ${blu}The system is already setup to function as a KVM host.${end}"
         printf "%s\n\n" "  ${mag}(*)${end} ${blu}The system is already registered to Red Hat.${end}"
 
-        confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
+        printf "%s\n" " If any of the following are ture, choose ${yel}no${end} : "
+        printf "%s\n" "  ${mag}(*)${end} ${blu}Your system only have one storage device.${end}"
+        printf "%s\n\n" "  ${mag}(*)${end} ${blu}You don't want to dedicate your extra storage device to Libvirt.${end}"
 
+        confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
         if [ "A${response}" == "Ayes" ]
         then
             # Set varaible to configure storage and networking
@@ -121,6 +126,9 @@ function ask_user_if_qubinode_setup () {
             printf "%s\n" "${cyn} kvm/libvirt host. Also, support for this setup is limited.${end}"
             printf "%s\n" "${yel} However, pull request are very welcome.${end}"
             printf "%s\n\n" "${cyn} We will now attempt to verify your libvirt storage and network.${end}"
+
+            # Don't expect a second storage device
+            sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${vars_file}"
 
         fi
     fi
@@ -396,9 +404,9 @@ function qubinode_setup_kvm_host () {
     fi
 
     sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${vars_file}"
-    printf "\n\n${yel}    ***************************${end}\n"
-    printf "${yel}    *   KVM Host Setup Complete   *${end}\n"
-    printf "${yel}    ***************************${end}\n\n"
+    printf "\n\n${yel}    ******************************${end}\n"
+    printf "${yel}    * KVM Host Setup Complete   *${end}\n"
+    printf "${yel}    *****************************${end}\n\n"
 }
 
 

@@ -42,7 +42,7 @@
     zone_name: "{{ domain }}"
     record_name: "{{ hostvars[vm_name].inventory_hostname }}"
     record_type: A
-    record_ttl: "{{ a_ttl_value | default(omit) }}"
+    #record_ttl: "{{ a_ttl_value | default(omit) }}"
     record_value: "{{ hostvars[vm_name].ansible_host }}"
     state: "{{ record_state }}"
     validate_certs: no
