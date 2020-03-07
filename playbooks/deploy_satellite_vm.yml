@@ -1,3 +1,4 @@
+---
 - name: Deploy Satellite server VM
   hosts: localhost
   become: yes
@@ -57,6 +58,3 @@
         regexp: "^{{ vm_name }}"
         state: absent
       when: vm_teardown|bool
-
-
-

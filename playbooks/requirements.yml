@@ -7,9 +7,6 @@
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: v1.0.0
 
-- src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
-  version: master
-
 - src: https://github.com/flyemsafe/swygue-redhat-subscription.git
   version: dev
 

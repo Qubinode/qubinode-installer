@@ -13,7 +13,6 @@
       shell: ss -tp state listening sport = :6443 | grep https
       register: result
       ignore_errors: yes
-      changed_when: false
 
     - debug: msg={{ result.stdout }}
 

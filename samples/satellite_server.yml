@@ -1,3 +1,4 @@
+---
 # Dns server VM attributes
 sat_server_hostname: "{{ instance_prefix }}-sat01"
 sat_server_vm:

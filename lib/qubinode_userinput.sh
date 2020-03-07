@@ -8,24 +8,31 @@ function ask_user_for_networking_info () {
 
     qubinode_networking
 
+    printf "%s\n\n" "" 
+    printf "%s\n" "  The installer deploys Red Hat IdM as a DNS server." 
+    printf "%s\n\n" "  This requires a DNS domain, accept the default below or enter your own." 
     # ask user for DNS domain or use default
     if grep '""' "${varsfile}"|grep -q domain
     then
         read -p " ${mag}Enter your dns domain or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blu}[lab.example]: ${end}" domain
         domain=${domain:-lab.example}
         sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
+        printf "%s\n\n" "" 
     fi
 
-    if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
-    then
+    #if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
+    #then
         # ask user to enter a upstream dns server or default to 1.1.1.1
         if grep '""' "${varsfile}"|grep -q dns_forwarder
         then
+            printf "%s\n\n" "" 
+            printf "%s\n" "  By default the forwarder for external DNS queries are sent to 1.1.1.1." 
+            printf "%s\n\n" "  If you would like to use a different upstream DNS server enter it below." 
             read -p " ${mag}Enter a upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
             dns_forwarder=${dns_forwarder:-1.1.1.1}
             sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
         fi
-    fi
+    #fi
 }
 
 function ask_for_vault_values () {

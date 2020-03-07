@@ -6,12 +6,6 @@ function qubinode_installer_setup () {
     # Ensure the RHEL qcow image exists
     pre_check_for_rhel_qcow_image
 
-    # Start user input session
-    setup_sudoers
-    setup_variables
-    setup_user_ssh_key
-    ask_user_input
-
     ask_user_if_qubinode_setup
     if [ "A${product_in_use}" == "Aocp3" ]
     then
@@ -45,6 +39,12 @@ function qubinode_installer_setup () {
         check_openshift3_size_yml
     fi
 
+    # Start user input session
+    setup_sudoers
+    ask_user_input
+    setup_variables
+    setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
     if [ "A${rhsm_completed}" == "Ano" ]

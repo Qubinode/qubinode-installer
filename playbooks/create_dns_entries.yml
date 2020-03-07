@@ -1,4 +1,4 @@
-#Only Works with Ansible 2.8
+---
 - name: set dns record state
   set_fact:
     record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"

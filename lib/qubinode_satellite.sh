@@ -249,5 +249,3 @@ function qubinode_teardown_satellite () {
        fi
     fi
 }
-
-

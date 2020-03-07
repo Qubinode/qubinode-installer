@@ -1,3 +1,4 @@
+---
 - name: Setup Satellite Post Installation
   hosts: qbn-sat01
   remote_user: root
@@ -16,4 +17,3 @@
     include_role:
       name: redhat-satellite-quickstart
     tags: [always,manifest,org,location]
-

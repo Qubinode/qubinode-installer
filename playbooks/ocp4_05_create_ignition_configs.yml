@@ -1,5 +1,5 @@
 ---
-  - name: Create OpenShift ignition related files
+  - name: Create OpenShift installation Configs
     hosts: localhost
     vars_files:
       - vars/all.yml
