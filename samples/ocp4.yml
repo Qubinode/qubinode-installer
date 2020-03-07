@@ -1,3 +1,4 @@
+---
 # ocp4-kvm-deployer roler vars
 admin_user: "{{ admin_user }}"
 domain: "{{ domain }}"

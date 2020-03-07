@@ -11,29 +11,31 @@
   become: yes
 
   tasks:
-#  - name: Check /etc/systemd/network/10-mainif.network
-#    stat:
-#      path: /etc/systemd/network/10-mainif.network
-#    register: stat_result
-#
-#  - name: ensure IPForward is set in /etc/systemd/network/10-mainif.network
-#    lineinfile:
-#      path: /etc/systemd/network/10-mainif.network
-#      line: 'IPForward=ipv4'
-#      insertafter: '^\[Network\]'
-#      regexp: '^IPForward='
-#    when: stat_result.stat.exists == True
-
   - name: Verifiy podman is installed
     stat:
       path: "/usr/bin/podman"
     register: podman_is_installed
 
+  - meta: end_play
+    when: "podman_is_installed.stat.exists"
+
   - name: Enable rhel-7-server-extras-rpms repository
     rhsm_repository:
       name: rhel-7-server-extras-rpms
       state: enabled
-    when: "podman_is_installed.stat.exists == False"
+
+  - name: Check /etc/systemd/network/10-mainif.network
+    stat:
+      path: /etc/systemd/network/10-mainif.network
+    register: stat_result
+
+  - name: ensure IPForward is set in /etc/systemd/network/10-mainif.network
+    lineinfile:
+      path: /etc/systemd/network/10-mainif.network
+      line: 'IPForward=ipv4'
+      insertafter: '^\[Network\]'
+      regexp: '^IPForward='
+    when: stat_result.stat.exists == True
 
   - name: install podman,buildah, skopeo and  nfs-utils
     yum:

@@ -1,3 +1,4 @@
+---
 - name: Setup Satellite Post Installation
   hosts: qbn-sat01
   remote_user: root
@@ -14,6 +15,5 @@
   tasks:
   - name: TASK| runnning ansible-role-configure-katello
     include_role:
-      name: satellite-day-two-ops
-    tags: [always,manifest]
-
+      name: redhat-satellite-quickstart
+    tags: [always,manifest,org,location]
