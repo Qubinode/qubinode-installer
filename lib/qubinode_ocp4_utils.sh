@@ -562,11 +562,13 @@ else
 fi
 
 dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
-if [[ ! -z $dns_query ]]; then
-  echo "IDM Server is able to resolve qbn-dns01.${domain}"
-  echo $dns_query
+echo "dns_query = $dns_query"
+if echo $dns_query | grep -q 'no servers could be reached'
+then
+      IDM_IN_GOOD_HEALTH="not ready"
 else
-  IDM_IN_GOOD_HEALTH="not ready"
+      echo "IDM Server is able to resolve qbn-dns01.${domain}"
+      echo $dns_query
 fi
 
   printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
