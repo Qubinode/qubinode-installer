@@ -40,10 +40,11 @@ function qubinode_installer_setup () {
     fi
 
     # Start user input session
-    ask_user_input
     setup_sudoers
+    ask_user_input
     setup_variables
     setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
     if [ "A${rhsm_completed}" == "Ano" ]

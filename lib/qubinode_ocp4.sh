@@ -8,6 +8,9 @@ function qubinode_autoinstall_openshift4 (){
     # load required files from samples to playbooks/vars/
     qubinode_required_prereqs
 
+    # Check for OCP4 pull sceret
+    check_for_pull_secret
+
     # Add current user to sudoers, setup global variables, run additional
     # prereqs, setup current user ssh key, ask user if they want to
     # deploy a qubinode system.
@@ -38,7 +41,7 @@ function qubinode_autoinstall_openshift4 (){
         fi
 
         # Deploy OCP4
-        openshift4_enterprise_deployment
+        #openshift4_enterprise_deployment
         exit 0
     fi
 
