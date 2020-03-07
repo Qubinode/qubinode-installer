@@ -11,7 +11,7 @@
   version: master
 
 - src: https://github.com/flyemsafe/swygue-redhat-subscription.git
-  version: v1.0.0
+  version: dev
 
 - src: https://github.com/flyemsafe/swygue-lvm.git
   version: v1.0.1
@@ -37,7 +37,7 @@
 - src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
   version: master
 
-- src: https://github.com/flyemsafe/satellite-day-two-ops.git
+- src: https://github.com/flyemsafe/redhat-satellite-quickstart.git
   version: master
 
 - src: https://github.com/flyemsafe/swygue.ansible-tower.git
