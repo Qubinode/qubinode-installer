@@ -6,6 +6,20 @@ function openshift4_variables () {
     lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp4_vars_file}")
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
+    ocp4_pull_secret="${project_dir}/pull-secret.txt"
+}
+
+function check_for_pull_secret () {
+    ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    if [ ! -f "${ocp4_pull_secret}" ]
+    then
+        printf "%s\n\n\n" ""
+        printf "%s\n\n\n" "${yel}    Your OpenShift Platform pull secret is missing!${end}"
+        printf "%s\n" "  Please download your pull-secret from: "
+        printf "%s\n" "  https://cloud.redhat.com/openshift/install/metal/user-provisioned"
+        printf "%s\n\n" "  and save it as ${ocp4_pull_secret}"
+        exit
+    fi
 }
 
 function openshift4_prechecks () {
@@ -17,15 +31,6 @@ function openshift4_prechecks () {
     fi
     openshift4_variables
 
-    #check for pull secret
-    if [ ! -f "${ocp4_pull_secret}" ]
-    then
-        echo "Please download your pull-secret from: "
-        echo "https://cloud.redhat.com/openshift/install/metal/user-provisioned"
-        echo "and save it as ${ocp4_pull_secret}"
-        echo ""
-        exit
-    fi
 
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
@@ -38,10 +43,8 @@ function openshift4_prechecks () {
         sudo firewall-cmd --reload
     fi
 
-    # Check the openshift version
-    RELEASE_TXT=$(mktemp)
-    curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt -o ${RELEASE_TXT}
-    current_version=$(cat "${RELEASE_TXT}" | grep Name:  |  awk '{print $2}')
+    curl -OL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
 }
@@ -121,9 +124,6 @@ openshift4_qubinode_teardown () {
     printf "%s\n" " OCP4 deployment removed"
     printf "%s\n\n" " ${yel}************************${end}"
     exit 0
-
-    # remove all client and install tools
-    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml -e tear_down=true
 }
 
 function remove_ocp4_vms () {
@@ -507,20 +507,20 @@ EOF
 }
 
 openshift4_kvm_health_check (){
-  KVM_IN_GOOD_HEALTH=yes
+  KVM_IN_GOOD_HEALTH="not ready"
 
   requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
   if sudo virsh net-list | grep -q $requested_brigde; then
     echo "$requested_brigde is configured"
   else
-      KVM_IN_GOOD_HEALTH=no
+      KVM_IN_GOOD_HEALTH=ready
   fi
 
   requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
   if sudo virsh net-list | grep -q $requested_nat; then
     echo "$requested_nat is configured"
   else
-      KVM_IN_GOOD_HEALTH=no
+      KVM_IN_GOOD_HEALTH=ready
   fi
 
   if sudo lsblk | grep -q nvme0n1; then
@@ -529,7 +529,7 @@ openshift4_kvm_health_check (){
     if sudo vgdisplay | grep -q $vg_name; then
       echo "$vg_name is configured"
     else
-        KVM_IN_GOOD_HEALTH=no
+        KVM_IN_GOOD_HEALTH=ready
     fi
   else
       echo "Skipping mount path check"
@@ -539,26 +539,26 @@ openshift4_kvm_health_check (){
   if [[ -d $check_image_path ]]; then
     echo "$check_image_path exists"
   else
-    KVM_IN_GOOD_HEALTH=no
+    KVM_IN_GOOD_HEALTH=ready
   fi
 
-  return $KVM_IN_GOOD_HEALTH
+  printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."
 }
 
 openshift4_idm_health_check () {
-IDM_IN_GOOD_HEALTH=yes
+IDM_IN_GOOD_HEALTH=ready
 
 if [[ -f $idm_vars_file ]]; then
   echo "$idm_vars_file exists"
 else
-  IDM_IN_GOOD_HEALTH=no
+  IDM_IN_GOOD_HEALTH="not ready"
 fi
 
 idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
 if pingreturnstatus ${idm_ipaddress}; then
   echo "IDM Server is connected $idm_ipaddress"
 else
-  IDM_IN_GOOD_HEALTH=no
+  IDM_IN_GOOD_HEALTH="not ready"
 fi
 
 dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
@@ -566,25 +566,25 @@ if [[ ! -z $dns_query ]]; then
   echo "IDM Server is able to resolve qbn-dns01.${domain}"
   echo $dns_query
 else
-  IDM_IN_GOOD_HEALTH=no
+  IDM_IN_GOOD_HEALTH="not ready"
 fi
 
-echo $IDM_IN_GOOD_HEALTH
+  printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
 }
 
 
 function ping_openshift4_nodes () {
-    IS_OPENSHIFT4_NODES=no
+    IS_OPENSHIFT4_NODES="not ready"
     masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
     for  i in $(seq "$masters")
     do
         vm="master-$((i-1))"
         if  pingreturnstatus ${vm}.ocp42.${domain}; then
           echo "${vm}.ocp42.lab.example is online"
-          IS_OPENSHIFT4_NODES=yes
+          IS_OPENSHIFT4_NODES=ready
         else
           echo "${vm}.ocp42.lab.example is offline"
-          IS_OPENSHIFT4_NODES=no
+          IS_OPENSHIFT4_NODES="not ready"
           break
         fi
     done
@@ -595,15 +595,15 @@ function ping_openshift4_nodes () {
         vm="compute-$((i-1))"
         if  pingreturnstatus ${vm}.ocp42.${domain}; then
           echo "${vm}.ocp42.lab.example is online"
-          IS_OPENSHIFT4_NODES=yes
+          IS_OPENSHIFT4_NODES=ready
         else
           echo "${vm}.ocp42.lab.example is offline"
-          IS_OPENSHIFT4_NODES=no
+          IS_OPENSHIFT4_NODES="not ready"
           break
         fi
     done
 
-    return $IS_OPENSHIFT4_NODES
+    printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
 }
 
 

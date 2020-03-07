@@ -44,10 +44,10 @@ ssh <your-user>@<your-system-ip-address>
 . Download the qubinode-installer project
 
 ```
-wget https://github.com/Qubinode/qubinode-installer/archive/2.3.zip
-unzip 2.3.zip
-mv qubinode-installer-2.3 qubinode-installer
-rm -f 2.3.zip
+wget https://github.com/Qubinode/qubinode-installer/archive/2.3.1.zip
+unzip 2.3.1.zip
+mv qubinode-installer-2.3.1 qubinode-installer
+rm -f 2.3.1.zip
 cd qubinode-installer/
 ```
 

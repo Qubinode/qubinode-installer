@@ -1,58 +1,39 @@
-# OpenShift 4.x Variables used for deployment
-dns_teardown: false
-tear_down: false
-vn_subnet: "{{ libvirt_host_networks[0].subnet }}"
-master_count: 3
-compute_count: 3
-dns_wildcard: "*.apps.ocp42"
-listen_address: "{{ kvm_host_ip }}"
-nat_gateway: "192.168.50.1"
-
-# OpenShift client  and install information
+---
+# ocp4-kvm-deployer roler vars
+admin_user: "{{ admin_user }}"
+domain: "{{ domain }}"
+project_dir: "{{ project_dir }}"
+idm_hostname: "{{ idm_hostname }}"
+idm_admin_user: "{{ idm_admin_user }}"
+idm_admin_pwd: "{{ idm_admin_pwd }}"
+idm_server_ip: "{{ idm_server_ip }}"
+ipa_host: "{{ ipa_host }}"
 ocp4_version: 4.3.0
-ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
 ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
-ocp4_release: latest
-ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}/"
-ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
-ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
-openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
-dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
-webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
-webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
-
-coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
-coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
-coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
-
-cluster_name: ocp42
-lb_container_name: "{{ lb_name }}-{{ cluster_name}}"
-podman_webserver: qbn-httpd
-coreos_tmp_dir: /tmp/build_coreos_container
-virtinstall_dir: "{{ project_dir }}/rhcos-install/"
-
-# set when you want to remove an old version of openshift tools
-remove_oc_tool: false
-# OpenShift install directory
+ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
+pull_secret: "{{ project_dir }}/pull-secret.txt"
+vm_public_key: "{{ vm_public_key }}"
 openshift_install_folder: ocp4
 openshift_install_dir: "{{ project_dir }}/{{ openshift_install_folder }}"
 ignition_files_dir: "{{ openshift_install_dir }}"
-downloaded_files_dir: /tmp
-
-# found https://cloud.openshift.com/clusters/install
-pull_secret: "{{ project_dir }}/pull-secret.txt"
-#image_pull_secret: "{{ lookup('file', pull_secret) }}"
 ssh_ocp4_public_key: "{{ lookup('file', vm_public_key) }}"
-
-# DNS
-idm_dns_forward_zone: "{{ domain }}"
-idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
+podman_webserver: qbn-httpd
+rhcos_webserver_img_name: rhcos-webserver
+dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
+webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
+webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
+coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
+coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
+coreos_tmp_dir: /tmp/build_coreos_container
+coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
+openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
+tear_down: false
+virtinstall_dir: "{{ project_dir }}/rhcos-install/"
 public_domain: "{{ domain }}"
-
-# Load Balancer
-libvirt_network_name: "{{ cluster_name }}"
-lb_name_prefix: qbn-lb
-lb_name: "{{ lb_name_prefix }}-{{ cluster_name}}"
-
-# Web server
 webserver_directory: /opt/qubinode_webserver
+ocp4_cluster_domain: "cloud.{{ domain }}"
+dns_teardown: false
+idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
+idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
+dns_wildcard: "*.apps.{{ cluster_name }}"
+nat_gateway: "192.168.50.1"
