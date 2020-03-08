@@ -6,7 +6,9 @@ function qubinode_installer_setup () {
     # Ensure the RHEL qcow image exists
     pre_check_for_rhel_qcow_image
 
-    ask_user_if_qubinode_setup
+    check_additional_storage
+    #ask_user_if_qubinode_setup
+    exit
     if [ "A${product_in_use}" == "Aocp3" ]
     then
         # Set the QUBINODE_SYSTEM variable based on user response
