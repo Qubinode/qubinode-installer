@@ -1,9 +1,16 @@
 #!/bin/bash
 
+function getPrimaryDdisk () {
+    root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
+    primary_disk=$(sudo lvs -o +devices $root_mount_lvm | grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}')
+}
+
+
 function check_additional_storage () {
     # Load system wide variables
     setup_variables
-
+    getPrimaryDdisk
+ 
     # Check if NVME device does not exist and present user with a choice of
     # disk to choose from if other disks are available.
     # If NVME device exist use it.
@@ -59,12 +66,22 @@ function check_additional_storage () {
     else
         # Check if there are multiple NVME devices and present user with the
         # option to choose one to continue.
-        TOTAL_NVME_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep nvme|wc -l)
+        TOTAL_NVME_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v $primary_disk |wc -l)
         if [ $TOTAL_NVME_DISKS -gt 1 ]
         then
-            printf "%s\n\n" " Multiple NVME devices found, please choose one? "
+            printf "%s\n" " Found multiple storage devices. It is recommended to dedicate a storage"
+            printf "%s\n" " device for /var/lib/libvirt/images. Choose one of the options below and the"
+            printf "%s\n" " installer will create a volume group, then a lv and mount /var/lib/libvirt/images"
+            printf "%s\n\n" " to it."
             declare -a all_disks=()
-            mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep nvme)
+            mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v $primary_disk)
+            for disk in $(echo ${all_disks[@]})
+            do
+               printf "%s\n" "     $disk"
+            done
+
+            printf "%s\n\n" " "
+            confirm "${yel}Do you want to dedicate a storage device: yes/no${end}"
             createmenu "${all_disks[@]}"
             disk=($(echo "${selected_option}"))
 
