@@ -7,9 +7,9 @@ function collect_system_information() {
     AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
 
 
-    libvirt_pool_name=$(cat playbooks/vars/all.yml | grep libvirt_pool_name: | awk '{print $2}')
+    libvirt_pool_name=$(cat playbooks/vars/kvm_host.yml | grep libvirt_pool_name: | awk '{print $2}')
     AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
-     AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
+    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
 }
 
 if [[ ! -f qubinode_profile.log ]]; then

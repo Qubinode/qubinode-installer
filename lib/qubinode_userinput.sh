@@ -47,11 +47,9 @@ function ask_for_vault_values () {
     if grep '""' "${vaultfile}"|grep -q admin_user_password
     then
         unset admin_user_password
-        printf "%s\n\n" " Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created."
-        printf "%s\n" " Next we will need the password for this use. When entering the password, do not ${yel}Backspace${end}."
-        printf "%s\n\n" " Just ${yel}Ctrl-c${end} to cancel then run the installer again."
-        
-        printf "%s" " Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
+        printf "%s\n" ""
+        printf "%s\n" "   Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created."
+        printf "%s" "   Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
         read_sensitive_data
         admin_user_password="${sensitive_data}"
         sed -i "s/admin_user_password: \"\"/admin_user_password: "$admin_user_password"/g" "${vaultfile}"
@@ -71,12 +69,15 @@ function ask_user_input () {
     if [ "A${teardown}" != "Atrue" ]
     then 
         printf "\n\n" ""
-        printf "%s\n" " If you've made an mistake you can restart the install by"
-        printf "%s\n" " hitting ${yel}Ctrl-c${end} then running ${grn}./qubinode-installer -m clean${end}."
-        printf "%s\n\n" " This will remove all configuration data"
-        ask_user_for_networking_info "${vars_file}"
+        printf "%s\n" " ${cyn}  If you've made an mistake you can restart the install by${end}"
+        printf "%s\n" " ${cyn}  hitting ${end}${yel}Ctrl-c${end} ${cyn}then running ${end}${grn}./qubinode-installer -m clean${end}."
+        printf "%s\n" "   When entering the password, do not ${yel}Backspace${end}."
+        printf "%s\n\n" "   Just ${yel}Ctrl-c${end} to cancel then run the installer again."
+        printf "%s\n" " ${cyn}  Running ${end}${yel}./qubinode-installer -m clean${end} ${cyn}removes all configuration data.${end}"
+        printf "%s\n\n" "   ${cyn}This effectively resets the installation progress.${end}"
         ask_for_vault_values "${vault_vars_file}"
-        ask_user_for_custom_idm_server
+        ask_user_for_networking_info "${vars_file}"
         ask_user_for_idm_password
+        ask_user_for_custom_idm_server
     fi
 }

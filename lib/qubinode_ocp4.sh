@@ -30,13 +30,13 @@ function qubinode_autoinstall_openshift4 (){
 
         # Ensure host system is setup as a KVM host
         openshift4_kvm_health_check
-        if [[ "A${KVM_IN_GOOD_HEALTH}" == "Ano"  ]]; then
+        if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
           qubinode_setup_kvm_host
         fi
 
         # Deploy IdM Server
         openshift4_idm_health_check
-        if [[  "A${IDM_IN_GOOD_HEALTH}" == "Ano"  ]]; then
+        if [[  "A${IDM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
           qubinode_deploy_idm
         fi
 
