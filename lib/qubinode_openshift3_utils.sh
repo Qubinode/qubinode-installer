@@ -5,6 +5,9 @@ function openshift3_variables () {
     # global variables used used in this script
     # for ocp3.
 
+    # load kvmhost variables
+    kvm_host_variables
+
     playbooks_dir="${project_dir}/playbooks"
     vars_file="${playbooks_dir}/vars/all.yml"
     ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
@@ -18,7 +21,7 @@ function openshift3_variables () {
     OCUSER=$ocp_user
     product_in_use="${product}"
     ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
-    libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
+    #libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
     NODES_POST_PLAY="${playbooks_dir}/openshift3_nodes_post_deployment.yml"
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"

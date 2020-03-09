@@ -120,8 +120,11 @@ function qubinode_rhsm_register () {
             printf "%s\n" "Try running: ${grn}qubinode-installer -m setup${grn}"
             exit 1
         fi
-    
-        RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
+   
+        # load kvmhost variables
+        kvm_host_variables
+ 
+        #RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
         IS_REGISTERED_tmp=$(mktemp)
         sudo subscription-manager identity > "${IS_REGISTERED_tmp}" 2>&1
     

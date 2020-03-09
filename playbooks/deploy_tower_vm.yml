@@ -4,6 +4,7 @@
   gather_facts: yes
   vars_files:
     - vars/all.yml
+    - vars/kvm_host.yml
     - vars/vault.yml
     - vars/idm.yml
     - vars/tower_server.yml

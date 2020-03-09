@@ -7,6 +7,9 @@ function openshift4_variables () {
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    
+    # load kvmhost variables
+    kvm_host_variables
 }
 
 function check_for_pull_secret () {
@@ -109,7 +112,7 @@ openshift4_qubinode_teardown () {
         do
             printf "%s\n" "    ${i:-other}"|grep -v other
         done
-        exit
+        exit 0
     fi
 
     # Remove downloaded ignitions files
@@ -201,7 +204,7 @@ function remove_ocp4_vms () {
         do
             printf "%s\n" "    ${i:-other}"|grep -v other
         done
-        exit
+        exit 0
     fi
 }
 
@@ -509,7 +512,7 @@ EOF
 openshift4_kvm_health_check (){
   KVM_IN_GOOD_HEALTH="not ready"
 
-  requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+  #requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
   if sudo virsh net-list | grep -q $requested_brigde; then
     echo "$requested_brigde is configured"
   else
@@ -525,7 +528,7 @@ openshift4_kvm_health_check (){
 
   if sudo lsblk | grep -q nvme0n1; then
     echo "Checking for vg name "
-    vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
+    #vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
     if sudo vgdisplay | grep -q $vg_name; then
       echo "$vg_name is configured"
     else
