@@ -42,6 +42,8 @@ function qubinode_autoinstall_openshift4 (){
 
         # Deploy OCP4
         #openshift4_enterprise_deployment
+        DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
+        ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?
         exit 0
     fi
 
