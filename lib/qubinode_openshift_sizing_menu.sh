@@ -18,7 +18,7 @@ cyn=$'\e[1;36m'
 end=$'\e[0m'
 
 
-ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
+
 
 function config_err_msg () {
     cat << EOH >&2
@@ -50,7 +50,14 @@ source "${project_dir}/lib/qubinode_requirements.sh"
 source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 
 qubinode_required_prereqs
-auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${ocp3_vars_file}")
+setup_required_paths
+if [[ -f ${project_dir}/playbooks/vars/ocp3.yml ]]; then
+  auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
+elif [[ -f ${project_dir}/playbooks/vars/okd3.yml ]]; then
+  auto_install=$(awk '/^openshift_auto_install:/ {print $2}' "${project_dir}/playbooks/vars/okd3.yml")
+else
+  exit 1
+fi
 
 
 if [[ -z $1 ]]; then
@@ -94,11 +101,19 @@ show_menus() {
 }
 
 function continue_with_selected_install () {
-            printf "%s\n" ""
-            sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
-            openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
-            cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
-            exit 0
+  printf "%s\n" ""
+  setup_required_paths
+  if [[ -f ${project_dir}/playbooks/vars/ocp3.yml ]]; then
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${project_dir}/playbooks/vars/ocp3.yml"
+  elif [[ -f ${project_dir}/playbooks/vars/okd3.yml ]]; then
+    sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${project_dir}/playbooks/vars/okd3.yml"
+  else
+    exit 1
+  fi
+
+  openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
+  cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
+  exit 0
 }
 
 function read_options(){
@@ -114,7 +129,7 @@ function read_options(){
 		4) exit 0;;
 		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
-        confirm " Continue with $ocp_size openshift 3 cluste deployment? yes/no"
+        confirm " Continue with $ocp_size openshift 3 cluster deployment? yes/no"
         if [ "A${response}" == "Ayes" ]
         then
             continue_with_selected_install

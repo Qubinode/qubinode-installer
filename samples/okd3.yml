@@ -1,4 +1,7 @@
 # Required for OpenShift/OKD
+openshift_product: ""
+openshift_deployment_size: ""
+openshift_auto_install: ""
 product: "{{ openshift_product }}"
 preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 openshift_release: "3.11"

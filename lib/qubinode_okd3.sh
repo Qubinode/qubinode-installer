@@ -1,5 +1,16 @@
 #!/bin/bash
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
 
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
 
 function qubinode_autoinstall_okd3() {
     product_in_use="okd3" # Tell the installer this is openshift3 installation
@@ -7,6 +18,13 @@ function qubinode_autoinstall_okd3() {
     qubinode_product_opt="${product_in_use}"
     openshift_auto_install=true # Tells the installer to use defaults options
     update_variable=true
+
+    setup_required_paths
+    playbooks_dir="${project_dir}/playbooks"
+    source "${project_dir}/lib/qubinode_openshift3_utils.sh"
+
+    # Load all global openshift variable
+    set_openshift_production_variables
 
     # load required files from samples to playbooks/vars/
     qubinode_required_prereqs
@@ -57,7 +75,7 @@ function qubinode_autoinstall_okd3() {
       qubinode_deploy_idm
     fi
 
-    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp3_vars_file}"
-    sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${ocp3_vars_file}"
+    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${playbooks_dir}/vars/okd3.yml"
+    sed -i "s/openshift_auto_install:.*/openshift_auto_install: "$openshift_auto_install"/g" "${playbooks_dir}/vars/okd3.yml"
     okd3_deployment
 }
