@@ -1,6 +1,6 @@
-# OpenShift 4.2 Cluster on a Single Node
+# OpenShift 4.3 Cluster on a Single Node
 
-Follow these steps to deploy OpenShift 4.2 cluster on a single node.
+Follow these steps to deploy OpenShift 4.3 cluster on a single node.
 This deploys 3 masters and 3 computes.
 
 # Installing Red Hat Enterprise Linux
@@ -30,10 +30,10 @@ ssh username@ipaddressofserver
 
 **Download files for qubinode installation**
 ```
-wget https://github.com/Qubinode/qubinode-installer/archive/2.3.zip
-unzip 2.3.zip
-mv qubinode-installer-2.3 qubinode-installer
-rm -f 2.3.zip
+wget https://github.com/Qubinode/qubinode-installer/archive/2.3.1.zip
+unzip 2.3.1.zip
+mv qubinode-installer-2.3.1 qubinode-installer
+rm -f 2.3.1.zip
 cd qubinode-installer/
 ```
 

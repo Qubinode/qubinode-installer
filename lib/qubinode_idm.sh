@@ -125,7 +125,9 @@ function ask_user_for_custom_idm_server () {
                 fi
             fi
 
-            confirm " ${blu}Would you like to enable allow-zone-overlap? Default option should be no unless needed for specific purpose. yes/no${end}"
+            printf "%s\n" " You can safely choose no for this next question."
+            printf "%s\n" " Choose yes if you need to use a existing DNS domain."
+            confirm " ${blu}Would you like to enable allow-zone-overlap? yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
                 sed -i "s/idm_zone_overlap:.*/idm_zone_overlap: true/g" "${idm_vars_file}"
