@@ -50,6 +50,9 @@ function openshift4_prechecks () {
     current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
+    # Ensure Openshift Subscription Pool is attached
+    get_subscription_pool_id 'Red Hat OpenShift Container Platform'
+
 }
 
 openshift4_qubinode_teardown () {
@@ -216,14 +219,14 @@ openshift4_server_maintenance () {
        smoketest)
            echo  "Running smoke test on environment: : not implemented yet"
               ;;
-        shutdown)
+       shutdown)
             echo  "Shutting down cluster"
             bash "${project_dir}/openshift4_server_maintenance"
             ;;
-        startup)
+       startup)
             echo  "Starting up Cluster: not implemented yet"
             ;;
-        checkcluster)
+       checkcluster)
             echo  "Running Cluster health check: : not implemented yet"
             ;;
        *)
