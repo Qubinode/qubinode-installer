@@ -47,5 +47,8 @@ function qubinode_autoinstall_openshift4 (){
         exit 0
     fi
 
+    # Check the OpenSHift status
+    ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml
+
 
 }
