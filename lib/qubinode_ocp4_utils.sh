@@ -46,11 +46,12 @@ function openshift4_prechecks () {
         sudo firewall-cmd --reload
     fi
 
-    curl -OL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+    curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
     current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
     # Ensure Openshift Subscription Pool is attached
+    check_for_openshift_subscription
     get_subscription_pool_id 'Red Hat OpenShift Container Platform'
 
 }

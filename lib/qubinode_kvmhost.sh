@@ -376,7 +376,7 @@ function qubinode_setup_kvm_host () {
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            #qubinode_check_libvirt_net
        else
-           printf "%s\n" " ${blu}not qubinode system${end}"
+           printf "%s\n" " ${blu}not a qubinode system${end}"
            #qubinode_check_libvirt_net
        fi
     else
