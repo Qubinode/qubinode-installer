@@ -17,7 +17,7 @@ qubinode_bridge_name: qubibr0
 rhel_release: 7.7
 
 # This variable is being phased out
-run_qubinode_setup: ""
+run_qubinode_setup: yes
 
 # Run storage check
 run_storage_check: ""

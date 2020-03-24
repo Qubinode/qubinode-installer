@@ -43,3 +43,6 @@ idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 deploy_ocp4_configs: True
+product: "{{ openshift_product }}"
+openshift_pool_id: ""
+openshift_product: ""

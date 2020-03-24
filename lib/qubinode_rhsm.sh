@@ -31,7 +31,7 @@ function check_rhsm_status () {
         status=$(awk -F: '/Overall Status:/ {print $2}' "${status_result}"|sed 's/^ *//g')
         if [ "A${status}" != "ACurrent" ]
         then
-            printf "%s\n" " Cannot resolved ${yel}$(hostname)${end} subscription status"
+            printf "%s\n" " Cannot determine the subscription status of ${yel}$(hostname)${end}"
             printf "%s\n" " Error details are: "
             cat "${status_result}"
             printf "%s\n\n" " Please resolved and try again"
@@ -167,14 +167,12 @@ function qubinode_rhsm_register () {
             then
                 printf "%s\n" " ${yel}Successfully registered $(hostname) to RHSM${end}"
                 cat "${rhsm_reg_result}"
-                check_rhsm_status
             else
                 printf "%s\n" " ${red}$(hostname) registration to RHSM was unsuccessfull.${end}"
                 cat "${rhsm_reg_result}"
             fi
         else
             printf "%s\n" " ${yel}$(hostname)${end} ${blu}is already registered${end}"
-            check_rhsm_status
         fi
     fi
 
@@ -221,4 +219,75 @@ function get_subscription_pool_id () {
         cat "${project_dir}/docs/subscription_pool_message"
         exit 1
     fi
+}
+
+function check_for_openshift_subscription () {
+
+    if [ -f $ocp3_vars_file ]
+    then
+        openshift_vars_file=$ocp3_vars_file
+    elif [ -f $ocp4_vars_file ]
+    then
+        openshift_vars_file=$ocp4_vars_file
+    else
+        printf "%s\n" "    Could not determine the correct openshift vars file"
+        exit 1
+    fi
+
+    # Set OpenShift product
+    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${openshift_vars_file}"
+
+    # Make sure the Qubinode is registered
+    qubinode_rhsm_register
+ 
+    # Make sure OpenShift subscription is attached
+    get_subscription_pool_id 'Red Hat OpenShift Container Platform'
+
+    # This function trys to find a subscription that mataches the OpenShift product
+    # then saves the pool id for that function and updates the varaibles file.
+    AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
+    CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
+
+    if [ "A${CONSUMED}" != "A" ]
+    then
+       echo "The system is already attached to the Red Hat OpenShift Container Platform with pool id: ${CONSUMED}"
+       POOL_ID="${CONSUMED}"
+    elif [ "A${CONSUMED}" == "A" ]
+    then
+       echo "Found the repo id: ${AVAILABLE} for Red Hat OpenShift Container Platform"
+       POOL_ID="${AVAILABLE}"
+
+       echo "Attaching system Red Hat OpenShift Container Platform subscription pool"
+       sudo subscription-manager remove --all
+       sudo subscription-manager attach --pool="${POOL_ID}"
+    else
+        cat "${project_dir}/docs/subscription_pool_message"
+        exit 1
+    fi
+
+    # set subscription pool id
+    if [ "A${POOL_ID}" != "A" ]
+    then
+        echo "Setting pool id for OpenShift Container Platform"
+        if grep '""' "${openshift_vars_file}"|grep -q openshift_pool_id
+        then
+            echo "${openshift_vars_file} openshift_pool_id variable"
+            sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${openshift_vars_file}"
+        fi
+    else
+        echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
+    fi
+
+    # Decrypt Ansible Vault
+    decrypt_ansible_vault "${vault_vars_file}" >/dev/null
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
+        printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
+        printf "%s\n\n" "username and password."
+
+        # Get RHSM username and password.
+        get_rhsm_user_and_pass
+    fi
+    # Encrypt Ansible Vault
+    encrypt_ansible_vault "${vault_vars_file}" >/dev/null
 }

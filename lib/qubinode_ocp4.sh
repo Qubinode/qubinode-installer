@@ -24,8 +24,9 @@ function qubinode_autoinstall_openshift4 (){
     if [[ "A${IS_OPENSHIFT4_NODES}" == "Ayes" ]] && [ $WEBCONSOLE_STATUS -eq 200 ]
     then
       printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
-      printf "%s\n\n" " ${grn}Access the OpenShift web-console here: https://console-openshift-console.apps.ocp42.${domain}${end}"
-      printf "%s\n\n" " ${grn}Login to the console with user: kubeadmin, password:$(cat ocp4/auth/kubeadmin-password)${end}"
+      #printf "%s\n\n" " ${grn}Access the OpenShift web-console here: https://console-openshift-console.apps.ocp42.${domain}${end}"
+      #printf "%s\n\n" " ${grn}Login to the console with user: kubeadmin, password:$(cat ocp4/auth/kubeadmin-password)${end}"
+      ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml || exit $?
     else
 
         # Ensure host system is setup as a KVM host
@@ -44,11 +45,8 @@ function qubinode_autoinstall_openshift4 (){
         #openshift4_enterprise_deployment
         DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
         ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?
-        exit 0
+
+        # Check the OpenSHift status
+        ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml || exit $?
     fi
-
-    # Check the OpenSHift status
-    ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml
-
-
 }

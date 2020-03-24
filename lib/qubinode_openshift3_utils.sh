@@ -246,61 +246,6 @@ function qubinode_openshift_nodes () {
    fi
 }
 
-
-function check_for_openshift_subscription () {
-
-    # Make sure the Qubinode is registered
-    qubinode_rhsm_register
-
-    # This function trys to find a subscription that mataches the OpenShift product
-    # then saves the pool id for that function and updates the varaibles file.
-    AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
-    CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
-
-    if [ "A${CONSUMED}" != "A" ]
-    then
-       echo "The system is already attached to the Red Hat OpenShift Container Platform with pool id: ${CONSUMED}"
-       POOL_ID="${CONSUMED}"
-    elif [ "A${CONSUMED}" == "A" ]
-    then
-       echo "Found the repo id: ${AVAILABLE} for Red Hat OpenShift Container Platform"
-       POOL_ID="${AVAILABLE}"
-
-       echo "Attaching system Red Hat OpenShift Container Platform subscription pool"
-       sudo subscription-manager remove --all
-       sudo subscription-manager attach --pool="${POOL_ID}"
-    else
-        cat "${project_dir}/docs/subscription_pool_message"
-        exit 1
-    fi
-
-    # set subscription pool id
-    if [ "A${POOL_ID}" != "A" ]
-    then
-        echo "Setting pool id for OpenShift Container Platform"
-        if grep '""' "${ocp3_vars_file}"|grep -q openshift_pool_id
-        then
-            echo "${ocp3_vars_file} openshift_pool_id variable"
-            sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${ocp3_vars_file}"
-        fi
-    else
-        echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
-    fi
-
-    # Decrypt Ansible Vault
-    decrypt_ansible_vault "${vault_vars_file}" >/dev/null
-    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-    then
-        printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
-        printf "%s\n\n" "username and password."
-
-        # Get RHSM username and password.
-        get_rhsm_user_and_pass
-    fi
-    # Encrypt Ansible Vault
-    encrypt_ansible_vault "${vault_vars_file}" >/dev/null
-}
-
 function validate_openshift_pool_id () {
     # This function ensures that when installing OCP
     # There exist an OpenShift subscription and an avialable pool id
