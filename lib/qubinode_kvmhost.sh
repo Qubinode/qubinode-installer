@@ -10,8 +10,9 @@ function kvm_host_variables () {
 }
 
 function getPrimaryDdisk () {
-    root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
-    primary_disk=$(sudo lvs -o +devices $root_mount_lvm | grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}')
+    #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
+    root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
+    primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm|grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
 }
 
 function check_additional_storage () {
