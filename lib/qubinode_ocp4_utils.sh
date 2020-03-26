@@ -7,7 +7,7 @@ function openshift4_variables () {
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    
+
     # load kvmhost variables
     kvm_host_variables
 }
@@ -549,6 +549,12 @@ openshift4_kvm_health_check (){
     KVM_IN_GOOD_HEALTH=ready
   fi
 
+  libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+  os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+  
   printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."
 }
 
