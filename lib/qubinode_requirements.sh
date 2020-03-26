@@ -24,6 +24,12 @@ function qubinode_required_prereqs () {
       cp "${project_dir}/samples/all.yml" "${vars_file}"
     fi
 
+    # copy sample kvm host vars
+    if [ ! -f "${kvm_host_vars_file}" ]
+    then
+      cp "${project_dir}/samples/kvm_host.yml" "${kvm_host_vars_file}"
+    fi
+
     if [ ! -f "${idm_vars_file}" ]
     then
      cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
@@ -100,10 +106,13 @@ function setup_variables () {
     VM_DATA_DIR=$(awk '/^vm_data_dir:/ {print $2}' ${vars_file}|tr -d '"')
     ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
 
+    # load kvmhost variables
+    kvm_host_variables
+
     setup_completed=$(awk '/qubinode_installer_setup_completed:/ {print $2;exit}' "${vars_file}")
     rhsm_completed=$(awk '/qubinode_installer_rhsm_completed:/ {print $2;exit}' "${vars_file}")
     ansible_completed=$(awk '/qubinode_installer_ansible_completed:/ {print $2;exit}' "${vars_file}")
-    host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' "${vars_file}")
+    #host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' "${vars_file}")
     base_setup_completed=$(awk '/qubinode_base_reqs_completed:/ {print $2;exit}' "${vars_file}")
 }
 

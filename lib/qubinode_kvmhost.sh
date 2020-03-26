@@ -1,119 +1,106 @@
 #!/bin/bash
 
+function kvm_host_variables () {
+    libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep : | awk '{print $2}')
+    host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
+    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
+    vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
+    requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+}
+
+function getPrimaryDdisk () {
+    #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
+    root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
+    primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm|grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
+}
+
 function check_additional_storage () {
     # Load system wide variables
     setup_variables
-
-    # Check if NVME device does not exist and present user with a choice of
-    # disk to choose from if other disks are available.
-    # If NVME device exist use it.
-    if ! lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -q nvme
+    CHECK_STORAGE=$(awk '/run_storage_check:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
+    if [ "A${CHECK_STORAGE}" == "A" ]
     then
-        printf "%s\n" "        ${yel}**NOTICE**${end}"
-        printf "%s\n\n" " ${red}Did not find a NVME device${end}"
-        printf "%s\n" " Qubinode recommends using a NVME device for"
-        printf "%s\n" " storing the VMs disk. The device will be paritioned and"
-        printf "%s\n\n" " a LVM volume created and mounted to /var/lib/libvirt/images."
+            printf "%s\n" "  ${yel}****************************************************************************${end}"
+        printf "%s\n\n" "    ${cyn}        Storage Setup${end}"
 
-        # Find all the disk devices
-        TOTAL_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v nvme|wc -l)
-        if [ $TOTAL_DISKS -gt 1 ]
+        getPrimaryDdisk
+        DISK="${primary_disk}"
+    
+        declare -a ALL_DISKS=()
+        mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v $primary_disk)
+        if [ ${#ALL_DISKS[@]} -gt 1 ]
         then
-            printf "%s\n\n" " If you are using a none NVME device, please choose from the list below."
-            declare -a all_disks=()
-            mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v nvme)
-            createmenu "${all_disks[@]}"
-            disk=($(echo "${selected_option}"))
-            confirm "${yel}Continue with $disk?${end} ${blu}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
-            then
-                host_device=$disk
-                printf "%s\n\n" ""
-                printf "%s\n\n" " ${mag}Using disk: $disk${end}"
-                sed -i "s/host_device: */host_device: $disk/g" "${vars_file}"
-            else
-                printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
-                exit 0
-            fi
-        else
-            # If only one device is availabble inform the user and set
-            # the host_device variable
-            printf "%s\n\n" " ${grn}No additional storage device found.${end}"
-            printf "%s\n" " There is no additional storage device available to"
-            printf "%s\n" " dedicate to the libvirt storage pool that will be"
-            printf "%s\n\n" " paritioned and mounted to /var/lib/libvirt/images."
+            printf "%s\n" "   Found multiple storage devices:"
 
-            confirm " ${yel}Do you want to skip configuring additional storage?${end} ${blue}yes/no${end}"
+            for disk in $(echo ${ALL_DISKS[@]})
+            do
+               printf "%s\n" "     ${yel} * ${end}${blu}$disk${end}"
+            done
+
+            printf "%s\n" " "
+            printf "%s\n" "   It is recommended to dedicate a storage device for /var/lib/libvirt/images."
+            printf "%s\n" "   Choose one of the options below and the installer will create a volume"
+            printf "%s\n\n" "   group, then a lv and mount /var/lib/libvirt/images to it."
+
+            confirm "   Do you want to dedicate a storage device: ${blu}yes/no${end}"
+            printf "%s\n" " "
             if [ "A${response}" == "Ayes" ]
             then
-                printf "%s\n" ""
-                printf "%s\n\n" "${mag} Setting create_lvm to no.${end}"
-                sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${vars_file}"
-                #TODO; add a validation check to ensure the device is correct.
-                host_device=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}')
-            else
-                printf "%s\n\n" "${mag} There are no other options, exiting the install.${end}"
-                exit
+                createmenu "${ALL_DISKS[@]}"
+                disk=($(echo "${selected_option}"))
+                confirm "    Continue with $disk? ${blu}yes/no${end}"
+                if [ "A${response}" == "Ayes" ]
+                then
+                    printf "%s\n\n" ""
+                    printf "%s\n\n" " ${mag}Using disk: $disk${end}"
+                    DISK="${disk}"
+                    sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
+                else
+                    printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
+                    exit 0
+                fi
             fi
         fi
-    else
-        # Check if there are multiple NVME devices and present user with the
-        # option to choose one to continue.
-        TOTAL_NVME_DISKS=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep nvme|wc -l)
-        if [ $TOTAL_NVME_DISKS -gt 1 ]
-        then
-            printf "%s\n\n" " Multiple NVME devices found, please choose one? "
-            declare -a all_disks=()
-            mapfile -t all_disks < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep nvme)
-            createmenu "${all_disks[@]}"
-            disk=($(echo "${selected_option}"))
-
-            confirm "${yel}Continue with $disk?${end} ${blu}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
-            then
-                printf "%s\n\n" ""
-                printf "%s\n\n" " ${mag}Using disk: $disk${end}"
-                sed -i "s/host_device: */host_device: $disk/g" "${vars_file}"
-            else
-                printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
-                exit 0
-            fi
-        else
-            host_device=$(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep nvme)
-            sed -i "s/host_device: */host_device: $disk/g" "${vars_file}"
-        fi
+            echo "Continue with existing $DISK storage!"
+            sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
+            sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
+            sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
     fi
 
-    # set variable disk required for check_disk_size
-    DISK="${host_device}"
 }
 
 # Ask if this host should be setup as a qubinode host
 function ask_user_if_qubinode_setup () {
     # ensure all required variables are setup
     setup_variables
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
     # Ask user if this system should be a qubinode
     if [ "A${QUBINODE_SYSTEM}" == "A" ]
     then
-        printf "%s\n" "   ${yel}Qubinode Setup${end}"
-        printf "%s\n" " The qubinode-installer configures your hardware as a KVM host"
-        printf "%s\n\n" " otherwise referred as ${grn}Qubinode${end}."
+        printf "%s\n" "     ${yel}******************${end}"
+        printf "%s\n" "     ${yel}*${end} ${cyn}Qubinode Setup${end} ${yel}*${end}"
+        printf "%s\n" "     ${yel}******************${end}"
+        printf "%s\n" "   The qubinode-installer configures your hardware as a KVM host"
+        printf "%s\n\n" "   otherwise referred as ${grn}Qubinode${end}."
 
-        printf "%s\n" " You can choose not to configure this as a Qubinode if the following are true: "
+        printf "%s\n" " You can choose ${yel}no${end} if all the following are true: "
         printf "%s\n" "  ${mag}(*)${end} ${blu}A libvirt bridge network is already setup.${end}"
         printf "%s\n" "  ${mag}(*)${end} ${blu}The system is already setup to function as a KVM host.${end}"
         printf "%s\n\n" "  ${mag}(*)${end} ${blu}The system is already registered to Red Hat.${end}"
 
-        confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
+        printf "%s\n" " If any of the following are ture, choose ${yel}no${end} : "
+        printf "%s\n" "  ${mag}(*)${end} ${blu}Your system only have one storage device.${end}"
+        printf "%s\n\n" "  ${mag}(*)${end} ${blu}You don't want to dedicate your extra storage device to Libvirt.${end}"
 
+        confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
         if [ "A${response}" == "Ayes" ]
         then
             # Set varaible to configure storage and networking
-            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${kvm_host_vars_file}"
         else
             # Set varaible not to configure storage and networking
-            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+            sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${kvm_host_vars_file}"
             printf "%s\n\n" ""
             printf "%s\n" "${cyn} You choose not to setup this system as a Qubinode.${end}"
             printf "%s\n" "${cyn} Please understand that by choosing this route you are${end}"
@@ -122,14 +109,17 @@ function ask_user_if_qubinode_setup () {
             printf "%s\n" "${yel} However, pull request are very welcome.${end}"
             printf "%s\n\n" "${cyn} We will now attempt to verify your libvirt storage and network.${end}"
 
+            # Don't expect a second storage device
+            sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+
         fi
     fi
 }
 
 function check_libvirt_pool () {
     # Verify storage and network when not setting up Qubinode
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
-    CHECK_LIBVIRT_POOL=$(awk '/libvirt_pool_name_check:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
+    CHECK_LIBVIRT_POOL=$(awk '/libvirt_pool_name_check:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
     if [ "A${CHECK_LIBVIRT_POOL}" == "Ayes" ]
     then
         # Check libvirt storage
@@ -145,8 +135,8 @@ function check_libvirt_pool () {
             POOL=($(echo "${selected_option}"))
 
             printf "%s\n" " Setting libvirt_pool_name to $POOL"
-            sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
-            sed -i "s/libvirt_pool_name_check:.*/libvirt_pool_name_check: no/g" "${vars_file}"
+            sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${kvm_host_vars_file}"
+            sed -i "s/libvirt_pool_name_check:.*/libvirt_pool_name_check: no/g" "${kvm_host_vars_file}"
         elif [ $LIBVIRT_POOLS -eq 0 ]
         then
             printf "%s\n\n" " ${red}No libvirt pool found, please resolve this issue and try again.${end}"
@@ -156,8 +146,8 @@ function check_libvirt_pool () {
             if [ "A${POOL}" != "default" ]
             then
                 printf "%s\n" " Setting libvirt_pool_name to $POOL"
-                sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${vars_file}"
-                sed -i "s/libvirt_pool_name_check:.*/libvirt_pool_name_check: no/g" "${vars_file}"
+                sed -i "s/libvirt_pool_name:.*/libvirt_pool_name: "$POOL"/g" "${kvm_host_vars_file}"
+                sed -i "s/libvirt_pool_name_check:.*/libvirt_pool_name_check: no/g" "${kvm_host_vars_file}"
             fi
         fi
         # Check the pool capacity
@@ -166,7 +156,7 @@ function check_libvirt_pool () {
 }
 
 function check_libvirt_network () {
-    CHECK_LIBVIRT_NET=$(awk '/vm_libvirt_net_check:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    CHECK_LIBVIRT_NET=$(awk '/vm_libvirt_net_check:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
     if [ "A${CHECK_LIBVIRT_NET}" == "Ayes" ]
     then
         # Check libvirt network
@@ -181,8 +171,8 @@ function check_libvirt_network () {
             NETWORK=($(echo "${selected_option}"))
 
             printf "%s\n" " Setting vm_libvirt_net to $NETWORK"
-            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$NETWORK"/g" "${vars_file}"
-            sed -i "s/vm_libvirt_net_check:.*/vm_libvirt_net_check: no/g" "${vars_file}"
+            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$NETWORK"/g" "${kvm_host_vars_file}"
+            sed -i "s/vm_libvirt_net_check:.*/vm_libvirt_net_check: no/g" "${kvm_host_vars_file}"
         elif [ $LIBVIRT_NETS -eq 0 ]
         then
             printf "%s\n\n" " ${red}No libvirt network found, please resolve this issue and try again.${end}"
@@ -192,8 +182,8 @@ function check_libvirt_network () {
             if [ "A${NETWORK}" != "qubinet" ]
             then
                printf "%s\n" " Setting vm_libvirt_net to $NETWORK"
-               sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: $NETWORK/g" "${vars_file}"
-               sed -i "s/vm_libvirt_net_check:.*/vm_libvirt_net_check: no/g" "${vars_file}"
+               sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: $NETWORK/g" "${kvm_host_vars_file}"
+               sed -i "s/vm_libvirt_net_check:.*/vm_libvirt_net_check: no/g" "${kvm_host_vars_file}"
             fi
         fi
     fi
@@ -202,11 +192,11 @@ function check_libvirt_network () {
 function qubinode_system_auto_install () {
     if [ "A${openshift_auto_install}" != "Atrue" ]
     then
-        QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${vars_file}" | tr -d '"')
+        QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
     else
         # Set varaible to configure storage and networking
         response=yes
-        sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${vars_file}"
+        sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${kvm_host_vars_file}"
         check_additional_storage
     fi
 }
@@ -214,7 +204,7 @@ function qubinode_system_auto_install () {
 # Ensure RHEL is set to the supported release
 function set_rhel_release () {
     qubinode_required_prereqs
-    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
+    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${kvm_host_vars_file}" |grep [0-9])
     RELEASE="Release: ${RHEL_RELEASE}"
     CURRENT_RELEASE=$(sudo subscription-manager release --show)
 
@@ -239,18 +229,18 @@ function qubinode_networking () {
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g')
 
     # ask user for their IP network and use the default
-    if cat "${vars_file}"|grep -q changeme.in-addr.arpa
+    if cat "${kvm_host_vars_file}"|grep -q changeme.in-addr.arpa
     then
         #read -p " ${mag}Enter your IP Network or press${end} ${yel}[ENTER]${end} ${mag}for the default [$NETWORK]: ${end}" network
         #network=${network:-"${NETWORK}"}
         network="${NETWORK}"
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
-        sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${vars_file}"
+        sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${kvm_host_vars_file}"
     fi
 
-    if [ -f "${vars_file}" ]
+    if [ -f "${kvm_host_vars_file}" ]
     then
-        DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2;exit 1 }' "${vars_file}")
+        DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2;exit 1 }' "${kvm_host_vars_file}")
     else
         DEFINED_BRIDGE=""
     fi
@@ -268,47 +258,47 @@ function qubinode_networking () {
     KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
 
    # Set KVM host ip info
-    iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${vars_file}")
+    iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${kvm_host_vars_file}")
     if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
     then
         #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
-        sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${vars_file}"
+        sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${kvm_host_vars_file}"
     fi
 
-    iSkvm_host_ip=$(awk '/^kvm_host_ip/ { print $2}' "${vars_file}")
+    iSkvm_host_ip=$(awk '/^kvm_host_ip/ { print $2}' "${kvm_host_vars_file}")
     if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
     then
         #echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
-        sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${vars_file}"
+        sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${kvm_host_vars_file}"
     fi
 
-    iSkvm_host_gw=$(awk '/^kvm_host_gw/ { print $2}' "${vars_file}")
+    iSkvm_host_gw=$(awk '/^kvm_host_gw/ { print $2}' "${kvm_host_vars_file}")
     if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
     then
         #echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
-        sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${vars_file}"
+        sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${kvm_host_vars_file}"
     fi
 
-    iSkvm_host_mask_prefix=$(awk '/^kvm_host_mask_prefix/ { print $2}' "${vars_file}")
+    iSkvm_host_mask_prefix=$(awk '/^kvm_host_mask_prefix/ { print $2}' "${kvm_host_vars_file}")
     if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
     then
         #echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
-        sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${vars_file}"
+        sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${kvm_host_vars_file}"
     fi
 
-    iSkvm_host_interface=$(awk '/^kvm_host_interface/ { print $2}' "${vars_file}")
+    iSkvm_host_interface=$(awk '/^kvm_host_interface/ { print $2}' "${kvm_host_vars_file}")
     if [[ "A${iSkvm_host_interface}" == "A" ]] || [[ "A${iSkvm_host_interface}" == 'A""' ]]
     then
         #echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
-        sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${vars_file}"
+        sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${kvm_host_vars_file}"
     fi
 
-    iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr/ { print $2}' "${vars_file}")
+    iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr/ { print $2}' "${kvm_host_vars_file}")
     if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
     then
         foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
         #echo "Updating the kvm_host_macaddr to ${foundmac}"
-        sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${vars_file}"
+        sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
     fi
 
     # Check Network
@@ -317,7 +307,7 @@ function qubinode_networking () {
 
 
 function qubinode_check_libvirt_net () {
-    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}"| tr -d '"')
+    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
 
     if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
     then
@@ -350,7 +340,7 @@ function qubinode_check_libvirt_net () {
         if [ "A${response}" == "Ayes" ]
         then
             printf "%s\n" " Updating libvirt network"
-            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$vm_libvirt_net"/g" "${vars_file}"
+            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$vm_libvirt_net"/g" "${kvm_host_vars_file}"
         fi
     fi
 }
@@ -369,7 +359,7 @@ function qubinode_setup_kvm_host () {
     fi
 
     # Check if we should setup qubinode
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${vars_file}" | tr -d '"')
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
 
     if [ "A${OS}" != "AFedora" ]
     then
@@ -387,7 +377,7 @@ function qubinode_setup_kvm_host () {
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            #qubinode_check_libvirt_net
        else
-           printf "%s\n" " ${blu}not qubinode system${end}"
+           printf "%s\n" " ${blu}not a qubinode system${end}"
            #qubinode_check_libvirt_net
        fi
     else
@@ -395,19 +385,19 @@ function qubinode_setup_kvm_host () {
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
     fi
 
-    sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${vars_file}"
-    printf "\n\n${yel}    ***************************${end}\n"
-    printf "${yel}    *   KVM Host Setup Complete   *${end}\n"
-    printf "${yel}    ***************************${end}\n\n"
+    sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
+    printf "\n\n${yel}    ******************************${end}\n"
+    printf "${yel}    * KVM Host Setup Complete   *${end}\n"
+    printf "${yel}    *****************************${end}\n\n"
 }
 
 
 function qubinode_check_kvmhost () {
     qubinode_networking
     echo "Validating the KVMHOST setup"
-    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${vars_file}" | tr -d '"')
-    DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
-    DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${vars_file}"| tr -d '"')
+    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
+    DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+    DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
     BRIDGE_IP=$(sudo awk -F'=' '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
     BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
 

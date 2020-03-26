@@ -16,3 +16,6 @@ rhcos-install
 satellite-server-manifest.zip
 qubinode_profile.log
 issue.md
+python-env/
+release.txt
+requirements.txt
