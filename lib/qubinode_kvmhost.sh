@@ -35,7 +35,9 @@ function check_additional_storage () {
 
             for disk in $(echo ${ALL_DISKS[@]})
             do
-               printf "%s\n" "     ${yel} * ${end}${blu}$disk${end}"
+              if [[ $disk != "$primary_disk" ]]; then
+                 printf "%s\n" "     ${yel} * ${end}${blu}$disk${end}"
+              fi
             done
 
             printf "%s\n" " "
@@ -47,19 +49,24 @@ function check_additional_storage () {
             printf "%s\n" " "
             if [ "A${response}" == "Ayes" ]
             then
-                createmenu "${ALL_DISKS[@]}"
-                disk=($(echo "${selected_option}"))
-                confirm "    Continue with $disk? ${blu}yes/no${end}"
-                if [ "A${response}" == "Ayes" ]
-                then
-                    printf "%s\n\n" ""
-                    printf "%s\n\n" " ${mag}Using disk: $disk${end}"
-                    DISK="${disk}"
-                    sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
-                else
-                    printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
-                    exit 0
-                fi
+              getPrimaryDdisk
+              DISK="${primary_disk}"
+
+              declare -a ALL_DISKS=()
+              mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
+              createmenu "${ALL_DISKS[@]}"
+              disk=($(echo "${selected_option}"))
+              confirm "    Continue with $disk? ${blu}yes/no${end}"
+              if [ "A${response}" == "Ayes" ]
+              then
+                  printf "%s\n\n" ""
+                  printf "%s\n\n" " ${mag}Using disk: $disk${end}"
+                  DISK="${disk}"
+                  sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
+              else
+                  printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
+                  exit 0
+              fi
             fi
         fi
             echo "Continue with existing $DISK storage!"
@@ -345,6 +352,21 @@ function qubinode_check_libvirt_net () {
     fi
 }
 
+function qcow_check() {
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    qcow_image=$( sudo bash -c 'find / -name '${os_qcow_image_name}' | grep -v qubinode | head -n 1')
+    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
+      if [[ -f "${project_dir}/${os_qcow_image_name}" ]]; then
+        sudo bash -c 'cp "'${project_dir}'/'${os_qcow_image_name}'"  '${libvirt_dir}'/'${os_qcow_image_name}''
+      elif [[ -f ${qcow_image} ]]; then
+        sudo bash -c 'cp /'${qcow_image}' '${libvirt_dir}'/'${os_qcow_image_name}''
+      else
+        echo "${os_qcow_image_name} not found on machine please copy over "
+        exit 1
+      fi
+    fi
+}
 
 function qubinode_setup_kvm_host () {
     # set variable to enable prompting user if they want to
@@ -375,6 +397,7 @@ function qubinode_setup_kvm_host () {
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+           qcow_check
            #qubinode_check_libvirt_net
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
@@ -383,6 +406,7 @@ function qubinode_setup_kvm_host () {
     else
         echo "Installing required packages"
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
+        qcow_check
     fi
 
     sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
