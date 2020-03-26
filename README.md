@@ -13,6 +13,8 @@ If you would like to Contribute to the qubinode project please see the documenta
 
 Feature  |  Status
 --|---
+OpenShift 4 Ansible Role  | In progress
+NFS Provisioner Role | In Progress
 Ansible 2.9 Compatibility  | NA
 OpenShift 3.11 jumpbox  | NA
 Ansible tower product  | NA  |  
