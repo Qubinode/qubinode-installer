@@ -33,7 +33,7 @@ function ask_for_vault_values () {
     varsfile=$2
 
     # decrypt ansible vault file
-    decrypt_ansible_vault "${vaultfile}"
+    decrypt_ansible_vault "${vaultfile}" >/dev/null
 
 
     # root user password to be set for virtual instances created
@@ -52,22 +52,21 @@ function ask_for_vault_values () {
     fi
 
     # encrypt ansible vault
-    encrypt_ansible_vault "${vaultfile}"
+    encrypt_ansible_vault "${vaultfile}" >/dev/null
 
     # Get RHSM credentials
     ask_user_for_rhsm_credentials
 }
 
 function ask_user_input () {
+    idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+    idm_check_static_ip=$(awk '/idm_check_static_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
     if [ "A${teardown}" != "Atrue" ]
     then 
-        printf "\n\n${yel}    ***************************${end}\n"
-        printf "${yel}    *   Interactive Session   *${end}\n"
-        printf "${yel}    ***************************${end}\n\n"
+        printf "\n\n" ""
         printf "%s\n" " If you've made an mistake you can restart the install by"
         printf "%s\n" " hitting ${yel}Ctrl-c${end} then running ${grn}./qubinode-installer -m clean${end}."
         printf "%s\n\n" " This will remove all configuration data"
-        ask_user_if_qubinode_setup
         ask_user_for_networking_info "${vars_file}"
         ask_for_vault_values "${vault_vars_file}"
         ask_user_for_custom_idm_server

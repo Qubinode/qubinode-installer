@@ -14,3 +14,5 @@ ocp4/
 pull-secret.txt
 rhcos-install
 satellite-server-manifest.zip
+qubinode_profile.log
+issue.md

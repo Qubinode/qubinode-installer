@@ -5,11 +5,12 @@
 # depends on
 
 function ensure_supported_ansible_version () {
-    ANSIBLE_VERSION="2.6.20"
-    ANSIBLE_RELEASE="2.6"
-    ANSIBLE_RPM="ansible-2.6.20-1.el7ae.noarch"
+    ANSIBLE_VERSION=$(awk '/ansible_version/ {print $2}' "${vars_file}")
+    ANSIBLE_RELEASE=$(awk '/ansible_release/ {print $2}' "${vars_file}")
+    ANSIBLE_RPM=$(awk '/ansible_rpm/ {print $2}' "${vars_file}")
     CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
+    ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
     AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
 
     if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
@@ -22,6 +23,13 @@ function ensure_supported_ansible_version () {
             printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
             exit 1
         fi
+    fi
+
+    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
+    then
+        printf "%s\n" ""
+        printf "%s\n" " ${cyn}**WARNING**${end}"
+        printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is later than the tested version of $ANSIBLE_VERSION"
     fi
 }
 
@@ -82,10 +90,9 @@ function qubinode_setup_ansible () {
             openssl rand -base64 512|xargs > "${vault_key_file}"
         fi
 
-        if cat "${vaultfile}" | grep -q VAULT
+        #if cat "${vaultfile}" | grep -q VAULT
+        if ! ansible-vault view "${vaultfile}" > /dev/null
         then
-            printf "%s\n" " ${vaultfile} is encrypted"
-        else
             #printf "%s\n" " Encrypting ${vaultfile}"
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi
@@ -124,11 +131,9 @@ function qubinode_setup_ansible () {
 function decrypt_ansible_vault () {
     vaulted_file="$1"
     grep -q VAULT "${vaulted_file}"
-    if [ "A$?" == "A1" ]
+    if [ "A$?" == "A0" ]
     then
-        #echo "${vaulted_file} is not encrypted"
-        :
-    else
+        cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
         ansible_encrypt=yes
     fi
@@ -138,6 +143,7 @@ function encrypt_ansible_vault () {
     vaulted_file="$1"
     if [ "A${ansible_encrypt}" == "Ayes" ]
     then
+        cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaulted_file}"
     fi
 }

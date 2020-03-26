@@ -1,0 +1,8 @@
+1. Run the the script found under  lib/qubinode_hardware_profile.sh on server
+
+```
+$ lib/qubinode_hardware_profile.sh
+```
+
+2. rename qubinode_profile.log to Product Name from result
+3. Post Product Name file in hardware_profiles folder and create entry in [README.md](../README.md).

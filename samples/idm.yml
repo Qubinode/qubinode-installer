@@ -5,6 +5,7 @@
 # The qubinode-installer depends on IdM as the DNS server.
 # If there is an existing Idm, then set this to no.
 deploy_idm_server: yes
+ask_use_existing_idm: yes
 
 # IDM server attributes
 idm_server_ip: ""
@@ -12,8 +13,9 @@ idm_public_ip: ""
 idm_admin_user: admin
 idm_check_static_ip: ""
 idm_hostname: "{{ instance_prefix }}-none"
-idm_reverse_zone:
+idm_reverse_zones:
   - "{{ qubinode_ptr }}"
+  - "{{ qubinode_ptr_two }}"
 idm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms
@@ -26,6 +28,7 @@ idm_forward_ip: "{{ dns_forwarder }}"
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
 ipa_host: "{{ idm_hostname }}.{{ domain }}"
+idm_zone_overlap: false
 
 # Dns server VM attributes
 dns_server_vm:
