@@ -1,3 +1,4 @@
+---
 - name: Setup Satellite Post Installation
   hosts: qbn-sat01
   remote_user: root
@@ -5,6 +6,7 @@
   gather_facts: true
   vars_files:
     - vars/all.yml
+    - vars/kvm_host.yml
     - vars/vault.yml
     - vars/satellite_server.yml
 
@@ -14,6 +16,5 @@
   tasks:
   - name: TASK| runnning ansible-role-configure-katello
     include_role:
-      name: satellite-day-two-ops
-    tags: [always,manifest]
-
+      name: redhat-satellite-quickstart
+    tags: [always,manifest,org,location]

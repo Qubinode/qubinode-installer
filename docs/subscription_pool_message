@@ -22,9 +22,14 @@ Log into the portal here: https://access.redhat.com/management/systems
 Find your system, and click on it
 Click the subscriptions tab
 Click remove
-run the following command
+
+run the following command:
+
 $ sudo subscription-manager  clean
 $ sudo subscription-manager refresh
-$ ./qubinode-installer  -m rhsm -p ocp
+$ ./qubinode-installer  -m rhsm -p <product>
+
+e.g. -installer  -m rhsm -p ocp4
+
 
 Otherwise you may want to try deploying okd instead
