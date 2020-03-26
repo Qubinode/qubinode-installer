@@ -92,7 +92,7 @@ function ask_user_for_custom_idm_server () {
             fi
 
             printf "%s\n\n" ""
-            read -p " What is the username for the existing IdM server admin user? " $IDM_USER
+            read -p " What is the username for the existing IdM server admin user? " IDM_USER
             idm_admin_user=$IDM_USER
             confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
