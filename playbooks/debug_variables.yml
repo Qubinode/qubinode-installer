@@ -1,6 +1,0 @@
-- name: Test Inventory Variables
-  hosts: qbnodes
-  gather_facts: false
-  tasks:
-  - name: get variables
-    debug: var=hostvars[inventory_hostname]

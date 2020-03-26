@@ -1,0 +1,36 @@
+---
+- name: test playbook
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/kvm_host.yml
+    - vars/ocp4.yml
+  environment:
+    IPA_HOST: "{{ idm_server_shortname }}.{{ internal_domain_name }}"
+    IPA_USER: "{{ user_idm_admin }}"
+    IPA_PASS: "{{ user_idm_password }}"
+
+
+  tasks:
+  - name: ensure kube folder exist
+    file:
+      path: "/home/{{ local_user_account  }}/.kube/"
+      state: directory
+      mode: '0755'
+    become: true
+    become_user: "{{ local_user_account }}"
+    tags: [ postinstall, enable_shutdown ]
+
+  - name: setup kubeconfig
+    copy:
+      src: "{{ project_dir }}/ocp4/auth/kubeconfig"
+      dest: "/home/{{ local_user_account  }}/.kube/config"
+    tags: [ postinstall, enable_shutdown ]
+
+  - name: check cluster status
+    import_role:
+      name: ocp4-kvm-deployer
+      tasks_from:  check_cluster.yml

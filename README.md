@@ -1,15 +1,8 @@
 # Qubinode Installer
 Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
-## Banana Development BRANCH
-Target Release 2.4
 
-This branch contains stable code from the developer branch. This can be used for testing future releases. There is limited support for this branch.
-If you would like to Contribute to the qubinode project please see the documentation below.  
-* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
-* [Testing and Validation](test/README.md)  
-
-## Features that will be released in v2.4
+## Qubinode Dev Branch for next release
 
 Feature  |  Status
 --|---
@@ -65,7 +58,7 @@ We are working as best we can to have better documentation. Contributions are we
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.3     | 2.6               | 2.3 |
+|     Release 2.3     | 2.6               | 2.3.1 |
 
 
 ## Training
@@ -101,6 +94,7 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 ## Roadmap
 * OCP 4.x Container Native Storage
 * OCP 4.x on RHEV
+* Ansible 2.9 Compatibility
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
