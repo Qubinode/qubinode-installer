@@ -26,9 +26,9 @@ function check_additional_storage () {
 
         getPrimaryDdisk
         DISK="${primary_disk}"
-    
+
         declare -a ALL_DISKS=()
-        mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}'|grep -v $primary_disk)
+        mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}')
         if [ ${#ALL_DISKS[@]} -gt 1 ]
         then
             printf "%s\n" "   Found multiple storage devices:"
