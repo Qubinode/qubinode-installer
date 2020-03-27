@@ -15,6 +15,13 @@ ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
 ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
+# ocp4 nodes attributes
+master_count: 3
+compute_count: 3
+master_ip_octet: 10
+compute_ip_octet: 20
+bootstrap_node_name: bootstrap
+
 #vm_public_key: "{{ vm_public_key }}"
 local_user_ssh_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
 ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
