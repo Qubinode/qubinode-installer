@@ -21,7 +21,7 @@ function check_additional_storage () {
     CHECK_STORAGE=$(awk '/run_storage_check:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
     if [ "A${CHECK_STORAGE}" == "A" ]
     then
-            printf "%s\n" "  ${yel}****************************************************************************${end}"
+        printf "%s\n" "  ${yel}****************************************************************************${end}"
         printf "%s\n\n" "    ${cyn}        Storage Setup${end}"
 
         getPrimaryDdisk
