@@ -138,17 +138,15 @@ function remove_ocp4_vms () {
     all_vms=(bootstrap)
     deleted_vms=()
 
-    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for  i in $(seq "$masters")
+    masters=$(sudo virsh list  --all | grep master | awk '{print $2}')
+    for vm in $masters
     do
-        vm="master-$((i-1))"
         all_vms+=( "$vm" )
     done
 
-    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in $(seq "$compute")
+    compute=$(sudo virsh list  --all | grep compute | awk '{print $2}')
+    for vm in $compute
     do
-        vm="compute-$((i-1))"
         all_vms+=( "$vm" )
     done
 
@@ -554,7 +552,7 @@ openshift4_kvm_health_check (){
   if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
     KVM_IN_GOOD_HEALTH="not ready"
   fi
-  
+
   printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."
 }
 
