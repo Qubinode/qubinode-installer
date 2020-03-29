@@ -49,3 +49,5 @@ qubinode_installer_host_completed: no
 
 # name of the libvirt network to use
 vm_libvirt_net: "qubinet"
+
+libvirt_network_name: "qubinat"

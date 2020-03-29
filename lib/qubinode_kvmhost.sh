@@ -63,19 +63,25 @@ function check_additional_storage () {
                   printf "%s\n\n" " ${mag}Using disk: $disk${end}"
                   DISK="${disk}"
                   sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
+                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: "${DISK}"/g" "${kvm_host_vars_file}"
               else
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
               fi
             fi
         fi
-            echo "Continue with existing $DISK storage!"
-            sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
-            sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-            sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+    else
+      getPrimaryDdisk
+      DISK="${primary_disk}"
+
+      echo "Continue with existing $DISK storage!"
+      sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
+      sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
+      sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
     fi
 
 }
+
 
 # Ask if this host should be setup as a qubinode host
 function ask_user_if_qubinode_setup () {
