@@ -235,6 +235,7 @@ function set_rhel_release () {
 }
 
 function qubinode_networking () {
+    check_for_dns redhat.com
     KVM_HOST_IPADDR=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
@@ -262,6 +263,8 @@ function qubinode_networking () {
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
+      linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:'  | head -2 | tail -1  | awk '{print $1}' | tr -d :)
+      sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
       KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
     fi
@@ -321,41 +324,57 @@ function qubinode_networking () {
 
 function qubinode_check_libvirt_net () {
     DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-
+    DEFINED_LIBVIRT_NETWORK=qubinat
     if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
     then
-        NONOTHING=yes
-        #printf "%s\n" " Using the defined libvirt network: ${DEFINED_LIBVIRT_NETWORK}"
+        echo "skipping ${DEFINED_LIBVIRT_NETWORK} configuration"
+        linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1| awk '{print $1}' | tr -d :)
+        sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
-        printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
-        printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"
+      printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
+      printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"echo "skipping ${DEFINED_LIBVIRT_NETWORK}"
 
-        nets=$(sudo virsh net-list --all --name)
-        for item in $(echo $nets)
-        do
-            mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
-            if [ "A${mode}" == "Abridge" ]
-            then
-                vm_libvirt_net="${item}"
-                break
-            elif [ "A${mode}" == "Anat" ]
-            then
-                vm_libvirt_net="${item}"
-                break
-            else
-                echo " Did not find a bridge or nat libvirt network."
-                echo " Please create one and try again."
-                exit 1
-            fi
-        done
+      nets=$(sudo virsh net-list --all --name)
+      NAT_ARRAY=()
+      printf "%s\n" "   Found NAT networks:"
 
-        confirm " Use the discovered libvirt net: ${blu}${vm_libvirt_net}${end} ${yel}yes/no${end}: "
+      for item in $(echo $nets)
+      do
+          mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
+          if [ "A${mode}" == "Anat" ]
+          then
+            NAT_ARRAY+=(${item})
+          fi
+      done
+
+       for nat in ${NAT_ARRAY[@]}
+       do
+           printf "%s\n" "     ${yel} * ${end}${blu}$nat${end}"
+       done
+
+      printf "%s\n" " "
+      printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
+      printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
+
+      confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
+      printf "%s\n" " "
+      if [ "A${response}" == "Ayes" ]
+      then
+        createmenu "${NAT_ARRAY[@]}"
+        nat_network=($(echo "${selected_option}"))
+        confirm "    Continue with $nat_network? ${blu}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
         then
-            printf "%s\n" " Updating libvirt network"
-            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$vm_libvirt_net"/g" "${kvm_host_vars_file}"
+            printf "%s\n\n" ""
+            printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
+            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
+            linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
+            sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
+        else
+            printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
+            exit 0
         fi
-    fi
+      fi
 }
 
 function qcow_check() {
