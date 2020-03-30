@@ -3,10 +3,11 @@
   become: yes
   gather_facts: yes
   vars_files:
+    - vars/ocp4.yml
     - vars/all.yml
+    - vars/kvm_host.yml
     - vars/vault.yml
     - vars/idm.yml
-    - vars/ocp4.yml
   environment:
     IPA_HOST: "{{idm_hostname}}.{{ domain }}"
     IPA_USER: "{{ idm_admin_user }}"
@@ -18,14 +19,16 @@
 
     - name: loop through vm types
       include_tasks: ocp4_02.1_check_dns_entries.yml
+      when: not dns_teardown|bool
 
     - name: set dns record state
       set_fact:
         record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
+      when: dns_teardown|bool
 
     - name: add bootstrap to dns forward zone
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.2"
         name: bootstrap
         ptr: 2
       set_fact:
@@ -34,7 +37,7 @@
 
     - name: add bootstrap to reverse forward zone
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.2"
         name: "bootstrap"
         ptr: 2
       set_fact:
@@ -43,7 +46,7 @@
 
     - name: add api-int to dns records list
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.1"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.1"
         name: api-int
         ptr: 1
       set_fact:
@@ -61,7 +64,7 @@
 
     - name: set  master nodes forward zone records
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
         name: "master-{{ item }}"
         ptr: "{{ 10 + item|int }}"
       set_fact:
@@ -71,7 +74,7 @@
 
     - name: set  master nodes reverse zone records
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
         name: "master-{{ item }}"
         ptr: "{{ 10 + item|int }}"
       set_fact:
@@ -81,7 +84,7 @@
 
     - name: set etcd nodes forward zone records
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
         name: "etcd-{{ item }}"
         ptr: "{{ 10 + item|int }}"
       set_fact:
@@ -91,7 +94,7 @@
 
     - name:  set compute nodes forward zone records
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 13 + item|int }}"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ 13 + item|int }}"
         name: "compute-{{ item }}"
         ptr: "{{ 13 + item|int }}"
       set_fact:
@@ -101,7 +104,7 @@
 
     - name:  set compute nodes reverse zone records
       vars:
-        ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 13 + item|int }}"
+        ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ 13 + item|int }}"
         name: "compute-{{ item }}"
         ptr: "{{ 13 + item|int }}"
       set_fact:
@@ -132,19 +135,17 @@
         state: "{{ record_state }}"
         validate_certs: no
       with_items: "{{ records }}"
-      when: not dns_teardown|bool
       tags: idm
 
     - name: Create/Delete PTR Records
       ipa_dnsrecord:
-        zone_name: "{{ idm_dns_reverse_zone }}"
-        record_name: "{{ item.ptr_record }}"
+        zone_name: "{{{ idm_dns_reverse_zone }}"
+        record_name: "{{ item.ptr_record }}.{{ cluster_name }}"
         record_type: PTR
-        record_value: "{{ item.hostname }}.{{ cluster_name }}.{{ public_domain }}."
+        record_value: "{{ item.hostname }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}."
         state: "{{ record_state }}"
         validate_certs: no
       with_items: "{{ reverse_records }}"
-      when: not dns_teardown|bool
       tags: idm
 
     # This requires ansible 2.7

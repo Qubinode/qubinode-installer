@@ -40,8 +40,8 @@
 - src: https://github.com/flyemsafe/swygue.ansible-tower.git
   version: master
 
-- src: https://github.com/tosin2013/nfs-provisioner-role.git
-  version: master
+- src: https://github.com/Qubinode/nfs-provisioner-role.git
+  version: qubinode
 
 - src: https://github.com/Qubinode/ocp4-kvm-deployer.git
   version: master
