@@ -56,7 +56,7 @@ function openshift4_prechecks () {
 
 }
 
-openshift4_qubinode_teardown () {
+openshift4_qubinode_teardown_deprecated () {
 
     # Ensure all preqs before continuing
     openshift4_prechecks
