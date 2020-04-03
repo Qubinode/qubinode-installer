@@ -62,7 +62,7 @@ openshift4_qubinode_teardown_deprecated () {
     openshift4_prechecks
 
     # delete dns entries
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e dns_teardown=true
 
     # Delete VMS
     test -f $ocp4_vars_file && remove_ocp4_vms
