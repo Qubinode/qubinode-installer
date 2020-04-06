@@ -45,6 +45,10 @@ function openshift4_prechecks () {
 }
 
 openshift4_qubinode_teardown () {
+
+    # Ensure all preqs before continuing
+    openshift4_prechecks
+
     # delete dns entries
     ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
 
@@ -247,6 +251,31 @@ is_node_up () {
     fi
 }
 
+function check_webconsole_status () {
+    #echo "Running check_webconsole_status"
+    # This function checks to see if the openshift console up
+    # It expects a return code of 200
+
+    # load required variables
+    openshift4_variables
+    #echo "Checking to see if Openshift is online."
+    web_console="https://console-openshift-console.apps.ocp42.${domain}"
+    WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
+    return $WEBCONSOLE_STATUS
+}
+
+function pingreturnstatus() {
+  ping -q -c3 $1 > /dev/null
+
+  if [ $? -eq 0 ]
+  then
+    true
+  else
+    false
+  fi
+  }
+
+
 function ignite_node () {
     NODE_PLAYBOOK="playbooks/${1}"
     NODE_LIST="${project_dir}/rhcos-install/node-list"
@@ -359,34 +388,50 @@ start_ocp4_deployment () {
     bash $install_cmd
 }
 
-
-post_deployment_steps (){
-  echo "Shutdown bootstrap node"
-  echo "*****************************"
-  echo "sudo virsh shutdown bootstrap"
-
-  echo "Check openshift enviornment and monitor clusteroperator status"
-  echo "*****************************"
+function empty_directory_msg () {
   cat << EOF
-  # export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
-  # oc whoami
-  # oc get nodes
-  # oc get csr
+  # oc get pod -n openshift-image-registry
+  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+  # oc get pod -n openshift-image-registry
   # oc get clusteroperators
 EOF
+}
 
-echo "NFS Server mount directory information"
-ls -lath /export
-df -h /export
+post_deployment_steps () {
 
-confirm "Configure nfs-provisioner? yes/no"
-if [ "A${response}" == "Ayes" ]
-then
-    export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
-    oc get storageclass
-    bash lib/qubinode_nfs_provisioner_setup.sh
-    oc get storageclass || exit 1
-    cat >image-registry-storage.yaml<<YAML
+    # ugly hack to install the jq command from the ocp 4.2 repo
+    # when we move ocp3 to jumpbox, this no longer needs to be a hack
+    if ! rpm -qa | grep -q 'jq-'
+    then
+        sudo subscription-manager repos --enable rhel-7-server-ose-4.2-rpms
+        rpmdir=$(mktemp -d)
+        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
+        sudo subscription-manager repos --disable rhel-7-server-ose-4.2-rpms
+        sudo yum -y install ${rpmdir}/*.rpm
+     fi
+
+    printf "%s\n\n" ""
+    printf "%s\n" " Registry storage for bate metal is required to complete the ocp4 cluster install."
+    printf "%s\n" " Additional informaiton is available here:"
+    printf "%s\n\n" " https://red.ht/2QVJpPK"
+    printf "%s\n" " The installer will attempt to configure storage."
+
+    if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
+    then
+        printf "%s\n\n" ""
+        printf "%s\n" " NFS Server is configured and can be used for persistent storage."
+        confirm " Do you want to configure nfs-provisioner? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            export KUBECONFIG="${project_dir}/ocp4/auth/kubeconfig"
+            if ! oc get storageclass | grep -q nfs-storage
+            then
+                bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
+            fi
+
+            if oc get storageclass | grep -q nfs-storage
+            then
+cat >image-registry-storage.yaml<<YAML
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -399,36 +444,165 @@ spec:
     requests:
       storage: 80Gi
 YAML
-oc create -f image-registry-storage.yaml
+                oc create -f image-registry-storage.yaml
+                sleep .5s
+                # Add pvc claim for registry storage
+                oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'
 
+                # Verify claim
+                sleep .5s
+                if oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage | grep -q image-registry-storage
+                then
+                    printf "%sn" " Registry pvc claim created successfully"
+                fi
+            else
+                printf "%s\n" " ${red}Unable to add nfs storage provisioner, please investigate.${end}"
+                empty_directory_msg
+            fi
+         fi
+    else
+      printf "%s\n" " Skipping nfs-provisioning"
+      printf "%s\n\n" "*****************************"
+      printf "%s\n" "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
+      empty_directory_msg
+    fi
+    printf "%s\n" " ${yel}*****************************${end}"
+    printf "%s\n" " ${cyn}   Post Bootstrap Steps ${end}"
+    printf "%s\n\n" " ${yel}*****************************${end}"
+    printf "%s\n" " (1) Shutdown the bootstrap node."
+    printf "%s\n\n" "       ${grn}sudo virsh shutdown bootstrap${end}"
+    printf "%s\n" " (2) Ensure all nodes are up."
+    printf "%s\n" "       ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
+    printf "%s\n\n" "       ${grn}oc get nodes${end}"
+    printf "%s\n" " (3) Ensure there are no pending CSR."
+    printf "%s\n\n" "       ${grn}oc get csr${end}"
+    printf "%s\n" " (4) Ensure a storage claim exist for the imageregistry"
+    printf "%s\n" "       ${grn}oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage${end}"
+    printf "%s\n" " The above command output should return:"
 cat << EOF
-# Please Follow instructions located below for persistent registry storage
-# Link: https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html
+                    {
+                      "pvc": {
+                        "claim": "image-registry-storage"
+                      }
+                    }
 EOF
-else
-  echo "Skipping nfs-provisioning"
-  echo "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
-  echo "*****************************"
-  cat << EOF
-  # oc get pod -n openshift-image-registry
-  # oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
-  # oc get pod -n openshift-image-registry
-  # oc get clusteroperators
-EOF
-fi
-
-echo "Check that OpenShift installation is complete"
-echo "*****************************"
-cat << EOF
-# cd ~/qubinode-installer
-# openshift-install --dir=ocp4 wait-for install-complete
-EOF
-
+    printf "%s\n" " If the output differs you can delete whats there."
+    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type json -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'${end}"
+    printf "%s\n" " Then try adding the nfs storage, then check again if the output matches."
+    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'${end}"
+    printf "%s\n" " If there's still no match the imageregistry operator is still down (step 5). Try setting it to a emptydir."
+    printf "%s\n\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"emptyDir\":{}}}}'${end}"
+    printf "%s\n" " (5) Ensure the image-registry operator ${yel}AVAILABLE${end} shows ${yel}True${end}."
+    printf "%s\n\n" "       ${grn}oc get clusteroperators image-registry${end}"
+    printf "%s\n" " (6) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
+    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
+    printf "%s\n" " (7) If all the above checks out, complete the installation by running."
+    printf "%s\n" "       ${grn}cd ${project_dir}${end}"
+    printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
 }
 
+openshift4_kvm_health_check (){
+  KVM_IN_GOOD_HEALTH=yes
+
+  requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+  if sudo virsh net-list | grep -q $requested_brigde; then
+    echo "$requested_brigde is configured"
+  else
+      KVM_IN_GOOD_HEALTH=no
+  fi
+
+  requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+  if sudo virsh net-list | grep -q $requested_nat; then
+    echo "$requested_nat is configured"
+  else
+      KVM_IN_GOOD_HEALTH=no
+  fi
+
+  if sudo lsblk | grep -q nvme0n1; then
+    echo "Checking for vg name "
+    vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
+    if sudo vgdisplay | grep -q $vg_name; then
+      echo "$vg_name is configured"
+    else
+        KVM_IN_GOOD_HEALTH=no
+    fi
+  else
+      echo "Skipping mount path check"
+  fi
+
+  check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+  if [[ -d $check_image_path ]]; then
+    echo "$check_image_path exists"
+  else
+    KVM_IN_GOOD_HEALTH=no
+  fi
+
+  return $KVM_IN_GOOD_HEALTH
+}
+
+openshift4_idm_health_check () {
+IDM_IN_GOOD_HEALTH=yes
+
+if [[ -f $idm_vars_file ]]; then
+  echo "$idm_vars_file exists"
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
+if pingreturnstatus ${idm_ipaddress}; then
+  echo "IDM Server is connected $idm_ipaddress"
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+if [[ ! -z $dns_query ]]; then
+  echo "IDM Server is able to resolve qbn-dns01.${domain}"
+  echo $dns_query
+else
+  IDM_IN_GOOD_HEALTH=no
+fi
+
+echo $IDM_IN_GOOD_HEALTH
+}
+
+
+function ping_openshift4_nodes () {
+    IS_OPENSHIFT4_NODES=no
+    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
+    for  i in $(seq "$masters")
+    do
+        vm="master-$((i-1))"
+        if  pingreturnstatus ${vm}.ocp42.${domain}; then
+          echo "${vm}.ocp42.lab.example is online"
+          IS_OPENSHIFT4_NODES=yes
+        else
+          echo "${vm}.ocp42.lab.example is offline"
+          IS_OPENSHIFT4_NODES=no
+          break
+        fi
+    done
+
+    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
+    for i in $(seq "$compute")
+    do
+        vm="compute-$((i-1))"
+        if  pingreturnstatus ${vm}.ocp42.${domain}; then
+          echo "${vm}.ocp42.lab.example is online"
+          IS_OPENSHIFT4_NODES=yes
+        else
+          echo "${vm}.ocp42.lab.example is offline"
+          IS_OPENSHIFT4_NODES=no
+          break
+        fi
+    done
+
+    return $IS_OPENSHIFT4_NODES
+}
+
+
 openshift4_enterprise_deployment () {
-
-
     # Ensure all preqs before continuing
     openshift4_prechecks
 
