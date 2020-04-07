@@ -38,12 +38,17 @@ function openshift4_prechecks () {
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
-    # Ensure firewall rules
-    if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
-    then
-        echo "Setting firewall rules"
-        sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
-        sudo firewall-cmd --reload
+    openshift4_kvm_health_check
+
+    if [[ ${KVM_IN_GOOD_HEALTH} == "ready" ]]; then
+      # Ensure firewall rules
+      if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
+      then
+          echo "Setting firewall rules"
+          sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
+          sudo firewall-cmd --reload
+      fi
+
     fi
 
     curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
@@ -550,6 +555,16 @@ openshift4_kvm_health_check (){
   libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
   os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
   if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  if ! [ -x "$(command -v virsh)" ]; then
+    echo 'Error: virsh is not installed.' >&2
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  if ! [ -x "$(command -v firewall-cmd)" ]; then
+    echo 'Error: firewall-cmd is not installed.' >&2
     KVM_IN_GOOD_HEALTH="not ready"
   fi
 
