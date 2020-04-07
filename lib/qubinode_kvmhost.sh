@@ -12,13 +12,21 @@ function kvm_host_variables () {
 function getPrimaryDdisk () {
     #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
     root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
-    primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm|grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
+    primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
+    if [ "A${primary_disk}" == "A" ];
+    then
+       primary_disk=$(/usr/bin/findmnt -nr -o source / | sed -e "s/\/dev\///g")
+       echo "lvs not found setting $primary_disk as primary disk"
+    else
+        primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
+        echo "lvs was found setting ${primary_disk} as primary disk"
+    fi
 }
 
 function check_additional_storage () {
     # Load system wide variables
     setup_variables
-    CHECK_STORAGE=$(awk '/run_storage_check:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
+    CHECK_STORAGE=$(awk '/run_storage_check:/ {print $2;}' "${kvm_host_vars_file}" | tr -d '"')
     if [ "A${CHECK_STORAGE}" == "A" ]
     then
         printf "%s\n" "  ${yel}****************************************************************************${end}"
@@ -69,19 +77,26 @@ function check_additional_storage () {
                   exit 0
               fi
             fi
+        else
+            setsingledisk
         fi
     else
-      getPrimaryDdisk
-      DISK="${primary_disk}"
-
-      echo "Continue with existing $DISK storage!"
-      sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
-      sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-      sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+        setsingledisk
     fi
 
 }
 
+#Configure System to use single disk
+function setsingledisk()
+{
+    getPrimaryDdisk
+    DISK="${primary_disk}"
+
+    echo "Continue with existing $DISK storage!"
+    sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
+    sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
+    sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+}
 
 # Ask if this host should be setup as a qubinode host
 function ask_user_if_qubinode_setup () {
@@ -254,7 +269,7 @@ function qubinode_networking () {
 
     if [ -f "${kvm_host_vars_file}" ]
     then
-        DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2;exit 1 }' "${kvm_host_vars_file}")
+        DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; }' "${kvm_host_vars_file}")
     else
         DEFINED_BRIDGE=""
     fi
@@ -322,59 +337,61 @@ function qubinode_networking () {
 }
 
 
-function qubinode_check_libvirt_net () {
+function qubinode_check_libvirt_net() {
     DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
     DEFINED_LIBVIRT_NETWORK=qubinat
-    if sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}"
+    RESULT=$(sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}")
+    if [[ "A${RESULT}" == "A" ]];
     then
         echo "skipping ${DEFINED_LIBVIRT_NETWORK} configuration"
         linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1| awk '{print $1}' | tr -d :)
         sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
-      printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
-      printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"echo "skipping ${DEFINED_LIBVIRT_NETWORK}"
+        printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
+        printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"echo "skipping ${DEFINED_LIBVIRT_NETWORK}"
 
-      nets=$(sudo virsh net-list --all --name)
-      NAT_ARRAY=()
-      printf "%s\n" "   Found NAT networks:"
+        nets=$(sudo virsh net-list --all --name)
+        NAT_ARRAY=()
+        printf "%s\n" "   Found NAT networks:"
 
-      for item in $(echo $nets)
-      do
+        for item in $(echo $nets)
+        do
           mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
           if [ "A${mode}" == "Anat" ]
           then
             NAT_ARRAY+=(${item})
           fi
-      done
+        done
 
-       for nat in ${NAT_ARRAY[@]}
-       do
+        for nat in ${NAT_ARRAY[@]}
+        do
            printf "%s\n" "     ${yel} * ${end}${blu}$nat${end}"
-       done
+        done
 
-      printf "%s\n" " "
-      printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
-      printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
+        printf "%s\n" " "
+        printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
+        printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
 
-      confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
-      printf "%s\n" " "
-      if [ "A${response}" == "Ayes" ]
-      then
-        createmenu "${NAT_ARRAY[@]}"
-        nat_network=($(echo "${selected_option}"))
-        confirm "    Continue with $nat_network? ${blu}yes/no${end}"
+        confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
+        printf "%s\n" " "
         if [ "A${response}" == "Ayes" ]
         then
-            printf "%s\n\n" ""
-            printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
-            sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
-            linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
-            sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
-        else
-            printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
-            exit 0
-        fi
+          createmenu "${NAT_ARRAY[@]}"
+          nat_network=($(echo "${selected_option}"))
+          confirm "    Continue with $nat_network? ${blu}yes/no${end}"
+          if [ "A${response}" == "Ayes" ]
+          then
+              printf "%s\n\n" ""
+              printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
+              sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
+              linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
+              sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
+          else
+              printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
+              exit 0
+          fi
       fi
+    fi
 }
 
 function qcow_check() {

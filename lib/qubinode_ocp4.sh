@@ -1,9 +1,25 @@
 #!/bin/bash
 
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+
 function qubinode_autoinstall_openshift4 () {
     product_in_use="ocp4" # Tell the installer this is openshift3 installation
     openshift_product="${product_in_use}"
     qubinode_product_opt="${product_in_use}"
+    setup_required_paths
+    [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
 
     # load required files from samples to playbooks/vars/
     qubinode_required_prereqs
