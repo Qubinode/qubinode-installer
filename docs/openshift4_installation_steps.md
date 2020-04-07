@@ -6,8 +6,9 @@ This deploys 3 masters and 3 computes.
 # Installing Red Hat Enterprise Linux
 * *[RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel)* - Follow the baremetal steps
 
+
 _TIPS_
-* If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
+*  If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
 * set root password and create admin user with sudo privilege
 * From the software selection choose: Virtualization Host > Virtualization Platform
 
