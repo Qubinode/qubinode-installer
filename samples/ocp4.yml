@@ -30,7 +30,7 @@ listen_address: "{{ kvm_host_ip }}"
 bootstrap_ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.2"
 ocp4_lb_container: qbn-lb
 lb_name: "{{ ocp4_lb_container }}"
-old_libvirt_net: ocp42
+old_libvirt_net: qbn # this was ocp4 need to see what to do with this 
 deploy_ocp4_configs: yes
 mask: 255.255.255.0
 mac_start: "52:54:00:"
@@ -131,7 +131,7 @@ nfs_server_ip:  "{{ kvm_host_ip }}"
 registry_pvc_size: 100Gi
 storage_class_result: true
 openshift_token: 1234567890
-openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}6443"
+openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
 openshift_version: ocp4
 project_namespace: nfs-provisioner
 set_as_default: true
