@@ -58,12 +58,14 @@ function check_additional_storage () {
             if [ "A${response}" == "Ayes" ]
             then
               getPrimaryDdisk
+              echo "Please Select secondary disk to be used."
               DISK="${primary_disk}"
 
               declare -a ALL_DISKS=()
               mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
+
               confirm "    Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then
@@ -430,25 +432,41 @@ function qubinode_setup_kvm_host () {
         set_rhel_release
     fi
 
-    if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
+    HARDWARE_ROLE=$(sudo  dmidecode -t 3 | grep Type | awk '{print $2}')
+
+    if [ "A${HARDWARE_ROLE}" != "ALaptop" ]
     then
        # Check for ansible and required role
        check_for_required_role swygue.edge_host_setup
+
+       ask_user_if_qubinode_setup
 
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            qcow_check
-           #qubinode_check_libvirt_net
+           qubinode_check_libvirt_net
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
-           #qubinode_check_libvirt_net
+           qubinode_check_libvirt_net
        fi
     else
-        echo "Installing required packages"
-        sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
+      ask_user_if_qubinode_setup
+      
+      if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
+      then
+        printf "%s\n" " ${blu}Setting up qubinode system${end}"
+        ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
         qcow_check
+        qubinode_check_libvirt_net
+      else
+          printf "%s\n" " ${blu}not a qubinode system${end}"
+          echo "Installing required packages"
+          sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
+          qcow_check
+          qubinode_check_libvirt_net
+      fi
     fi
 
     sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
