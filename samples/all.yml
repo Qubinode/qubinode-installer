@@ -147,7 +147,7 @@ libvirt_host_networks:
 # This is required for OpenShift 4
 # TODO: the codebase needs to up to look for this
 # variable under playbooks/var/ocp4.yml
-cluster_name: ocp42
+cluster_name: qbn
 
 nat_network_name: "{{ cluster_name }}"
 

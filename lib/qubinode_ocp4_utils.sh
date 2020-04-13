@@ -7,7 +7,7 @@ function openshift4_variables () {
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    
+
     # load kvmhost variables
     kvm_host_variables
 }
@@ -38,12 +38,17 @@ function openshift4_prechecks () {
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
-    # Ensure firewall rules
-    if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
-    then
-        echo "Setting firewall rules"
-        sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
-        sudo firewall-cmd --reload
+    openshift4_kvm_health_check
+
+    if [[ ${KVM_IN_GOOD_HEALTH} == "ready" ]]; then
+      # Ensure firewall rules
+      if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
+      then
+          echo "Setting firewall rules"
+          sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
+          sudo firewall-cmd --reload
+      fi
+
     fi
 
     curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
@@ -56,13 +61,13 @@ function openshift4_prechecks () {
 
 }
 
-openshift4_qubinode_teardown () {
+openshift4_qubinode_teardown_deprecated () {
 
     # Ensure all preqs before continuing
     openshift4_prechecks
 
     # delete dns entries
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e dns_teardown=true
 
     # Delete VMS
     test -f $ocp4_vars_file && remove_ocp4_vms
@@ -138,17 +143,15 @@ function remove_ocp4_vms () {
     all_vms=(bootstrap)
     deleted_vms=()
 
-    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for  i in $(seq "$masters")
+    masters=$(sudo virsh list  --all | grep master | awk '{print $2}')
+    for vm in $masters
     do
-        vm="master-$((i-1))"
         all_vms+=( "$vm" )
     done
 
-    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in $(seq "$compute")
+    compute=$(sudo virsh list  --all | grep compute | awk '{print $2}')
+    for vm in $compute
     do
-        vm="compute-$((i-1))"
         all_vms+=( "$vm" )
     done
 
@@ -547,6 +550,22 @@ openshift4_kvm_health_check (){
     echo "$check_image_path exists"
   else
     KVM_IN_GOOD_HEALTH=ready
+  fi
+
+  libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+  os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  if ! [ -x "$(command -v virsh)" ]; then
+    echo 'Error: virsh is not installed.' >&2
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  if ! [ -x "$(command -v firewall-cmd)" ]; then
+    echo 'Error: firewall-cmd is not installed.' >&2
+    KVM_IN_GOOD_HEALTH="not ready"
   fi
 
   printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."

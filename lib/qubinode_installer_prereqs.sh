@@ -67,10 +67,10 @@ function check_for_dns () {
     record=$1
     if [ -f /usr/bin/dig ]
     then
-        resolvedIP=$(nslookup "$record" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
+      resolvedIP=$(dig +short "$record")
     elif [ -f /usr/bin/nslookup ]
     then
-        resolvedIP=$(dig +short "$record")
+        resolvedIP=$(nslookup "$record" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
     else
         printf "%s\n" " Can't find the dig or nslookup command, please resolved and run script again"
         exit 1
@@ -191,4 +191,3 @@ function rhelinsightscheck() {
   fi
 
 }
-

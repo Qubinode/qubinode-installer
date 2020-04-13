@@ -782,12 +782,15 @@ function openshift_enterprise_deployment () {
     ping_openshift3_nodes
 
     # Check if the OCP3 cluster is already deployed
-    check_webconsole_status_ocp3
+    # Check if the cluster is reponding
+    #WEBCONSOLE_STATUS=$(check_webconsole_status_ocp3)
     if [[ "A${IS_OPENSHIFT3_NODES}" != "Ayes" ]]
     then
         deploy_openshift3_nodes
     fi
 
+    # Check if the cluster is reponding
+    WEBCONSOLE_STATUS=$(check_webconsole_status_ocp3)
     if [[ $WEBCONSOLE_STATUS -ne 200 ]]
     then
         #ask_user_which_openshift_product #this function should be deleted
@@ -893,7 +896,8 @@ function check_webconsole_status_ocp3 () {
 function openshift3_installation_msg () {
 
    # Check if the web console is available
-   check_webconsole_status_ocp3
+   # Check if the cluster is reponding
+   WEBCONSOLE_STATUS=$(check_webconsole_status_ocp3)
 
    # Get the admin user password
    get_admin_user_password

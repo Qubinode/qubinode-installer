@@ -1,9 +1,25 @@
 #!/bin/bash
 
-function qubinode_autoinstall_openshift4 (){
+function setup_required_paths () {
+    current_dir="`dirname \"$0\"`"
+    project_dir="$(dirname ${current_dir})"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
+
+function qubinode_autoinstall_openshift4 () {
     product_in_use="ocp4" # Tell the installer this is openshift3 installation
     openshift_product="${product_in_use}"
     qubinode_product_opt="${product_in_use}"
+    setup_required_paths
+    [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
 
     # load required files from samples to playbooks/vars/
     qubinode_required_prereqs
@@ -48,5 +64,16 @@ function qubinode_autoinstall_openshift4 (){
 
         # Check the OpenSHift status
         ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml || exit $?
+    fi
+}
+
+function openshift4_qubinode_teardown () {
+    confirm " Are you sure you want to delete the OpenShift 4 cluster? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
+        ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e tear_down=yes || exit $?
+    else
+        exit 0
     fi
 }
