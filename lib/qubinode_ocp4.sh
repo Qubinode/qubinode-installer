@@ -47,7 +47,6 @@ function qubinode_autoinstall_openshift4 () {
       ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml || exit $?
     else
         check_openshift4_size_yml
-        exit $?
 
         # Ensure host system is setup as a KVM host
         openshift4_kvm_health_check
