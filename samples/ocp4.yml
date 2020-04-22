@@ -121,6 +121,10 @@ ocp4_instances:
     vm_type: bootstrap
     ip_octet: 30
 
+## Local storage variable 
+localstorage_version: '4.3'
+localstorage_filesystem: false
+localstorage_block: false
 
 ## Defaults for NFS Provisioner role
 provision_nfs_server: true
