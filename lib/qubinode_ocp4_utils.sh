@@ -1,8 +1,10 @@
 #!/bin/bash
 
 function openshift4_variables () {
+    playbooks_dir="${project_dir}/playbooks"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
     cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
+    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp4_vars_file}")
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
@@ -25,6 +27,36 @@ function check_for_pull_secret () {
     fi
 }
 
+function openshift4_standard_desc() {
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Deployment Type: Standard${end}
+    ${yel}=========================${end}
+     3 masters
+     3 workers
+
+    ${cyn}========${end}
+    Features
+    ${cyn}========${end}
+     - nfs-provisioner for image registry
+EOF
+}
+
+function openshift4_minimal_desc() {
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Deployment Type: Minimal${end}
+    ${yel}=========================${end}
+     3 masters
+     2 workers
+
+    ${cyn}========${end}
+    Features
+    ${cyn}========${end}
+     - nfs-provisioner for image registry
+EOF
+}
+
 function openshift4_prechecks () {
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
@@ -34,6 +66,7 @@ function openshift4_prechecks () {
     fi
     openshift4_variables
 
+    collect_system_information
 
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
@@ -56,8 +89,8 @@ function openshift4_prechecks () {
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
     # Ensure Openshift Subscription Pool is attached
-    check_for_openshift_subscription
-    get_subscription_pool_id 'Red Hat OpenShift Container Platform'
+    #check_for_openshift_subscription
+    #get_subscription_pool_id 'Red Hat OpenShift Container Platform'
 
 }
 
@@ -73,7 +106,7 @@ openshift4_qubinode_teardown_deprecated () {
     test -f $ocp4_vars_file && remove_ocp4_vms
 
     # Delete containers managed by systemd
-    for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
+    for i in $(echo "lb${cluster_name}.service ocp4lb.service $podman_webserver $lb_name")
     do
         if sudo sudo systemctl list-unit-files | grep -q $i
         then
@@ -89,7 +122,7 @@ openshift4_qubinode_teardown_deprecated () {
 
 
     # Delete the remaining containers and pruge their images
-    containers=(ocp4lb lbocp42 openshift-4-loadbalancer-ocp42 ocp4ignhttpd ignwebserver qbn-httpd)
+    containers=(ocp4lb lb${cluster_name} openshift-4-loadbalancer-${cluster_name} ocp4ignhttpd ignwebserver qbn-httpd)
     deleted_containers=()
     for pod in ${containers[@]}
     do
@@ -215,6 +248,53 @@ function remove_ocp4_vms () {
     fi
 }
 
+function configure_local_storage (){
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Select volume Mode: ${end}
+    ${yel}=========================${end}
+
+    1) Filesystem - Presented to the OS as a file system export to be mounted.
+    2) Block - Presented to the operating system (OS) as a block device.
+EOF
+    local choice
+	read -p " ${cyn}Enter choice [ 1 - 2] ${end}" choice
+	case $choice in
+		1) storage_type=filesystem
+            ;;
+        2) storage_type=block
+            ;;
+		3) exit 0;;
+		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
+	esac
+        confirm " Continue with  Volume Mode for $storage_type OpenShift deployment? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            set_local_volume_type
+        else
+            configure_local_storage
+        fi
+}
+
+function set_local_volume_type(){
+  if [[ $storage_type == "filesystem" ]]; then 
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${ocp4_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${ocp4_vars_file}"
+  elif [[ $storage_type == "block" ]]; then 
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${ocp4_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${ocp4_vars_file}"
+  fi 
+}
+
+function confirm_minimal_deployment(){
+    openshift4_minimal_desc
+     confirm " This Option will set your compute count to 2? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
+    fi
+}
+
 openshift4_server_maintenance () {
     case ${product_maintenance} in
        diag)
@@ -251,11 +331,11 @@ is_node_up () {
     ssh -q -o "StrictHostKeyChecking=no" core@${IP} 'hostname -s' &>/dev/null
     NAME_CHECK=$(ssh core@${IP} 'hostname -s')
     #NAME_CHECK=$(ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" core@${IP} 'hostname -s')
-    ETCD_CHECK=$(ssh core@${IP} 'dig @${DNSIP} -t srv _etcd-server-ssl._tcp.ocp42.lunchnet.example|grep "^_etcd-server-ssl."|wc -l')
+    ETCD_CHECK=$(ssh core@${IP} 'dig @${DNSIP} -t srv _etcd-server-ssl._tcp.${cluster_name}.lunchnet.example|grep "^_etcd-server-ssl."|wc -l')
     echo ETCD_CHECK=$ETCD_CHECK
     if [ "A${VMNAME}" != "A${NAME_CHECK}" ]
     then
-      hostnamectl set-hostname "${VMNAME}.ocp42.${domain}"
+      hostnamectl set-hostname "${VMNAME}.${cluster_name}.${domain}"
     fi
     if [ "A${ETCD_CHECK}" != "A3" ]
     then
@@ -274,7 +354,7 @@ function check_webconsole_status () {
     # load required variables
     openshift4_variables
     #echo "Checking to see if Openshift is online."
-    web_console="https://console-openshift-console.apps.ocp42.${domain}"
+    web_console="https://console-openshift-console.apps.${cluster_name}.${ocp4_cluster_domain}"
     WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
     return $WEBCONSOLE_STATUS
 }
@@ -341,9 +421,9 @@ deploy_bootstrap_node () {
     VMNAME=bootstrap
     sudo virsh dominfo $VMNAME > $DOMINFO 2>/dev/null
     #NODE_NETINFO=$(mktemp)
-    #sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
-    BOOTSTRAP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-    COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap  | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+    #sudo virsh net-dumpxml ${cluster_name} | grep 'host mac' > $NODE_NETINFO
+    BOOTSTRAP=$(sudo virsh net-dumpxml ${cluster_name} | grep  bootstrap | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+    COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep  bootstrap  | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
     ansible-playbook playbooks/ocp4_07_deploy_bootstrap_vm.yml  -e vm_mac_address=${BOOTSTRAP} -e coreos_host_ip=${COREOS_IP}
     sleep 30s
 }
@@ -352,8 +432,8 @@ deploy_master_nodes () {
     ## Deploy Master
     for i in {0..2}
     do
-        MASTER=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-        COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+        MASTER=$(sudo virsh net-dumpxml ${cluster_name} | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
         ansible-playbook playbooks/ocp4_07.1_deploy_master_vm.yml  -e vm_mac_address=${MASTER}   -e vm_name=master-${i} -e coreos_host_ip=${COREOS_IP}
         sleep 30s
     done
@@ -364,8 +444,8 @@ deploy_compute_nodes () {
     # Deploy computes
     for i in {0..1}
     do
-      COMPUTE=$(sudo virsh net-dumpxml ocp42 | grep  compute-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-      COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep   compute-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+      COMPUTE=$(sudo virsh net-dumpxml ${cluster_name} | grep  compute-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+      COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep   compute-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
       ansible-playbook playbooks/ocp4_07.2_deploy_compute_vm.yml  -e vm_mac_address=${COMPUTE}   -e vm_name=compute-${i} -e coreos_host_ip=${COREOS_IP}
       sleep 10s
     done
@@ -607,11 +687,11 @@ function ping_openshift4_nodes () {
     for  i in $(seq "$masters")
     do
         vm="master-$((i-1))"
-        if  pingreturnstatus ${vm}.ocp42.${domain}; then
-          echo "${vm}.ocp42.lab.example is online"
+        if  pingreturnstatus ${vm}.${cluster_name}.${domain}; then
+          echo "${vm}.${cluster_name}.lab.example is online"
           IS_OPENSHIFT4_NODES=ready
         else
-          echo "${vm}.ocp42.lab.example is offline"
+          echo "${vm}.${cluster_name}.lab.example is offline"
           IS_OPENSHIFT4_NODES="not ready"
           break
         fi
@@ -621,11 +701,11 @@ function ping_openshift4_nodes () {
     for i in $(seq "$compute")
     do
         vm="compute-$((i-1))"
-        if  pingreturnstatus ${vm}.ocp42.${domain}; then
-          echo "${vm}.ocp42.lab.example is online"
+        if  pingreturnstatus ${vm}.${cluster_name}.${domain}; then
+          echo "${vm}.${cluster_name}.lab.example is online"
           IS_OPENSHIFT4_NODES=ready
         else
-          echo "${vm}.ocp42.lab.example is offline"
+          echo "${vm}.${cluster_name}.lab.example is offline"
           IS_OPENSHIFT4_NODES="not ready"
           break
         fi
@@ -634,6 +714,31 @@ function ping_openshift4_nodes () {
     printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
 }
 
+function check_openshift4_size_yml () {
+    check_hardware_resources
+    storage_profile=$(awk '/^storage_profile:/ {print $2}' "${vars_file}")
+    memory_profile=$(awk '/^memory_profile:/ {print $2}' "${vars_file}")
+
+    if [ ! -f "${openshift_deployment_size_yml}" ]
+    then
+        if [ "A${storage_profile}" == "A${memory_profile}" ]
+        then
+            memory_size="${memory_profile}"
+            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+        else
+            printf "%s\n" " Your hardware does not meet our recommended sizing."
+            printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
+            printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
+            printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
+            confirm " Do you want to proceed with a minimal install?"
+            if [ "A${response}" == "Ayes" ]
+            then
+                memory_size="minimal"
+                bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+            fi
+        fi
+    fi
+}
 
 openshift4_enterprise_deployment () {
     # Ensure all preqs before continuing
@@ -684,7 +789,7 @@ openshift4_enterprise_deployment () {
 
     # Get network information for ocp4 vms
     NODE_NETINFO=$(mktemp)
-    sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
+    sudo virsh net-dumpxml ${cluster_name} | grep 'host mac' > $NODE_NETINFO
 
     # Deploy the coreos nodes required
     #TODO: playbook should not attempt to start VM's if they are already running

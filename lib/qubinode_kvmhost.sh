@@ -73,7 +73,8 @@ function check_additional_storage () {
                   printf "%s\n\n" " ${mag}Using disk: $disk${end}"
                   DISK="${disk}"
                   sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
-                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: "${DISK}"/g" "${kvm_host_vars_file}"
+                  sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
+                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: "${disk}"/g" "${kvm_host_vars_file}"
               else
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
@@ -83,7 +84,9 @@ function check_additional_storage () {
             setsingledisk
         fi
     else
-        setsingledisk
+       printf "%s\n" "     ${yel}******************${end}"
+       printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
+       printf "%s\n" "     ${yel}******************${end}"
     fi
 
 }
