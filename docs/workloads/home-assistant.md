@@ -16,7 +16,7 @@ $ oc new-project home-assistant
 
 **Create persistent volume claim yaml file**
 ```
-$ vi home-assitant-pvc.yml
+$ vi home-assistant-pvc.yml
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -34,7 +34,7 @@ spec:
 
 **Create the claim** 
 ```
-$ oc create -f home-assitant-pvc.yml
+$ oc create -f home-assistant-pvc.yml
 ```
 
 **Give root privlages to container** 
@@ -42,9 +42,9 @@ $ oc create -f home-assitant-pvc.yml
 $  oc adm policy add-scc-to-user anyuid -z default
 ```
 
-**Create home assitant deployment yaml** 
+**Create home assistant deployment yaml** 
 ```
-$ vi home-assitant-deployment.yaml
+$ vi home-assistant-deployment.yaml
 kind: DeploymentConfig
 apiVersion: apps.openshift.io/v1
 metadata:
@@ -209,9 +209,9 @@ spec:
   wildcardPolicy: None
 ```
 
-**Create home assitant deployment**
+**Create home assistant deployment**
 ```
-$ oc create -f home-assitant-deployment.yaml
+$ oc create -f home-assistant-deployment.yaml
 ```
 
 **get deployment status**
