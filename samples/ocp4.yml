@@ -100,7 +100,7 @@ ocp4_instances:
       - size: 10G
         name: vdb
         enable: true
-      - size: 50G
+      - size: 100G
         name: vdc
         enable: true
     qty: "{{ compute_count }}"

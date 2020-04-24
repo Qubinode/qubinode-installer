@@ -54,6 +54,9 @@ function qubinode_autoinstall_openshift4 () {
           qubinode_setup_kvm_host
         fi
 
+        # Checking for stale vms 
+        state_check
+
         # Deploy IdM Server
         openshift4_idm_health_check
         if [[  "A${IDM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
