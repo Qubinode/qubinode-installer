@@ -63,6 +63,9 @@ We are working as best we can to have better documentation. Contributions are we
 **Day Two Operations**
 - [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
 
+**Workloads**
+- [Application Workloads to try](docs/workloads/README.md)
+  
 ## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |

@@ -248,6 +248,42 @@ function remove_ocp4_vms () {
     fi
 }
 
+function state_check(){
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Checking Machine for stale openshift vms ${end}
+    ${yel}=========================${end}
+EOF
+    clean_up_stale_vms dns
+    clean_up_stale_vms bootstrap
+    clean_up_stale_vms master
+    clean_up_stale_vms compute
+}
+
+function clean_up_stale_vms(){
+    KILLVM=true
+    echo "Checking for state $1"
+    stalemachines=$(sudo virsh list  --all | grep $1 | awk '{print $2}')
+    for vm in $stalemachines
+    do
+       echo "${vm} found in virsh"
+       KILLVM=false
+    done
+
+    if [[ $KILLVM == "true" ]]; then 
+        stale_vms=$(ls /var/lib/libvirt/images/ | grep $1)
+        if [[ ! -z $stale_vms ]]; then 
+            for old_vm in $stale_vms
+            do
+            if [[ "$old_vm" == *${1}* ]]; then 
+                sudo rm  /var/lib/libvirt/images/$old_vm
+            fi
+            done 
+        fi 
+    fi
+
+}
+
 function configure_local_storage (){
 cat << EOF
     ${yel}=========================${end}

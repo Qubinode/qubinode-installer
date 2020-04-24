@@ -111,6 +111,25 @@ and save it as /home/admin/qubinode-installer/pull-secret.txt
 ./qubinode-installer  -p ocp4 -d
 ```
 
+## Additional flags 
+**To configure shutdown before 24 hours**
+```
+$ cd /home/$USER/qubinode-installer
+$ ansible-playbook playbooks/deploy_ocp4.yml  -t enable_shutdown
+```
+
+**To configure nfs-provisioner for registry**
+```
+$ cd /home/$USER/qubinode-installer
+$ ansible-playbook playbooks/deploy_ocp4.yml  -t nfs
+```
+
+**To configure localstroage**
+```
+$ cd /home/$USER/qubinode-installer
+$ ansible-playbook playbooks/deploy_ocp4.yml  -t localstorage
+```
+
 ## Deployment Post Steps
 #### How to access OpenShift Cluster
 * Option 1: Add dns server to /etc/resolv.conf on your computer.
