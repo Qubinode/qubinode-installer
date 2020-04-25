@@ -29,7 +29,8 @@ rhsm_reg_method: ""
 
 # Ansible 2.6 is rhel-7-server-ansible-2.6-rpms
 # Ansible 2.9 on rhel 7  rhel-7-server-ansible-2.9-rpms
-ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
+rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms 
+rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
 ansible_version: 2.9.5
 ansible_release: 2.9
 #ansible_rpm: ansible-2.6.20-1.el7ae.noarch
