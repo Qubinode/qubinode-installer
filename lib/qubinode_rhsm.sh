@@ -7,7 +7,7 @@ function check_rhsm_status () {
     if grep Fedora /etc/redhat-release
     then
         echo "Skipping checking RHSM status"
-    else
+    else 
         sudo subscription-manager identity > /dev/null 2>&1
         RESULT="$?"
         if [ "A${RESULT}" == "A1" ]
@@ -161,6 +161,7 @@ function qubinode_rhsm_register () {
             check_for_dns subscription.rhsm.redhat.com
             printf "%s\n" " ${rhsm_msg}"
             rhsm_reg_result=$(mktemp)
+            RHEL_RELEASE=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
             echo sudo subscription-manager register "${rhsm_cmd_opts}" --force --release="'${RHEL_RELEASE}'"|sh > "${rhsm_reg_result}" 2>&1
             RESULT="$?"
             if [ "A${RESULT}" == "A${RESULT}" ]
