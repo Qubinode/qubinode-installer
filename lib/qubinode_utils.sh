@@ -111,3 +111,11 @@ function isvmShutdown () {
     sudo virsh list --all | grep $vm| awk '/shut/ {print $2}'
 }
 
+function dnf_or_yum(){
+     RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+     if [[ $RHEL_VERSION == "RHEL8" ]]; then 
+        echo "dnf"
+     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+        echo "yum"
+     fi 
+}

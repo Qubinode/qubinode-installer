@@ -11,13 +11,23 @@ function ensure_supported_ansible_version () {
     CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
-    AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+
+    if [[ $RHEL_VERSION == "RHEL8" ]]; then 
+        AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+        AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+    fi 
 
     if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
     then
         if [ "A${AVAILABLE_VERSION}" != "A" ]
         then
-            sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+            if [[ $RHEL_VERSION == "RHEL8" ]]; then 
+                sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
+            elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+                sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+            fi 
         else
             printf "%s\n" " Could not find any available version of ansible greater than the"
             printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
@@ -33,11 +43,12 @@ function ensure_supported_ansible_version () {
     fi
 }
 
-
 function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
     HAS_SUDO=$(has_sudo)
+    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+    
     if [ "A${HAS_SUDO}" == "Ano_sudo" ]
     then
         printf "%s\n" " ${red}You do not have sudo access${end}"
@@ -53,9 +64,16 @@ function qubinode_setup_ansible () {
     # install python
     if [ ! -f /usr/bin/python ];
     then
-       printf "%s\n" " Installing python.."
-       sudo yum clean all > /dev/null 2>&1
-       sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
+        if [[ $RHEL_VERSION == "RHEL8" ]]; then 
+            printf "%s\n" " Installing python.."
+            sudo dnf clean all > /dev/null 2>&1
+            sudo rm -r /var/cache/dnf
+            sudo dnf install -y -q -e 0 python python3-pip python2-pip python-dns
+        elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+            printf "%s\n" " Installing python.."
+            sudo yum clean all > /dev/null 2>&1
+            sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
+        fi 
     else
        PYTHON=yes
        #printf "%s\n" " python is installed"
@@ -73,8 +91,13 @@ function qubinode_setup_ansible () {
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
            sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
        fi
-       sudo yum clean all > /dev/null 2>&1
-       sudo yum install -y -q -e 0 ansible git
+       if [[ $RHEL_VERSION == "RHEL8" ]]; then 
+            sudo dnf clean all > /dev/null 2>&1
+            sudo dnf install -y -q -e 0 ansible git
+        elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+            sudo dnf clean all > /dev/null 2>&1
+            sudo dnf install -y -q -e 0 ansible git
+        fi 
        ensure_supported_ansible_version
     else
        ensure_supported_ansible_version
