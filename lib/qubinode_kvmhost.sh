@@ -456,7 +456,7 @@ function qubinode_setup_kvm_host () {
        fi
     else
       ask_user_if_qubinode_setup
-      
+
       if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
