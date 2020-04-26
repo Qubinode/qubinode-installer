@@ -13,8 +13,8 @@ libvirt_pool_name_check: yes
 qubinode_bridge_name: qubibr0
 
 # RHEL 7.7 is the current tested RHEL 7 minor release.
-# RHEL 7.6 was also tested and may work if you need to stay at 7.6
-rhel_release: 7.7
+# RHEL 8.1 was also tested 
+rhel_release: ""
 
 # This variable is being phased out
 run_qubinode_setup: yes

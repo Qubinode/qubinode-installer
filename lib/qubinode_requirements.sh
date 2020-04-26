@@ -98,8 +98,6 @@ function setup_variables () {
     then
         return_os_version=$(get_rhel_version)
         sed -i "s#rhel_version: \"\"#rhel_version: "$return_os_version"#g" "${vars_file}"
-        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
-        sed -i "s#rhel_version: \"\"#rhel_version: "$rhel_release"#g" "${kvm_host_vars_file}"
     fi
 
     # pull domain from all.yml
