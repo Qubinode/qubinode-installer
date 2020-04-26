@@ -20,6 +20,7 @@ function qubinode_autoinstall_openshift4 () {
     qubinode_product_opt="${product_in_use}"
     setup_required_paths
     [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
+    [[ -f ${project_dir}/lib/qubinode_ocp4_utils.sh ]] && . ${project_dir}/lib/qubinode_ocp4_utils.sh || exit 1
 
     # load required files from samples to playbooks/vars/
     qubinode_required_prereqs
@@ -31,6 +32,7 @@ function qubinode_autoinstall_openshift4 () {
     # prereqs, setup current user ssh key, ask user if they want to
     # deploy a qubinode system.
     qubinode_installer_setup
+
 
     openshift4_prechecks
 
@@ -44,12 +46,16 @@ function qubinode_autoinstall_openshift4 () {
       #printf "%s\n\n" " ${grn}Login to the console with user: kubeadmin, password:$(cat ocp4/auth/kubeadmin-password)${end}"
       ansible-playbook ${project_dir}/playbooks/ocp4-check-cluster.yml || exit $?
     else
+        check_openshift4_size_yml
 
         # Ensure host system is setup as a KVM host
         openshift4_kvm_health_check
         if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
           qubinode_setup_kvm_host
         fi
+
+        # Checking for stale vms 
+        state_check
 
         # Deploy IdM Server
         openshift4_idm_health_check
@@ -58,7 +64,6 @@ function qubinode_autoinstall_openshift4 () {
         fi
 
         # Deploy OCP4
-        #openshift4_enterprise_deployment
         DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
         ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?
 
