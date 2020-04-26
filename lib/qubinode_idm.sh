@@ -307,6 +307,14 @@ function qubinode_install_idm () {
 }
 
 function qubinode_deploy_idm () {
+    check_additional_storage
+
+    # Ensure host system is setup as a KVM host
+    openshift4_kvm_health_check
+    if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
+      qubinode_setup_kvm_host
+    fi
+
     qubinode_deploy_idm_vm
     qubinode_install_idm
 }
