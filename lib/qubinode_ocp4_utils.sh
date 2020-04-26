@@ -65,9 +65,7 @@ function openshift4_prechecks () {
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
     openshift4_variables
-
     collect_system_information
-
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
@@ -530,14 +528,14 @@ EOF
 
 post_deployment_steps () {
 
-    # ugly hack to install the jq command from the ocp 4.2 repo
+    # ugly hack to install the jq command from the ocp 4.3 repo
     # when we move ocp3 to jumpbox, this no longer needs to be a hack
     if ! rpm -qa | grep -q 'jq-'
     then
-        sudo subscription-manager repos --enable rhel-7-server-ose-4.2-rpms
+        sudo subscription-manager repos --enable rhel-7-server-ose-4.3-rpms
         rpmdir=$(mktemp -d)
         sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
-        sudo subscription-manager repos --disable rhel-7-server-ose-4.2-rpms
+        sudo subscription-manager repos --disable rhel-7-server-ose-4.3-rpms
         sudo yum -y install ${rpmdir}/*.rpm
      fi
 

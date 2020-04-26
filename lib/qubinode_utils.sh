@@ -119,3 +119,73 @@ function dnf_or_yum(){
         echo "yum"
      fi 
 }
+
+function collect_system_information() {
+
+    which virsh > /dev/null 2>&1 || sudo yum group install virtualization-host-environment -y -q > /dev/null 2>&1
+    which virsh > /dev/null 2>&1 || sudo yum install libvirt-client libvirt deltarpm -y -q > /dev/null 2>&1
+    which dmidecode > /dev/null 2>&1 || sudo yum install dmidecode -y -q > /dev/null 2>&1
+    sudo systemctl restart libvirtd
+    MANUFACTURER=$(sudo dmidecode --string system-manufacturer)
+    PRODUCTNAME=$(sudo dmidecode --string baseboard-product-name)
+    AVAILABLE_MEMORY=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+    AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
+
+
+    libvirt_pool_name=$(cat playbooks/vars/kvm_host.yml | grep libvirt_pool_name: | awk '{print $2}')
+    if [ "A${libvirt_pool_name}" == "Adefault" ]
+    then
+        if ! sudo virsh pool-info default > /dev/null 2>&1
+        then
+cat > /tmp/libvirt-vol.xml <<EOF
+<pool type='dir'>
+  <name>default</name>
+  <capacity unit='bytes'>0</capacity>
+  <allocation unit='bytes'>0</allocation>
+  <available unit='bytes'>0</available>
+  <source>
+  </source>
+  <target>
+    <path>/var/lib/libvirt/images</path>
+  </target>
+</pool>
+EOF
+            sudo virsh pool-define /tmp/libvirt-vol.xml > /dev/null 2>&1
+            sudo virsh pool-autostart default > /dev/null 2>&1
+            sudo virsh pool-start default > /dev/null 2>&1
+        fi
+    fi
+
+    AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
+    AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
+}
+
+function create_qubinode_profile_log () {
+    if [[ ! -f qubinode_profile.log ]]; then
+        rm -rf qubinode_profile.log
+        collect_system_information
+cat >qubinode_profile.log<<EOF
+Manufacturer: ${MANUFACTURER}
+Product Name: ${PRODUCTNAME}
+
+System Memory
+*************
+Avaliable Memory: ${AVAILABLE_MEMORY}
+Avaliable Human Memory: ${AVAILABLE_HUMAN_MEMORY}
+
+Storage Information
+*******************
+Avaliable Storage: ${AVAILABLE_STORAGE}
+Avaliable Human Storage: ${AVAILABLE_HUMAN_STORAGE}
+
+CPU INFO
+***************
+$(lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)')
+EOF
+
+    fi
+
+    echo "SYSTEM REPORT"
+    cat qubinode_profile.log
+}
+
