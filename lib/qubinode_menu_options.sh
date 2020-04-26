@@ -75,6 +75,10 @@ function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
         qubinode_project_cleanup
+    elif [ "${qubinode_maintenance_opt}" == "hwp" ]
+    then
+        # Collect hardware information
+        create_qubinode_profile_log
     elif [ "${qubinode_maintenance_opt}" == "setup" ]
     then
         qubinode_installer_setup
