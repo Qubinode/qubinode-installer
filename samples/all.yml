@@ -9,6 +9,9 @@ project_dir: ""
 admin_user: ""
 domain: ""
 
+# RHEL Version
+rhel_version: ""
+
 # PTR - The PTR record that should be use
 qubinode_ptr: changeme.in-addr.arpa
 
@@ -24,13 +27,13 @@ rhsm_reg_method: ""
 # You shouldn't need to change these #
 ######################################
 
-# Ansible 2.6 is current working version
-# Ansible 2.7 is the current tested version.
-# Ansible 2.8 is currently being tested.
-ansible_repo: rhel-7-server-ansible-2.6-rpms
-ansible_version: 2.6.20
-ansible_release: 2.6
-ansible_rpm: ansible-2.6.20-1.el7ae.noarch
+# Ansible 2.6 is rhel-7-server-ansible-2.6-rpms
+# Ansible 2.9 on rhel 7  rhel-7-server-ansible-2.9-rpms
+rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms 
+rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
+ansible_version: 2.9.5
+ansible_release: 2.9
+#ansible_rpm: ansible-2.6.20-1.el7ae.noarch
 
 # All VMs created name will begin with this prefix.
 instance_prefix: qbn
@@ -114,6 +117,7 @@ qubinode_performance_storage: 1340 # actual is 1340
 # your system profile
 storage_profile: ""
 memory_profile: ""
+ocp_cluster_size: ""
 
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"

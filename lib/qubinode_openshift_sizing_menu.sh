@@ -50,7 +50,7 @@ source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/qubinode_requirements.sh"
 source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 source "${project_dir}/lib/qubinode_ocp4_utils.sh"
-source "${project_dir}/lib/qubinode_hardware_check.sh"
+source "${project_dir}/lib/qubinode_utils.sh"
 
 ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
 
