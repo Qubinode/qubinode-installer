@@ -65,9 +65,7 @@ function openshift4_prechecks () {
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
     openshift4_variables
-
     collect_system_information
-
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
@@ -401,8 +399,10 @@ function pingreturnstatus() {
   if [ $? -eq 0 ]
   then
     true
+    return 0
   else
     false
+    return 1
   fi
   }
 
@@ -528,110 +528,6 @@ function empty_directory_msg () {
 EOF
 }
 
-post_deployment_steps () {
-
-    # ugly hack to install the jq command from the ocp 4.2 repo
-    # when we move ocp3 to jumpbox, this no longer needs to be a hack
-    if ! rpm -qa | grep -q 'jq-'
-    then
-        sudo subscription-manager repos --enable rhel-7-server-ose-4.2-rpms
-        rpmdir=$(mktemp -d)
-        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
-        sudo subscription-manager repos --disable rhel-7-server-ose-4.2-rpms
-        sudo yum -y install ${rpmdir}/*.rpm
-     fi
-
-    printf "%s\n\n" ""
-    printf "%s\n" " Registry storage for bate metal is required to complete the ocp4 cluster install."
-    printf "%s\n" " Additional informaiton is available here:"
-    printf "%s\n\n" " https://red.ht/2QVJpPK"
-    printf "%s\n" " The installer will attempt to configure storage."
-
-    if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
-    then
-        printf "%s\n\n" ""
-        printf "%s\n" " NFS Server is configured and can be used for persistent storage."
-        confirm " Do you want to configure nfs-provisioner? yes/no"
-        if [ "A${response}" == "Ayes" ]
-        then
-            export KUBECONFIG="${project_dir}/ocp4/auth/kubeconfig"
-            if ! oc get storageclass | grep -q nfs-storage
-            then
-                bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
-            fi
-
-            if oc get storageclass | grep -q nfs-storage
-            then
-cat >image-registry-storage.yaml<<YAML
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: image-registry-storage
-spec:
-  accessModes:
-  - ReadWriteMany
-  storageClassName: nfs-storage-provisioner
-  resources:
-    requests:
-      storage: 80Gi
-YAML
-                oc create -f image-registry-storage.yaml
-                sleep .5s
-                # Add pvc claim for registry storage
-                oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'
-
-                # Verify claim
-                sleep .5s
-                if oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage | grep -q image-registry-storage
-                then
-                    printf "%sn" " Registry pvc claim created successfully"
-                fi
-            else
-                printf "%s\n" " ${red}Unable to add nfs storage provisioner, please investigate.${end}"
-                empty_directory_msg
-            fi
-         fi
-    else
-      printf "%s\n" " Skipping nfs-provisioning"
-      printf "%s\n\n" "*****************************"
-      printf "%s\n" "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
-      empty_directory_msg
-    fi
-    printf "%s\n" " ${yel}*****************************${end}"
-    printf "%s\n" " ${cyn}   Post Bootstrap Steps ${end}"
-    printf "%s\n\n" " ${yel}*****************************${end}"
-    printf "%s\n" " (1) Shutdown the bootstrap node."
-    printf "%s\n\n" "       ${grn}sudo virsh shutdown bootstrap${end}"
-    printf "%s\n" " (2) Ensure all nodes are up."
-    printf "%s\n" "       ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
-    printf "%s\n\n" "       ${grn}oc get nodes${end}"
-    printf "%s\n" " (3) Ensure there are no pending CSR."
-    printf "%s\n\n" "       ${grn}oc get csr${end}"
-    printf "%s\n" " (4) Ensure a storage claim exist for the imageregistry"
-    printf "%s\n" "       ${grn}oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage${end}"
-    printf "%s\n" " The above command output should return:"
-cat << EOF
-                    {
-                      "pvc": {
-                        "claim": "image-registry-storage"
-                      }
-                    }
-EOF
-    printf "%s\n" " If the output differs you can delete whats there."
-    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type json -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'${end}"
-    printf "%s\n" " Then try adding the nfs storage, then check again if the output matches."
-    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'${end}"
-    printf "%s\n" " If there's still no match the imageregistry operator is still down (step 5). Try setting it to a emptydir."
-    printf "%s\n\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"emptyDir\":{}}}}'${end}"
-    printf "%s\n" " (5) Ensure the image-registry operator ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperators image-registry${end}"
-    printf "%s\n" " (6) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
-    printf "%s\n" " (7) If all the above checks out, complete the installation by running."
-    printf "%s\n" "       ${grn}cd ${project_dir}${end}"
-    printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
-}
-
 openshift4_kvm_health_check (){
   KVM_IN_GOOD_HEALTH="not ready"
 
@@ -719,60 +615,70 @@ fi
 
 function ping_openshift4_nodes () {
     IS_OPENSHIFT4_NODES="not ready"
-    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for  i in $(seq "$masters")
-    do
-        vm="master-$((i-1))"
-        if  pingreturnstatus ${vm}.${cluster_name}.${domain}; then
-          echo "${vm}.${cluster_name}.lab.example is online"
-          IS_OPENSHIFT4_NODES=ready
-        else
-          echo "${vm}.${cluster_name}.lab.example is offline"
-          IS_OPENSHIFT4_NODES="not ready"
-          break
-        fi
-    done
+    masters=$(cat $ocp4_vars_file | grep master_count:| awk '{print $2}')
+  
+    if [ "A${masters}" != "A" ]
+    then
+        for i in $(seq $masters)
+        do
+            vm="master-$((i-1))"
+            if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
+              echo "${vm}.${cluster_name}.lab.example is online"
+              IS_OPENSHIFT4_NODES=ready
+            else
+              echo "${vm}.${cluster_name}.lab.example is offline"
+              IS_OPENSHIFT4_NODES="not ready"
+              break
+            fi
+        done
+    else
+        IS_OPENSHIFT4_NODES="not ready"
+    fi
 
-    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in $(seq "$compute")
-    do
-        vm="compute-$((i-1))"
-        if  pingreturnstatus ${vm}.${cluster_name}.${domain}; then
-          echo "${vm}.${cluster_name}.lab.example is online"
-          IS_OPENSHIFT4_NODES=ready
-        else
-          echo "${vm}.${cluster_name}.lab.example is offline"
-          IS_OPENSHIFT4_NODES="not ready"
-          break
-        fi
-    done
+    compute=$(cat $ocp4_vars_file | grep compute_count:| awk '{print $2}')
+    if [ "A${compute}" != "A" ]
+    then
+        for i in $(seq $compute)
+        do
+            vm="compute-$((i-1))"
+            if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
+              echo "${vm}.${cluster_name}.lab.example is online"
+              IS_OPENSHIFT4_NODES=ready
+            else
+              echo "${vm}.${cluster_name}.lab.example is offline"
+              IS_OPENSHIFT4_NODES="not ready"
+              break
+            fi
+        done
+    else
+        IS_OPENSHIFT4_NODES="not ready"
+    fi
 
     printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
+
 }
 
 function check_openshift4_size_yml () {
     check_hardware_resources
     storage_profile=$(awk '/^storage_profile:/ {print $2}' "${vars_file}")
     memory_profile=$(awk '/^memory_profile:/ {print $2}' "${vars_file}")
+    ocp_cluster_size=$(awk '/^ocp_cluster_size:/ {print $2}' "${vars_file}")
 
-    if [ ! -f "${openshift_deployment_size_yml}" ]
+    #if [[ "A${memory_profile}" == "Anotmet" ]] || [[ "A${storage_profile}" == "Anotmet" ]]
+    if [[ "A${ocp_cluster_size}" == "Anotmet" ]] || [[ "A${ocp_cluster_size}" == "Aminimal" ]]
     then
-        if [ "A${storage_profile}" == "A${memory_profile}" ]
-        then
-            memory_size="${memory_profile}"
-            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-        else
-            printf "%s\n" " Your hardware does not meet our recommended sizing."
-            printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
-            printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
-            printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
-            confirm " Do you want to proceed with a minimal install?"
-            if [ "A${response}" == "Ayes" ]
-            then
-                memory_size="minimal"
-                bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-            fi
-        fi
+        printf "%s\n" " Your hardware does not meet our recommended sizing."
+        printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
+        printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
+        printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
+
+        printf "%s\n\n" " To choose a minimal install and other customization options."
+        printf "%s\n\n" " Run: ./qubinode-installer -p ocp4"
+        exit 1
+    elif [ "A${ASK_SIZE}" == "Atrue" ]
+    then
+        memory_size="${memory_profile}"
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
     fi
 }
 
@@ -845,3 +751,38 @@ openshift4_enterprise_deployment () {
     # Show user post deployment steps to follow
     post_deployment_steps
 }
+
+function custom_ocp4_sizing (){
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Deployment Type: Custom${end}
+    ${yel}=========================${end}
+
+    ${red}=========================${end}
+    ${mag}This Deployment option is not supported. Limited assitance will be provided.${end}
+    ${red}=========================${end}
+
+    ${cyn}========${end}
+    The Following can be changed
+    Please submit a pull request for additional changes.
+    ${cyn}========${end}
+     - compute count 
+     - local storage 
+EOF
+
+    ## Compute Count 
+    printf "%s\n\n" ""
+    read -p " ${yel}Enter the number of compute nodes your would like?${end} " compute_count
+    compute_num="${compute_count}"
+    confirm " ${blu}You entered${end} ${yel}$compute_num${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s\n" " ${blu}Your compute_count is now set to${end} ${yel}$compute_num${end}"
+    fi
+
+    ## Configure local Storage 
+    configure_local_storage
+}
+
