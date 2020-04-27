@@ -117,6 +117,7 @@ qubinode_performance_storage: 1340 # actual is 1340
 # your system profile
 storage_profile: ""
 memory_profile: ""
+ocp_cluster_size: ""
 
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"

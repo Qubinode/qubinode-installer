@@ -197,6 +197,9 @@ function check_disk_size () {
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
+    POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+    POOL_CAPACITY=$(sudo virsh pool-dumpxml "${POOL}"| grep capacity | grep -Eo "[[:digit:]]{1,100}")
+    DISK=$(cat "${kvm_host_vars_file}" | grep kvm_host_libvirt_extra_disk: | awk '{print $2}')
 
     if rpm -qf /bin/lsblk > /dev/null 2>&1
     then
@@ -263,90 +266,39 @@ function check_memory_size () {
        printf "%s\n" " The memory size $TOTAL_MEMORY GB does not meet the minimum size of the $MINIMAL_MEMORY GB"
        MEMORY_PROFILE=notmet
     fi
+
+    sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
+    sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
 }
 
 function check_hardware_resources () {
     check_disk_size
     check_memory_size
 
-    if [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" != minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
+    #if [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" != minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
+    if [ "$STORAGE_PROFILE" == "$MEMORY_PROFILE" ]
+    then
+        local PROFILE=$MEMORY_PROFILE
+    elif [[ "$STORAGE_PROFILE" != notmet ]] && [[ "$MEMORY_PROFILE" != notmet ]] && [[ "$STORAGE_PROFILE" != minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
     then
         local PROFILE=standard
-        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
-    elif [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" == minimal ]] || [[ "$MEMORY_PROFILE" == minimal ]]
+    elif [[ "$STORAGE_PROFILE" != notmet ]] && [[ "$MEMORY_PROFILE" != notmet ]]
     then
         local PROFILE=minimal
-        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
     else
-        sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+        local PROFILE=notmet
     fi
+   
+    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: "$PROFILE"/g" "${vars_file}"
+#    elif [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" == minimal ]] || [[ "$MEMORY_PROFILE" == minimal ]]
+#    then
+#        local PROFILE=minimal
+#        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
+#        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
+#    else
+#        sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
+#        sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+#    fi
+
 }
 
-function select_openshift3_cluster_size () {
-    printf "%s\n" "${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY}"
-    # Set OpenShift deployment size based on available memory
-    if [[ ${AVAILABLE_MEMORY} -ge ${STANDARD_MEMORY} ]]
-    then
-        memory_size=standard
-        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-    elif [[ ${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY} ]]
-    then
-        memory_size=small
-        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-    elif [[ ${AVAILABLE_MEMORY} -ge ${MINIMAL_MEMORY} ]]
-    then
-        memory_size=minimal
-        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-    else
-        printf "%s\n" "Your available memory of ${AVAILABLE_HUMAN_MEMORY} is not enough to continue"
-        read -p "Do you want to continue with a minimal instalation? y/n " -n 1 -r
-        echo ""
-        if [[ ! $REPLY =~ ^[Nn]$ ]]
-        then
-            memory_size=minimal
-            printf "%s\n" "Your available memory ${AVAILABLE_HUMAN_MEMORY} does not meet our minimum supported."
-            printf "%s\n" "The installation will continue, but you may run out of memory depending on your workload"
-            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-        else
-            printf "%s\n" "Aborting installation, the minium supported memory is ${MINIMAL_MEMORY}"
-            exit $?
-        fi
-    fi 
-}
-
-function custom_ocp4_sizing (){
-cat << EOF
-    ${yel}=========================${end}
-    ${mag}Deployment Type: Custom${end}
-    ${yel}=========================${end}
-
-    ${red}=========================${end}
-    ${mag}This Deployment option is not supported. Limited assitance will be provided.${end}
-    ${red}=========================${end}
-
-    ${cyn}========${end}
-    The Following can be changed
-    Please submit a pull request for additional changes.
-    ${cyn}========${end}
-     - compute count 
-     - local storage 
-EOF
-
-    ## Compute Count 
-    printf "%s\n\n" ""
-    read -p " ${yel}Enter the number of compute nodes your would like?${end} " compute_count
-    compute_num="${compute_count}"
-    confirm " ${blu}You entered${end} ${yel}$compute_num${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s\n" " ${blu}Your compute_count is now set to${end} ${yel}$compute_num${end}"
-    fi
-
-    ## Configure local Storage 
-    configure_local_storage
-}
