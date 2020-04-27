@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function kvm_host_variables () {
-    libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep : | awk '{print $2}')
+    libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep libvirt_pool_name: | awk '{print $2}')
     host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
     RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
@@ -75,7 +75,7 @@ function check_additional_storage () {
                   DISK="${disk}"
                   sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
                   sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: "${disk}"/g" "${kvm_host_vars_file}"
+                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
               else
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
@@ -101,7 +101,7 @@ function setsingledisk()
     echo "Continuing with existing $DISK storage"
     printf "%s\n" "   Continuing with your primary storage device: ${yel}${DISK}${end}."
     printf "%s\n\n" "   No changes will be made to ${yel}${DISK}${end}"
-    sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
+    sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
     sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
     sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
 }

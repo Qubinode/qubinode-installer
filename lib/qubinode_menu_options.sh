@@ -27,8 +27,10 @@ function qubinode_product_deployment () {
               elif [ "A${qubinode_maintenance}" == "Atrue" ]
               then
                   openshift4_server_maintenance
+                  ASK_SIZE=true
               else
                   openshift4_enterprise_deployment
+                  ASK_SIZE=false
               fi
               ;;
           satellite)
