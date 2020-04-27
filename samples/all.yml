@@ -179,7 +179,6 @@ libvirt_pkgs:
    - bind-utils
    - yum-utils
    - iptables-services
-   - bridge-utils
    - bash-completion
    - kexec-tools
    - sos
