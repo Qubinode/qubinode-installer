@@ -29,7 +29,7 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
                   ASK_SIZE=true
               else
-                  openshift4_enterprise_deployment
+                  qubinode_autoinstall_openshift4
                   ASK_SIZE=false
               fi
               ;;
