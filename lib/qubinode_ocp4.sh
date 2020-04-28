@@ -42,6 +42,7 @@ function qubinode_autoinstall_openshift4 () {
     if ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t cluster_status > /dev/null 2>&1
     then
         printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
+        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t bootstrap_shut > /dev/null 2>&1
         /usr/local/bin/qubinode-ocp4-status
         exit 0
     else
@@ -91,6 +92,7 @@ function qubinode_adv_openshift4 () {
     if ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t cluster_status > /dev/null 2>&1
     then
         printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
+        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t bootstrap_shut > /dev/null 2>&1
         /usr/local/bin/qubinode-ocp4-status
         exit 0
     else
