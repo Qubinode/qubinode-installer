@@ -11,7 +11,7 @@ user_idm_admin: "{{ idm_admin_user }}"
 user_idm_password: "{{ idm_admin_pwd }}"
 
 ocp4_version: 4.3.3
-ocp4_image_version: 4.3.0
+#ocp4_image_version: 4.3.0
 ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
 ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
@@ -32,6 +32,7 @@ ocp4_lb_container: qbn-lb
 lb_name: "{{ ocp4_lb_container }}"
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this 
 deploy_ocp4_configs: yes
+#deploy_ocp4_configs: True
 mask: 255.255.255.0
 mac_start: "52:54:00:"
 cluster_name: qbn
@@ -41,7 +42,8 @@ bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 rhcos_metal_bios: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_metal_bios }}"
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
-coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal-bios.raw.gz"
+#coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal-bios.raw.gz"
+coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
 libvirt_network_mode: nat
 libivrt_network_domain: compute.local
 
@@ -61,7 +63,6 @@ webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ima
 coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
 coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
 coreos_tmp_dir: /tmp/build_coreos_container
-coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
 openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
 tear_down: false
 virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
@@ -72,7 +73,6 @@ idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
 idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
-deploy_ocp4_configs: True
 product: "{{ openshift_product }}"
 openshift_pool_id: ""
 openshift_product: ""
