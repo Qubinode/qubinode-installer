@@ -47,7 +47,7 @@
 
     - name: running KVM host setup
       include_role:
-         name: swygue.edge_host_setup
+         name: qubinode_kvmhost_setup
 
     - name: validate KVM host setup
       include_role:
