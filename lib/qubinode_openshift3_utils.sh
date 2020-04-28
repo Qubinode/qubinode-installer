@@ -1039,3 +1039,36 @@ openshift3_smoke_test_fail () {
         printf "%s\n" " *** SMOKE TESTS FAILED                 ***"
         printf "%s\n" " ******************************************"
 }
+
+function select_openshift3_cluster_size () {
+    printf "%s\n" "${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY}"
+    # Set OpenShift deployment size based on available memory
+    if [[ ${AVAILABLE_MEMORY} -ge ${STANDARD_MEMORY} ]]
+    then
+        memory_size=standard
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ ${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY} ]]
+    then
+        memory_size=small
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ ${AVAILABLE_MEMORY} -ge ${MINIMAL_MEMORY} ]]
+    then
+        memory_size=minimal
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    else
+        printf "%s\n" "Your available memory of ${AVAILABLE_HUMAN_MEMORY} is not enough to continue"
+        read -p "Do you want to continue with a minimal instalation? y/n " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]
+        then
+            memory_size=minimal
+            printf "%s\n" "Your available memory ${AVAILABLE_HUMAN_MEMORY} does not meet our minimum supported."
+            printf "%s\n" "The installation will continue, but you may run out of memory depending on your workload"
+            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+        else
+            printf "%s\n" "Aborting installation, the minium supported memory is ${MINIMAL_MEMORY}"
+            exit $?
+        fi
+    fi
+}
+
