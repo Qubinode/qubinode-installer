@@ -36,13 +36,14 @@ function qubinode_autoinstall_openshift4 () {
 
     openshift4_prechecks
 
-    ping_openshift4_nodes
-    check_webconsole_status
+    #ping_openshift4_nodes
+    #check_webconsole_status
 
-    if [[ "A${IS_OPENSHIFT4_NODES}" == "Ayes" ]] && [ $WEBCONSOLE_STATUS -eq 200 ]
+    if ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t cluster_status > /dev/null 2>&1
     then
-      printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
-      /usr/local/bin/qubinode-ocp4-status
+        printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
+        /usr/local/bin/qubinode-ocp4-status
+        exit 0
     else
         check_openshift4_size_yml
 
@@ -87,10 +88,11 @@ function qubinode_adv_openshift4 () {
     ping_openshift4_nodes
     check_webconsole_status
 
-    if [[ "A${IS_OPENSHIFT4_NODES}" == "Ayes" ]] && [ $WEBCONSOLE_STATUS -eq 200 ]
+    if ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t cluster_status > /dev/null 2>&1
     then
-      printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
-      /usr/local/bin/qubinode-ocp4-status
+        printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
+        /usr/local/bin/qubinode-ocp4-status
+        exit 0
     else
         check_openshift4_size_yml
 
