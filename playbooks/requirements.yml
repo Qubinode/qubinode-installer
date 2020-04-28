@@ -1,8 +1,8 @@
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
   version: v1.0.0
 
-- src: https://github.com/Qubinode/swygue.edge_host_setup.git
-  version: v1.0.0
+- src: https://github.com/tosin2013/swygue.edge_host_setup.git
+  version: rhel8
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: v1.0.0
