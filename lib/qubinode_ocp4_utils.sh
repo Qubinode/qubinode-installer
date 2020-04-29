@@ -260,21 +260,19 @@ EOF
 
 function clean_up_stale_vms(){
     KILLVM=true
-    echo "Checking for state $1"
     stalemachines=$(sudo virsh list  --all | grep $1 | awk '{print $2}')
     for vm in $stalemachines
     do
-       echo "${vm} found in virsh"
        KILLVM=false
     done
 
     if [[ $KILLVM == "true" ]]; then 
-        stale_vms=$(ls /var/lib/libvirt/images/ | grep $1)
+        stale_vms=$(sudo ls /var/lib/libvirt/images/ | grep $1)
         if [[ ! -z $stale_vms ]]; then 
             for old_vm in $stale_vms
             do
             if [[ "$old_vm" == *${1}* ]]; then 
-                sudo rm  /var/lib/libvirt/images/$old_vm
+                sudo rm  -f /var/lib/libvirt/images/$old_vm
             fi
             done 
         fi 
@@ -594,26 +592,25 @@ fi
 
 idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
 if pingreturnstatus ${idm_ipaddress}; then
-  echo "IDM Server is connected $idm_ipaddress"
+  echo "IDM Server is connected $idm_ipaddress" >/dev/null
 else
   IDM_IN_GOOD_HEALTH="not ready"
 fi
 
 dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
-echo "dns_query = $dns_query"
 if echo $dns_query | grep -q 'no servers could be reached'
 then
       IDM_IN_GOOD_HEALTH="not ready"
 else
       echo "IDM Server is able to resolve qbn-dns01.${domain}"
-      echo $dns_query
 fi
 
-  printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
+  #printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
 }
 
 
 function ping_openshift4_nodes () {
+#TODO: validate if this funciton is still need
     IS_OPENSHIFT4_NODES="not ready"
     masters=$(cat $ocp4_vars_file | grep master_count:| awk '{print $2}')
   
@@ -654,7 +651,7 @@ function ping_openshift4_nodes () {
         IS_OPENSHIFT4_NODES="not ready"
     fi
 
-    printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
+    #printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
 
 }
 
