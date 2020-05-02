@@ -204,7 +204,7 @@ function ocp3_menu(){
         esac
 
         printf "%s\n" ""
-        confirm " ${cyn}Would you like a customize this deployment? yes/no${end}"
+        confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
         echo    # (optional) move to a new line
         if [ "A${response}" == "Ayes" ]
         then
@@ -254,7 +254,7 @@ function ocp4_menu(){
         esac
 
         printf "%s\n" ""
-        confirm " ${cyn}Would you like a customize this deployment? yes/no${end}"
+        confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
         echo    # (optional) move to a new line
         if [ "A${response}" == "Ayes" ]
         then
