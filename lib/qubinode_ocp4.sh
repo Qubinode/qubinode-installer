@@ -39,10 +39,10 @@ function qubinode_autoinstall_openshift4 () {
     #ping_openshift4_nodes
     #check_webconsole_status
 
-    if ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t cluster_status > /dev/null 2>&1
+    if [ -f /usr/local/bin/qubinode-ocp4-status ]
     then
-        printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
         ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t bootstrap_shut > /dev/null 2>&1
+        printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
         /usr/local/bin/qubinode-ocp4-status
         exit 0
     else

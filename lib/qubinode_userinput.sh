@@ -28,7 +28,7 @@ function ask_user_for_networking_info () {
             printf "%s\n\n" "" 
             printf "%s\n" "  By default the forwarder for external DNS queries are sent to 1.1.1.1." 
             printf "%s\n\n" "  If you would like to use a different upstream DNS server enter it below." 
-            read -p " ${mag}Enter a upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
+            read -p " ${mag}Enter an upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
             dns_forwarder=${dns_forwarder:-1.1.1.1}
             sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
         fi
