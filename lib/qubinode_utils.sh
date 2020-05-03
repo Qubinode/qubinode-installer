@@ -233,18 +233,18 @@ function check_disk_size () {
         # Set the system storage profile based on disk or libvirt pool capacity
         if [[ $DISK_SIZE_COMPARE -ge $MIN_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $STANDARD_STORAGE ]]
         then
-            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the minimum storage requirement of $MIN_STORAGE GB"
+            #printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the minimum storage requirement of $MIN_STORAGE GB"
             STORAGE_PROFILE=minimal
         elif [[ $DISK_SIZE_COMPARE -ge $STANDARD_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $PERFORMANCE_STORAGE ]]
         then
-            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the standard storage requirement of $STANDARD_STORAGE GB"
+            #printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the standard storage requirement of $STANDARD_STORAGE GB"
             STORAGE_PROFILE=standard
         elif [[ $DISK_SIZE_COMPARE -ge $PERFORMANCE_STORAGE ]]
         then
-            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the performance storage requirement of $PERFORMANCE_STORAGE GB"
-            STORAGE_PROFILE=performance
+            #printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the performance storage requirement of $PERFORMANCE_STORAGE GB"
+            STORAGE_PROFILE=custom
         else
-           printf "%s\n" " The storage size $DISK_SIZE_HUMAN does not meet the minimum size of the $MIN_STORAGE GB"
+           #printf "%s\n" " The storage size $DISK_SIZE_HUMAN does not meet the minimum size of the $MIN_STORAGE GB"
             STORAGE_PROFILE=notmet
         fi
     else
@@ -267,18 +267,18 @@ function check_memory_size () {
     
     if [[ $TOTAL_MEMORY -ge $MINIMAL_MEMORY ]] && [[ $TOTAL_MEMORY -lt $STANDARD_MEMORY ]]
     then
-        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the minimum memory requirement of $MINIMAL_MEMORY GB"
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the minimum memory requirement of $MINIMAL_MEMORY GB"
         MEMORY_PROFILE=minimal
     elif [[ $TOTAL_MEMORY -ge $STANDARD_MEMORY ]] && [[ $TOTAL_MEMORY -lt $PERFORMANCE_MEMORY ]]
     then
-        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the standard memory requirement of $STANDARD_MEMORY GB"
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the standard memory requirement of $STANDARD_MEMORY GB"
         MEMORY_PROFILE=standard
     elif [[ $TOTAL_MEMORY -ge $PERFORMANCE_MEMORY ]]
     then
-        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the performance memory requirement of $PERFORMANCE_MEMORY GB"
-        MEMORY_PROFILE=performance
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the performance memory requirement of $PERFORMANCE_MEMORY GB"
+        MEMORY_PROFILE=custom
     else
-       printf "%s\n" " The memory size $TOTAL_MEMORY GB does not meet the minimum size of the $MINIMAL_MEMORY GB"
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB does not meet the minimum size of the $MINIMAL_MEMORY GB"
        MEMORY_PROFILE=notmet
     fi
 

@@ -45,6 +45,7 @@ display_openshift_msg_ocp4 () {
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
+        ASK_SIZE=false
         qubinode_autoinstall_openshift4
         #confirm "  Proceed with ocp4 install? yes/no"
         #if [ "A${response}" == "Ayes" ]
