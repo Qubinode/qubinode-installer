@@ -4,6 +4,7 @@
   become: yes
   vars_files:
     - vars/all.yml
+    - vars/kvm_host.yml
     - vars/vault.yml
 
   tasks:
@@ -46,7 +47,7 @@
 
     - name: running KVM host setup
       include_role:
-         name: swygue.edge_host_setup
+         name: qubinode_kvmhost_setup
 
     - name: validate KVM host setup
       include_role:

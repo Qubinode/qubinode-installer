@@ -24,6 +24,12 @@ function qubinode_required_prereqs () {
       cp "${project_dir}/samples/all.yml" "${vars_file}"
     fi
 
+    # copy sample kvm host vars
+    if [ ! -f "${kvm_host_vars_file}" ]
+    then
+      cp "${project_dir}/samples/kvm_host.yml" "${kvm_host_vars_file}"
+    fi
+
     if [ ! -f "${idm_vars_file}" ]
     then
      cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
@@ -87,6 +93,15 @@ function setup_variables () {
         sed -i "s#admin_user: \"\"#admin_user: "$CURRENT_USER"#g" "${vars_file}"
     fi
 
+    # Set the RHEL version
+    if grep '""' "${vars_file}"|grep -q rhel_version
+    then
+        return_os_version=$(get_rhel_version)
+        sed -i "s#rhel_version: \"\"#rhel_version: "$return_os_version"#g" "${vars_file}"
+        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+        sed -i "s#rhel_version: \"\"#rhel_version: "$rhel_release"#g" "${kvm_host_vars_file}"
+    fi
+
     # pull domain from all.yml
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     echo ""
@@ -100,11 +115,25 @@ function setup_variables () {
     VM_DATA_DIR=$(awk '/^vm_data_dir:/ {print $2}' ${vars_file}|tr -d '"')
     ADMIN_USER=$(awk '/^admin_user:/ {print $2;exit}' "${vars_file}")
 
+    # load kvmhost variables
+    kvm_host_variables
+
     setup_completed=$(awk '/qubinode_installer_setup_completed:/ {print $2;exit}' "${vars_file}")
     rhsm_completed=$(awk '/qubinode_installer_rhsm_completed:/ {print $2;exit}' "${vars_file}")
     ansible_completed=$(awk '/qubinode_installer_ansible_completed:/ {print $2;exit}' "${vars_file}")
-    host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' "${vars_file}")
+    #host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' "${vars_file}")
     base_setup_completed=$(awk '/qubinode_base_reqs_completed:/ {print $2;exit}' "${vars_file}")
+}
+
+function get_rhel_version() {
+  if cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
+    echo "RHEL8"
+  elif cat /etc/redhat-release  | grep 7.[0-9] > /dev/null 2>&1; then
+    echo  "RHEL7"
+  else
+    echo "Operating System not supported"
+  fi
+
 }
 
 function qubinode_base_requirements () {

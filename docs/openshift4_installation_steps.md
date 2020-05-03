@@ -1,115 +1,167 @@
-# OpenShift 4.3 Cluster on a Single Node
+# Deploy OpenShift 4.x Cluster
 
-Follow these steps to deploy OpenShift 4.3 cluster on a single node.
-This deploys 3 masters and 3 computes.
+The guide walks you through the steps for deploying a production like OCP4 cluster, 3 masters and 3 workers on a KVM host running Red Hat Enterprise Linux.
 
-# Installing Red Hat Enterprise Linux
-* *[RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel)* - Follow the baremetal steps
+## Prerequisites
+
+#### Get Subscriptions
+
+-  Get your [No-cost developer subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/) for RHEL.
+-  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
+
+#### Install Red Hat Enterprise Linux
+A bare metal system running Red Hat Enterprise Linux (RHEL). Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
+
+1. Virtualization Host
+2. Server with GUI
+
+If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evironment** you select the following:
+
+- Virtualization Hypervisor 
+- Virtualization Tools
 
 
 _TIPS_
-*  If using two storage devices install choose the correct one for RHEL installation. If using the recommend storage options. Install RHEL on the ssd. The installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
-* set root password and create admin user with sudo privilege
-* From the software selection choose: Virtualization Host > Virtualization Platform
+* If using the recommend storage options install RHEL on the ssd, not the NVME. 
+* The RHEL installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
+* Set root password and create admin user with sudo privilege
+
+## Install OpenShift
+
+### The qubinode-installer
+
+Downlaod and extract the qubinode-installer as a non root user.
+
+```
+cd $HOME
+wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
+unzip master.zip
+rm master.zip
+mv qubinode-installer-master qubinode-installer
+```
+Before you running the qubinode-installer, you will need to grab the RHEL qcow image and your OpenShift 4 pull secret.
+
+**Red Hat Enterprise Linux 7 Qcow Image**
 
 *Download the qcow image*
 From your web browser:
 - Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.7/x86_64/product-software
-- Find *Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)* and right click on the *Download Now* box
--  wget -c "insert-url-here" -O rhel-server-7.7-update-2-x86_64-kvm.qcow2
+- Find **Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)** and right click on the *Download Now* box
+- Switch to your terminal and run the below command replacing **insert-url-here** 
 
-*Once completed you should have*
-* A developer subscription of RHEL
-* A RHEL 7.7 iso
-* A fully deployed machine with RHEL 7.7
-* A rhel-server-7.7-update-2-x86_64-kvm.qcow2 image
-
-*SSH into server*
 ```
-ssh username@ipaddressofserver
+cd $HOME/qubinode-installer
+wget -c "insert-url-here" -O rhel-server-7.7-update-2-x86_64-kvm.qcow2
 ```
 
-**Download files for qubinode installation**
-```
-wget https://github.com/Qubinode/qubinode-installer/archive/2.3.1.zip
-unzip 2.3.1.zip
-mv qubinode-installer-2.3.1 qubinode-installer
-rm -f 2.3.1.zip
-cd qubinode-installer/
-```
+**OpenShift Pull Secret**
 
-## Install Options  
+- Navigate to [https://cloud.redhat.com/openshift/install/metal/user-provisioned](https://cloud.redhat.com/openshift/install/metal/user-provisioned)
+- Under downloads copy or download you pull secret to ```$HOME/qubinode-installer/pull-secret.txt```
+
+
+### Install Options  
 - Quick Start - Answer questions from the installer to complete installation of OpenmShift 4.x.
 - Advanced - Step through the different Qubinode modules to complete installation.
 
-### Quick start
+#### Quick start
 ```
 ./qubinode-installer
 ```
 
-#### Select Option 1
-**This will perform the following**
+*Select Option 1: Continue with the default installation*
+
+```
+  ****************************************************************************
+        Red Hat Openshift Container Platform 4 (OCP4)
+
+    The default product option is to install OCP4. The deployment consists of
+    3 masters and 3 computes. The standard hardware profile is the minimum
+    hardware profile required for the installation. In addition to meeting the
+    minimum hardware profile requirement, the installation requires a valid
+    pull-secret. If you are unable to obtain a pull-secret, exit the install
+    and choose OKD from menu option 2.
+
+    Hardware profiles are defined as:
+      Minimal     - 30G Memory and 370G Storage
+      Standard    - 80G Memory and 900G Storage
+      Performance - 88G Memory and 1340G Storage
+
+  ****************************************************************************
+
+1) Continue with the default installation
+2) Display other options
+#? 1
+```
+
+*This will perform the following*
 * Configure server for KVM.
 * Deploy an idm server to be used as DNS.
 * Deploy OpenShift 4.
 * Optional: Configure NFS Provisioner
 
-### Advanced installation
-#### Use this when you would like to step thru the installation process.
-**setup playbooks vars and user sudoers**  
+#### Advanced installation
+Use this when you would like to step thru the installation process.
+
+****setup playbooks vars and user sudoers****  
 ```
 ./qubinode-installer -m setup
 ```
 
-**register host system to Red Hat***  
+****register host system to Red Hat****  
 ```
 ./qubinode-installer -m rhsm
 ```
-**Update to RHEL 7.7 if you are using 7.6**
+****update to RHEL 7.7 if you are using 7.6****
 ```
 sudo yum update -y
 ```
 
-**setup host system as an ansible controller**
+****setup host system as an ansible controller****
 ```
 ./qubinode-installer -m ansible
 ```
 
-**setup host system as an ansible controller**
+****setup host system as an ansible controller****
 ```
 ./qubinode-installer -m host
 ```
 
-**Download qcow images for idmserver**
-```
-copy rhel-server-7.7-update-2-x86_64-kvm.qcow2 to qubinode-installer directory
-```
-
-**install idm dns server**
+****install idm dns server****
 ```
 ./qubinode-installer -p idm
 ```
 
-**Optional: Uninstall idm dns server. This may be used when there is an issue with the deployment. Note that idm is required for OpenShift 4.x installations.**
+****Optional: Uninstall idm dns server****
+
+This may be used when there is an issue with the deployment. Note that idm is required for OpenShift 4.x installations.
 ```
 ./qubinode-installer  -p idm -d
 ```
 
-**Prerequisites**
-```
-Please download your pull-secret from:
-https://cloud.redhat.com/openshift/install/metal/user-provisioned
-and save it as /home/admin/qubinode-installer/pull-secret.txt
-```
-
-**Install OpenShift 4.x**
+****Install OpenShift 4.x****
 ```
 ./qubinode-installer -p ocp4
 ```
 
-**Optional: Uninstall idm dns server**
+****Additional options**** 
+
+*To configure shutdown before 24 hours*
 ```
-./qubinode-installer  -p ocp4 -d
+$ cd /home/$USER/qubinode-installer
+$ ansible-playbook playbooks/deploy_ocp4.yml  -t enable_shutdown
+```
+
+*To configure nfs-provisioner for registry*
+```
+$ cd /home/$USER/qubinode-installer
+$ ansible-playbook playbooks/deploy_ocp4.yml  -t nfs
+```
+
+*To configure localstroage*
+```
+$ cd /home/$USER/qubinode-installer
+$ ansible-playbook playbooks/deploy_ocp4.yml  -t localstorage
 ```
 
 ## Deployment Post Steps

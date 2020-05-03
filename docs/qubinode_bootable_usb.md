@@ -28,8 +28,13 @@ Find Procedure 3.2. Making USB Media on Windows [Link](https://access.redhat.com
 ### Install RHEL from Generic USB
 Follow instructions found in link below
 * https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel
+* When using two drives select the SSD as the primaly and allow the nvme to be secondary.
 * set root password and create admin user with sudo privilege
 * From the software selection choose: Virtualization Host > Virtualization Platform
+
+### May want to install the following tools before deployment
+* bind-utils
+* unzip
 
 ### Qubinode USB
 * This will automatically provision Qubinode Box with all th required scripts and qcow images. This currently works with RHEL 7.7.
