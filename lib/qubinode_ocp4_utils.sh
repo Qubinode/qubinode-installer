@@ -60,6 +60,7 @@ EOF
 function openshift4_prechecks () {
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
     if [ ! -f "${ocp4_vars_file}" ]
     then
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
@@ -320,11 +321,15 @@ function set_local_volume_type(){
 }
 
 function confirm_minimal_deployment(){
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
     openshift4_minimal_desc
-     confirm " This Option will set your compute count to 2? yes/no"
+    confirm " This Option will set your compute count to 2? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
+        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
     fi
 }
 
@@ -769,6 +774,7 @@ cat << EOF
 EOF
 
     ## Compute Count 
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
     printf "%s\n\n" ""
     read -p " ${yel}Enter the number of compute nodes your would like?${end} " compute_count
     compute_num="${compute_count}"
@@ -782,5 +788,9 @@ EOF
 
     ## Configure local Storage 
     configure_local_storage
+
+    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
+    sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
+    sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
 }
 
