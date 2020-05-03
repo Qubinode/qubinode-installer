@@ -65,7 +65,7 @@ if [[ -z $1 ]]; then
 fi
 
 INSTALLTYPE=$1
-arr=('minimal', 'standard', 'custom')
+arr=('minimal', 'standard', 'custom', 'notmet')
 match=$(echo "${arr[@]:0}" | grep -o $1)
 
 if [[ ! -z $match ]]
@@ -73,7 +73,7 @@ then
     printf "%s\n\n" " Setting OpenShift cluster profile to $INSTALLTYPE"
 else
     printf "%s\n" "The flag $INSTALLTYPE passed is not valid. "
-    printf "%s\n" "Valid flags are  minimal, standard, performnance."
+    printf "%s\n" "Valid flags are  minimal, standard, performnance, custom, notmet."
     exit 1
 fi
 
@@ -251,6 +251,9 @@ function ocp4_menu(){
                     ;;
             custom)
                     openshift4_custom_desc
+                    ;;
+            notmet)
+                    user_choose_ocp4_profile
                     ;;
             *) exit 0;;
         esac

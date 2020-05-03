@@ -303,6 +303,7 @@ EOF
         if [ "A${response}" == "Ayes" ]
         then
             set_local_volume_type
+            exit 0
         else
             configure_local_storage
         fi
