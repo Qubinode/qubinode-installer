@@ -20,7 +20,6 @@ If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evi
 - Virtualization Hypervisor 
 - Virtualization Tools
 
-
 _TIPS_
 * If using the recommend storage options install RHEL on the ssd, not the NVME. 
 * The RHEL installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
@@ -84,8 +83,8 @@ wget -c "insert-url-here" -O rhel-server-7.7-update-2-x86_64-kvm.qcow2
 
     Hardware profiles are defined as:
       Minimal     - 30G Memory and 370G Storage
-      Standard    - 80G Memory and 900G Storage
-      Performance - 88G Memory and 1340G Storage
+      Standard    - 128G Memory and 900G Storage
+      Custom      - 128G Memory and 1340G Storage
 
   ****************************************************************************
 
