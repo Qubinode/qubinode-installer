@@ -83,13 +83,14 @@ function check_additional_storage () {
             else
                 setsingledisk
             fi
+        else
+            setsingledisk
         fi
     else
        printf "%s\n" "     ${yel}******************${end}"
        printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
        printf "%s\n" "     ${yel}******************${end}"
     fi
-
 }
 
 #Configure System to use single disk

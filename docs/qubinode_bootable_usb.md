@@ -7,7 +7,7 @@
 ```
 $ sudo su -
 ```
-**Ensure your usb shows up it is normally /dev/sdb**
+**Ensure your usb shows up. It is normally /dev/sdb**  
 Note: if it is already formated it will have a 1 or 2 next to the name
 ```
 $ ls /dev/sd*
@@ -32,9 +32,14 @@ Follow instructions found in link below
 * set root password and create admin user with sudo privilege
 * From the software selection choose: Virtualization Host > Virtualization Platform
 
+
+
 ### May want to install the following tools before deployment
 * bind-utils
 * unzip
+
+## Option 2 Qubinode  usb
+
 
 ### Qubinode USB
 * This will automatically provision Qubinode Box with all th required scripts and qcow images. This currently works with RHEL 7.7.
