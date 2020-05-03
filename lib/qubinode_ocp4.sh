@@ -38,8 +38,12 @@ function qubinode_autoinstall_openshift4 () {
 
     #ping_openshift4_nodes
     #check_webconsole_status
+<<<<<<< HEAD
 
     if [ -f /usr/local/bin/qubinode-ocp4-status ]
+=======
+if [ -f /usr/local/bin/qubinode-ocp4-status ]
+>>>>>>> e9cf2ad... changed the sizing menu to only work with the -p option
     then
         ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t bootstrap_shut > /dev/null 2>&1
         printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
