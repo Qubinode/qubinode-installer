@@ -662,7 +662,11 @@ function check_openshift4_size_yml () {
     ocp_cluster_size=$(awk '/^ocp_cluster_size:/ {print $2}' "${vars_file}")
 
     #if [[ "A${memory_profile}" == "Anotmet" ]] || [[ "A${storage_profile}" == "Anotmet" ]]
-    if [[ "A${ocp_cluster_size}" == "Anotmet" ]] || [[ "A${ocp_cluster_size}" == "Aminimal" ]]
+    if [ "A${ASK_SIZE}" == "Atrue" ]
+    then
+        memory_size="${memory_profile}"
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ "A${ocp_cluster_size}" == "Anotmet" ]] || [[ "A${ocp_cluster_size}" == "Aminimal" ]]
     then
         printf "%s\n" " Your hardware does not meet our recommended sizing."
         printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
@@ -672,10 +676,6 @@ function check_openshift4_size_yml () {
         printf "%s\n\n" " To choose a minimal install and other customization options."
         printf "%s\n\n" " Run: ./qubinode-installer -p ocp4"
         exit 1
-    elif [ "A${ASK_SIZE}" == "Atrue" ]
-    then
-        memory_size="${memory_profile}"
-        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
     fi
 }
 
@@ -749,7 +749,7 @@ openshift4_enterprise_deployment () {
     post_deployment_steps
 }
 
-function custom_ocp4_sizing (){
+function openshift4_custom_desc (){
 cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Custom${end}

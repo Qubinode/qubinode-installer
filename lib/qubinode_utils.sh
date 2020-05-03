@@ -6,12 +6,27 @@ function qubinode_project_cleanup () {
     # ensure requirements are in place
     qubinode_required_prereqs
 
-    FILES=()
-    mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
-    if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
-    then
-        FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
-    fi
+    # ensure VMs aren't in a running state before proceeding
+    VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
+    if [ "A$VMSTATE" = "Arunning" ]
+    then 
+        printf "%s\n" " "
+        printf "%s\n" "Running this command will remove all the vars files" 
+        printf "%s\n" "which will become troublesome later on when you're trying to delete the cluster"
+        printf "%s\n" "using the qubinode-installer with the -d option"
+        confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
+        if [ "A${response}" != "Ayes" ]
+        then
+           exit 1
+        else    
+             FILES=()
+             mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
+            if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
+            then
+                FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+            fi
+        fi
+    fi        
 
     # Delete OpenShift 3 files
     if [ -f ${project_dir}/playbooks/vars/ocp3.yml ]
@@ -218,18 +233,18 @@ function check_disk_size () {
         # Set the system storage profile based on disk or libvirt pool capacity
         if [[ $DISK_SIZE_COMPARE -ge $MIN_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $STANDARD_STORAGE ]]
         then
-            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the minimum storage requirement of $MIN_STORAGE GB"
+            #printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the minimum storage requirement of $MIN_STORAGE GB"
             STORAGE_PROFILE=minimal
         elif [[ $DISK_SIZE_COMPARE -ge $STANDARD_STORAGE ]] && [[ $DISK_SIZE_COMPARE -lt $PERFORMANCE_STORAGE ]]
         then
-            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the standard storage requirement of $STANDARD_STORAGE GB"
+            #printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the standard storage requirement of $STANDARD_STORAGE GB"
             STORAGE_PROFILE=standard
         elif [[ $DISK_SIZE_COMPARE -ge $PERFORMANCE_STORAGE ]]
         then
-            printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the performance storage requirement of $PERFORMANCE_STORAGE GB"
-            STORAGE_PROFILE=performance
+            #printf "%s\n" " The storage size $DISK_SIZE_HUMAN meets the performance storage requirement of $PERFORMANCE_STORAGE GB"
+            STORAGE_PROFILE=custom
         else
-           printf "%s\n" " The storage size $DISK_SIZE_HUMAN does not meet the minimum size of the $MIN_STORAGE GB"
+           #printf "%s\n" " The storage size $DISK_SIZE_HUMAN does not meet the minimum size of the $MIN_STORAGE GB"
             STORAGE_PROFILE=notmet
         fi
     else
@@ -252,18 +267,18 @@ function check_memory_size () {
     
     if [[ $TOTAL_MEMORY -ge $MINIMAL_MEMORY ]] && [[ $TOTAL_MEMORY -lt $STANDARD_MEMORY ]]
     then
-        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the minimum memory requirement of $MINIMAL_MEMORY GB"
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the minimum memory requirement of $MINIMAL_MEMORY GB"
         MEMORY_PROFILE=minimal
     elif [[ $TOTAL_MEMORY -ge $STANDARD_MEMORY ]] && [[ $TOTAL_MEMORY -lt $PERFORMANCE_MEMORY ]]
     then
-        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the standard memory requirement of $STANDARD_MEMORY GB"
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the standard memory requirement of $STANDARD_MEMORY GB"
         MEMORY_PROFILE=standard
     elif [[ $TOTAL_MEMORY -ge $PERFORMANCE_MEMORY ]]
     then
-        printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the performance memory requirement of $PERFORMANCE_MEMORY GB"
-        MEMORY_PROFILE=performance
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the performance memory requirement of $PERFORMANCE_MEMORY GB"
+        MEMORY_PROFILE=custom
     else
-       printf "%s\n" " The memory size $TOTAL_MEMORY GB does not meet the minimum size of the $MINIMAL_MEMORY GB"
+       #printf "%s\n" " The memory size $TOTAL_MEMORY GB does not meet the minimum size of the $MINIMAL_MEMORY GB"
        MEMORY_PROFILE=notmet
     fi
 

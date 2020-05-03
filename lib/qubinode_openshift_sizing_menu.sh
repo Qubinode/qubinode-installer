@@ -65,7 +65,7 @@ if [[ -z $1 ]]; then
 fi
 
 INSTALLTYPE=$1
-arr=('minimal', 'standard', 'performnance','ocp4_standard')
+arr=('minimal', 'standard', 'custom')
 match=$(echo "${arr[@]:0}" | grep -o $1)
 
 if [[ ! -z $match ]]
@@ -133,14 +133,15 @@ function read_options(){
 	local choice
 	read -p " ${cyn}Enter choice [ 1 - 5] ${end}" choice
 	case $choice in
-		1) ocp_size=minimal
+	1) ocp_size=minimal
             ;;
         2) ocp_size=standard
             ;;
         3) ocp_size=performance
             ;;
-		4) exit 0;;
-		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
+	4) exit 0
+            ;;
+	*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
         confirm " Continue with $ocp_size OpenShift cluster deployment? yes/no"
         if [ "A${response}" == "Ayes" ]
@@ -155,16 +156,17 @@ function read_options_ocp4(){
 	local choice
 	read -p " ${cyn}Enter choice [ 1 - 5] ${end}" choice
 	case $choice in
-		1) ocp_size=minimal && confirm_minimal_deployment
+	1) ocp_size=minimal && confirm_minimal_deployment
             ;;
         2) ocp_size=standard && openshift4_standard_desc
             ;;
         3) ocp_size=local-storage && configure_local_storage
             ;;
-        4) ocp_size=custom && custom_ocp4_sizing
+        4) ocp_size=custom && openshift4_custom_desc
             ;;
-		5) exit 0;;
-		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
+	5) exit 0
+            ;;
+	*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
 
     confirm " Continue with $ocp_size OpenShift cluster deployment? yes/no"
@@ -204,7 +206,7 @@ function ocp3_menu(){
         esac
 
         printf "%s\n" ""
-        confirm " ${cyn}Would you like a customize this deployment? yes/no${end}"
+        confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
         echo    # (optional) move to a new line
         if [ "A${response}" == "Ayes" ]
         then
@@ -247,14 +249,14 @@ function ocp4_menu(){
             standard)
                     openshift4_standard_desc
                     ;;
-            performance)
-                    openshift4_performance_desc
+            custom)
+                    openshift4_custom_desc
                     ;;
             *) exit 0;;
         esac
 
         printf "%s\n" ""
-        confirm " ${cyn}Would you like a customize this deployment? yes/no${end}"
+        confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
         echo    # (optional) move to a new line
         if [ "A${response}" == "Ayes" ]
         then
@@ -270,8 +272,8 @@ function ocp4_menu(){
                 ocp_size=standard
                 continue_with_selected_install
                 ;;
-            performance)
-                ocp_size=performance
+            custom)
+                ocp_size=custom
                 continue_with_selected_install
                 ;;
                 *) exit 0;;
