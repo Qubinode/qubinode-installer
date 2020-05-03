@@ -4,12 +4,25 @@ Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s sui
 
 ## Features in v2.3.1 Version
 
+<<<<<<< HEAD
 New Feature |
 -- |
 OpenShift 4.3 |
 Optimized Qubinode Menu  |
 OpenShift 4 menu option  |
 OpenShift 4 NFS storage  |
+=======
+Feature  |  Status
+--|---
+OpenShift 4 Ansible Role  | In progress
+NFS Provisioner Role | In Progress
+Ansible 2.9 Compatibility  | NA
+OpenShift 3.11 jumpbox  | NA
+Ansible tower product  | NA  |  
+Satellite - Red Hat Satellite Server  | NA  |  
+OCP4 Smoke Test  | NA  |  
+OCP4 Cluster Verification  | NA  |  
+>>>>>>> 45209dc... updated README
 
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
