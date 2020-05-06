@@ -15,9 +15,11 @@ function setup_required_paths () {
 
 
 function qubinode_autoinstall_openshift4 () {
-    product_in_use="ocp4" # Tell the installer this is openshift3 installation
+    product_in_use="ocp4" # Tell the installer which release of OCP
     openshift_product="${product_in_use}"
     qubinode_product_opt="${product_in_use}"
+
+    # Ensure project paths are setup correctly
     setup_required_paths
     [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
     [[ -f ${project_dir}/lib/qubinode_ocp4_utils.sh ]] && . ${project_dir}/lib/qubinode_ocp4_utils.sh || exit 1
@@ -33,23 +35,16 @@ function qubinode_autoinstall_openshift4 () {
     # deploy a qubinode system.
     qubinode_installer_setup
 
-
     openshift4_prechecks
 
-    #ping_openshift4_nodes
-    #check_webconsole_status
-<<<<<<< HEAD
-
     if [ -f /usr/local/bin/qubinode-ocp4-status ]
-=======
-if [ -f /usr/local/bin/qubinode-ocp4-status ]
->>>>>>> e9cf2ad... changed the sizing menu to only work with the -p option
     then
         ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t bootstrap_shut > /dev/null 2>&1
         printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
         /usr/local/bin/qubinode-ocp4-status
         exit 0
     else
+        # Ensure the system meets the requirement for a standard OCP deployment
         check_openshift4_size_yml
 
         # Ensure host system is setup as a KVM host
@@ -67,6 +62,8 @@ if [ -f /usr/local/bin/qubinode-ocp4-status ]
           qubinode_deploy_idm
         fi
 
+echo "I am here lib/qubinode_ocp4.sh #2"
+exit
         # Deploy OCP4
         DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
         ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?

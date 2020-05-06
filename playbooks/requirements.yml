@@ -43,7 +43,7 @@
 - src: https://github.com/Qubinode/nfs-provisioner-role.git
   version: qubinode
 
-- src: https://github.com/Qubinode/ocp4-kvm-deployer.git
+- src: https://github.com/flyemsafe/ocp4-kvm-deployer.git
   version: dev
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
