@@ -62,8 +62,6 @@ function qubinode_autoinstall_openshift4 () {
           qubinode_deploy_idm
         fi
 
-echo "I am here lib/qubinode_ocp4.sh #2"
-exit
         # Deploy OCP4
         DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
         ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?
