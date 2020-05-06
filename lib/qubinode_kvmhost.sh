@@ -259,7 +259,7 @@ function set_rhel_release () {
             sudo subscription-manager release --unset
             sudo subscription-manager release --set="${RHEL_RELEASE}"
         else
-            printf "\n\nRHEL release is set to the supported release: ${CURRENT_RELEASE}"
+            printf "\n\n  RHEL release is set to the supported release: ${CURRENT_RELEASE}"
         fi
     fi
 }

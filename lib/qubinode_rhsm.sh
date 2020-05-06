@@ -178,11 +178,19 @@ function qubinode_rhsm_register () {
     fi
 
     # Check for RHSM values
-    if [ -f ${vault_vars_file} ]
+    if [[ -f ${vaultfile} ]] && [[ -f /usr/bin/ansible-vault ]]
     then
-        rhsm_password=$(ansible-vault view ${vault_vars_file}|awk '/rhsm_password:/ {print $2;exit}')
-        rhsm_username=$(ansible-vault view ${vault_vars_file}|awk '/rhsm_username:/ {print $2;exit}')
-    
+        rhsm_password='""'
+        rhsm_username='""'
+        if ansible-vault view "${vault_vars_file}" >/dev/null 2>&1
+        then
+            rhsm_password=$(ansible-vault view ${vault_vars_file}|awk '/rhsm_password:/ {print $2;exit}')
+            rhsm_username=$(ansible-vault view ${vault_vars_file}|awk '/rhsm_username:/ {print $2;exit}')
+        else
+            rhsm_password=$(awk '/rhsm_password:/ {print $2;exit}' ${vault_vars_file})
+            rhsm_username=$(awk '/rhsm_username:/ {print $2;exit}' ${vault_vars_file})
+        fi
+
         if [[ "A${rhsm_password}" != 'A""' ]] && [[ "A${rhsm_username}" != 'A""' ]]
         then
             sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"

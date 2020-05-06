@@ -162,9 +162,6 @@ function ask_user_for_custom_idm_server () {
             # Tell installer to deploy IdM server
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
 
-            # Tell installer to skip asking about existing IdM server
-            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
-
             # Setting default IdM server name
             sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
 
@@ -191,20 +188,28 @@ function ask_user_for_custom_idm_server () {
     #- update {{ idm_server_ip | default('1.1.1.1') }} to point to the dns ip provided
 
     # Check for required flags set file to skip this function if all is present
-    if [ -f ${vaultfile} ]
+    if [[ -f ${vaultfile} ]] && [[ -f /usr/bin/ansible-vault ]]
     then
-        idm_ssh_user=$(ansible-vault view ${vaultfile}|awk '/idm_ssh_user:/ {print $2;exit}')
-        idm_dm_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_dm_pwd:/ {print $2;exit}')
-        idm_admin_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_admin_pwd:/ {print $2;exit}')
+        idm_ssh_user='""'
+        idm_dm_pwd='""'
+        idm_admin_pwd='""'
+        if ansible-vault view "${vaultfile}" > /dev/null 2>&1
+        then
+            idm_ssh_user=$(ansible-vault view ${vaultfile}|awk '/idm_ssh_user:/ {print $2;exit}')
+            idm_dm_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_dm_pwd:/ {print $2;exit}')
+            idm_admin_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_admin_pwd:/ {print $2;exit}')
+        else
+            idm_ssh_user=$(awk '/idm_ssh_user:/ {print $2;exit}' ${vaultfile})
+            idm_dm_pwd=$(awk '/idm_dm_pwd:/ {print $2;exit}' ${vaultfile})
+            idm_admin_pwd=$(awk '/idm_admin_pwd:/ {print $2;exit}' ${vaultfile})
+        fi
     
         if [[ "A${idm_ssh_user}" != 'A""' ]] && [[ "A${idm_dm_pwd}" != 'A""' ]] && [[ "A${idm_admin_pwd}" != 'A""' ]] 
         then
             # Tell installer not to deploy IdM server
-            sed -i "s/deploy_idm_server:.*/deploy_idm_server: no/g" "${idm_vars_file}"
             sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
         fi    
     fi
-
 }
 
 
