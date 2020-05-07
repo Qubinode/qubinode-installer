@@ -44,10 +44,9 @@ _Required_
 _Optional_
 * For deploying Red Hat OpenShift Container Platform (OCP) you can obtain a [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
-## Installation
+## Installation Guide
 
-We are working as best we can to have better documentation. Contributions are welcome.
-
+We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.adoc). 
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
