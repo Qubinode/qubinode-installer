@@ -32,7 +32,7 @@ Below are a list of resources help understand different tools that and products 
 link:https://learndocker.online/[LearnDocker.online]
 link:https://www.katacoda.com/courses/docker[Learn Docker & Containers using Interactive Browser-Based Scenarios]
 
-== OpenShift Container PLatform
+== OpenShift Container Platform(OCP)
 * link:https://www.edx.org/course/fundamentals-of-containers-kubernetes-and-red-hat[Fundamentals of Containers, Kubernetes, and Red Hat OpenShift]
 * link:https://learn.openshift.com/[learn.openshift.com]
 * link:https://www.redhat.com/en/services/training/do180-introduction-containers-kubernetes-red-hat-openshift[Introduction to Containers, Kubernetes, and Red Hat OpenShift]
@@ -40,5 +40,5 @@ link:https://www.katacoda.com/courses/docker[Learn Docker & Containers using Int
 * link:https://www.redhat.com/en/services/training/do380-red-hat-openshift-administration-ii-high-availability[Red Hat OpenShift Administration II (DO380)]
 * link:https://awesome-kubernetes.readthedocs.io/openshift/[Awesome Kubernetes]
 
-== DevOps
+== DevOps explained
 * link:https://training.linuxfoundation.org/resources/free-courses/introduction-to-site-reliability-engineering-and-devops/[Introduction to Site Reliability Engineering and DevOps]
