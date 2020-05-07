@@ -28,7 +28,8 @@ function qubinode_product_deployment () {
               then
                   openshift4_server_maintenance
               else
-                  openshift4_enterprise_deployment
+                  ASK_SIZE=true
+                  qubinode_autoinstall_openshift4
               fi
               ;;
           satellite)
@@ -75,6 +76,10 @@ function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
         qubinode_project_cleanup
+    elif [ "${qubinode_maintenance_opt}" == "hwp" ]
+    then
+        # Collect hardware information
+        create_qubinode_profile_log
     elif [ "${qubinode_maintenance_opt}" == "setup" ]
     then
         qubinode_installer_setup

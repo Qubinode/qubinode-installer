@@ -92,7 +92,7 @@ function ask_user_for_custom_idm_server () {
             fi
 
             printf "%s\n\n" ""
-            read -p " What is the username for the existing IdM server admin user? " $IDM_USER
+            read -p " What is the username for the existing IdM server admin user? " IDM_USER
             idm_admin_user=$IDM_USER
             confirm " ${blu}You entered${end} ${yel}$idm_admin_user${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
@@ -125,7 +125,9 @@ function ask_user_for_custom_idm_server () {
                 fi
             fi
 
-            confirm " ${blu}Would you like to enable allow-zone-overlap? Default option should be no unless needed for specific purpose. yes/no${end}"
+            printf "%s\n" " You can safely choose no for this next question."
+            printf "%s\n" " Choose yes if you need to use a existing DNS domain."
+            confirm " ${blu}Would you like to enable allow-zone-overlap? yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
                 sed -i "s/idm_zone_overlap:.*/idm_zone_overlap: true/g" "${idm_vars_file}"

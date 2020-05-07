@@ -1,5 +1,5 @@
 = Qubinode for Beginners
-Below are a list of resources help understand different tools that and products Qubinode uses.
+Below are a list of resources to help understand different tools and products that Qubinode uses.
 
 == What is Open Source
 * link:https://www.redhat.com/en/about/videos/default-open-story-open-source-and-red-hat[The story of open source and Red Hat]
