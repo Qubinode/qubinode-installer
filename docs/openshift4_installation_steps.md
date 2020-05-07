@@ -1,7 +1,7 @@
-# OpenShift 4.3 Cluster on a Single Node
+# Installing an OpenShift 4.3 Cluster on a Single Node
 
-Follow these steps to deploy OpenShift 4.3 cluster on a single node.
-This deploys 3 masters and 3 computes.
+The following documentation will help you to deploy OpenShift Container Platform 4.3 cluster, on a single node.
+The installation steps deploys an enviorment with 3 masters and 3 computes.
 
 # Installing Red Hat Enterprise Linux
 * *[RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel)* - Follow the baremetal steps
