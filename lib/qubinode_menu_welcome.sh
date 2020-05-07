@@ -28,11 +28,11 @@ display_openshift_msg_ocp4 () {
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 4 (OCP4)${txend}${end}"
     printf "%s\n" "    The default product option is to install OCP4. The deployment consists of"
-    printf "%s\n" "    3 masters and 2 computes. The ${txb}standard hardware profile is the minimum${txend}"
+    printf "%s\n" "    3 masters and 3 computes. The ${cyn}${txb}standard hardware profile is the minimum${txend}${end}"
     printf "%s\n" "    hardware profile required for the installation. In addition to meeting the"
     printf "%s\n" "    minimum hardware profile requirement, the installation requires a valid"
     printf "%s\n" "    pull-secret. If you are unable to obtain a pull-secret, exit the install"
-    printf "%s\n\n" "    and choose OKD3 from the menu option."
+    printf "%s\n\n" "    and choose OKD from menu option 2."
     printf "%s\n" "    Hardware profiles are defined as:"
     display_hardware_profile_msg
     printf "%s\n\n" "  ${yel}****************************************************************************${end}"
@@ -45,6 +45,7 @@ display_openshift_msg_ocp4 () {
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
+        ASK_SIZE=false
         qubinode_autoinstall_openshift4
         #confirm "  Proceed with ocp4 install? yes/no"
         #if [ "A${response}" == "Ayes" ]

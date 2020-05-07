@@ -6,7 +6,15 @@ function qubinode_installer_setup () {
     # Ensure the RHEL qcow image exists
     pre_check_for_rhel_qcow_image
 
-    ask_user_if_qubinode_setup
+    # Ensure user is setup for sudoers
+    setup_sudoers
+
+    check_additional_storage
+    #ask_user_if_qubinode_setup
+
+    # load kvmhost variables
+    kvm_host_variables
+
     if [ "A${product_in_use}" == "Aocp3" ]
     then
         # Set the QUBINODE_SYSTEM variable based on user response
@@ -41,9 +49,9 @@ function qubinode_installer_setup () {
 
     # Start user input session
     ask_user_input
-    setup_sudoers
     setup_variables
     setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
     if [ "A${rhsm_completed}" == "Ano" ]

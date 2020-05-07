@@ -21,22 +21,19 @@ function elevate_cmd () {
 }
 
 function setup_sudoers () {
-    printf "%s\n" ""
-    printf "%s\n" "     ${txu}${txb}Setup Sudoers${txend}${txuend}"
-    printf "%s\n" " The qubinode-installer runs as a normal user. It sets up"
-    printf "%s\n" " your current user account for passwordless sudo."
-    printf "%s\n" " Checking if ${yel}${CURRENT_USER}${end} is already setup for passwordless sudo."
-    printf "%s\n" ""
     elevate_cmd test -f "/etc/sudoers.d/${CURRENT_USER}"
     if [ "A$?" != "A0" ]
     then
+        printf "%s\n" ""
+        printf "%s\n" "     ${txu}${txb}Setup Sudoers${txend}${txuend}"
+        printf "%s\n" " The qubinode-installer runs as a normal user. It sets up"
+        printf "%s\n" " your current user account for passwordless sudo."
+        printf "%s\n" ""
         SUDOERS_TMP=$(mktemp)
         printf "%s\n" " Setting up /etc/sudoers.d/${CURRENT_USER}"
 	echo "${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL" > "${SUDOERS_TMP}"
         elevate_cmd cp "${SUDOERS_TMP}" "/etc/sudoers.d/${CURRENT_USER}"
         sudo chmod 0440 "/etc/sudoers.d/${CURRENT_USER}"
-    else
-        printf "\n ${yel}${CURRENT_USER}${end} is setup for password-less sudo"
     fi
 }
 

@@ -1,62 +1,111 @@
 #!/bin/bash
 
 function openshift4_variables () {
+    playbooks_dir="${project_dir}/playbooks"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
     cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp4_vars_file}")
+    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp4_vars_file}")
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
+    ocp4_pull_secret="${project_dir}/pull-secret.txt"
+
+    # load kvmhost variables
+    kvm_host_variables
+}
+
+function check_for_pull_secret () {
+    ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    if [ ! -f "${ocp4_pull_secret}" ]
+    then
+        printf "%s\n\n\n" ""
+        printf "%s\n\n\n" "${yel}    Your OpenShift Platform pull secret is missing!${end}"
+        printf "%s\n" "  Please download your pull-secret from: "
+        printf "%s\n" "  https://cloud.redhat.com/openshift/install/metal/user-provisioned"
+        printf "%s\n\n" "  and save it as ${ocp4_pull_secret}"
+        exit
+    fi
+}
+
+function openshift4_standard_desc() {
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Deployment Type: Standard${end}
+    ${yel}=========================${end}
+     3 masters
+     3 workers
+
+    ${cyn}========${end}
+    Features
+    ${cyn}========${end}
+     - nfs-provisioner for image registry
+EOF
+}
+
+function openshift4_minimal_desc() {
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Deployment Type: Minimal${end}
+    ${yel}=========================${end}
+     3 masters
+     2 workers
+
+    ${cyn}========${end}
+    Features
+    ${cyn}========${end}
+     - nfs-provisioner for image registry
+EOF
 }
 
 function openshift4_prechecks () {
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
     if [ ! -f "${ocp4_vars_file}" ]
     then
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
     openshift4_variables
-
-    #check for pull secret
-    if [ ! -f "${ocp4_pull_secret}" ]
-    then
-        echo "Please download your pull-secret from: "
-        echo "https://cloud.redhat.com/openshift/install/metal/user-provisioned"
-        echo "and save it as ${ocp4_pull_secret}"
-        echo ""
-        exit
-    fi
-
+    collect_system_information
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
-    # Ensure firewall rules
-    if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
-    then
-        echo "Setting firewall rules"
-        sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
-        sudo firewall-cmd --reload
+    openshift4_kvm_health_check
+
+    if [[ ${KVM_IN_GOOD_HEALTH} == "ready" ]]; then
+      # Ensure firewall rules
+      if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
+      then
+          echo "Setting firewall rules"
+          sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
+          sudo firewall-cmd --reload
+      fi
+
     fi
 
-    curl -OL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+    curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
     current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
+    # Ensure Openshift Subscription Pool is attached
+    #check_for_openshift_subscription
+    #get_subscription_pool_id 'Red Hat OpenShift Container Platform'
+
 }
 
-openshift4_qubinode_teardown () {
+openshift4_qubinode_teardown_deprecated () {
 
     # Ensure all preqs before continuing
     openshift4_prechecks
 
     # delete dns entries
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e tear_down=true
+    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e dns_teardown=true
 
     # Delete VMS
     test -f $ocp4_vars_file && remove_ocp4_vms
 
     # Delete containers managed by systemd
-    for i in $(echo "lbocp42.service ocp4lb.service $podman_webserver $lb_name")
+    for i in $(echo "lb${cluster_name}.service ocp4lb.service $podman_webserver $lb_name")
     do
         if sudo sudo systemctl list-unit-files | grep -q $i
         then
@@ -72,7 +121,7 @@ openshift4_qubinode_teardown () {
 
 
     # Delete the remaining containers and pruge their images
-    containers=(ocp4lb lbocp42 openshift-4-loadbalancer-ocp42 ocp4ignhttpd ignwebserver qbn-httpd)
+    containers=(ocp4lb lb${cluster_name} openshift-4-loadbalancer-${cluster_name} ocp4ignhttpd ignwebserver qbn-httpd)
     deleted_containers=()
     for pod in ${containers[@]}
     do
@@ -104,7 +153,7 @@ openshift4_qubinode_teardown () {
         do
             printf "%s\n" "    ${i:-other}"|grep -v other
         done
-        exit
+        exit 0
     fi
 
     # Remove downloaded ignitions files
@@ -126,17 +175,15 @@ function remove_ocp4_vms () {
     all_vms=(bootstrap)
     deleted_vms=()
 
-    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for  i in $(seq "$masters")
+    masters=$(sudo virsh list  --all | grep master | awk '{print $2}')
+    for vm in $masters
     do
-        vm="master-$((i-1))"
         all_vms+=( "$vm" )
     done
 
-    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in $(seq "$compute")
+    compute=$(sudo virsh list  --all | grep compute | awk '{print $2}')
+    for vm in $compute
     do
-        vm="compute-$((i-1))"
         all_vms+=( "$vm" )
     done
 
@@ -196,7 +243,93 @@ function remove_ocp4_vms () {
         do
             printf "%s\n" "    ${i:-other}"|grep -v other
         done
-        exit
+        exit 0
+    fi
+}
+
+function state_check(){
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Checking Machine for stale openshift vms ${end}
+    ${yel}=========================${end}
+EOF
+    clean_up_stale_vms dns
+    clean_up_stale_vms bootstrap
+    clean_up_stale_vms master
+    clean_up_stale_vms compute
+}
+
+function clean_up_stale_vms(){
+    KILLVM=true
+    stalemachines=$(sudo virsh list  --all | grep $1 | awk '{print $2}')
+    for vm in $stalemachines
+    do
+       KILLVM=false
+    done
+
+    if [[ $KILLVM == "true" ]]; then 
+        stale_vms=$(sudo ls /var/lib/libvirt/images/ | grep $1)
+        if [[ ! -z $stale_vms ]]; then 
+            for old_vm in $stale_vms
+            do
+            if [[ "$old_vm" == *${1}* ]]; then 
+                sudo rm  -f /var/lib/libvirt/images/$old_vm
+            fi
+            done 
+        fi 
+    fi
+
+}
+
+function configure_local_storage (){
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Select volume Mode: ${end}
+    ${yel}=========================${end}
+
+    1) Filesystem - Presented to the OS as a file system export to be mounted.
+    2) Block - Presented to the operating system (OS) as a block device.
+EOF
+    local choice
+	read -p " ${cyn}Enter choice [ 1 - 2] ${end}" choice
+	case $choice in
+		1) storage_type=filesystem
+            ;;
+        2) storage_type=block
+            ;;
+		3) exit 0;;
+		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
+	esac
+        confirm " Continue with  Volume Mode for $storage_type OpenShift deployment? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            set_local_volume_type
+            exit 0
+        else
+            configure_local_storage
+        fi
+}
+
+function set_local_volume_type(){
+  if [[ $storage_type == "filesystem" ]]; then 
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${ocp4_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${ocp4_vars_file}"
+  elif [[ $storage_type == "block" ]]; then 
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${ocp4_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${ocp4_vars_file}"
+  fi 
+}
+
+function confirm_minimal_deployment(){
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    openshift4_minimal_desc
+    confirm " This Option will set your compute count to 2? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
+        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
     fi
 }
 
@@ -208,14 +341,14 @@ openshift4_server_maintenance () {
        smoketest)
            echo  "Running smoke test on environment: : not implemented yet"
               ;;
-        shutdown)
+       shutdown)
             echo  "Shutting down cluster"
             bash "${project_dir}/openshift4_server_maintenance"
             ;;
-        startup)
+       startup)
             echo  "Starting up Cluster: not implemented yet"
             ;;
-        checkcluster)
+       checkcluster)
             echo  "Running Cluster health check: : not implemented yet"
             ;;
        *)
@@ -236,11 +369,11 @@ is_node_up () {
     ssh -q -o "StrictHostKeyChecking=no" core@${IP} 'hostname -s' &>/dev/null
     NAME_CHECK=$(ssh core@${IP} 'hostname -s')
     #NAME_CHECK=$(ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" core@${IP} 'hostname -s')
-    ETCD_CHECK=$(ssh core@${IP} 'dig @${DNSIP} -t srv _etcd-server-ssl._tcp.ocp42.lunchnet.example|grep "^_etcd-server-ssl."|wc -l')
+    ETCD_CHECK=$(ssh core@${IP} 'dig @${DNSIP} -t srv _etcd-server-ssl._tcp.${cluster_name}.lunchnet.example|grep "^_etcd-server-ssl."|wc -l')
     echo ETCD_CHECK=$ETCD_CHECK
     if [ "A${VMNAME}" != "A${NAME_CHECK}" ]
     then
-      hostnamectl set-hostname "${VMNAME}.ocp42.${domain}"
+      hostnamectl set-hostname "${VMNAME}.${cluster_name}.${domain}"
     fi
     if [ "A${ETCD_CHECK}" != "A3" ]
     then
@@ -259,7 +392,7 @@ function check_webconsole_status () {
     # load required variables
     openshift4_variables
     #echo "Checking to see if Openshift is online."
-    web_console="https://console-openshift-console.apps.ocp42.${domain}"
+    web_console="https://console-openshift-console.apps.${cluster_name}.${ocp4_cluster_domain}"
     WEBCONSOLE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${web_console}" --insecure)
     return $WEBCONSOLE_STATUS
 }
@@ -270,8 +403,10 @@ function pingreturnstatus() {
   if [ $? -eq 0 ]
   then
     true
+    return 0
   else
     false
+    return 1
   fi
   }
 
@@ -326,9 +461,9 @@ deploy_bootstrap_node () {
     VMNAME=bootstrap
     sudo virsh dominfo $VMNAME > $DOMINFO 2>/dev/null
     #NODE_NETINFO=$(mktemp)
-    #sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
-    BOOTSTRAP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-    COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  bootstrap  | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+    #sudo virsh net-dumpxml ${cluster_name} | grep 'host mac' > $NODE_NETINFO
+    BOOTSTRAP=$(sudo virsh net-dumpxml ${cluster_name} | grep  bootstrap | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+    COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep  bootstrap  | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
     ansible-playbook playbooks/ocp4_07_deploy_bootstrap_vm.yml  -e vm_mac_address=${BOOTSTRAP} -e coreos_host_ip=${COREOS_IP}
     sleep 30s
 }
@@ -337,8 +472,8 @@ deploy_master_nodes () {
     ## Deploy Master
     for i in {0..2}
     do
-        MASTER=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-        COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+        MASTER=$(sudo virsh net-dumpxml ${cluster_name} | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
         ansible-playbook playbooks/ocp4_07.1_deploy_master_vm.yml  -e vm_mac_address=${MASTER}   -e vm_name=master-${i} -e coreos_host_ip=${COREOS_IP}
         sleep 30s
     done
@@ -349,8 +484,8 @@ deploy_compute_nodes () {
     # Deploy computes
     for i in {0..1}
     do
-      COMPUTE=$(sudo virsh net-dumpxml ocp42 | grep  compute-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-      COREOS_IP=$(sudo virsh net-dumpxml ocp42 | grep   compute-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+      COMPUTE=$(sudo virsh net-dumpxml ${cluster_name} | grep  compute-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+      COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep   compute-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
       ansible-playbook playbooks/ocp4_07.2_deploy_compute_vm.yml  -e vm_mac_address=${COMPUTE}   -e vm_name=compute-${i} -e coreos_host_ip=${COREOS_IP}
       sleep 10s
     done
@@ -397,134 +532,30 @@ function empty_directory_msg () {
 EOF
 }
 
-post_deployment_steps () {
-
-    # ugly hack to install the jq command from the ocp 4.2 repo
-    # when we move ocp3 to jumpbox, this no longer needs to be a hack
-    if ! rpm -qa | grep -q 'jq-'
-    then
-        sudo subscription-manager repos --enable rhel-7-server-ose-4.2-rpms
-        rpmdir=$(mktemp -d)
-        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
-        sudo subscription-manager repos --disable rhel-7-server-ose-4.2-rpms
-        sudo yum -y install ${rpmdir}/*.rpm
-     fi
-
-    printf "%s\n\n" ""
-    printf "%s\n" " Registry storage for bate metal is required to complete the ocp4 cluster install."
-    printf "%s\n" " Additional informaiton is available here:"
-    printf "%s\n\n" " https://red.ht/2QVJpPK"
-    printf "%s\n" " The installer will attempt to configure storage."
-
-    if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
-    then
-        printf "%s\n\n" ""
-        printf "%s\n" " NFS Server is configured and can be used for persistent storage."
-        confirm " Do you want to configure nfs-provisioner? yes/no"
-        if [ "A${response}" == "Ayes" ]
-        then
-            export KUBECONFIG="${project_dir}/ocp4/auth/kubeconfig"
-            if ! oc get storageclass | grep -q nfs-storage
-            then
-                bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
-            fi
-
-            if oc get storageclass | grep -q nfs-storage
-            then
-cat >image-registry-storage.yaml<<YAML
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: image-registry-storage
-spec:
-  accessModes:
-  - ReadWriteMany
-  storageClassName: nfs-storage-provisioner
-  resources:
-    requests:
-      storage: 80Gi
-YAML
-                oc create -f image-registry-storage.yaml
-                sleep .5s
-                # Add pvc claim for registry storage
-                oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'
-
-                # Verify claim
-                sleep .5s
-                if oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage | grep -q image-registry-storage
-                then
-                    printf "%sn" " Registry pvc claim created successfully"
-                fi
-            else
-                printf "%s\n" " ${red}Unable to add nfs storage provisioner, please investigate.${end}"
-                empty_directory_msg
-            fi
-         fi
-    else
-      printf "%s\n" " Skipping nfs-provisioning"
-      printf "%s\n\n" "*****************************"
-      printf "%s\n" "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
-      empty_directory_msg
-    fi
-    printf "%s\n" " ${yel}*****************************${end}"
-    printf "%s\n" " ${cyn}   Post Bootstrap Steps ${end}"
-    printf "%s\n\n" " ${yel}*****************************${end}"
-    printf "%s\n" " (1) Shutdown the bootstrap node."
-    printf "%s\n\n" "       ${grn}sudo virsh shutdown bootstrap${end}"
-    printf "%s\n" " (2) Ensure all nodes are up."
-    printf "%s\n" "       ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
-    printf "%s\n\n" "       ${grn}oc get nodes${end}"
-    printf "%s\n" " (3) Ensure there are no pending CSR."
-    printf "%s\n\n" "       ${grn}oc get csr${end}"
-    printf "%s\n" " (4) Ensure a storage claim exist for the imageregistry"
-    printf "%s\n" "       ${grn}oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage${end}"
-    printf "%s\n" " The above command output should return:"
-cat << EOF
-                    {
-                      "pvc": {
-                        "claim": "image-registry-storage"
-                      }
-                    }
-EOF
-    printf "%s\n" " If the output differs you can delete whats there."
-    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type json -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'${end}"
-    printf "%s\n" " Then try adding the nfs storage, then check again if the output matches."
-    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'${end}"
-    printf "%s\n" " If there's still no match the imageregistry operator is still down (step 5). Try setting it to a emptydir."
-    printf "%s\n\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"emptyDir\":{}}}}'${end}"
-    printf "%s\n" " (5) Ensure the image-registry operator ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperators image-registry${end}"
-    printf "%s\n" " (6) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
-    printf "%s\n" " (7) If all the above checks out, complete the installation by running."
-    printf "%s\n" "       ${grn}cd ${project_dir}${end}"
-    printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
-}
-
 openshift4_kvm_health_check (){
-  KVM_IN_GOOD_HEALTH=yes
+  KVM_IN_GOOD_HEALTH="not ready"
 
-  requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+  #requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
   if sudo virsh net-list | grep -q $requested_brigde; then
     echo "$requested_brigde is configured"
   else
-      KVM_IN_GOOD_HEALTH=no
+      KVM_IN_GOOD_HEALTH=ready
   fi
 
   requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
   if sudo virsh net-list | grep -q $requested_nat; then
     echo "$requested_nat is configured"
   else
-      KVM_IN_GOOD_HEALTH=no
+      KVM_IN_GOOD_HEALTH=ready
   fi
 
   if sudo lsblk | grep -q nvme0n1; then
     echo "Checking for vg name "
-    vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
+    #vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
     if sudo vgdisplay | grep -q $vg_name; then
       echo "$vg_name is configured"
     else
-        KVM_IN_GOOD_HEALTH=no
+        KVM_IN_GOOD_HEALTH=ready
     fi
   else
       echo "Skipping mount path check"
@@ -534,73 +565,125 @@ openshift4_kvm_health_check (){
   if [[ -d $check_image_path ]]; then
     echo "$check_image_path exists"
   else
-    KVM_IN_GOOD_HEALTH=no
+    KVM_IN_GOOD_HEALTH=ready
   fi
 
-  return $KVM_IN_GOOD_HEALTH
+  libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+  os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+  if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  if ! [ -x "$(command -v virsh)" ]; then
+    echo 'Error: virsh is not installed.' >&2
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  if ! [ -x "$(command -v firewall-cmd)" ]; then
+    echo 'Error: firewall-cmd is not installed.' >&2
+    KVM_IN_GOOD_HEALTH="not ready"
+  fi
+
+  printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."
 }
 
 openshift4_idm_health_check () {
-IDM_IN_GOOD_HEALTH=yes
+IDM_IN_GOOD_HEALTH=ready
 
 if [[ -f $idm_vars_file ]]; then
   echo "$idm_vars_file exists"
 else
-  IDM_IN_GOOD_HEALTH=no
+  IDM_IN_GOOD_HEALTH="not ready"
 fi
 
 idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
 if pingreturnstatus ${idm_ipaddress}; then
-  echo "IDM Server is connected $idm_ipaddress"
+  echo "IDM Server is connected $idm_ipaddress" >/dev/null
 else
-  IDM_IN_GOOD_HEALTH=no
+  IDM_IN_GOOD_HEALTH="not ready"
 fi
 
 dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
-if [[ ! -z $dns_query ]]; then
-  echo "IDM Server is able to resolve qbn-dns01.${domain}"
-  echo $dns_query
+if echo $dns_query | grep -q 'no servers could be reached'
+then
+      IDM_IN_GOOD_HEALTH="not ready"
 else
-  IDM_IN_GOOD_HEALTH=no
+      echo "IDM Server is able to resolve qbn-dns01.${domain}"
 fi
 
-echo $IDM_IN_GOOD_HEALTH
+  #printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
 }
 
 
 function ping_openshift4_nodes () {
-    IS_OPENSHIFT4_NODES=no
-    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for  i in $(seq "$masters")
-    do
-        vm="master-$((i-1))"
-        if  pingreturnstatus ${vm}.ocp42.${domain}; then
-          echo "${vm}.ocp42.lab.example is online"
-          IS_OPENSHIFT4_NODES=yes
-        else
-          echo "${vm}.ocp42.lab.example is offline"
-          IS_OPENSHIFT4_NODES=no
-          break
-        fi
-    done
+#TODO: validate if this funciton is still need
+    IS_OPENSHIFT4_NODES="not ready"
+    masters=$(cat $ocp4_vars_file | grep master_count:| awk '{print $2}')
+  
+    if [ "A${masters}" != "A" ]
+    then
+        for i in $(seq $masters)
+        do
+            vm="master-$((i-1))"
+            if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
+              echo "${vm}.${cluster_name}.lab.example is online"
+              IS_OPENSHIFT4_NODES=ready
+            else
+              echo "${vm}.${cluster_name}.lab.example is offline"
+              IS_OPENSHIFT4_NODES="not ready"
+              break
+            fi
+        done
+    else
+        IS_OPENSHIFT4_NODES="not ready"
+    fi
 
-    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in $(seq "$compute")
-    do
-        vm="compute-$((i-1))"
-        if  pingreturnstatus ${vm}.ocp42.${domain}; then
-          echo "${vm}.ocp42.lab.example is online"
-          IS_OPENSHIFT4_NODES=yes
-        else
-          echo "${vm}.ocp42.lab.example is offline"
-          IS_OPENSHIFT4_NODES=no
-          break
-        fi
-    done
+    compute=$(cat $ocp4_vars_file | grep compute_count:| awk '{print $2}')
+    if [ "A${compute}" != "A" ]
+    then
+        for i in $(seq $compute)
+        do
+            vm="compute-$((i-1))"
+            if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
+              echo "${vm}.${cluster_name}.lab.example is online"
+              IS_OPENSHIFT4_NODES=ready
+            else
+              echo "${vm}.${cluster_name}.lab.example is offline"
+              IS_OPENSHIFT4_NODES="not ready"
+              break
+            fi
+        done
+    else
+        IS_OPENSHIFT4_NODES="not ready"
+    fi
 
-    return $IS_OPENSHIFT4_NODES
+    #printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
+
 }
 
+function check_openshift4_size_yml () {
+    check_hardware_resources
+    storage_profile=$(awk '/^storage_profile:/ {print $2}' "${vars_file}")
+    memory_profile=$(awk '/^memory_profile:/ {print $2}' "${vars_file}")
+    ocp_cluster_size=$(awk '/^ocp_cluster_size:/ {print $2}' "${vars_file}")
+
+    #if [[ "A${memory_profile}" == "Anotmet" ]] || [[ "A${storage_profile}" == "Anotmet" ]]
+    if [ "A${ASK_SIZE}" == "Atrue" ]
+    then
+        memory_size="${memory_profile}"
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ "A${ocp_cluster_size}" == "Anotmet" ]] || [[ "A${ocp_cluster_size}" == "Aminimal" ]]
+    then
+        printf "%s\n" " Your hardware does not meet our recommended sizing."
+        printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
+        printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
+        printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
+
+        printf "%s\n\n" " To choose a minimal install and other customization options."
+        printf "%s\n\n" " Run: ./qubinode-installer -p ocp4"
+        exit 1
+    fi
+}
 
 openshift4_enterprise_deployment () {
     # Ensure all preqs before continuing
@@ -651,7 +734,7 @@ openshift4_enterprise_deployment () {
 
     # Get network information for ocp4 vms
     NODE_NETINFO=$(mktemp)
-    sudo virsh net-dumpxml ocp42 | grep 'host mac' > $NODE_NETINFO
+    sudo virsh net-dumpxml ${cluster_name} | grep 'host mac' > $NODE_NETINFO
 
     # Deploy the coreos nodes required
     #TODO: playbook should not attempt to start VM's if they are already running
@@ -671,3 +754,43 @@ openshift4_enterprise_deployment () {
     # Show user post deployment steps to follow
     post_deployment_steps
 }
+
+function openshift4_custom_desc (){
+cat << EOF
+    ${yel}=========================${end}
+    ${mag}Deployment Type: Custom${end}
+    ${yel}=========================${end}
+
+    ${red}=========================${end}
+    ${mag}This Deployment option is not supported. Limited assitance will be provided.${end}
+    ${red}=========================${end}
+
+    ${cyn}========${end}
+    The Following can be changed
+    Please submit a pull request for additional changes.
+    ${cyn}========${end}
+     - compute count 
+     - local storage 
+EOF
+
+    ## Compute Count 
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    printf "%s\n\n" ""
+    read -p " ${yel}Enter the number of compute nodes your would like?${end} " compute_count
+    compute_num="${compute_count}"
+    confirm " ${blu}You entered${end} ${yel}$compute_num${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s\n" " ${blu}Your compute_count is now set to${end} ${yel}$compute_num${end}"
+    fi
+
+    ## Configure local Storage 
+    configure_local_storage
+
+    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
+    sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
+    sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
+}
+
