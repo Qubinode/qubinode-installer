@@ -29,7 +29,7 @@
   version: master
 
 - src: https://github.com/Qubinode/openshift-4-loadbalancer.git
-  version: master
+  version: dev
 
 - src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
   version: master
@@ -47,4 +47,4 @@
   version: dev
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
-  version: master
+  version: dev
