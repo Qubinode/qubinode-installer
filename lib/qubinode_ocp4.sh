@@ -75,7 +75,7 @@ function qubinode_autoinstall_openshift4 () {
 
     # Deploy OCP4
     DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
-    ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?
+    ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e "cluster_status='not deployed'" || exit $?
 
     # Check the OpenSHift status
     check_if_cluster_deployed
@@ -121,7 +121,7 @@ function qubinode_adv_openshift4 () {
 
     # Deploy OCP4
     DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
-    ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" || exit $?
+    ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e "cluster_status='not deployed'" || exit $?
 
     # Check the OpenSHift status
     check_if_cluster_deployed
