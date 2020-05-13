@@ -156,9 +156,11 @@ ocp4_instances:
     ip_octet: 30
 
 ## Local storage variable 
-localstorage_version: "{{ minor_version }}"
-localstorage_filesystem: false
-localstorage_block: true
+localstorage_version: "{{ major_version }}"
+localstorage_filesystem: yes
+localstorage_block: no
+localstorage_mount_path: /dev/vdc
+configure_local_storage: no
 
 ## Defaults for NFS Provisioner role
 provision_nfs_server: true
@@ -175,7 +177,6 @@ project_namespace: nfs-provisioner
 set_as_default: true
 delete_deployment: false
 insecure_skip_tls_verify: true
-
 
 # These variables appear to be no longer needed
 openshift_pool_id: ""
