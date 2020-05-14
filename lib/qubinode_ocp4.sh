@@ -45,7 +45,7 @@ if [ -f /usr/local/bin/qubinode-ocp4-status ]
         /usr/local/bin/qubinode-ocp4-status
         exit 0
     else
-        check_openshift4_size_yml
+
 
         # Ensure host system is setup as a KVM host
         openshift4_kvm_health_check
@@ -53,7 +53,9 @@ if [ -f /usr/local/bin/qubinode-ocp4-status ]
           qubinode_setup_kvm_host
         fi
 
-        # Checking for stale vms 
+        check_openshift4_size_yml
+
+        # Checking for stale vms
         state_check
 
         # Deploy IdM Server
@@ -95,8 +97,6 @@ function qubinode_adv_openshift4 () {
         /usr/local/bin/qubinode-ocp4-status
         exit 0
     else
-        check_openshift4_size_yml
-
         # Ensure host system is setup as a KVM host
         openshift4_kvm_health_check
         if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
@@ -104,7 +104,9 @@ function qubinode_adv_openshift4 () {
           echo "Please run ./qubinode-installer -m host"
         fi
 
-        # Checking for stale vms 
+        check_openshift4_size_yml
+
+        # Checking for stale vms
         state_check
 
         # Deploy IdM Server
