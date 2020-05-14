@@ -1,7 +1,7 @@
 ---
 ######################################
 #         USER VARIABLES             #
-# The are autojatically updated or   #
+# The are automatically updated or   #
 # you can update them manually       #
 ######################################
 inventory_dir: ""

@@ -7,6 +7,7 @@ function qubinode_project_cleanup () {
     qubinode_required_prereqs
 
     # ensure VMs aren't in a running state before proceeding
+<<<<<<< HEAD
     VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
     if [ "A$VMSTATE" = "Arunning" ]
     then
@@ -22,10 +23,35 @@ function qubinode_project_cleanup () {
              FILES=()
              mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
             if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
+=======
+    if which virsh > /dev/null 2>&1
+    then
+        VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
+        if [ "A$VMSTATE" = "Arunning" ]
+        then 
+            printf "%s\n" " "
+            printf "%s\n" "Running this command will remove all the vars files" 
+            printf "%s\n" "which will become troublesome later on when you're trying to delete the cluster"
+            printf "%s\n" "using the qubinode-installer with the -d option"
+            confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
+            if [ "A${response}" != "Ayes" ]
+>>>>>>> d8bce39aa5a4b35c8949f6198b80d25d1f17801b
             then
-                FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+               exit 1
+            else
+                printf "%s\n" "proceeding with the reset to default"
             fi
+<<<<<<< HEAD
         fi
+=======
+        fi        
+    fi
+    FILES=()
+    mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
+    if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
+    then
+        FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+>>>>>>> d8bce39aa5a4b35c8949f6198b80d25d1f17801b
     fi
 
     # Delete OpenShift 3 files
@@ -136,7 +162,7 @@ function dnf_or_yum(){
 }
 
 function collect_system_information() {
-
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     which virsh > /dev/null 2>&1 || sudo yum group install virtualization-host-environment -y -q > /dev/null 2>&1
     which virsh > /dev/null 2>&1 || sudo yum install libvirt-client libvirt deltarpm -y -q > /dev/null 2>&1
     which dmidecode > /dev/null 2>&1 || sudo yum install dmidecode -y -q > /dev/null 2>&1
@@ -147,7 +173,7 @@ function collect_system_information() {
     AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
 
 
-    libvirt_pool_name=$(cat playbooks/vars/kvm_host.yml | grep libvirt_pool_name: | awk '{print $2}')
+    libvirt_pool_name=$(cat $project_dir/playbooks/vars/kvm_host.yml | grep libvirt_pool_name: | awk '{print $2}')
     if [ "A${libvirt_pool_name}" == "Adefault" ]
     then
         if ! sudo virsh pool-info default > /dev/null 2>&1
@@ -161,7 +187,7 @@ cat > /tmp/libvirt-vol.xml <<EOF
   <source>
   </source>
   <target>
-    <path>/var/lib/libvirt/images</path>
+    <path>${libvirt_dir}</path>
   </target>
 </pool>
 EOF
