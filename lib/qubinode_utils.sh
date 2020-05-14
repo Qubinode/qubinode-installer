@@ -7,23 +7,6 @@ function qubinode_project_cleanup () {
     qubinode_required_prereqs
 
     # ensure VMs aren't in a running state before proceeding
-<<<<<<< HEAD
-    VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
-    if [ "A$VMSTATE" = "Arunning" ]
-    then
-        printf "%s\n" " "
-        printf "%s\n" "Running this command will remove all the vars files"
-        printf "%s\n" "which will become troublesome later on when you're trying to delete the cluster"
-        printf "%s\n" "using the qubinode-installer with the -d option"
-        confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
-        if [ "A${response}" != "Ayes" ]
-        then
-           exit 1
-        else
-             FILES=()
-             mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
-            if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
-=======
     if which virsh > /dev/null 2>&1
     then
         VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
@@ -35,15 +18,11 @@ function qubinode_project_cleanup () {
             printf "%s\n" "using the qubinode-installer with the -d option"
             confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
             if [ "A${response}" != "Ayes" ]
->>>>>>> d8bce39aa5a4b35c8949f6198b80d25d1f17801b
             then
                exit 1
             else
                 printf "%s\n" "proceeding with the reset to default"
             fi
-<<<<<<< HEAD
-        fi
-=======
         fi        
     fi
     FILES=()
@@ -51,7 +30,6 @@ function qubinode_project_cleanup () {
     if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
     then
         FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
->>>>>>> d8bce39aa5a4b35c8949f6198b80d25d1f17801b
     fi
 
     # Delete OpenShift 3 files
