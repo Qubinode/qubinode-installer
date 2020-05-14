@@ -52,6 +52,8 @@ function qubinode_autoinstall_openshift4 () {
 
     openshift4_prechecks
 
+    check_for_openshift_subscription
+
     # Check if openshift cluster is already deployed and running
     check_if_cluster_deployed
 
@@ -94,12 +96,16 @@ function qubinode_adv_openshift4 () {
 
     # Check for OCP4 pull sceret
     check_for_pull_secret
+
+
     openshift4_prechecks
     ping_openshift4_nodes
     check_webconsole_status
 
     # Check if openshift cluster is already deployed and running
     check_if_cluster_deployed
+    
+    check_for_openshift_subscription
 
     # Ensure host system is setup as a KVM host
     openshift4_kvm_health_check
