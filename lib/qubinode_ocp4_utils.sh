@@ -65,13 +65,15 @@ function openshift4_prechecks () {
     then
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
+
     openshift4_variables
     collect_system_information
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
+    # Check for OCP4 pull sceret
+    check_for_pull_secret
     openshift4_kvm_health_check
-
     if [[ ${KVM_IN_GOOD_HEALTH} == "ready" ]]; then
       # Ensure firewall rules
       if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
@@ -89,9 +91,8 @@ function openshift4_prechecks () {
     sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
     # Ensure Openshift Subscription Pool is attached
-    #check_for_openshift_subscription
+    check_for_openshift_subscription
     #get_subscription_pool_id 'Red Hat OpenShift Container Platform'
-
 }
 
 openshift4_qubinode_teardown_deprecated () {
