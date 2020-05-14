@@ -1,6 +1,8 @@
-# Deploy OpenShift 4.x Cluster
+#  Installing an OpenShift 4.3 Cluster on a Single Node
 
-The guide walks you through the steps for deploying a production like OCP4 cluster, 3 masters and 3 workers on a KVM host running Red Hat Enterprise Linux.
+The following documentation will help you deploy an OpenShift Container Platform (OCP) 4.3 cluster, on a single node.
+The installation steps deploys a production like OCP4 clsuter, in a enviorment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL) 
+
 
 ## Prerequisites
 
@@ -10,7 +12,7 @@ The guide walks you through the steps for deploying a production like OCP4 clust
 -  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
 #### Install Red Hat Enterprise Linux
-A bare metal system running Red Hat Enterprise Linux (RHEL). Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
+A bare metal system running RHEL. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
 
 1. Virtualization Host
 2. Server with GUI

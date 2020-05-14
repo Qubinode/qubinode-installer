@@ -83,9 +83,10 @@ function openshift4_prechecks () {
 
     fi
 
+    # Get the lastest OCP4 version
     curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
     current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
+    sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
     # Ensure Openshift Subscription Pool is attached
     #check_for_openshift_subscription
@@ -249,9 +250,9 @@ function remove_ocp4_vms () {
 
 function state_check(){
 cat << EOF
-    ${yel}=========================${end}
+    ${yel}**************************************** ${end}
     ${mag}Checking Machine for stale openshift vms ${end}
-    ${yel}=========================${end}
+    ${yel}**************************************** ${end}
 EOF
     clean_up_stale_vms dns
     clean_up_stale_vms bootstrap
@@ -268,12 +269,12 @@ function clean_up_stale_vms(){
     done
 
     if [[ $KILLVM == "true" ]]; then 
-        stale_vms=$(sudo ls /var/lib/libvirt/images/ | grep $1)
+        stale_vms=$(sudo ls "${libvirt_dir}/" | grep $1)
         if [[ ! -z $stale_vms ]]; then 
             for old_vm in $stale_vms
             do
             if [[ "$old_vm" == *${1}* ]]; then 
-                sudo rm  -f /var/lib/libvirt/images/$old_vm
+                sudo rm  -f "${libvirt_dir}/$old_vm"
             fi
             done 
         fi 
@@ -281,24 +282,23 @@ function clean_up_stale_vms(){
 
 }
 
-function configure_local_storage (){
+function configure_local_storage () {
 cat << EOF
     ${yel}=========================${end}
     ${mag}Select volume Mode: ${end}
     ${yel}=========================${end}
-
     1) Filesystem - Presented to the OS as a file system export to be mounted.
     2) Block - Presented to the operating system (OS) as a block device.
 EOF
     local choice
 	read -p " ${cyn}Enter choice [ 1 - 2] ${end}" choice
 	case $choice in
-		1) storage_type=filesystem
+	    1) storage_type=filesystem
             ;;
-        2) storage_type=block
+            2) storage_type=block
             ;;
-		3) exit 0;;
-		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
+	    3) exit 0;;
+	    *) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
         confirm " Continue with  Volume Mode for $storage_type OpenShift deployment? yes/no"
         if [ "A${response}" == "Ayes" ]
@@ -310,7 +310,7 @@ EOF
         fi
 }
 
-function set_local_volume_type(){
+function set_local_volume_type () {
   if [[ $storage_type == "filesystem" ]]; then 
     sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${ocp4_vars_file}"
     sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${ocp4_vars_file}"
@@ -320,7 +320,7 @@ function set_local_volume_type(){
   fi 
 }
 
-function confirm_minimal_deployment(){
+function confirm_minimal_deployment () {
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
     openshift4_minimal_desc
     confirm " This Option will set your compute count to 2? yes/no"
@@ -333,28 +333,18 @@ function confirm_minimal_deployment(){
     fi
 }
 
-openshift4_server_maintenance () {
-    case ${product_maintenance} in
-       diag)
-           echo "Perparing to run full Diagnostics: : not implemented yet"
-           ;;
-       smoketest)
-           echo  "Running smoke test on environment: : not implemented yet"
-              ;;
-       shutdown)
-            echo  "Shutting down cluster"
-            bash "${project_dir}/openshift4_server_maintenance"
-            ;;
-       startup)
-            echo  "Starting up Cluster: not implemented yet"
-            ;;
-       checkcluster)
-            echo  "Running Cluster health check: : not implemented yet"
-            ;;
-       *)
-           echo "No arguement was passed"
-           ;;
-    esac
+
+function confirm_minimal_deployment () {
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    openshift4_minimal_desc
+    confirm " This Option will set your compute count to 2? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
+        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
+    fi
 }
 
 is_node_up () {
@@ -532,86 +522,74 @@ function empty_directory_msg () {
 EOF
 }
 
-openshift4_kvm_health_check (){
-  KVM_IN_GOOD_HEALTH="not ready"
-
-  #requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
-  if sudo virsh net-list | grep -q $requested_brigde; then
-    echo "$requested_brigde is configured"
-  else
-      KVM_IN_GOOD_HEALTH=ready
-  fi
-
-  requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
-  if sudo virsh net-list | grep -q $requested_nat; then
-    echo "$requested_nat is configured"
-  else
-      KVM_IN_GOOD_HEALTH=ready
-  fi
-
-  if sudo lsblk | grep -q nvme0n1; then
-    echo "Checking for vg name "
-    #vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
-    if sudo vgdisplay | grep -q $vg_name; then
-      echo "$vg_name is configured"
-    else
+openshift4_kvm_health_check () {
+    KVM_IN_GOOD_HEALTH=""
+    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+    check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+  
+    if ! sudo virsh net-list | grep -q $requested_brigde; then
+      KVM_STATUS="not ready"
+    fi
+  
+    #if ! sudo virsh net-list | grep -q $requested_nat; then
+    #  KVM_IN_GOOD_HEALTH="not ready"
+    #fi
+  
+    # If dedicated disk for libvirt images, check for the volume group
+    if [ "A${create_lvm}" == "Ayes" ]
+    then
+        if ! sudo vgdisplay | grep -q $vg_name
+        then
+            KVM_STATUS="not ready"
+        fi
+    fi
+  
+    if [ ! -d $check_image_path ]
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if ! [ -x "$(command -v virsh)" ]
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if ! [ -x "$(command -v firewall-cmd)" ]
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if [ "A$KVM_STATUS" != "Anot ready" ]
+    then
         KVM_IN_GOOD_HEALTH=ready
     fi
-  else
-      echo "Skipping mount path check"
-  fi
-
-  check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
-  if [[ -d $check_image_path ]]; then
-    echo "$check_image_path exists"
-  else
-    KVM_IN_GOOD_HEALTH=ready
-  fi
-
-  libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-  os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-  if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
-    KVM_IN_GOOD_HEALTH="not ready"
-  fi
-
-  if ! [ -x "$(command -v virsh)" ]; then
-    echo 'Error: virsh is not installed.' >&2
-    KVM_IN_GOOD_HEALTH="not ready"
-  fi
-
-  if ! [ -x "$(command -v firewall-cmd)" ]; then
-    echo 'Error: firewall-cmd is not installed.' >&2
-    KVM_IN_GOOD_HEALTH="not ready"
-  fi
-
-  printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."
 }
 
 openshift4_idm_health_check () {
-IDM_IN_GOOD_HEALTH=ready
-
-if [[ -f $idm_vars_file ]]; then
-  echo "$idm_vars_file exists"
-else
-  IDM_IN_GOOD_HEALTH="not ready"
-fi
-
-idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
-if pingreturnstatus ${idm_ipaddress}; then
-  echo "IDM Server is connected $idm_ipaddress" >/dev/null
-else
-  IDM_IN_GOOD_HEALTH="not ready"
-fi
-
-dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
-if echo $dns_query | grep -q 'no servers could be reached'
-then
+    IDM_IN_GOOD_HEALTH=ready
+    
+    if [[ ! -f $idm_vars_file ]]; then
       IDM_IN_GOOD_HEALTH="not ready"
-else
-      echo "IDM Server is able to resolve qbn-dns01.${domain}"
-fi
-
-  #printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
+    fi
+    
+    idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
+    if ! pingreturnstatus ${idm_ipaddress}; then
+      IDM_IN_GOOD_HEALTH="not ready"
+    fi
+    
+    dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+    if echo $dns_query | grep -q 'no servers could be reached'
+    then
+          IDM_IN_GOOD_HEALTH="not ready"
+    fi
 }
 
 
@@ -788,9 +766,110 @@ EOF
 
     ## Configure local Storage 
     configure_local_storage
-
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
     sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
     sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
+}
+
+function shutdown_variables () {
+    export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+    REGISTER_STATUS=$(oc get clusteroperators | awk '/image-registry/ {print $3}')
+    CLUSTER_UPTIME=$(oc get clusteroperators | awk '/authentication/ {print $6}')
+    CLUSTER_UUID=$(oc get clusterversions.config.openshift.io version -o jsonpath='{.spec.clusterID}{"\n"}')
+    INFRA_ID=$(oc get infrastructures.config.openshift.io cluster -o jsonpath='{.status.infrastructureName}{"\n"}')
+    BKUP_CMD="sudo /usr/local/bin/etcd-snapshot-backup.sh ./assets/backup/snapshot.db"
+    NODE_USER="core"
+    SSH_USER=$(whoami)
+    USER_SSH_ID="/home/${SSH_USER}/.ssh/id_rsa"
+    SSH_OPTIONS="-q -o StrictHostKeyChecking=no -o BatchMode=yes"
+    HOURS_RUNNING=$(oc get clusteroperators | awk '/authentication/ {print $6}'|tr -d 'h'|tr -d 'd')
+}
+
+function shutdown_nodes () {
+    shutdown_variables
+    MASTER_ONE=192.168.50.10
+    MASTER_STATE=$(ping -c3 ${MASTER_ONE} 1>/dev/null; echo $?)
+    
+    if [ $MASTER_STATE -ne 0 ]
+    then
+        printf "\n It appears the cluster is already down.\n\n"
+        exit 0
+    else
+       printf "\ Shutting down the ocp4 cluster.\n"
+    fi
+    
+
+    for node in $(echo $NODES)
+    do
+        VM_NAME=$(echo $node|cut -d\. -f1)
+        VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
+        if [ $VM_STATE == "running" ]
+        then
+
+            if [ "A${ROLE}" == "Acompute" ]
+            then
+                # mark node unschedulable
+                oc adm cordon $node
+                if [ "A$?" != "A0" ]
+                then
+                    printf "\n Marking $node unschedulable returned $?.\n"
+                    printf "\n Please investigate and try again.\n"
+                    exit 1
+                fi
+
+                # drain node
+                oc adm drain $node --ignore-daemonsets --delete-local-data --force --timeout=120s
+                if [ "A$?" != "A0" ]
+                then
+                    printf "\n Draining $node returned $?.\n"
+                    printf "\n Continining with shtudwon. Please investigate and try again.\n"
+                    # This should prompt the user and ask if they would like t continue with
+                    # shutdown or exist and troubleshoot.
+                    #exit 1
+                fi
+            fi 
+
+            printf "\n\n Shutting down $node.\n"
+            ssh $SSH_OPTIONS -i $USER_SSH_ID "${NODE_USER}@${node}" sudo shutdown -h now --no-wall
+
+            until [ $VM_STATE != "running" ]
+            do
+                printf "\n Waiting on $VM_NAME to shutdown. \n"
+                VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
+                sleep 5s
+            done
+            printf "\n $VM_NAME state is $VM_STATE\n\n"
+        else 
+            printf "\n $VM_NAME state is $VM_STATE\n\n"
+        fi
+    done
+}
+
+function shutdown_cluster () {
+    shutdown_variables
+    if [ $HOURS_RUNNING -gt 24 ]
+    then
+    
+        printf "\n The ocp4 cluster has been up for more than 24hrs now.\n The current uptime is ${HOURS_RUNNING}\n\n"
+        ALL_COMPUTES=$(oc get nodes -l node-role.kubernetes.io/worker="" --no-headers | awk '{print $1}'|sort -r)
+        ALL_MASTERS=$(oc get nodes -l node-role.kubernetes.io/master="" --no-headers | awk '{print $1}'|sort -r)
+    
+        printf "\n Backing up etcd snapshot.\n\n"
+        ssh $SSH_OPTIONS -i $USER_SSH_ID "${NODE_USER}@${MASTER_ONE}" $BKUP_CMD tar tar czf - /home/core/assets/ > /home/${SSH_USER}/ocp4-etcd-snapshot-$(date +%Y%m%d-%H%M%S).tar.gz
+    
+        # Mark computes as unscheduleable, drain and shutdown
+        ROLE=compute
+        NODES=$ALL_COMPUTES
+        shutdown_nodes 
+    
+        ROLE=master
+        NODES=$ALL_MASTERS
+        shutdown_nodes 
+    else
+        printf "\n The ocp4 cluster has been up for less that 24hrs now.\n Please wait until after 24rs beforetrying to shutdown the cluster.\n\n"
+    fi
+    
+    exit 0
+
 }
 
