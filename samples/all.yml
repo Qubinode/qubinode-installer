@@ -111,7 +111,7 @@ qubinode_performance_memory: 88
 
 # We are not enforcing acutal sizes at this time
 qubinode_minimal_storage: 370      # actual is 640
-qubinode_standard_storage: 900     # actual is 1160
+qubinode_standard_storage: 400     # actual is 1160
 qubinode_performance_storage: 1340 # actual is 1340
 
 # your system profile

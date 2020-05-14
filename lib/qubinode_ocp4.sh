@@ -11,6 +11,7 @@ function setup_required_paths () {
     if [ ! -d "${project_dir}/playbooks/vars" ] ; then
         config_err_msg; exit 1
     fi
+    DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
 }
 
 check_if_cluster_deployed () {
@@ -20,7 +21,7 @@ check_if_cluster_deployed () {
         NODES=$(/usr/local/bin/oc get nodes 2>&1| grep -i master)
         if [ "A${NODES}" != "A" ]
         then
-            ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t bootstrap_shut > /dev/null 2>&1
+            ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t bootstrap_shut > /dev/null 2>&1 || exit $?
             printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
             /usr/local/bin/qubinode-ocp4-status
             exit 0
@@ -74,7 +75,6 @@ function qubinode_autoinstall_openshift4 () {
     fi
 
     # Deploy OCP4
-    DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
     ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' || exit $?
 
     # Check the OpenSHift status
