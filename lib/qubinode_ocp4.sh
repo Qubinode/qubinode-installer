@@ -56,14 +56,14 @@ function qubinode_autoinstall_openshift4 () {
     # Check if openshift cluster is already deployed and running
     check_if_cluster_deployed
 
-    # Ensure the system meets the requirement for a standard OCP deployment
-    check_openshift4_size_yml
-
     # Ensure host system is setup as a KVM host
     openshift4_kvm_health_check
     if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
         qubinode_setup_kvm_host
     fi
+
+    # Ensure the system meets the requirement for a standard OCP deployment
+    check_openshift4_size_yml
 
     # Checking for stale vms 
     state_check
@@ -100,14 +100,15 @@ function qubinode_adv_openshift4 () {
 
     # Check if openshift cluster is already deployed and running
     check_if_cluster_deployed
-    check_openshift4_size_yml
 
     # Ensure host system is setup as a KVM host
     openshift4_kvm_health_check
     if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
-        echo "The system isn't setupt to function as a KVM host."
-        echo "Please run ./qubinode-installer -m host"
+        qubinode_setup_kvm_host
     fi
+
+    # Ensure the system meets the requirement for a standard OCP deployment
+    check_openshift4_size_yml
 
     # Checking for stale vms 
     state_check
