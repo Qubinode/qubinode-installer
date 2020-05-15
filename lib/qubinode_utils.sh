@@ -7,6 +7,23 @@ function qubinode_project_cleanup () {
     qubinode_required_prereqs
 
     # ensure VMs aren't in a running state before proceeding
+<<<<<<< HEAD
+    VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
+    if [ "A$VMSTATE" = "Arunning" ]
+    then
+        printf "%s\n" " "
+        printf "%s\n" "Running this command will remove all the vars files"
+        printf "%s\n" "which will become troublesome later on when you're trying to delete the cluster"
+        printf "%s\n" "using the qubinode-installer with the -d option"
+        confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
+        if [ "A${response}" != "Ayes" ]
+        then
+           exit 1
+        else
+             FILES=()
+             mapfile -t FILES < <(find "${project_dir}/inventory/" -not -path '*/\.*' -type f)
+            if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
+=======
     if which virsh > /dev/null 2>&1
     then
         VMSTATE=$(sudo virsh list --all |  awk '{ print $3}')
@@ -18,11 +35,15 @@ function qubinode_project_cleanup () {
             printf "%s\n" "using the qubinode-installer with the -d option"
             confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
             if [ "A${response}" != "Ayes" ]
+>>>>>>> d8bce39aa5a4b35c8949f6198b80d25d1f17801b
             then
                exit 1
             else
                 printf "%s\n" "proceeding with the reset to default"
             fi
+<<<<<<< HEAD
+        fi
+=======
         fi        
     fi
     FILES=()
@@ -30,11 +51,12 @@ function qubinode_project_cleanup () {
     if [ -f "$vault_vars_file" ] && [ -f "$vault_vars_file" ]
     then
         FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
+>>>>>>> d8bce39aa5a4b35c8949f6198b80d25d1f17801b
     fi
 
     # Delete OpenShift 3 files
     if [ -f ${project_dir}/playbooks/vars/ocp3.yml ]
-    then 
+    then
         openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
         if [[ ${openshift_product} == "ocp3" ]]; then
           FILES=("${FILES[@]}" "$ocp3_vars_files")
@@ -132,11 +154,11 @@ function isvmShutdown () {
 
 function dnf_or_yum(){
      RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
-     if [[ $RHEL_VERSION == "RHEL8" ]]; then 
+     if [[ $RHEL_VERSION == "RHEL8" ]]; then
         echo "dnf"
      elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         echo "yum"
-     fi 
+     fi
 }
 
 function collect_system_information() {
@@ -258,17 +280,17 @@ function check_disk_size () {
 }
 
 function check_memory_size () {
-    
+
     MINIMAL_MEMORY=$(awk '/qubinode_minimal_memory:/ {print $2}' "${vars_file}")
     STANDARD_MEMORY=$(awk '/qubinode_standard_memory:/ {print $2}' "${vars_file}")
     PERFORMANCE_MEMORY=$(awk '/qubinode_performance_memory:/ {print $2}' "${vars_file}")
-    
+
     MINIMAL_MEMORY=${MINIMAL_MEMORY:-30}
     STANDARD_MEMORY=${STANDARD_MEMORY:-80}
     PERFORMANCE_MEMORY=${PERFORMANCE_MEMORY:-88}
 
     TOTAL_MEMORY=$(free -g|awk '/^Mem:/{print $2}')
-    
+
     if [[ $TOTAL_MEMORY -ge $MINIMAL_MEMORY ]] && [[ $TOTAL_MEMORY -lt $STANDARD_MEMORY ]]
     then
        #printf "%s\n" " The memory size $TOTAL_MEMORY GB meets the minimum memory requirement of $MINIMAL_MEMORY GB"
@@ -307,7 +329,7 @@ function check_hardware_resources () {
     else
         local PROFILE=notmet
     fi
-   
+
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: "$PROFILE"/g" "${vars_file}"
 #    elif [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" == minimal ]] || [[ "$MEMORY_PROFILE" == minimal ]]
 #    then
