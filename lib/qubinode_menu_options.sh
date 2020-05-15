@@ -29,7 +29,7 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
               else
                   ASK_SIZE=true
-                  qubinode_adv_openshift4
+                  qubinode_deploy_ocp4
               fi
               ;;
           satellite)
