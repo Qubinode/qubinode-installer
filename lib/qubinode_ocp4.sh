@@ -40,6 +40,11 @@ function qubinode_deploy_ocp4 () {
     [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
     [[ -f ${project_dir}/lib/qubinode_ocp4_utils.sh ]] && . ${project_dir}/lib/qubinode_ocp4_utils.sh || exit 1
 
+#    check_openshift4_size_yml
+#    echo "STORAGE_PROFILE=$STORAGE_PROFILE"
+#    echo "MEMORY_PROFILE=$MEMORY_PROFILE"
+#    exit
+
     # Check if openshift cluster is already deployed and running
     check_if_cluster_deployed
 
