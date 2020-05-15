@@ -28,6 +28,17 @@ user_idm_password: "{{ idm_admin_pwd }}"
 # Change to reflect the number of masters and workers you want to deploy
 master_count: 3
 compute_count: 3
+master_hd_size: 120
+master_mem_size: 16192
+master_vcpu: 4
+compute_hd_size: 120
+compute_mem_size: 16192
+compute_vcpu: 4
+compute_local_storage: true
+compute_vdb_size: 10
+compute_vdc_size: 100
+monpod_disk_size: "{{ compute_vdb_size }}"
+osdvolume_disk_size: "{{ monpod_disk_size }}"
 
 # The start ranage for IP address make sure there is enough for the
 # master and compute nodes you want to deploy
@@ -113,30 +124,30 @@ product: "{{ openshift_product }}"
 # OCP4 instance sizes
 ocp4_instances:
   - name: master
-    hd_size: 120G
-    memory_size: 16192
-    cpu_size: 4
+    hd_size: "{{ master_hd_size }}G"
+    memory_size: "{{ master_mem_size }}"
+    cpu_size: "{{ master_vcpu }}"
     extra_storage:
       - size: 10G
-        enable: true
+        enable: false
         name: vdb
       - size: 50G
-        enable: true
+        enable: false
         name: vdc
     qty: "{{ master_count }}"
     vm_type: master
     ip_octet: "{{ master_ip_octet }}"
   - name: compute
-    hd_size: 120G
-    memory_size: 16192
-    cpu_size: 4
+    hd_size: "{{ compute_hd_size }}G"
+    memory_size: "{{ compute_mem_size }}"
+    cpu_size: "{{ compute_vcpu }}"
     extra_storage:
-      - size: 10G
+      - size: "{{ compute_vdb_size }}G"
         name: vdb
-        enable: true
-      - size: 100G
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdc_size }}G"
         name: vdc
-        enable: true
+        enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"

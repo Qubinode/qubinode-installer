@@ -32,8 +32,8 @@ cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Standard${end}
     ${yel}=========================${end}
-     3 masters
-     3 workers
+     3 masters w/16G and 4 vcpu
+     3 workers w/16G and 4 vcpu
 
     ${cyn}========${end}
     Features
@@ -47,8 +47,8 @@ cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Minimal${end}
     ${yel}=========================${end}
-     3 masters
-     2 workers
+     3 masters w/8G memory and 2 vcpu
+     0 workers
 
     ${cyn}========${end}
     Features
@@ -284,6 +284,19 @@ function clean_up_stale_vms(){
 }
 
 function configure_local_storage () {
+    #TODO: you be presented with the choice between localstorage or ocs. Not both.
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
+    vdb_size="${vdb:-100}"
+    compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "    ${def}Your compute_hd_size is now set to${end} ${yel}${compute_disk_size}G${end}"
+    fi
+
 cat << EOF
     ${yel}=========================${end}
     ${mag}Select volume Mode: ${end}
@@ -324,29 +337,21 @@ function set_local_volume_type () {
 function confirm_minimal_deployment () {
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
     openshift4_minimal_desc
-    confirm " This Option will set your compute count to 2? yes/no"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
+    #confirm " This Option will set your compute count to 2? yes/no"
+    #if [ "A${response}" == "Ayes" ]
+    #then
+        compute_num=0
+        master_vcpu=2
+        master_memory_size=8
+        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory_size"/g" "${ocp4_vars_file}"
+        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
+        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
         sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
         sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
-    fi
+    #fi
 }
 
-
-function confirm_minimal_deployment () {
-    all_vars_file="${project_dir}/playbooks/vars/all.yml"
-    openshift4_minimal_desc
-    confirm " This Option will set your compute count to 2? yes/no"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
-        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
-        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
-    fi
-}
 
 is_node_up () {
     IP=$1
@@ -736,40 +741,211 @@ openshift4_enterprise_deployment () {
 
 function openshift4_custom_desc (){
 cat << EOF
+
+
+
     ${yel}=========================${end}
-    ${mag}Deployment Type: Custom${end}
+    ${blu} Deployment Type: Custom${end}
     ${yel}=========================${end}
 
-    ${red}=========================${end}
-    ${mag}This Deployment option is not supported. Limited assitance will be provided.${end}
-    ${red}=========================${end}
+    ${blu}The Following can be changed${end}
 
-    ${cyn}========${end}
-    The Following can be changed
-    Please submit a pull request for additional changes.
-    ${cyn}========${end}
-     - compute count 
-     - local storage 
+     ${mag}Master Nodes:${end}
+       - master node count
+       - master disk size
+       - master vcpu
+
+     ${mag}Compute Nodes:${end}
+       - compute node count
+       - compute disk size
+       - compute vcpu
+       - deploy ocs
+         - size for MON disk
+         - size for OSD disk
+       - deploy local-storage
+         - size for disk vdb
+
+    ${red}********** NOTICE ************${end}
+    ${blu} This is still in development ${end}
+    ${blu} Please resport issues        ${end}
+    ${red}******************************${end}
 EOF
 
-    ## Compute Count 
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
+
+    #------------------------------------------
+    # master count
+    #------------------------------------------
     printf "%s\n\n" ""
-    read -p " ${yel}Enter the number of compute nodes your would like?${end} " compute_count
-    compute_num="${compute_count}"
-    confirm " ${blu}You entered${end} ${yel}$compute_num${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
+    read -p "     ${def}Enter the number of master nodes you would like, the default is 3: ${end} " master_count
+    master_num="${master_count:-3}"
+    confirm "     ${def}You entered${end} ${yel}$master_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_count:.*/master_count: "$master_num"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_count is now set to${end} ${yel}$master_num${end}"
+    fi
+
+    #------------------------------------------
+    # master disk size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the disk size in GB for the master nodes, e.g. 120, default is 120: ${end} " hd_size
+    master_hd_size="${hd_size:-120}"
+    master_disk_size=$(echo ${master_hd_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$master_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_hd_size:.*/master_hd_size: "$master_disk_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_hd_size is now set to${end} ${yel}${master_disk_size}G${end}"
+    fi
+
+    #------------------------------------------
+    # master memory size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the memory size in GB for the master nodes e.g. 12, the default is 16:  ${end} " mem_size
+    master_mem_size="${mem_size:-16}"
+    user_mem_input=$(echo ${master_mem_size}| grep -o '[[:digit:]]*')
+    master_memory_size=$(echo $user_mem_input*1024|bc)
+    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_mem_size is now set to${end} ${yel}${user_mem_input}G${end}"
+    fi
+
+    #------------------------------------------
+    # master vcpu count
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}How many vcpu to allocate to the master nodes, the default is 4? ${end} " mvcpu
+    master_vcpu="${mvcpu:-4}"
+    user_vcpu_input=$(echo ${master_vcpu}| grep -o '[[:digit:]]*')
+    master_vcpu_count=$user_vcpu_input
+    confirm "     ${def}You entered${end} ${yel}$master_vcpu_count${end}${def},is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_vcpu is now set to${end} ${yel}${user_vcpu_input}G${end}"
+    fi
+
+
+    #------------------------------------------
+    # Compute Count 
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the number of compute nodes you would like, the defaut is 3: ${end} " compute_count
+    compute_num="${compute_count:-3}"
+    confirm "     ${def}You entered${end} ${yel}$compute_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
         printf "%s\n" ""
-        printf "%s\n" " ${blu}Your compute_count is now set to${end} ${yel}$compute_num${end}"
+        printf "%s" "     ${def}Your compute_count is now set to${end} ${yel}$compute_num${end}"
     fi
 
+    #------------------------------------------
+    # compute disk size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the disk size in GB for the compute nodes e.g. 120, default is 120: ${end} " c_hd_size
+    compute_hd_size="${c_hd_size:-120}"
+    compute_disk_size=$(echo ${compute_hd_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$compute_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_hd_size:.*/compute_hd_size: "$compute_disk_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_hd_size is now set to${end} ${yel}${compute_disk_size}G${end}"
+    fi
+
+    #------------------------------------------
+    # compute memory size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the memory size in GB for the compute nodes, e.g. 16, default is 16: ${end} " c_mem_size
+    compute_mem_size="${c_mem_size:-16}"
+    user_mem_input=$(echo ${compute_mem_size}| grep -o '[[:digit:]]*')
+    compute_memory_size=$(echo $user_mem_input*1024|bc)
+    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_mem_size:.*/compute_mem_size: "$compute_memory_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_mem_size is now set to${end} ${yel}${user_mem_input}G${end}"
+    fi
+
+    #------------------------------------------
+    # compute vcpu count
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}How many vcpu to allocate to the compute nodes, the default is 4? ${end} " c_vcpu
+    compute_vcpu="${c_vcpu:-4}"
+    user_vcpu_input=$(echo ${compute_vcpu}| grep -o '[[:digit:]]*')
+    compute_vcpu_count=$user_vcpu_input
+    confirm "     ${def}You entered${end} ${yel}$compute_vcpu_count${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_vcpu:.*/compute_vcpu: "$compute_vcpu_count"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_vcpu is now set to${end} ${yel}${user_vcpu_input}${end}"
+    fi
+
+    printf "%s\n\n\n" ""
+    printf "%s\n" "      Choose a persistant storage option."
+    printf "%s\n" "         * Local Storage "
+    printf "%s\n\n" "         * OpenShift Container Storage (OCS)"
+    local storage_option
+    read -p "    ${cyn} What is your choice? local or ocs: ${end}" storage_option
+    case $storage_option in
+        local) configure_local_storage
+               ;;
+        ocs)   configure_ocs_storage
+               ;;
+        exit)  exit 0
+               ;; 
+        *) printf "%s\n\n" " ${red}Error...${end}"
+        ;;
+    esac
+
     ## Configure local Storage 
-    configure_local_storage
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
     sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
     sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
+}
+
+function configure_ocs_storage () {
+    #------------------------------------------
+    # configure OpenShift Container Storage
+    #------------------------------------------
+    printf "%s\n\n" ""
+    confirm "     ${def}Do you want to deploy OCS? ${end}${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        read -p "     ${def}Enter the size you want in GB for MON disk, default is 10: ${end} " mon_vdb_size
+        read -p "     ${def}Enter the size you want in GB for OSD disk, default is 100: ${end} " osd_vdc_size
+        vdb_size="{mon_vdb_size:-10}"
+        vdc_size="{osd_vdc_size:-100}"
+        compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+        compute_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
+        confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end} MON and ${yel}$compute_vdc_size${end} for OSD${def}, is this correct?${end} ${yel}yes/no${end}"
+        if [ "A${response}" == "Ayes" ]
+        then
+            sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+            sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+            printf "%s\n" ""
+            printf "%s" "    ${def}Your MON disk size is set to${end} ${yel}${compute_vdb_size}G${end} and your OSD is set to ${yel}${compute_vdc_size}G${end}"
+        fi
+    fi
 }
 
 function shutdown_variables () {
