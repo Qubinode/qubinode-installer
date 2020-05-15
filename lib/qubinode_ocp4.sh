@@ -30,7 +30,7 @@ check_if_cluster_deployed () {
 }
 
 
-function qubinode_autoinstall_openshift4 () {
+function qubinode_deploy_ocp4 () {
     product_in_use="ocp4" # Tell the installer which release of OCP
     openshift_product="${product_in_use}"
     qubinode_product_opt="${product_in_use}"
