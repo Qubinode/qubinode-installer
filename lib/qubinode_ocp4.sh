@@ -80,58 +80,6 @@ function qubinode_deploy_ocp4 () {
     check_if_cluster_deployed
 }
 
-function qubinode_adv_openshift4 () {
-    product_in_use="ocp4" # Tell the installer this is openshift3 installation
-    openshift_product="${product_in_use}"
-    qubinode_product_opt="${product_in_use}"
-    setup_required_paths
-    [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
-    [[ -f ${project_dir}/lib/qubinode_ocp4_utils.sh ]] && . ${project_dir}/lib/qubinode_ocp4_utils.sh || exit 1
-
-    # Check if openshift cluster is already deployed and running
-    check_if_cluster_deployed
-
-    # load required files from samples to playbooks/vars/
-    qubinode_required_prereqs
-
-    # Ensure the KVM host is setup
-    # System is attached to the OpenShift subscription
-    # Get the version number for the lastest openshift
-    openshift4_prechecks
-
-    # Ensure host system is setup as a KVM host
-    if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]
-    then
-        printf "%s\n" " ${red}The system is not setup as a KVM host.${end}"
-        printf "%s\n" " Run the below command to setup the host"
-        printf "%s\n\n" " then run ${grn}./qubinode-installer -p ocp4 ${end}again."
-        printf "%s\n\n" " ${grn}./qubinode-installer -m host ${end}"
-    fi
-
-    # Ensure the system meets the requirement for a standard OCP deployment
-    check_openshift4_size_yml
-
-    # make sure no old VMs from previous deployments are still around
-    state_check
-
-    # Deploy IdM Server
-    openshift4_idm_health_check
-    if [[  "A${IDM_IN_GOOD_HEALTH}" != "Aready"  ]]
-    then
-        printf "%s\n" " ${red}Could not find the IdM server.${end}"
-        printf "%s\n" " Run the below command to deploy the IdM server"
-        printf "%s\n\n" " then run ${grn}./qubinode-installer -p ocp4 ${end}again."
-        printf "%s\n\n" " ${grn}./qubinode-installer -p idm ${end}"
-    fi
-
-    # Deploy OCP4
-    DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
-    ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' || exit $?
-
-    # Check the OpenSHift status
-    check_if_cluster_deployed
-}
-
 function openshift4_qubinode_teardown () {
     confirm " Are you sure you want to delete the OpenShift 4 cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
