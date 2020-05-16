@@ -1050,3 +1050,26 @@ function shutdown_cluster () {
 
 }
 
+openshift4_server_maintenance () {
+    case ${product_maintenance} in
+       diag)
+           echo "Perparing to run full Diagnostics: : not implemented yet"
+           ;;
+       smoketest)
+           echo  "Running smoke test on environment: : not implemented yet"
+              ;;
+       shutdown)
+            shutdown_cluster
+            ;;
+       startup)
+            ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t startup -e startup_cluster=yes || exit 1
+            /usr/local/bin/qubinode-ocp4-status
+            ;;
+       status)
+            /usr/local/bin/qubinode-ocp4-status
+            ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
+}
