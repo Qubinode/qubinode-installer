@@ -82,6 +82,7 @@ ssh_username: "{{ admin_user }}"
 # Use to create VM
 # Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)
 os_qcow_image_name: rhel-server-7.7-update-2-x86_64-kvm.qcow2
+os_qcow_image_checksum: eb292b70bc88885cabc78f8dff0a0415a76064e2593eab54ac8dd4973199a921
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 
 # setting this to true will result is no VMs being created and any existing vms to be deleted
@@ -111,7 +112,7 @@ qubinode_performance_memory: 88
 
 # We are not enforcing acutal sizes at this time
 qubinode_minimal_storage: 370      # actual is 640
-qubinode_standard_storage: 900     # actual is 1160
+qubinode_standard_storage: 400     # actual is 1160
 qubinode_performance_storage: 1340 # actual is 1340
 
 # your system profile
