@@ -19,6 +19,16 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 # deploy NFS persistent storage
 configure_nfs_storage: yes
 
+# set NFS as the default persistent storage
+set_as_default: true
+
+# Defaults for NFS Provisioner role
+provision_nfs_server: true
+nfs_server_directory_path: /export
+nfs_server_ip:  "{{ kvm_host_ip }}"
+provision_nfs_provisoner: true
+project_namespace: nfs-provisioner
+
 # deploy OCS persistent storage
 configure_ocs_storage: no
 
@@ -48,8 +58,8 @@ compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
 compute_local_storage: true
-compute_vdb_size: 10
-compute_vdc_size: 100
+compute_vdb_size: 50
+compute_vdc_size: 150
 monpod_disk_size: "{{ compute_vdb_size }}"
 osdvolume_disk_size: "{{ monpod_disk_size }}"
 
@@ -180,12 +190,6 @@ ocp4_instances:
     ip_octet: 30
 
 
-## Defaults for NFS Provisioner role
-provision_nfs_server: true
-nfs_server_directory_path: /export
-nfs_server_ip:  "{{ kvm_host_ip }}"
-provision_nfs_provisoner: true
-project_namespace: nfs-provisioner
 
 configure_registry: true
 registry_pvc_size: 100Gi
@@ -194,7 +198,6 @@ storage_class_result: true
 openshift_token: 1234567890
 openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
 openshift_version: ocp4
-set_as_default: true
 delete_deployment: false
 insecure_skip_tls_verify: true
 
