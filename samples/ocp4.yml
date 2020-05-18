@@ -39,6 +39,13 @@ localstorage_filesystem: yes
 localstorage_block: no
 localstorage_mount_path: /dev/vdc
 
+# configure OCP register
+configure_registry: true
+registry_pvc_size: 100Gi
+
+# TODO: futture implementation
+ocp_register_storage: nfs   # options: ocs, nfs
+
 # DNS & IdM info
 internal_domain_name: "{{ domain }}"
 external_domain_name: "{{ domain }}"
@@ -188,11 +195,6 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
-
-
-
-configure_registry: true
-registry_pvc_size: 100Gi
 
 storage_class_result: true
 openshift_token: 1234567890
