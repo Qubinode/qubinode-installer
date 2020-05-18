@@ -86,6 +86,9 @@ function openshift4_qubinode_teardown () {
     then
         DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
         ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ tear_down: True }' || exit $?
+        test -f "${project_dir}/playbooks/vars/ocp4.yml" && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
+        printf "%s\n\n\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
+        
     else
         exit 0
     fi
