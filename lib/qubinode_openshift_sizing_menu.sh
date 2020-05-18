@@ -158,8 +158,8 @@ function read_options_ocp4(){
 	local choice
 	read -p "   ${cyn}Enter choice [ 1 - 6] ${end}" choice
 	case $choice in
-	1) ocp_size=minimal && confirm_minimal_deployment
-            ;;
+        1) ocp_size=minimal && confirm_minimal_deployment
+                ;;
         2) ocp_size=standard && openshift4_standard_desc
             ;;
         3) ocp_size=local-storage && configure_local_storage
@@ -168,8 +168,8 @@ function read_options_ocp4(){
             ;;
         5) ocp_size=custom && openshift4_custom_desc
             ;;
-	6) exit 0
-            ;;
+        6) exit 0
+                ;;
 	*) printf "%s\n\n" " ${red}Error...${end}" && sleep 2
 	esac
 
@@ -278,7 +278,7 @@ function ocp4_menu(){
                 ocp_size=custom
                 continue_with_selected_install
                 ;;
-                *) exit 0;;
+            *) exit 0;;
             esac
         else
             echo "Option not met"
