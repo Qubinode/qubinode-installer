@@ -297,7 +297,7 @@ function check_hardware_resources () {
     elif [[ "$STORAGE_PROFILE" != notmet ]] && [[ "$MEMORY_PROFILE" != notmet ]] && [[ "$STORAGE_PROFILE" == minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
     then
         local PROFILE=standard
-        if [ "A${ASK_SIZE}" == "Afalse" ]
+        if [[ "A${ASK_SIZE}" == "Afalse" ]] || [[ "A${warn_storage_profile}" == "Ayes" ]]
         then
             printf "%s\n\n\n" ""
             printf "%s\n" " ${yel} Your storage size of $DISK_SIZE_COMPARE does not meet the recommended size of $STANDARD_STORAGE.${end}"
@@ -311,6 +311,8 @@ function check_hardware_resources () {
             if [ "A${response}" == "Ayes" ]
             then
                 exit 0
+            else
+                sed -i "s/warn_storage_profile:.*/warn_storage_profile: no/g" "${vars_file}"
             fi
         fi
     elif [[ "$STORAGE_PROFILE" != notmet ]] && [[ "$MEMORY_PROFILE" != notmet ]]
