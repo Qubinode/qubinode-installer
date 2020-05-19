@@ -131,11 +131,12 @@ coreos_tmp_dir: /tmp/build_coreos_container
 webserver_directory: /opt/qubinode_webserver
 ocp4_release_dir: "{{ ocp4_release }}"
 
-
 # Containers info
 ocp4_lb_container: qbn-lb
 podman_webserver: qbn-httpd
 
+# Your openshift cluster url
+openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
 
 openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
 ignition_files_dir: "{{ openshift_install_dir }}"
@@ -195,14 +196,3 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
-
-storage_class_result: true
-openshift_token: 1234567890
-openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
-openshift_version: ocp4
-delete_deployment: false
-insecure_skip_tls_verify: true
-
-# These variables appear to be no longer needed
-openshift_pool_id: ""
-openshift_product: ""

@@ -86,9 +86,10 @@ function openshift4_prechecks () {
     fi
 
     # Get the lastest OCP4 version
-    curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
-    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
+    # temporarly removing auto release
+    #curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+    #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+    #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
     # Ensure Openshift Subscription Pool is attached
     check_for_openshift_subscription
