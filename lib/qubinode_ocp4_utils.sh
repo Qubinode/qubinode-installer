@@ -663,6 +663,28 @@ openshift4_enterprise_deployment () {
     post_deployment_steps
 }
 
+reset_cluster_resources_default () {
+    default_master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_master_hd_size=$(awk '/^master_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_master_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+
+    sed -i "s/master_vcpu:.*/master_vcpu: "$default_master_vcpu"/g" "${ocp4_vars_file}"
+    sed -i "s/master_mem_size:.*/master_mem_size: "$default_master_mem_size"/g" "${ocp4_vars_file}"
+    sed -i "s/master_hd_size:.*/master_hd_size: "$default_master_hd_size"/g" "${ocp4_vars_file}"
+    sed -i "s/master_count:.*/master_count: "$default_master_count"/g" "${ocp4_vars_file}"
+
+    sed -i "s/compute_vcpu:.*/compute_vcpu: "$default_compute_count"/g" "${ocp4_vars_file}"
+    sed -i "s/compute_mem_size:.*/compute_mem_size: "$default_compute_mem_size"/g" "${ocp4_vars_file}"
+    sed -i "s/compute_hd_size:.*/compute_hd_size: "$default_compute_hd_size"/g" "${ocp4_vars_file}"
+    sed -i "s/compute_count:.*/compute_count: "$default_compute_count"/g" "${ocp4_vars_file}"
+}
+
 function update_node_count () {
     #------------------------------------------
     # Update Node Count
@@ -717,7 +739,7 @@ function update_node_disk_size () {
             sed -i "s/master_hd_size:.*/master_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
-            sed -i "s/compute_hd_size:.*/master_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
+            sed -i "s/compute_hd_size:.*/compute_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
         else
             printf "%s" "     ${red}Unknown node type $NODE!{end}"
             RC=1
@@ -818,6 +840,7 @@ function get_cluster_resources () {
                          "compute_disk  - ${yel}$compute_hd_size${end} size HD for compute nodes" \
                          "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
                          "compute_vcpu  - ${yel}$compute_vcpu${end} vCPU for compute nodes" \
+                         "Reset         - Reset to default values" \
                          "Exit          - Save changes and exist")
 }
 
@@ -897,52 +920,49 @@ EOF
                 update_node_vcpu_size master $master_vcpu_count
 		get_cluster_resources
                 ;;
-            Exit) echo exit; break;;
+            Reset)
+                reset_cluster_resources_default
+		get_cluster_resources
+                ;;
+            Exit) break;;
             * ) echo "Please answer a valid choice";;
         esac
     done
 
-    exit
-
-
-
-    #------------------------------------------
-    # master vcpu count
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}How many vcpu to allocate to the master nodes, the default is 4? ${end} " mvcpu
-    master_vcpu="${mvcpu:-4}"
-    user_vcpu_input=$(echo ${master_vcpu}| grep -o '[[:digit:]]*')
-    master_vcpu_count=$user_vcpu_input
-    confirm "     ${def}You entered${end} ${yel}$master_vcpu_count${end}${def},is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s
-" "     ${def}Your master_vcpu is now set to${end} ${yel}${user_vcpu_input}G${end}"
-    fi
-
-
-
+    storage_opts=("NFS   - Configure NFS persistent Storage" \
+                  "OCS   - Red Hat OpenShift Container Storage" \
+                  "Local - Configure local disk for persistent Storage" \
+                  "Reset - Reset to default storage options" \
+                  "Exit  - Save changes and exist menu")
     printf "%s\n\n\n" ""
-    printf "%s\n" "      Choose a persistant storage option."
-    printf "%s\n" "         * Local Storage "
-    printf "%s\n\n" "         * OpenShift Container Storage (OCS)"
-    local storage_option
-    read -p "    ${cyn} What is your choice? local or ocs: ${end}" storage_option
-    case $storage_option in
-        local) configure_local_storage
-               ;;
-        ocs)   configure_ocs_storage
-               ;;
-        exit)  exit 0
-               ;; 
-        *) printf "%s\n\n" " ${red}Error...${end}"
-        ;;
-    esac
+    printf "%s\n\n" "    ${blu}Choose one of the below peristent storage${end}"
+    while true
+    do
+        createmenu "${storage_opts[@]}"
+        result=($(echo "${selected_option}"))
+        case $result in
+            NFS)
+                echo NFS
+                ;;
+            OCS)
+                configure_ocs_storage
+                ;;
+            Local)
+                configure_local_storage
+                ;;
+            Reset)
+                echo RESET
+                ;;
+            Exit)
+                break
+                ;;
+            *)
+                echo "Please answer a valid choice"
+                ;;
+        esac
+    done
 
-    ## Configure local Storage 
+    ##  set cluster details to custom
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
     sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
     sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
