@@ -16,9 +16,18 @@ local_user_account: "{{ admin_user }}"
 local_user_ssh_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
 ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 
-
 # deploy NFS persistent storage
 configure_nfs_storage: yes
+
+# set NFS as the default persistent storage
+set_as_default: true
+
+# Defaults for NFS Provisioner role
+provision_nfs_server: true
+nfs_server_directory_path: /export
+nfs_server_ip:  "{{ kvm_host_ip }}"
+provision_nfs_provisoner: true
+project_namespace: nfs-provisioner
 
 # deploy OCS persistent storage
 configure_ocs_storage: no
@@ -29,6 +38,13 @@ localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
 localstorage_mount_path: /dev/vdc
+
+# configure OCP register
+configure_registry: true
+registry_pvc_size: 100Gi
+
+# TODO: futture implementation
+ocp_register_storage: nfs   # options: ocs, nfs
 
 # DNS & IdM info
 internal_domain_name: "{{ domain }}"
@@ -49,8 +65,8 @@ compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
 compute_local_storage: true
-compute_vdb_size: 10
-compute_vdc_size: 100
+compute_vdb_size: 50
+compute_vdc_size: 150
 monpod_disk_size: "{{ compute_vdb_size }}"
 osdvolume_disk_size: "{{ monpod_disk_size }}"
 
@@ -115,11 +131,12 @@ coreos_tmp_dir: /tmp/build_coreos_container
 webserver_directory: /opt/qubinode_webserver
 ocp4_release_dir: "{{ ocp4_release }}"
 
-
 # Containers info
 ocp4_lb_container: qbn-lb
 podman_webserver: qbn-httpd
 
+# Your openshift cluster url
+openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
 
 openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
 ignition_files_dir: "{{ openshift_install_dir }}"
@@ -179,39 +196,3 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
-
-
-## Defaults for NFS Provisioner role
-# Install and configure nfs server packages
-provision_nfs_server: true
-# Set Directory path of nfs storage
-nfs_server_directory_path: /export
-# Set the ip address of the nfs server
-nfs_server_ip:  "{{ kvm_host_ip }}"
-
-# Configure the nfs-provisioner container on OpenShift
-provision_nfs_provisoner: true
-# OpenShift Project name for the nfs-provisioner	
-project_namespace: nfs-provisioner
-# Configure Registry with nfs-provisioner storage
-configure_registry: true
-# Configure the default size of regisitry
-registry_pvc_size: 100Gi
-# default storage class name
-storage_class_result: true
-# OpenShift login token
-openshift_token: 1234567890
-# OpenShift target url
-openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
-# OpenShift version that will will be deploying nfs-provisioner to
-openshift_version: ocp4
-# Set nfs-provisoner as default stroage 
-set_as_default: true
-#delete deployment
-delete_deployment: false
-# Skip TLS on login
-insecure_skip_tls_verify: true
-
-# These variables appear to be no longer needed
-openshift_pool_id: ""
-openshift_product: ""

@@ -96,82 +96,6 @@ function openshift4_prechecks () {
     #get_subscription_pool_id 'Red Hat OpenShift Container Platform'
 }
 
-openshift4_qubinode_teardown_deprecated () {
-
-    # Ensure all preqs before continuing
-    openshift4_prechecks
-
-    # delete dns entries
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml -e dns_teardown=true
-
-    # Delete VMS
-    test -f $ocp4_vars_file && remove_ocp4_vms
-
-    # Delete containers managed by systemd
-    for i in $(echo "lb${cluster_name}.service ocp4lb.service $podman_webserver $lb_name")
-    do
-        if sudo sudo systemctl list-unit-files | grep -q $i
-        then
-            echo "Removing podman container $i"
-            sudo systemctl stop $i >/dev/null
-            sudo systemctl disable $i >/dev/null
-            sudo systemctl daemon-reload >/dev/null
-            sudo systemctl reset-failed >/dev/null
-            path="/etc/systemd/system/${i}"
-            test -f $path && sudo rm -f $path
-        fi
-    done
-
-
-    # Delete the remaining containers and pruge their images
-    containers=(ocp4lb lb${cluster_name} openshift-4-loadbalancer-${cluster_name} ocp4ignhttpd ignwebserver qbn-httpd)
-    deleted_containers=()
-    for pod in ${containers[@]}
-    do
-        id=$(sudo podman ps -q -f name=$pod)
-        if [ "A${id}" != "A" ]
-        then
-            sudo podman container stop $id
-            sudo podman container rm -f $id
-        fi
-
-        if ! sudo podman container ls -a | grep -q $pod
-        then
-            deleted_containers+=( "$pod" )
-            containers=("${containers[@]/$pod/}")
-        fi
-    done
-
-    # purge all containers and their images
-    sudo podman container prune --force >/dev/null
-    sudo podman image prune --all >/dev/null
-
-    # Verify all containers have been deleted and exit otherwise
-    if [ "${#containers[@]}" -ne "${#deleted_containers[@]}" ]
-    then
-        printf "%s\n" " There is a total of ${#containers[@]}, ${#deleted_containers[@]} were deleted."
-        printf "%s\n" " The following could containers not be deleted. Please manually delete them and try again."
-
-        for i in "${containers[@]}"
-        do
-            printf "%s\n" "    ${i:-other}"|grep -v other
-        done
-        exit 0
-    fi
-
-    # Remove downloaded ignitions files
-    test -d /opt/qubinode_webserver/4.2/ignitions && \
-         rm -rf /opt/qubinode_webserver/4.2/ignitions
-    test -d "${project_dir}/ocp4" && rm -rf "${project_dir}/ocp4"
-    test -d "${project_dir}/rhcos-install" && rm -rf "${project_dir}/rhcos-install"
-    test -f "${project_dir}/playbooks/vars/ocp4.yml"  && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
-
-    printf "%s\n\n" ""
-    printf "%s\n" " ${yel}************************${end}"
-    printf "%s\n" " OCP4 deployment removed"
-    printf "%s\n\n" " ${yel}************************${end}"
-    exit 0
-}
 
 function remove_ocp4_vms () {
     #clean up
@@ -740,7 +664,189 @@ openshift4_enterprise_deployment () {
     post_deployment_steps
 }
 
-function openshift4_custom_desc (){
+reset_cluster_resources_default () {
+    default_master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_master_hd_size=$(awk '/^master_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_master_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+
+    sed -i "s/master_vcpu:.*/master_vcpu: "$default_master_vcpu"/g" "${ocp4_vars_file}"
+    sed -i "s/master_mem_size:.*/master_mem_size: "$default_master_mem_size"/g" "${ocp4_vars_file}"
+    sed -i "s/master_hd_size:.*/master_hd_size: "$default_master_hd_size"/g" "${ocp4_vars_file}"
+    sed -i "s/master_count:.*/master_count: "$default_master_count"/g" "${ocp4_vars_file}"
+
+    sed -i "s/compute_vcpu:.*/compute_vcpu: "$default_compute_count"/g" "${ocp4_vars_file}"
+    sed -i "s/compute_mem_size:.*/compute_mem_size: "$default_compute_mem_size"/g" "${ocp4_vars_file}"
+    sed -i "s/compute_hd_size:.*/compute_hd_size: "$default_compute_hd_size"/g" "${ocp4_vars_file}"
+    sed -i "s/compute_count:.*/compute_count: "$default_compute_count"/g" "${ocp4_vars_file}"
+}
+
+function update_node_count () {
+    #------------------------------------------
+    # Update Node Count
+    #------------------------------------------
+
+    NODE=$1
+    DEFAULT_VALUE=$2
+    RC=0
+    
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the number of ${NODE} nodes you would like: ${end} " user_input
+    node_num="${user_input:-$DEFAULT_VALUE}"
+    confirm "     ${def}You entered${end} ${yel}$node_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        printf "%s\n" ""
+        if [ "A${NODE}" == "Amaster" ]
+        then
+            sed -i "s/master_count:.*/master_count: "$node_num"/g" "${ocp4_vars_file}"
+        elif [ "A${NODE}" == "Acompute" ]
+        then
+            sed -i "s/compute_count:.*/compute_count: "$node_num"/g" "${ocp4_vars_file}"
+        else
+            printf "%s" "     ${red}Unknown node type $NODE!{end}"
+            RC=1
+        fi
+        
+        printf "%s\n\n" "     ${def}Your $NODE count is now set to${end} ${yel}$node_num${end}"
+    fi
+    return $RC
+}
+
+function update_node_disk_size () {
+    #------------------------------------------
+    # $NODE disk size
+    #------------------------------------------
+
+    NODE=$1
+    DEFAULT_VALUE=$2
+    RC=0
+
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the disk size in GB for the $NODE nodes, e.g. 120: ${end} " user_input
+    hd_size="${user_input:-$DEFAULT_VALUE}"
+    node_disk_size=$(echo ${hd_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$node_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        printf "%s\n" ""
+        if [ "A${NODE}" == "Amaster" ]
+        then
+            sed -i "s/master_hd_size:.*/master_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
+        elif [ "A${NODE}" == "Acompute" ]
+        then
+            sed -i "s/compute_hd_size:.*/compute_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
+        else
+            printf "%s" "     ${red}Unknown node type $NODE!{end}"
+            RC=1
+        fi
+        printf "%s\n\n" "     ${def}Your $NODE disk size is now set to${end} ${yel}${node_disk_size}G${end}"
+    fi
+    return $RC
+}
+
+function update_node_mem_size () {
+    #------------------------------------------
+    # $NODE memory size
+    #------------------------------------------
+
+    NODE=$1
+    DEFAULT_VALUE=$2
+    RC=0
+
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the memory size in GB for the $NODE nodes e.g. 12:  ${end} " user_input
+    mem_size="${user_input:-$DEFAULT}"
+    user_mem_input=$(echo ${mem_size}| grep -o '[[:digit:]]*')
+    memory_size=$(echo $user_mem_input*1000|bc)
+    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        printf "%s\n" ""
+        if [ "A${NODE}" == "Amaster" ]
+        then
+            sed -i "s/master_mem_size:.*/master_mem_size: "$memory_size"/g" "${ocp4_vars_file}"
+        elif [ "A${NODE}" == "Acompute" ]
+        then
+            sed -i "s/compute_mem_size:.*/compute_mem_size: "$memory_size"/g" "${ocp4_vars_file}"
+        else
+            printf "%s" "     ${red}Unknown node type $NODE!{end}"
+            RC=1
+        fi
+        printf "%s\n\n" "     ${def}Your $NODE memory size is now set to${end} ${yel}${user_mem_input}G${end}"
+    fi
+    return $RC
+
+}
+
+function update_node_vcpu_size () {
+    #------------------------------------------
+    # $NODE vCPU size
+    #------------------------------------------
+
+    NODE=$1
+    DEFAULT_VALUE=$2
+    RC=0
+
+    printf "%s\n\n" ""
+    read -p "     ${def}How many vcpu to allocate to the $NODE nodes?${end} " user_input
+    user_vcpu="${user_input:-$DEFAULT}"
+    user_vcpu_input=$(echo ${user_vcpu}| grep -o '[[:digit:]]*')
+    user_vcpu_count=$user_vcpu_input
+    confirm "     ${def}You entered${end} ${yel}$user_vcpu_count${end}${def},is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        printf "%s\n" ""
+        if [ "A${NODE}" == "Amaster" ]
+        then
+            sed -i "s/master_vcpu:.*/master_vcpu: "$user_vcpu_count"/g" "${ocp4_vars_file}"
+        elif [ "A${NODE}" == "Acompute" ]
+        then
+            sed -i "s/compute_vcpu:.*/compute_vcpu: "$user_vcpu_count"/g" "${ocp4_vars_file}"
+        else
+            printf "%s" "     ${red}Unknown node type $NODE!{end}"
+            RC=1
+        fi
+        printf "%s\n\n" "     ${def}Your $NODE vCPU is now set to${end} ${yel}${user_vcpu_input}.${end}"
+    fi
+    return $RC
+
+}
+
+function get_cluster_resources () {
+    # Get current values
+    master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    master_hd_size=$(awk '/^master_hd_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    m_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    master_mem_size=$(echo $m_mem_size/1000|bc)
+    master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    c_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    compute_mem_size=$(echo $c_mem_size/1000|bc)
+    compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    compute_vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    compute_vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    cluster_custom_opts=("master_count  - ${yel}$master_count${end} master nodes" \
+                         "master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
+                         "master_mem    - ${yel}$master_mem_size${end} memory for master nodes" \
+                         "master_vcpu   - ${yel}$master_vcpu${end} vCPU for master nodes" \
+                         "compute_count - ${yel}$compute_count${end} compute nodes" \
+                         "compute_disk  - ${yel}$compute_hd_size${end} size HD for compute nodes" \
+                         "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
+                         "compute_vcpu  - ${yel}$compute_vcpu${end} vCPU for compute nodes" \
+                         "Reset         - Reset to default values" \
+                         "Exit          - Save changes and exist")
+}
+
+function openshift4_custom_desc () {
+
 cat << EOF
 
 
@@ -770,155 +876,94 @@ cat << EOF
     ${blu} This is still in development ${end}
     ${blu} Please resport issues        ${end}
     ${red}******************************${end}
+
+
 EOF
 
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    get_cluster_resources
+    printf "%s\n" "    ${blu}Make a selection to change the current value.${end}"
+    printf "%s\n\n" "    ${blu}The memory and disk size are in Gigabyte.${end}"
+    while true
+    do
+        createmenu "${cluster_custom_opts[@]}"
+        result=($(echo "${selected_option}"))
+        case $result in
+            master_count) 
+                update_node_count master $master_count
+                get_cluster_resources
+                ;;
+            master_disk)
+                update_node_disk_size master $master_count
+                get_cluster_resources
+                ;;
+            master_mem)
+                update_node_mem_size master $master_mem_size
+		get_cluster_resources
+                ;;
+            master_vcpu)
+                update_node_vcpu_size master $master_vcpu_count
+		get_cluster_resources
+                ;;
+            compute_count)
+                update_node_count compute $compute_count
+                get_cluster_resources
+                ;;
+            compute_disk)
+                update_node_disk_size compute $compute_count
+                get_cluster_resources
+                ;;
+            compute_mem)
+                update_node_mem_size compute $compute_mem_size
+		get_cluster_resources
+                ;;
+            compute_vcpu)
+                update_node_vcpu_size master $master_vcpu_count
+		get_cluster_resources
+                ;;
+            Reset)
+                reset_cluster_resources_default
+		get_cluster_resources
+                ;;
+            Exit) break;;
+            * ) echo "Please answer a valid choice";;
+        esac
+    done
 
-    #------------------------------------------
-    # master count
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}Enter the number of master nodes you would like, the default is 3: ${end} " master_count
-    master_num="${master_count:-3}"
-    confirm "     ${def}You entered${end} ${yel}$master_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/master_count:.*/master_count: "$master_num"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s
-" "     ${def}Your master_count is now set to${end} ${yel}$master_num${end}"
-    fi
-
-    #------------------------------------------
-    # master disk size
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}Enter the disk size in GB for the master nodes, e.g. 120, default is 120: ${end} " hd_size
-    master_hd_size="${hd_size:-120}"
-    master_disk_size=$(echo ${master_hd_size}| grep -o '[[:digit:]]*')
-    confirm "     ${def}You entered${end} ${yel}$master_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/master_hd_size:.*/master_hd_size: "$master_disk_size"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s
-" "     ${def}Your master_hd_size is now set to${end} ${yel}${master_disk_size}G${end}"
-    fi
-
-    #------------------------------------------
-    # master memory size
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}Enter the memory size in GB for the master nodes e.g. 12, the default is 16:  ${end} " mem_size
-    master_mem_size="${mem_size:-16}"
-    user_mem_input=$(echo ${master_mem_size}| grep -o '[[:digit:]]*')
-    master_memory_size=$(echo $user_mem_input*1024|bc)
-    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory_size"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s
-" "     ${def}Your master_mem_size is now set to${end} ${yel}${user_mem_input}G${end}"
-    fi
-
-    #------------------------------------------
-    # master vcpu count
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}How many vcpu to allocate to the master nodes, the default is 4? ${end} " mvcpu
-    master_vcpu="${mvcpu:-4}"
-    user_vcpu_input=$(echo ${master_vcpu}| grep -o '[[:digit:]]*')
-    master_vcpu_count=$user_vcpu_input
-    confirm "     ${def}You entered${end} ${yel}$master_vcpu_count${end}${def},is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s
-" "     ${def}Your master_vcpu is now set to${end} ${yel}${user_vcpu_input}G${end}"
-    fi
-
-
-    #------------------------------------------
-    # Compute Count 
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}Enter the number of compute nodes you would like, the defaut is 3: ${end} " compute_count
-    compute_num="${compute_count:-3}"
-    confirm "     ${def}You entered${end} ${yel}$compute_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s" "     ${def}Your compute_count is now set to${end} ${yel}$compute_num${end}"
-    fi
-
-    #------------------------------------------
-    # compute disk size
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}Enter the disk size in GB for the compute nodes e.g. 120, default is 120: ${end} " c_hd_size
-    compute_hd_size="${c_hd_size:-120}"
-    compute_disk_size=$(echo ${compute_hd_size}| grep -o '[[:digit:]]*')
-    confirm "     ${def}You entered${end} ${yel}$compute_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_hd_size:.*/compute_hd_size: "$compute_disk_size"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s" "     ${def}Your compute_hd_size is now set to${end} ${yel}${compute_disk_size}G${end}"
-    fi
-
-    #------------------------------------------
-    # compute memory size
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}Enter the memory size in GB for the compute nodes, e.g. 16, default is 16: ${end} " c_mem_size
-    compute_mem_size="${c_mem_size:-16}"
-    user_mem_input=$(echo ${compute_mem_size}| grep -o '[[:digit:]]*')
-    compute_memory_size=$(echo $user_mem_input*1024|bc)
-    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_mem_size:.*/compute_mem_size: "$compute_memory_size"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s" "     ${def}Your compute_mem_size is now set to${end} ${yel}${user_mem_input}G${end}"
-    fi
-
-    #------------------------------------------
-    # compute vcpu count
-    #------------------------------------------
-    printf "%s\n\n" ""
-    read -p "     ${def}How many vcpu to allocate to the compute nodes, the default is 4? ${end} " c_vcpu
-    compute_vcpu="${c_vcpu:-4}"
-    user_vcpu_input=$(echo ${compute_vcpu}| grep -o '[[:digit:]]*')
-    compute_vcpu_count=$user_vcpu_input
-    confirm "     ${def}You entered${end} ${yel}$compute_vcpu_count${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_vcpu:.*/compute_vcpu: "$compute_vcpu_count"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s" "     ${def}Your compute_vcpu is now set to${end} ${yel}${user_vcpu_input}${end}"
-    fi
-
+    storage_opts=("NFS   - Configure NFS persistent Storage" \
+                  "OCS   - Red Hat OpenShift Container Storage" \
+                  "Local - Configure local disk for persistent Storage" \
+                  "Reset - Reset to default storage options" \
+                  "Exit  - Save changes and exist menu")
     printf "%s\n\n\n" ""
-    printf "%s\n" "      Choose a persistant storage option."
-    printf "%s\n" "         * Local Storage "
-    printf "%s\n\n" "         * OpenShift Container Storage (OCS)"
-    local storage_option
-    read -p "    ${cyn} What is your choice? local or ocs: ${end}" storage_option
-    case $storage_option in
-        local) configure_local_storage
-               ;;
-        ocs)   configure_ocs_storage
-               ;;
-        exit)  exit 0
-               ;; 
-        *) printf "%s\n\n" " ${red}Error...${end}"
-        ;;
-    esac
+    printf "%s\n\n" "    ${blu}Choose one of the below peristent storage${end}"
+    while true
+    do
+        createmenu "${storage_opts[@]}"
+        result=($(echo "${selected_option}"))
+        case $result in
+            NFS)
+                echo NFS
+                ;;
+            OCS)
+                configure_ocs_storage
+                ;;
+            Local)
+                configure_local_storage
+                ;;
+            Reset)
+                echo RESET
+                ;;
+            Exit)
+                break
+                ;;
+            *)
+                echo "Please answer a valid choice"
+                ;;
+        esac
+    done
 
-    ## Configure local Storage 
+    ##  set cluster details to custom
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
     sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
     sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
