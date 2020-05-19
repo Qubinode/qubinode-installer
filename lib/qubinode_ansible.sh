@@ -120,7 +120,7 @@ function qubinode_setup_ansible () {
         fi
 
         #if cat "${vaultfile}" | grep -q VAULT
-        if ! ansible-vault view "${vaultfile}" > /dev/null
+        if ! ansible-vault view "${vaultfile}" >/dev/null 2>&1
         then
             #printf "%s\n" " Encrypting ${vaultfile}"
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1

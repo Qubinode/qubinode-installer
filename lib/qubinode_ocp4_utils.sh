@@ -32,8 +32,8 @@ cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Standard${end}
     ${yel}=========================${end}
-     3 masters
-     3 workers
+     3 masters w/16G and 4 vcpu
+     3 workers w/16G and 4 vcpu
 
     ${cyn}========${end}
     Features
@@ -47,8 +47,8 @@ cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Minimal${end}
     ${yel}=========================${end}
-     3 masters
-     2 workers
+     3 masters w/8G memory and 2 vcpu
+     0 workers
 
     ${cyn}========${end}
     Features
@@ -60,19 +60,20 @@ EOF
 function openshift4_prechecks () {
     ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
     if [ ! -f "${ocp4_vars_file}" ]
     then
         cp "${ocp4_sample_vars}" "${ocp4_vars_file}"
     fi
+
     openshift4_variables
-
     collect_system_information
-
     check_for_required_role openshift-4-loadbalancer
     check_for_required_role swygue.coreos-virt-install-iso
 
+    # Check for OCP4 pull sceret
+    check_for_pull_secret
     openshift4_kvm_health_check
-
     if [[ ${KVM_IN_GOOD_HEALTH} == "ready" ]]; then
       # Ensure firewall rules
       if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
@@ -84,14 +85,15 @@ function openshift4_prechecks () {
 
     fi
 
-    curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
-    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    sed -i "s/^ocp4_version:.*/ocp4_version: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
+    # Get the lastest OCP4 version
+    # temporarly removing auto release
+    #curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+    #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+    #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${project_dir}/playbooks/vars/ocp4.yml"
 
     # Ensure Openshift Subscription Pool is attached
-    #check_for_openshift_subscription
+    check_for_openshift_subscription
     #get_subscription_pool_id 'Red Hat OpenShift Container Platform'
-
 }
 
 openshift4_qubinode_teardown_deprecated () {
@@ -250,9 +252,9 @@ function remove_ocp4_vms () {
 
 function state_check(){
 cat << EOF
-    ${yel}=========================${end}
+    ${yel}**************************************** ${end}
     ${mag}Checking Machine for stale openshift vms ${end}
-    ${yel}=========================${end}
+    ${yel}**************************************** ${end}
 EOF
     clean_up_stale_vms dns
     clean_up_stale_vms bootstrap
@@ -262,21 +264,19 @@ EOF
 
 function clean_up_stale_vms(){
     KILLVM=true
-    echo "Checking for state $1"
     stalemachines=$(sudo virsh list  --all | grep $1 | awk '{print $2}')
     for vm in $stalemachines
     do
-       echo "${vm} found in virsh"
        KILLVM=false
     done
 
     if [[ $KILLVM == "true" ]]; then 
-        stale_vms=$(ls /var/lib/libvirt/images/ | grep $1)
+        stale_vms=$(sudo ls "${libvirt_dir}/" | grep $1)
         if [[ ! -z $stale_vms ]]; then 
             for old_vm in $stale_vms
             do
             if [[ "$old_vm" == *${1}* ]]; then 
-                sudo rm  /var/lib/libvirt/images/$old_vm
+                sudo rm  -f "${libvirt_dir}/$old_vm"
             fi
             done 
         fi 
@@ -284,35 +284,48 @@ function clean_up_stale_vms(){
 
 }
 
-function configure_local_storage (){
+function configure_local_storage () {
+    #TODO: you be presented with the choice between localstorage or ocs. Not both.
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
+    vdb_size="${vdb:-100}"
+    compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "    ${def}Your compute_hd_size is now set to${end} ${yel}${compute_disk_size}G${end}"
+    fi
+
 cat << EOF
     ${yel}=========================${end}
     ${mag}Select volume Mode: ${end}
     ${yel}=========================${end}
-
     1) Filesystem - Presented to the OS as a file system export to be mounted.
     2) Block - Presented to the operating system (OS) as a block device.
 EOF
     local choice
 	read -p " ${cyn}Enter choice [ 1 - 2] ${end}" choice
 	case $choice in
-		1) storage_type=filesystem
+	    1) storage_type=filesystem
             ;;
-        2) storage_type=block
+            2) storage_type=block
             ;;
-		3) exit 0;;
-		*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
+	    3) exit 0;;
+	    *) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
         confirm " Continue with  Volume Mode for $storage_type OpenShift deployment? yes/no"
         if [ "A${response}" == "Ayes" ]
         then
             set_local_volume_type
+            exit 0
         else
             configure_local_storage
         fi
 }
 
-function set_local_volume_type(){
+function set_local_volume_type () {
   if [[ $storage_type == "filesystem" ]]; then 
     sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${ocp4_vars_file}"
     sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${ocp4_vars_file}"
@@ -322,38 +335,24 @@ function set_local_volume_type(){
   fi 
 }
 
-function confirm_minimal_deployment(){
+function confirm_minimal_deployment () {
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
     openshift4_minimal_desc
-     confirm " This Option will set your compute count to 2? yes/no"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
-    fi
+    #confirm " This Option will set your compute count to 2? yes/no"
+    #if [ "A${response}" == "Ayes" ]
+    #then
+        compute_num=0
+        master_vcpu=2
+        master_memory_size=8
+        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory_size"/g" "${ocp4_vars_file}"
+        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
+        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
+        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
+    #fi
 }
 
-openshift4_server_maintenance () {
-    case ${product_maintenance} in
-       diag)
-           echo "Perparing to run full Diagnostics: : not implemented yet"
-           ;;
-       smoketest)
-           echo  "Running smoke test on environment: : not implemented yet"
-              ;;
-       shutdown)
-            echo  "Shutting down cluster"
-            bash "${project_dir}/openshift4_server_maintenance"
-            ;;
-       startup)
-            echo  "Starting up Cluster: not implemented yet"
-            ;;
-       checkcluster)
-            echo  "Running Cluster health check: : not implemented yet"
-            ;;
-       *)
-           echo "No arguement was passed"
-           ;;
-    esac
-}
 
 is_node_up () {
     IP=$1
@@ -401,8 +400,10 @@ function pingreturnstatus() {
   if [ $? -eq 0 ]
   then
     true
+    return 0
   else
     false
+    return 1
   fi
   }
 
@@ -528,251 +529,144 @@ function empty_directory_msg () {
 EOF
 }
 
-post_deployment_steps () {
-
-    # ugly hack to install the jq command from the ocp 4.2 repo
-    # when we move ocp3 to jumpbox, this no longer needs to be a hack
-    if ! rpm -qa | grep -q 'jq-'
-    then
-        sudo subscription-manager repos --enable rhel-7-server-ose-4.2-rpms
-        rpmdir=$(mktemp -d)
-        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
-        sudo subscription-manager repos --disable rhel-7-server-ose-4.2-rpms
-        sudo yum -y install ${rpmdir}/*.rpm
-     fi
-
-    printf "%s\n\n" ""
-    printf "%s\n" " Registry storage for bate metal is required to complete the ocp4 cluster install."
-    printf "%s\n" " Additional informaiton is available here:"
-    printf "%s\n\n" " https://red.ht/2QVJpPK"
-    printf "%s\n" " The installer will attempt to configure storage."
-
-    if sudo rpcinfo -t localhost nfs 4 > /dev/null 2>&1
-    then
-        printf "%s\n\n" ""
-        printf "%s\n" " NFS Server is configured and can be used for persistent storage."
-        confirm " Do you want to configure nfs-provisioner? yes/no"
-        if [ "A${response}" == "Ayes" ]
-        then
-            export KUBECONFIG="${project_dir}/ocp4/auth/kubeconfig"
-            if ! oc get storageclass | grep -q nfs-storage
-            then
-                bash ${project_dir}/lib/qubinode_nfs_provisioner_setup.sh
-            fi
-
-            if oc get storageclass | grep -q nfs-storage
-            then
-cat >image-registry-storage.yaml<<YAML
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: image-registry-storage
-spec:
-  accessModes:
-  - ReadWriteMany
-  storageClassName: nfs-storage-provisioner
-  resources:
-    requests:
-      storage: 80Gi
-YAML
-                oc create -f image-registry-storage.yaml
-                sleep .5s
-                # Add pvc claim for registry storage
-                oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'
-
-                # Verify claim
-                sleep .5s
-                if oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage | grep -q image-registry-storage
-                then
-                    printf "%sn" " Registry pvc claim created successfully"
-                fi
-            else
-                printf "%s\n" " ${red}Unable to add nfs storage provisioner, please investigate.${end}"
-                empty_directory_msg
-            fi
-         fi
-    else
-      printf "%s\n" " Skipping nfs-provisioning"
-      printf "%s\n\n" "*****************************"
-      printf "%s\n" "Optional: Configure registry to use empty directory if you do not want to use the nfs-provisioner"
-      empty_directory_msg
+openshift4_kvm_health_check () {
+    KVM_IN_GOOD_HEALTH=""
+    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+    check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
+    create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+  
+    if ! sudo virsh net-list | grep -q $requested_brigde; then
+      KVM_STATUS="not ready"
     fi
-    printf "%s\n" " ${yel}*****************************${end}"
-    printf "%s\n" " ${cyn}   Post Bootstrap Steps ${end}"
-    printf "%s\n\n" " ${yel}*****************************${end}"
-    printf "%s\n" " (1) Shutdown the bootstrap node."
-    printf "%s\n\n" "       ${grn}sudo virsh shutdown bootstrap${end}"
-    printf "%s\n" " (2) Ensure all nodes are up."
-    printf "%s\n" "       ${grn}export KUBECONFIG=${project_dir}/ocp4/auth/kubeconfig${end}"
-    printf "%s\n\n" "       ${grn}oc get nodes${end}"
-    printf "%s\n" " (3) Ensure there are no pending CSR."
-    printf "%s\n\n" "       ${grn}oc get csr${end}"
-    printf "%s\n" " (4) Ensure a storage claim exist for the imageregistry"
-    printf "%s\n" "       ${grn}oc get configs.imageregistry.operator.openshift.io -o json | jq .items[0].spec.storage${end}"
-    printf "%s\n" " The above command output should return:"
-cat << EOF
-                    {
-                      "pvc": {
-                        "claim": "image-registry-storage"
-                      }
-                    }
-EOF
-    printf "%s\n" " If the output differs you can delete whats there."
-    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type json -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'${end}"
-    printf "%s\n" " Then try adding the nfs storage, then check again if the output matches."
-    printf "%s\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"pvc\":{}}}}'${end}"
-    printf "%s\n" " If there's still no match the imageregistry operator is still down (step 5). Try setting it to a emptydir."
-    printf "%s\n\n" "       ${grn}oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\":{\"emptyDir\":{}}}}'${end}"
-    printf "%s\n" " (5) Ensure the image-registry operator ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperators image-registry${end}"
-    printf "%s\n" " (6) Ensure all operatators ${yel}AVAILABLE${end} shows ${yel}True${end}."
-    printf "%s\n\n" "       ${grn}oc get clusteroperator${end}"
-    printf "%s\n" " (7) If all the above checks out, complete the installation by running."
-    printf "%s\n" "       ${grn}cd ${project_dir}${end}"
-    printf "%s\n\n" "       ${grn}openshift-install --dir=ocp4 wait-for install-complete${end}"
-}
-
-openshift4_kvm_health_check (){
-  KVM_IN_GOOD_HEALTH="not ready"
-
-  #requested_brigde=$(cat ${vars_file}|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
-  if sudo virsh net-list | grep -q $requested_brigde; then
-    echo "$requested_brigde is configured"
-  else
-      KVM_IN_GOOD_HEALTH=ready
-  fi
-
-  requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
-  if sudo virsh net-list | grep -q $requested_nat; then
-    echo "$requested_nat is configured"
-  else
-      KVM_IN_GOOD_HEALTH=ready
-  fi
-
-  if sudo lsblk | grep -q nvme0n1; then
-    echo "Checking for vg name "
-    #vg_name=$(cat ${vars_file}| grep vg_name: | awk '{print $2}')
-    if sudo vgdisplay | grep -q $vg_name; then
-      echo "$vg_name is configured"
-    else
+  
+    #if ! sudo virsh net-list | grep -q $requested_nat; then
+    #  KVM_IN_GOOD_HEALTH="not ready"
+    #fi
+  
+    # If dedicated disk for libvirt images, check for the volume group
+    if [ "A${create_lvm}" == "Ayes" ]
+    then
+        if ! sudo vgdisplay | grep -q $vg_name
+        then
+            KVM_STATUS="not ready"
+        fi
+    fi
+  
+    if [ ! -d $check_image_path ]
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if ! [ -x "$(command -v virsh)" ]
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if ! [ -x "$(command -v firewall-cmd)" ]
+    then
+        KVM_STATUS="not ready"
+    fi
+  
+    if [ "A$KVM_STATUS" != "Anot ready" ]
+    then
         KVM_IN_GOOD_HEALTH=ready
     fi
-  else
-      echo "Skipping mount path check"
-  fi
-
-  check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
-  if [[ -d $check_image_path ]]; then
-    echo "$check_image_path exists"
-  else
-    KVM_IN_GOOD_HEALTH=ready
-  fi
-
-  libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-  os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-  if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
-    KVM_IN_GOOD_HEALTH="not ready"
-  fi
-
-  if ! [ -x "$(command -v virsh)" ]; then
-    echo 'Error: virsh is not installed.' >&2
-    KVM_IN_GOOD_HEALTH="not ready"
-  fi
-
-  if ! [ -x "$(command -v firewall-cmd)" ]; then
-    echo 'Error: firewall-cmd is not installed.' >&2
-    KVM_IN_GOOD_HEALTH="not ready"
-  fi
-
-  printf "%s\n\n" "  The KVM host health status is $KVM_IN_GOOD_HEALTH."
 }
 
 openshift4_idm_health_check () {
-IDM_IN_GOOD_HEALTH=ready
-
-if [[ -f $idm_vars_file ]]; then
-  echo "$idm_vars_file exists"
-else
-  IDM_IN_GOOD_HEALTH="not ready"
-fi
-
-idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
-if pingreturnstatus ${idm_ipaddress}; then
-  echo "IDM Server is connected $idm_ipaddress"
-else
-  IDM_IN_GOOD_HEALTH="not ready"
-fi
-
-dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
-echo "dns_query = $dns_query"
-if echo $dns_query | grep -q 'no servers could be reached'
-then
+    IDM_IN_GOOD_HEALTH=ready
+    
+    if [[ ! -f $idm_vars_file ]]; then
       IDM_IN_GOOD_HEALTH="not ready"
-else
-      echo "IDM Server is able to resolve qbn-dns01.${domain}"
-      echo $dns_query
-fi
-
-  printf "%s\n\n" "  The IdM host health status is $IDM_IN_GOOD_HEALTH."
+    fi
+    
+    idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
+    if ! pingreturnstatus ${idm_ipaddress}; then
+      IDM_IN_GOOD_HEALTH="not ready"
+    fi
+    
+    dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+    if echo $dns_query | grep -q 'no servers could be reached'
+    then
+          IDM_IN_GOOD_HEALTH="not ready"
+    fi
 }
 
 
 function ping_openshift4_nodes () {
+#TODO: validate if this funciton is still need
     IS_OPENSHIFT4_NODES="not ready"
-    masters=$(cat $ocp4_vars_file | grep master_count| awk '{print $2}')
-    for  i in $(seq "$masters")
-    do
-        vm="master-$((i-1))"
-        if  pingreturnstatus ${vm}.${cluster_name}.${domain}; then
-          echo "${vm}.${cluster_name}.lab.example is online"
-          IS_OPENSHIFT4_NODES=ready
-        else
-          echo "${vm}.${cluster_name}.lab.example is offline"
-          IS_OPENSHIFT4_NODES="not ready"
-          break
-        fi
-    done
+    masters=$(cat $ocp4_vars_file | grep master_count:| awk '{print $2}')
+  
+    if [ "A${masters}" != "A" ]
+    then
+        for i in $(seq $masters)
+        do
+            vm="master-$((i-1))"
+            if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
+              echo "${vm}.${cluster_name}.lab.example is online"
+              IS_OPENSHIFT4_NODES=ready
+            else
+              echo "${vm}.${cluster_name}.lab.example is offline"
+              IS_OPENSHIFT4_NODES="not ready"
+              break
+            fi
+        done
+    else
+        IS_OPENSHIFT4_NODES="not ready"
+    fi
 
-    compute=$(cat $ocp4_vars_file | grep compute_count| awk '{print $2}')
-    for i in $(seq "$compute")
-    do
-        vm="compute-$((i-1))"
-        if  pingreturnstatus ${vm}.${cluster_name}.${domain}; then
-          echo "${vm}.${cluster_name}.lab.example is online"
-          IS_OPENSHIFT4_NODES=ready
-        else
-          echo "${vm}.${cluster_name}.lab.example is offline"
-          IS_OPENSHIFT4_NODES="not ready"
-          break
-        fi
-    done
+    compute=$(cat $ocp4_vars_file | grep compute_count:| awk '{print $2}')
+    if [ "A${compute}" != "A" ]
+    then
+        for i in $(seq $compute)
+        do
+            vm="compute-$((i-1))"
+            if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
+              echo "${vm}.${cluster_name}.lab.example is online"
+              IS_OPENSHIFT4_NODES=ready
+            else
+              echo "${vm}.${cluster_name}.lab.example is offline"
+              IS_OPENSHIFT4_NODES="not ready"
+              break
+            fi
+        done
+    else
+        IS_OPENSHIFT4_NODES="not ready"
+    fi
 
-    printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
+    #printf "%s\n\n" "  The OCP4 nodes health status is $IS_OPENSHIFT4_NODES."
+
 }
 
 function check_openshift4_size_yml () {
     check_hardware_resources
     storage_profile=$(awk '/^storage_profile:/ {print $2}' "${vars_file}")
     memory_profile=$(awk '/^memory_profile:/ {print $2}' "${vars_file}")
+    ocp_cluster_size=$(awk '/^ocp_cluster_size:/ {print $2}' "${vars_file}")
 
-    if [ ! -f "${openshift_deployment_size_yml}" ]
+    #if [[ "A${memory_profile}" == "Anotmet" ]] || [[ "A${storage_profile}" == "Anotmet" ]]
+    if [ "A${ASK_SIZE}" == "Atrue" ]
     then
-        if [ "A${storage_profile}" == "A${memory_profile}" ]
-        then
-            memory_size="${memory_profile}"
-            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-        else
-            printf "%s\n" " Your hardware does not meet our recommended sizing."
-            printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
-            printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
-            printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
-            confirm " Do you want to proceed with a minimal install?"
-            if [ "A${response}" == "Ayes" ]
-            then
-                memory_size="minimal"
-                bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
-            fi
-        fi
+        memory_size="${memory_profile}"
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ "A${ocp_cluster_size}" == "Anotmet" ]] || [[ "A${ocp_cluster_size}" == "Aminimal" ]]
+    then
+        printf "%s\n" " Your hardware does not meet our recommended sizing."
+        printf "%s\n" " Your disk size is $DISK_SIZE_HUMAN and your total memory is $TOTAL_MEMORY."
+        printf "%s\n" " You can continue with a minimum OpenShift 3 cluster. There are no gurantees"
+        printf "%s\n\n" " the installation will be successful or if deployed your cluster may be very slow."
+
+        printf "%s\n\n" " To choose a minimal install and other customization options."
+        printf "%s\n\n" " Run: ./qubinode-installer -p ocp4"
+        exit 1
     fi
 }
 
@@ -844,4 +738,339 @@ openshift4_enterprise_deployment () {
 
     # Show user post deployment steps to follow
     post_deployment_steps
+}
+
+function openshift4_custom_desc (){
+cat << EOF
+
+
+
+    ${yel}=========================${end}
+    ${blu} Deployment Type: Custom${end}
+    ${yel}=========================${end}
+
+    ${blu}The Following can be changed${end}
+
+     ${mag}Master Nodes:${end}
+       - master node count
+       - master disk size
+       - master vcpu
+
+     ${mag}Compute Nodes:${end}
+       - compute node count
+       - compute disk size
+       - compute vcpu
+       - deploy ocs
+         - size for MON disk
+         - size for OSD disk
+       - deploy local-storage
+         - size for disk vdb
+
+    ${red}********** NOTICE ************${end}
+    ${blu} This is still in development ${end}
+    ${blu} Please resport issues        ${end}
+    ${red}******************************${end}
+EOF
+
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+
+    #------------------------------------------
+    # master count
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the number of master nodes you would like, the default is 3: ${end} " master_count
+    master_num="${master_count:-3}"
+    confirm "     ${def}You entered${end} ${yel}$master_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_count:.*/master_count: "$master_num"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_count is now set to${end} ${yel}$master_num${end}"
+    fi
+
+    #------------------------------------------
+    # master disk size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the disk size in GB for the master nodes, e.g. 120, default is 120: ${end} " hd_size
+    master_hd_size="${hd_size:-120}"
+    master_disk_size=$(echo ${master_hd_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$master_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_hd_size:.*/master_hd_size: "$master_disk_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_hd_size is now set to${end} ${yel}${master_disk_size}G${end}"
+    fi
+
+    #------------------------------------------
+    # master memory size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the memory size in GB for the master nodes e.g. 12, the default is 16:  ${end} " mem_size
+    master_mem_size="${mem_size:-16}"
+    user_mem_input=$(echo ${master_mem_size}| grep -o '[[:digit:]]*')
+    master_memory_size=$(echo $user_mem_input*1024|bc)
+    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_mem_size is now set to${end} ${yel}${user_mem_input}G${end}"
+    fi
+
+    #------------------------------------------
+    # master vcpu count
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}How many vcpu to allocate to the master nodes, the default is 4? ${end} " mvcpu
+    master_vcpu="${mvcpu:-4}"
+    user_vcpu_input=$(echo ${master_vcpu}| grep -o '[[:digit:]]*')
+    master_vcpu_count=$user_vcpu_input
+    confirm "     ${def}You entered${end} ${yel}$master_vcpu_count${end}${def},is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s
+" "     ${def}Your master_vcpu is now set to${end} ${yel}${user_vcpu_input}G${end}"
+    fi
+
+
+    #------------------------------------------
+    # Compute Count 
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the number of compute nodes you would like, the defaut is 3: ${end} " compute_count
+    compute_num="${compute_count:-3}"
+    confirm "     ${def}You entered${end} ${yel}$compute_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_count is now set to${end} ${yel}$compute_num${end}"
+    fi
+
+    #------------------------------------------
+    # compute disk size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the disk size in GB for the compute nodes e.g. 120, default is 120: ${end} " c_hd_size
+    compute_hd_size="${c_hd_size:-120}"
+    compute_disk_size=$(echo ${compute_hd_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$compute_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_hd_size:.*/compute_hd_size: "$compute_disk_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_hd_size is now set to${end} ${yel}${compute_disk_size}G${end}"
+    fi
+
+    #------------------------------------------
+    # compute memory size
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the memory size in GB for the compute nodes, e.g. 16, default is 16: ${end} " c_mem_size
+    compute_mem_size="${c_mem_size:-16}"
+    user_mem_input=$(echo ${compute_mem_size}| grep -o '[[:digit:]]*')
+    compute_memory_size=$(echo $user_mem_input*1024|bc)
+    confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_mem_size:.*/compute_mem_size: "$compute_memory_size"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_mem_size is now set to${end} ${yel}${user_mem_input}G${end}"
+    fi
+
+    #------------------------------------------
+    # compute vcpu count
+    #------------------------------------------
+    printf "%s\n\n" ""
+    read -p "     ${def}How many vcpu to allocate to the compute nodes, the default is 4? ${end} " c_vcpu
+    compute_vcpu="${c_vcpu:-4}"
+    user_vcpu_input=$(echo ${compute_vcpu}| grep -o '[[:digit:]]*')
+    compute_vcpu_count=$user_vcpu_input
+    confirm "     ${def}You entered${end} ${yel}$compute_vcpu_count${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_vcpu:.*/compute_vcpu: "$compute_vcpu_count"/g" "${ocp4_vars_file}"
+        printf "%s\n" ""
+        printf "%s" "     ${def}Your compute_vcpu is now set to${end} ${yel}${user_vcpu_input}${end}"
+    fi
+
+    printf "%s\n\n\n" ""
+    printf "%s\n" "      Choose a persistant storage option."
+    printf "%s\n" "         * Local Storage "
+    printf "%s\n\n" "         * OpenShift Container Storage (OCS)"
+    local storage_option
+    read -p "    ${cyn} What is your choice? local or ocs: ${end}" storage_option
+    case $storage_option in
+        local) configure_local_storage
+               ;;
+        ocs)   configure_ocs_storage
+               ;;
+        exit)  exit 0
+               ;; 
+        *) printf "%s\n\n" " ${red}Error...${end}"
+        ;;
+    esac
+
+    ## Configure local Storage 
+    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
+    sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
+    sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
+}
+
+function configure_ocs_storage () {
+    #------------------------------------------
+    # configure OpenShift Container Storage
+    #------------------------------------------
+    printf "%s\n\n" ""
+    confirm "     ${def}Do you want to deploy OCS? ${end}${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        read -p "     ${def}Enter the size you want in GB for MON disk, default is 10: ${end} " mon_vdb_size
+        read -p "     ${def}Enter the size you want in GB for OSD disk, default is 100: ${end} " osd_vdc_size
+        vdb_size="{mon_vdb_size:-10}"
+        vdc_size="{osd_vdc_size:-100}"
+        compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+        compute_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
+        confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end} MON and ${yel}$compute_vdc_size${end} for OSD${def}, is this correct?${end} ${yel}yes/no${end}"
+        if [ "A${response}" == "Ayes" ]
+        then
+            sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+            sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+            printf "%s\n" ""
+            printf "%s" "    ${def}Your MON disk size is set to${end} ${yel}${compute_vdb_size}G${end} and your OSD is set to ${yel}${compute_vdc_size}G${end}"
+        fi
+    fi
+}
+
+function shutdown_variables () {
+    export KUBECONFIG=/home/admin/qubinode-installer/ocp4/auth/kubeconfig
+    REGISTER_STATUS=$(oc get clusteroperators | awk '/image-registry/ {print $3}')
+    CLUSTER_UPTIME=$(oc get clusteroperators | awk '/authentication/ {print $6}')
+    CLUSTER_UUID=$(oc get clusterversions.config.openshift.io version -o jsonpath='{.spec.clusterID}{"\n"}')
+    INFRA_ID=$(oc get infrastructures.config.openshift.io cluster -o jsonpath='{.status.infrastructureName}{"\n"}')
+    BKUP_CMD="sudo /usr/local/bin/etcd-snapshot-backup.sh ./assets/backup/snapshot.db"
+    NODE_USER="core"
+    SSH_USER=$(whoami)
+    USER_SSH_ID="/home/${SSH_USER}/.ssh/id_rsa"
+    SSH_OPTIONS="-q -o StrictHostKeyChecking=no -o BatchMode=yes"
+    HOURS_RUNNING=$(oc get clusteroperators | awk '/authentication/ {print $6}'|tr -d 'h'|tr -d 'd')
+}
+
+function shutdown_nodes () {
+    shutdown_variables
+    MASTER_ONE=192.168.50.10
+    MASTER_STATE=$(ping -c3 ${MASTER_ONE} 1>/dev/null; echo $?)
+    
+    if [ $MASTER_STATE -ne 0 ]
+    then
+        printf "\n It appears the cluster is already down.\n\n"
+        exit 0
+    else
+       printf "\ Shutting down the ocp4 cluster.\n"
+    fi
+    
+
+    for node in $(echo $NODES)
+    do
+        VM_NAME=$(echo $node|cut -d\. -f1)
+        VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
+        if [ $VM_STATE == "running" ]
+        then
+
+            if [ "A${ROLE}" == "Acompute" ]
+            then
+                # mark node unschedulable
+                oc adm cordon $node
+                if [ "A$?" != "A0" ]
+                then
+                    printf "\n Marking $node unschedulable returned $?.\n"
+                    printf "\n Please investigate and try again.\n"
+                    exit 1
+                fi
+
+                # drain node
+                oc adm drain $node --ignore-daemonsets --delete-local-data --force --timeout=120s
+                if [ "A$?" != "A0" ]
+                then
+                    printf "\n Draining $node returned $?.\n"
+                    printf "\n Continining with shtudwon. Please investigate and try again.\n"
+                    # This should prompt the user and ask if they would like t continue with
+                    # shutdown or exist and troubleshoot.
+                    #exit 1
+                fi
+            fi 
+
+            printf "\n\n Shutting down $node.\n"
+            ssh $SSH_OPTIONS -i $USER_SSH_ID "${NODE_USER}@${node}" sudo shutdown -h now --no-wall
+
+            until [ $VM_STATE != "running" ]
+            do
+                printf "\n Waiting on $VM_NAME to shutdown. \n"
+                VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
+                sleep 5s
+            done
+            printf "\n $VM_NAME state is $VM_STATE\n\n"
+        else 
+            printf "\n $VM_NAME state is $VM_STATE\n\n"
+        fi
+    done
+}
+
+function shutdown_cluster () {
+    shutdown_variables
+    if [ $HOURS_RUNNING -gt 24 ]
+    then
+    
+        printf "\n The ocp4 cluster has been up for more than 24hrs now.\n The current uptime is ${HOURS_RUNNING}\n\n"
+        ALL_COMPUTES=$(oc get nodes -l node-role.kubernetes.io/worker="" --no-headers | awk '{print $1}'|sort -r)
+        ALL_MASTERS=$(oc get nodes -l node-role.kubernetes.io/master="" --no-headers | awk '{print $1}'|sort -r)
+    
+        printf "\n Backing up etcd snapshot.\n\n"
+        ssh $SSH_OPTIONS -i $USER_SSH_ID "${NODE_USER}@${MASTER_ONE}" $BKUP_CMD tar tar czf - /home/core/assets/ > /home/${SSH_USER}/ocp4-etcd-snapshot-$(date +%Y%m%d-%H%M%S).tar.gz
+    
+        # Mark computes as unscheduleable, drain and shutdown
+        ROLE=compute
+        NODES=$ALL_COMPUTES
+        shutdown_nodes 
+    
+        ROLE=master
+        NODES=$ALL_MASTERS
+        shutdown_nodes 
+    else
+        printf "\n The ocp4 cluster has been up for less that 24hrs now.\n Please wait until after 24rs beforetrying to shutdown the cluster.\n\n"
+    fi
+    
+    exit 0
+
+}
+
+openshift4_server_maintenance () {
+    case ${product_maintenance} in
+       diag)
+           echo "Perparing to run full Diagnostics: : not implemented yet"
+           ;;
+       smoketest)
+           echo  "Running smoke test on environment: : not implemented yet"
+              ;;
+       shutdown)
+            shutdown_cluster
+            ;;
+       startup)
+            ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -t startup -e startup_cluster=yes || exit 1
+            /usr/local/bin/qubinode-ocp4-status
+            ;;
+       status)
+            /usr/local/bin/qubinode-ocp4-status
+            ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
 }

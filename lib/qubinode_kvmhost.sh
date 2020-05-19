@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function kvm_host_variables () {
-    libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep : | awk '{print $2}')
+    libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep libvirt_pool_name: | awk '{print $2}')
     host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
     RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
@@ -15,7 +15,7 @@ function kvm_host_variables () {
     fi
 }
 
-function getPrimaryDdisk () {
+function getPrimaryDisk () {
     #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
     root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
     primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
@@ -25,7 +25,7 @@ function getPrimaryDdisk () {
        echo "lvs not found setting $primary_disk as primary disk"
     else
         primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
-        echo "lvs was found setting ${primary_disk} as primary disk"
+        #echo "lvs was found setting ${primary_disk} as primary disk"
     fi
 }
 
@@ -37,15 +37,21 @@ function check_additional_storage () {
     then
         printf "%s\n" "  ${yel}****************************************************************************${end}"
         printf "%s\n\n" "    ${cyn}        Storage Setup${end}"
+        printf "%s\n" "   The installer checks for additional available disk and"
+        printf "%s\n" "   presents you with the option to dedicate that disk for"
+        printf "%s\n" "   the storage of the libvirt qcow disks. The default location"
+        printf "%s\n" "   is $libvirt_dir."
+        printf "%s\n" ""
 
-        getPrimaryDdisk
+        getPrimaryDisk
         DISK="${primary_disk}"
 
         declare -a ALL_DISKS=()
         mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}')
         if [ ${#ALL_DISKS[@]} -gt 1 ]
         then
-            printf "%s\n" "   Found multiple storage devices:"
+            printf "%s\n" "   Your primary storage device appears to be ${yel}${DISK}${end}."
+            printf "%s\n\n" "   The following additional storage devices where found:"
 
             for disk in $(echo ${ALL_DISKS[@]})
             do
@@ -56,14 +62,14 @@ function check_additional_storage () {
 
             printf "%s\n" " "
             printf "%s\n" "   It is recommended to dedicate a storage device for /var/lib/libvirt/images."
-            printf "%s\n" "   Choose one of the options below and the installer will create a volume"
+            printf "%s\n" "   Choose one of the available storage devices and the installer will create a volume"
             printf "%s\n\n" "   group, then a lv and mount /var/lib/libvirt/images to it."
 
             confirm "   Do you want to dedicate a storage device: ${blu}yes/no${end}"
             printf "%s\n" " "
             if [ "A${response}" == "Ayes" ]
             then
-              getPrimaryDdisk
+              getPrimaryDisk
               echo "Please Select secondary disk to be used."
               DISK="${primary_disk}"
 
@@ -80,33 +86,37 @@ function check_additional_storage () {
                   DISK="${disk}"
                   sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
                   sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: "${disk}"/g" "${kvm_host_vars_file}"
+                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
               else
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
               fi
+            else
+                setsingledisk
             fi
         else
             setsingledisk
         fi
-    else
-       printf "%s\n" "     ${yel}******************${end}"
-       printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
-       printf "%s\n" "     ${yel}******************${end}"
+    #else
+       #printf "%s\n" "     ${yel}*************************************${end}"
+       #printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
+       #printf "%s\n" "     ${yel}*************************************${end}"
     fi
-
 }
 
 #Configure System to use single disk
 function setsingledisk()
 {
-    getPrimaryDdisk
+    getPrimaryDisk
     DISK="${primary_disk}"
 
-    echo "Continue with existing $DISK storage!"
-    sed -i "s/kvm_host_libvirt_extra_disk: */kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
+    printf "%s\n" "   Looks like no additional disk is available."
+    printf "%s\n" "   Continuing with your primary storage device: ${yel}${DISK}${end}."
+    printf "%s\n\n" "   No changes will be made to ${yel}${DISK}${end}"
+    sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
     sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
     sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
 }
 
 # Ask if this host should be setup as a qubinode host
@@ -255,7 +265,7 @@ function set_rhel_release () {
             sudo subscription-manager release --unset
             sudo subscription-manager release --set="${RHEL_RELEASE}"
         else
-            printf "\n\nRHEL release is set to the supported release: ${CURRENT_RELEASE}"
+            printf "\n\n  RHEL release is set to the supported release: ${CURRENT_RELEASE}"
         fi
     fi
 }

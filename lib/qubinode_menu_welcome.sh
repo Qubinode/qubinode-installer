@@ -45,15 +45,8 @@ display_openshift_msg_ocp4 () {
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
-        qubinode_autoinstall_openshift4
-        #confirm "  Proceed with ocp4 install? yes/no"
-        #if [ "A${response}" == "Ayes" ]
-        #then
-        #    echo qubinode_autoinstall_openshift4
-        #    #openshift4_enterprise_deployment
-        #else
-        #    display_other_options
-        #fi
+        ASK_SIZE=false
+        qubinode_deploy_ocp4
     else
         print "%s\n" " ${red}Unknown issue, please run the installer again${end}"
     fi

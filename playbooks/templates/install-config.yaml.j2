@@ -1,25 +1,24 @@
 apiVersion: v1
 baseDomain: {{ public_domain }}
 compute:
-- name: worker
-  hyperthreading: Enabled
-  platform: {}
-  replicas: {{ compute_count }}
+-  hyperthreading: Enabled
+   name: worker
+   replicas: {{ compute_count }}
 controlPlane:
-  name: master
   hyperthreading: Enabled
-  platform: {}
+  name: master
   replicas: {{ master_count }}
 metadata:
   name: {{ cluster_name }}
 networking:
   clusterNetworks:
   - cidr: 10.128.0.0/14
-    hostSubnetLength: 9
-  machineCIDR: 10.0.0.0/16
-  serviceCIDR: 172.30.0.0/16
-  type: OpenShiftSDN
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
 platform:
   none: {}
+fips: false
 pullSecret: '{{ lookup('file', pull_secret) }}'
 sshKey: {{ ssh_ocp4_public_key }}

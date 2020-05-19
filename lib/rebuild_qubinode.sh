@@ -53,6 +53,7 @@ function forceVMteardown () {
 }
 
 function removeStorage () {
+    #libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     while sudo systemctl list-units --type=service | grep -q libvirtd
     do
         sudo systemctl stop libvirtd
