@@ -29,6 +29,7 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
               else
                   ASK_SIZE=true
+                  check_for_rhel_qcow_image
                   qubinode_deploy_ocp4
               fi
               ;;
@@ -57,6 +58,14 @@ function qubinode_product_deployment () {
               else
                   echo "Running IdM VM deploy function"
                   qubinode_deploy_idm
+              fi
+              ;;
+          rhel)
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  echo "Tear Down RHEL VM"
+              else
+                  qubinode_deploy_rhel
               fi
               ;;
           kvmhost)

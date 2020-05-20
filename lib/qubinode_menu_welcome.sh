@@ -46,6 +46,7 @@ display_openshift_msg_ocp4 () {
     elif [ "A${result}" == "AContinue" ]
     then
         ASK_SIZE=false
+        check_for_rhel_qcow_image
         qubinode_deploy_ocp4
     else
         print "%s\n" " ${red}Unknown issue, please run the installer again${end}"
@@ -74,12 +75,15 @@ display_other_options () {
         echo "Not implemented yet!"
     elif [ "A${result}" == "ATower" ]
     then
+        check_for_rhel_qcow_image
         qubinode_deploy_tower
     elif [ "A${result}" == "ASatellite" ]
     then
+        check_for_rhel_qcow_image
         qubinode_deploy_satellite
     elif [ "A${result}" == "AIdM" ]
     then
+        check_for_rhel_qcow_image
         qubinode_deploy_idm
     else
         echo "Unknown issue, please run the installer again"
