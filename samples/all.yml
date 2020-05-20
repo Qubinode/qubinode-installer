@@ -80,9 +80,9 @@ ssh_username: "{{ admin_user }}"
 # ROLE: deploy-kvm-vm
 #--------------------
 # Use to create VM
-# Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)
-os_qcow_image_name: rhel-server-7.7-update-2-x86_64-kvm.qcow2
-os_qcow_image_checksum: eb292b70bc88885cabc78f8dff0a0415a76064e2593eab54ac8dd4973199a921
+# Red Hat Enterprise Linux 7.8 KVM Guest Image
+os_qcow_image_name: rhel-server-7.8-x86_64-kvm.qcow2 
+os_qcow_image_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 
 # setting this to true will result is no VMs being created and any existing vms to be deleted
