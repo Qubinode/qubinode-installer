@@ -63,7 +63,7 @@ function qubinode_product_deployment () {
           rhel)
               if [ "A${teardown}" == "Atrue" ]
               then
-                  echo "Tear Down RHEL VM"
+                  qubinode_rhel_teardown
               else
                   qubinode_deploy_rhel
               fi

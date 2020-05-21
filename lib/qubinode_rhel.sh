@@ -1,6 +1,5 @@
 #!/bin/bash
-
-function qubinode_deploy_rhel () {
+function qubinode_rhel () {
     setup_variables
     RHEL_VM_PLAY="${project_dir}/playbooks/rhel.yml"
     rhel_vars_file="${project_dir}/playbooks/vars/rhel.yml"
@@ -22,7 +21,7 @@ function qubinode_deploy_rhel () {
     # Check for user provided variables
     for var in "${product_options[@]}"
     do
-        local $var
+       export $var
     done
 
     if [ "A${release}" != "A" ]
@@ -44,19 +43,16 @@ function qubinode_deploy_rhel () {
     then
         if [ "A${size}" == "Asmall" ]
         then
-            echo "Setting VM size to small"
             vcpu=1
             memory=800
             disk=20G
         elif [ "A${size}" == "Amedium" ]
         then
-            echo "Setting VM size to medium"
             vcpu=2
             memory=2048
             disk=60G
         elif [ "A${size}" == "Alarge" ]
         then
-            echo "Setting VM size to large"
             vcpu=4
             memory=8192
             disk=200G
@@ -64,7 +60,6 @@ function qubinode_deploy_rhel () {
             echo "using default size"
        fi
     else
-        echo "Setting VM size to small"
         vcpu=1
         memory=800
         disk=20G
@@ -91,15 +86,19 @@ function qubinode_deploy_rhel () {
         cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
     fi
 
+
+}
+
+
+
+function qubinode_deploy_rhel () {
+    qubinode_rhel
     sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
     sed -i "s/rhel_vcpu:.*/rhel_vcpu: "$vcpu"/g" "${rhel_vars_file}"
     sed -i "s/rhel_memory:.*/rhel_memory: "$memory"/g" "${rhel_vars_file}"
     sed -i "s/rhel_root_disk_size:.*/rhel_root_disk_size: "$disk"/g" "${rhel_vars_file}"
     sed -i "s/cloud_init_vm_image:.*/cloud_init_vm_image: "$qcow_image"/g" "${rhel_vars_file}"
-    echo $rhel_server_hostname
-    echo $rhel_server_fqdn
 
-    echo RHEL_QCOW="${project_dir}/${qcow_image}"
     # Ensure the RHEL qcow image is at /var/lib/libvirt/images
     RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"
     if [ ! -f "{RHEL_QCOW_SOURCE}" ]
@@ -113,11 +112,33 @@ function qubinode_deploy_rhel () {
         fi
     fi
 
+    if [ "A${qty}" != "A" ]
+    then
+        re='^[0-9]+$'
+        if ! [[ $qty =~ $re ]]
+        then
+           echo "error: The value for qty is not a integer." >&2; exit 1
+        else
+            for num in $(seq 1 $qty)
+            do
+                run_rhel_deployment "${rhel_server_hostname}${num}"
+            done
+        fi 
+    else
+        run_rhel_deployment "${rhel_server_hostname}"
+    fi
+
+}
+
+function run_rhel_deployment () {
+    local rhel_server_hostname=$1
     qcow_image_file="/var/lib/libvirt/images/${rhel_server_hostname}_vda.qcow2"
     if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
     then
         PLAYBOOK_STATUS=0
         sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file 
+        test -d ${project_dir}/.rhel || mkdir ${project_dir}/.rhel
+        cp ${rhel_vars_file} "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
         echo "Deploying $rhel_server_hostname"
         ansible-playbook "${RHEL_VM_PLAY}"
         PLAYBOOK_STATUS=$?
@@ -127,50 +148,41 @@ function qubinode_deploy_rhel () {
     if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
     then
         sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file
+        rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
     fi
 
-   # return the status of the playbook run
-   return $PLAYBOOK_STATUS
+    # return the status of the playbook run
+    exit $PLAYBOOK_STATUS
 }
 
 
-#function qubinode_teardown_rhel () {
-#     IDM_PLAY_CLEANUP="${project_dir}/playbooks/rhel_server_cleanup.yml"
-#     if sudo virsh list --all |grep -q "${rhel_server_hostname}"
-#     then
-#         echo "Remove IdM VM"
-#         ansible-playbook "${RHEL_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
-#     fi
-#     echo "Ensure IdM server deployment is cleaned up"
-#     ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
-#
-#     printf "\n\n*************************\n"
-#     printf "* IdM server VM deleted *\n"
-#     printf "*************************\n\n"
-#}
-#
-#function qubinode_deploy_rhel_vm () {
-#    if grep deploy_rhel_server "${rhel_vars_file}" | grep -q yes
-#    then
-#        qubinode_vm_deployment_precheck
-#        isIdMrunning
-#
-#        IDM_PLAY_CLEANUP="${project_dir}/playbooks/rhel_server_cleanup.yml"
-#        SET_IDM_STATIC_IP=$(awk '/rhel_check_static_ip/ {print $2; exit}' "${rhel_vars_file}"| tr -d '"')
-#
-#        if [ "A${rhel_running}" == "Afalse" ]
-#        then
-#            echo "running playbook ${RHEL_VM_PLAY}"
-#            if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
-#            then
-#                echo "Deploy with custom IP"
-#                rhel_server_ip=$(awk '/rhel_server_ip:/ {print $2}' "${rhel_vars_file}")
-#                ansible-playbook "${RHEL_VM_PLAY}" --extra-vars "vm_ipaddress=${rhel_server_ip}"|| exit $?
-#             else
-#                 echo "Deploy without custom IP"
-#                 ansible-playbook "${RHEL_VM_PLAY}" || exit $?
-#             fi
-#         fi
-#     fi
-#}
-#
+function qubinode_rhel_teardown () {
+    qubinode_rhel
+    if [ "A${name}" == "A" ]
+    then
+        echo "Please specify the name of the instance to delete"
+        echo "Example: ./qubinode-install -p rhel -a name=qbn-rhel8-348 -d"
+        exit
+    fi
+
+    PLAYBOOK="${project_dir}/.rhel/${name}-playbook.yml"
+    VARS_FILE="${project_dir}/.rhel/${name}-vars.yml"
+
+    if sudo virsh dominfo "${name}" >/dev/null 2>&1
+    then
+        echo "removing $name"
+        ansible-playbook "${RHEL_VM_PLAY}" --extra-vars "vm_teardown=true" -e @"${VARS_FILE}"
+        RESULT=$?
+
+        if [ $RESULT -eq 0 ]
+        then
+            rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
+            printf "\n\n*************************\n"
+            printf "  * VM $name deleted *\n"
+            printf "*************************\n\n"
+        fi
+    else 
+        echo "The VM $name does not exist"
+    fi
+}
+
