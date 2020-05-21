@@ -132,8 +132,11 @@ function qubinode_deploy_rhel () {
 
 function run_rhel_deployment () {
     local rhel_server_hostname=$1
+    sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
+    qubinode_networking
     qcow_image_file="/var/lib/libvirt/images/${rhel_server_hostname}_vda.qcow2"
-    if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
+    #if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
+    if ! sudo virsh dominfo "${rhel_server_hostname}" >/dev/null 2>&1
     then
         PLAYBOOK_STATUS=0
         sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file 
@@ -152,7 +155,7 @@ function run_rhel_deployment () {
     fi
 
     # return the status of the playbook run
-    exit $PLAYBOOK_STATUS
+    #return $PLAYBOOK_STATUS
 }
 
 
