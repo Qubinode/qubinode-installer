@@ -25,18 +25,18 @@ function qubinode_deploy_rhel () {
         local $var
     done
 
-    if [ "A${name}" != "A" ]
-    then
-        rhel_server_hostname="${prefix}-${name}"
-    else
-        rhel_server_hostname="${prefix}-${suffix}${release}-${instance_id}"
-    fi
-
     if [ "A${release}" != "A" ]
     then
         rhel_release="$release"
     else
         rhel_release=7
+    fi
+
+    if [ "A${name}" != "A" ]
+    then
+        rhel_server_hostname="${prefix}-${name}"
+    else
+        rhel_server_hostname="${prefix}-${suffix}${release}-${instance_id}"
     fi
 
     # Get instance size
@@ -71,17 +71,17 @@ function qubinode_deploy_rhel () {
     fi
 
     # Default RHEL release to deploy
-    qcow_image="rhel-server-7.7-update-2-x86_64-kvm.qcow2"
-    if [ "A${relese}" == "A7" ]
+    if [ "A${release}" == "A7" ]
     then
         qcow_image="rhel-server-7.7-update-2-x86_64-kvm.qcow2"
-    elif [ "A${relese}" == "A8" ]
+        echo $release is $release and qcow is $qcow_image
+    elif [ "A${release}" == "A8" ]
     then
-        qcow_image="rhel-server-7.7-update-2-x86_64-kvm.qcow2"
+        qcow_image="rhel-8.2-x86_64-kvm.qcow2"
+        echo $release is $release and qcow is $qcow_image
     else
         qcow_image="rhel-server-7.7-update-2-x86_64-kvm.qcow2"
     fi
-
 
     rhel_server_fqdn="${rhel_server_hostname}.${domain}"
 
@@ -99,14 +99,38 @@ function qubinode_deploy_rhel () {
     echo $rhel_server_hostname
     echo $rhel_server_fqdn
 
+    echo RHEL_QCOW="${project_dir}/${qcow_image}"
+    # Ensure the RHEL qcow image is at /var/lib/libvirt/images
+    RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"
+    if [ ! -f "{RHEL_QCOW_SOURCE}" ]
+    then
+        if [ -f "${project_dir}/${qcow_image}" ]
+        then
+             sudo cp "${project_dir}/${qcow_image}" "${RHEL_QCOW_SOURCE}" 
+        else
+            echo "Please download ${qcow_image} to ${RHEL_QCOW_SOURCE}"
+            exit 1
+        fi
+    fi
+
     qcow_image_file="/var/lib/libvirt/images/${rhel_server_hostname}_vda.qcow2"
     if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
     then
-        sudo test -f $qcow_image_file && rm -f $qcow_image_file 
+        PLAYBOOK_STATUS=0
+        sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file 
         echo "Deploying $rhel_server_hostname"
-        ansible-playbook "${RHEL_VM_PLAY}" || exit $?
+        ansible-playbook "${RHEL_VM_PLAY}"
+        PLAYBOOK_STATUS=$?
     fi
 
+    # check if VM was deployed, if not delete the qcow image created for the vm
+    if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
+    then
+        sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file
+    fi
+
+   # return the status of the playbook run
+   return $PLAYBOOK_STATUS
 }
 
 
