@@ -257,7 +257,7 @@ function check_for_openshift_subscription () {
     qubinode_rhsm_register
  
     # Make sure OpenShift subscription is attached
-    if grep openshift_pool_id: ${openshift_vars_file} | grep '""'
+    if grep openshift_pool_id: ${openshift_vars_file} | grep '""' > /dev/null 2>&1
     then
         get_subscription_pool_id 'Red Hat OpenShift Container Platform'
     fi

@@ -20,3 +20,4 @@ python-env/
 release.txt
 requirements.txt
 Working/
+.rhel/

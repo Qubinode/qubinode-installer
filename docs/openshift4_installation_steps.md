@@ -2,6 +2,7 @@
 
 The following documentation will help you deploy an OpenShift Container Platform (OCP) 4.3 cluster, on a single node.
 The installation steps deploys a production like OCP4 clsuter, in a enviorment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL) 
+![](https://i.imgur.com/n8TQAyB.png)
 
 
 ## Prerequisites

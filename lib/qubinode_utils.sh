@@ -34,7 +34,7 @@ function qubinode_project_cleanup () {
 
     # Delete OpenShift 3 files
     if [ -f ${project_dir}/playbooks/vars/ocp3.yml ]
-    then
+    then 
         openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
         if [[ ${openshift_product} == "ocp3" ]]; then
           FILES=("${FILES[@]}" "$ocp3_vars_files")
@@ -297,7 +297,7 @@ function check_hardware_resources () {
     elif [[ "$STORAGE_PROFILE" != notmet ]] && [[ "$MEMORY_PROFILE" != notmet ]] && [[ "$STORAGE_PROFILE" == minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
     then
         local PROFILE=standard
-        if [[ "A${ASK_SIZE}" == "Afalse" ]] || [[ "A${warn_storage_profile}" == "Ayes" ]]
+        if [[ "A${ASK_SIZE}" == "Afalse" ]] && [[ "A${warn_storage_profile}" == "Ayes" ]]
         then
             printf "%s\n\n\n" ""
             printf "%s\n" " ${yel} Your storage size of $DISK_SIZE_COMPARE does not meet the recommended size of $STANDARD_STORAGE.${end}"
