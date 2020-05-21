@@ -84,6 +84,7 @@ source "${project_dir}/lib/qubinode_ocp4.sh"
 source "${project_dir}/lib/qubinode_openshift3_powermgt.sh"
 source "${project_dir}/lib/qubinode_satellite.sh"
 source "${project_dir}/lib/qubinode_tower.sh"
+source "${project_dir}/lib/qubinode_rhel.sh"
 
 
 # Exit if this is executed as the root user
@@ -103,6 +104,7 @@ do
     case $opt in
         a) check_args;
            full_deploy=true
+           product_options+=("$OPTARG")
            ;;
         c) check_args
            check=true
@@ -153,7 +155,6 @@ then
     qubinode_maintenance_options
 elif [ "A${qubinode_product}" == "Atrue" ]
 then
-    check_for_rhel_qcow_image
     qubinode_product_deployment $qubinode_product_opt
 else
     display_help

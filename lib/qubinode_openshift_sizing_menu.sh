@@ -257,36 +257,36 @@ function ocp4_menu(){
         user_choose_ocp4_profile
 
         printf "%s\n" ""
-        confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
-        echo    # (optional) move to a new line
-        if [ "A${response}" == "Ayes" ]
-        then
-            openshift4_custom_desc
-            #user_choose_ocp4_profile
-        elif [ "A${response}" == "Ano" ]
-        then
-            case $INSTALLTYPE in
-            minimal)
-                ocp_size=minimal
-                continue_with_selected_install
-                ;;
-            standard)
-                ocp_size=standard
-                continue_with_selected_install
-                ;;
-            custom)
-                ocp_size=custom
-                continue_with_selected_install
-                ;;
-            *) exit 0;;
-            esac
-        else
-            echo "Option not met"
+        #confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
+        #echo    # (optional) move to a new line
+        #if [ "A${response}" == "Ayes" ]
+        #then
+        #    openshift4_custom_desc
+        #    #user_choose_ocp4_profile
+        #elif [ "A${response}" == "Ano" ]
+        #then
+        #    case $INSTALLTYPE in
+        #    minimal)
+        #        ocp_size=minimal
+        #        continue_with_selected_install
+        #        ;;
+        #    standard)
+        #        ocp_size=standard
+        #        continue_with_selected_install
+        #        ;;
+        #    custom)
+        #        ocp_size=custom
+        #        continue_with_selected_install
+        #        ;;
+        #    *) exit 0;;
+        #    esac
+        #else
+        #    break
             #while true
             #do
             #    user_choose_ocp4_profile
             #done
-        fi
+        #fi
     fi
 }
 

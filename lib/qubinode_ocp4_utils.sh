@@ -842,7 +842,7 @@ function get_cluster_resources () {
                          "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
                          "compute_vcpu  - ${yel}$compute_vcpu${end} vCPU for compute nodes" \
                          "Reset         - Reset to default values" \
-                         "Exit          - Save changes and exist")
+                         "Exit          - Save changes and continue to persistent storage setup")
 }
 
 function openshift4_custom_desc () {
@@ -934,7 +934,7 @@ EOF
                   "OCS   - Red Hat OpenShift Container Storage" \
                   "Local - Configure local disk for persistent Storage" \
                   "Reset - Reset to default storage options" \
-                  "Exit  - Save changes and exist menu")
+                  "Exit  - Save changes and exit the custom menu.")
     printf "%s\n\n\n" ""
     printf "%s\n\n" "    ${blu}Choose one of the below peristent storage${end}"
     while true
@@ -943,7 +943,7 @@ EOF
         result=($(echo "${selected_option}"))
         case $result in
             NFS)
-                echo NFS
+                configure_nfs_storage
                 ;;
             OCS)
                 configure_ocs_storage
@@ -973,24 +973,123 @@ function configure_ocs_storage () {
     #------------------------------------------
     # configure OpenShift Container Storage
     #------------------------------------------
+
+    OCS_STORAGE=no
+    NFS_STORAGE=yes
+    LOCAL_STORAGE=no
+    LOCAL_STORAGE_FS=yes
+    LOCAL_STORAGE_BLOCK=no
+    FS_DISK="/dev/vdc"
+
+    configure_ocs_storage=$(awk '/^configure_ocs_storage:/ {print $2; exit}' "${ocp4_vars_file}")
+    vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp4_vars_file}")
+    vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp4_vars_file}")
     printf "%s\n\n" ""
-    confirm "     ${def}Do you want to deploy OCS? ${end}${yel}yes/no${end}"
+    printf "%s\n" "    ${yel}The deployment of OCS isn't fully automated.${end}"
+    printf "%s\n" "    ${yel}Once the cluster is up follow the install guide on the website.${end}"
+    printf "%s\n" "    ${yel}This will ensure Local storage is deployed and the vms are deployed with the extra disk required.${end}"
+    printf "%s\n\n" ""
+    confirm "     Do you want to deploy OpenShift Container Storage? ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
-        read -p "     ${def}Enter the size you want in GB for MON disk, default is 10: ${end} " mon_vdb_size
-        read -p "     ${def}Enter the size you want in GB for OSD disk, default is 100: ${end} " osd_vdc_size
-        vdb_size="{mon_vdb_size:-10}"
-        vdc_size="{osd_vdc_size:-100}"
-        compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
-        compute_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
-        confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end} MON and ${yel}$compute_vdc_size${end} for OSD${def}, is this correct?${end} ${yel}yes/no${end}"
+        OCS_STORAGE=yes
+        NFS_STORAGE=no
+        LOCAL_STORAGE=yes
+        LOCAL_STORAGE_FS=yes
+        LOCAL_STORAGE_BLOCK=yes
+        FS_DISK="/dev/vdb"
+
+        confirm "     Current MON disk size is ${yel}$vdb_size${end}, do you want to change it? ${yel}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
         then
-            sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
-            sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
             printf "%s\n" ""
-            printf "%s" "    ${def}Your MON disk size is set to${end} ${yel}${compute_vdb_size}G${end} and your OSD is set to ${yel}${compute_vdc_size}G${end}"
+            read -p "     ${blu}Enter the size you want in GB: ${end} " mon_vdb_size
+            vdb_size="${mon_vdb_size:-10}"
+            compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+            printf "%s\n" "    ${def}You entered${end} ${yel}$compute_vdb_size${end}"
+            confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
+            fi
         fi
+    
+        confirm "     Current OSD disk size is ${yel}$vdc_size${end}, do you want to change it? ${yel}yes/no${end}"
+        if [ "A${response}" == "Ayes" ]
+        then
+            printf "%s\n" ""
+            read -p "     ${blu}Enter the size you want in GB: ${end} " osd_vdc_size
+            vdc_size="${osd_vdc_size:-100}"
+            compute_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
+            printf "%s\n" "    ${def}You entered${end} ${yel}$compute_vdc_size${end}"
+            confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
+            if [ "A${response}" == "Ayes" ]
+            then
+                sed -i "s/compute_vdc_size:.*/compute_vdc_size: "$compute_vdc_size"/g" "${ocp4_vars_file}"
+            fi
+        fi
+    fi
+
+    # Set OCS storage to deploy
+    sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp4_vars_file}"
+    # Disable deployment of nfs
+    sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp4_vars_file}"
+    # enable local storage 
+    sed -i "s/configure_local_storage:.*/configure_local_storage: "$LOCAL_STORAGE"/g" "${ocp4_vars_file}"
+    # Enable local storage filesystem
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: "$LOCAL_STORAGE_FS"/g" "${ocp4_vars_file}"
+    # Enable local storage block device
+    sed -i "s/localstorage_block:.*/localstorage_block: "$LOCAL_STORAGE_BLOCK"/g" "${ocp4_vars_file}"
+
+    # Enable local storage block device
+    sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${ocp4_vars_file}"
+}
+
+function configure_nfs_storage () {
+    #------------------------------------------
+    # configure NFS Storage
+    #------------------------------------------
+
+    OCS_STORAGE=no
+    NFS_STORAGE=yes
+    REGISTRY=true
+    SET_NFS_DEFAULT=true
+    REGISTRY_PVC_SIZE=100Gi
+    DEPLOY_NFS=true
+
+    configure_nfs_storage=$(awk '/^configure_nfs_storage:/ {print $2; exit}' "${ocp4_vars_file}")
+
+    printf "%s\n\n" ""
+    printf "%s\n" "    ${yel}This will configure the KVM host as NFS server.${end}"
+    printf "%s\n" "    ${yel}Then deploy NFS as the persistent storage.${end}"
+    printf "%s\n" "    ${yel}This also configures the OCP internal registry to use this as storage.${end}"
+    printf "%s\n\n" ""
+    confirm "     Do you want to configure NFS Storage? ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        OCS_STORAGE=no
+        NFS_STORAGE=yes
+        REGISTRY=true
+        SET_NFS_DEFAULT=true
+
+        # Enable NFS
+        sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp4_vars_file}"
+
+        # Set NFS as default storage
+        sed -i "s/set_as_default:.*/set_as_default: "$SET_NFS_DEFAULT"/g" "${ocp4_vars_file}"
+
+        # Provision the NFS Server
+        sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${ocp4_vars_file}"
+
+        # Provision the NFS Server
+        sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${ocp4_vars_file}"
+
+        # Disable OCS
+        sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp4_vars_file}"
+
+        #provision_nfs_provisoner: true      # deploys the nfs provision
+        #configure_registry: true
+        #registry_pvc_size: 100Gi
     fi
 }
 
