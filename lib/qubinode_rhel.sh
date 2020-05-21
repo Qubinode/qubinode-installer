@@ -39,6 +39,10 @@ function qubinode_rhel () {
     fi
 
     # Get instance size
+    vcpu=1
+    memory=800
+    disk=20G
+    # Get instance size
     if [ "A${size}" != "A" ]
     then
         if [ "A${size}" == "Asmall" ]
@@ -59,11 +63,8 @@ function qubinode_rhel () {
         else
             echo "using default size"
        fi
-    else
-        vcpu=1
-        memory=800
-        disk=20G
     fi
+
 
     # Default RHEL release to deploy
     if [ "A${release}" == "A7" ]
