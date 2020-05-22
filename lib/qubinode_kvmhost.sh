@@ -31,6 +31,11 @@ function check_additional_storage () {
     then
         printf "%s\n" "  ${yel}****************************************************************************${end}"
         printf "%s\n\n" "    ${cyn}        Storage Setup${end}"
+        printf "%s\n" "   The installer checks for additional available disk and"
+        printf "%s\n" "   presents you with the option to dedicate that disk for"
+        printf "%s\n" "   the storage of the libvirt qcow disks. The default location"
+        printf "%s\n" "   is $libvirt_dir."
+        printf "%s\n" ""
 
         getPrimaryDisk
         DISK="${primary_disk}"
@@ -86,10 +91,10 @@ function check_additional_storage () {
         else
             setsingledisk
         fi
-    else
-       printf "%s\n" "     ${yel}******************${end}"
-       printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
-       printf "%s\n" "     ${yel}******************${end}"
+    #else
+       #printf "%s\n" "     ${yel}*************************************${end}"
+       #printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
+       #printf "%s\n" "     ${yel}*************************************${end}"
     fi
 }
 
@@ -99,12 +104,13 @@ function setsingledisk()
     getPrimaryDisk
     DISK="${primary_disk}"
 
-    echo "Continuing with existing $DISK storage"
+    printf "%s\n" "   Looks like no additional disk is available."
     printf "%s\n" "   Continuing with your primary storage device: ${yel}${DISK}${end}."
     printf "%s\n\n" "   No changes will be made to ${yel}${DISK}${end}"
     sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
     sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
     sed -i "s/create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
 }
 
 # Ask if this host should be setup as a qubinode host
@@ -253,7 +259,7 @@ function set_rhel_release () {
             sudo subscription-manager release --unset
             sudo subscription-manager release --set="${RHEL_RELEASE}"
         else
-            printf "\n\nRHEL release is set to the supported release: ${CURRENT_RELEASE}"
+            printf "\n\n  RHEL release is set to the supported release: ${CURRENT_RELEASE}"
         fi
     fi
 }
@@ -267,13 +273,13 @@ function qubinode_networking () {
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g')
 
     # ask user for their IP network and use the default
-    if cat "${kvm_host_vars_file}"|grep -q changeme.in-addr.arpa
+    if egrep -R changeme.in-addr.arpa "${project_dir}/playbooks/vars/" >/dev/null 2>&1
     then
-        #read -p " ${mag}Enter your IP Network or press${end} ${yel}[ENTER]${end} ${mag}for the default [$NETWORK]: ${end}" network
-        #network=${network:-"${NETWORK}"}
         network="${NETWORK}"
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
-        sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${kvm_host_vars_file}"
+        test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
+        test -f "${project_dir}/playbooks/vars/all.yml" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${project_dir}/playbooks/vars/all.yml"
+        test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
     fi
 
     if [ -f "${kvm_host_vars_file}" ]

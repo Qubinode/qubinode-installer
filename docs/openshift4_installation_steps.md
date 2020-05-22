@@ -2,6 +2,7 @@
 
 The following documentation will help you deploy an OpenShift Container Platform (OCP) 4.3 cluster, on a single node.
 The installation steps deploys a production like OCP4 clsuter, in a enviorment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL) 
+![](https://i.imgur.com/n8TQAyB.png)
 
 
 ## Prerequisites
@@ -46,13 +47,13 @@ Before you running the qubinode-installer, you will need to grab the RHEL qcow i
 
 *Download the qcow image*
 From your web browser:
-- Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.7/x86_64/product-software
-- Find **Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)** and right click on the *Download Now* box
+- Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software
+- Find **Red Hat Enterprise Linux 7.8 KVM Guest Image** and right click on the *Download Now* box
 - Switch to your terminal and run the below command replacing **insert-url-here** 
 
 ```
 cd $HOME/qubinode-installer
-wget -c "insert-url-here" -O rhel-server-7.7-update-2-x86_64-kvm.qcow2
+wget -c "insert-url-here" -O rhel-server-7.8-x86_64-kvm.qcow2 
 ```
 
 **OpenShift Pull Secret**

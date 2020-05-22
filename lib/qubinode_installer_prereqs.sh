@@ -23,10 +23,10 @@ function createmenu () {
             if [ 1 -le "$REPLY" ] && [ "$REPLY" -le $(($#)) ]; then
                 break;
             else
-                echo "Please make a vaild selection (1-$#)."
+                echo "    ${blu}Please make a vaild selection (1-$#).${end}"
             fi
          else
-            echo "Please make a vaild selection (1-$#)."
+            echo "    ${blu}Please make a vaild selection (1-$#).${end}"
          fi
     done
 }

@@ -68,7 +68,7 @@ function qubinode_installer_setup () {
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
 
-    printf "\n\n${yel}    ***************************${end}\n"
-    printf "${yel}    *   Setup is complete   *${end}\n"
-    printf "${yel}    ***************************${end}\n\n"
+    #printf "\n\n${yel}    ***************************${end}\n"
+    #printf "${yel}    *   Setup is complete   *${end}\n"
+    #printf "${yel}    ***************************${end}\n\n"
 }
