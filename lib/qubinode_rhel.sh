@@ -38,6 +38,9 @@ function qubinode_rhel () {
         rhel_server_hostname="${prefix}-${suffix}${release}-${instance_id}"
     fi
 
+    vcpu=1
+    memory=800
+    disk=20G
     # Get instance size
     if [ "A${size}" != "A" ]
     then
@@ -59,10 +62,6 @@ function qubinode_rhel () {
         else
             echo "using default size"
        fi
-    else
-        vcpu=1
-        memory=800
-        disk=20G
     fi
 
     # Default RHEL release to deploy

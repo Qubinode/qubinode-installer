@@ -75,6 +75,7 @@ function qubinode_deploy_ocp4 () {
 
     # Deploy OCP4
     ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' || exit $?
+    #ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' -e '{ configure_nfs_storage: no}' -e '{ configure_local_storage: no}' || exit $?
 
     # Check the OpenSHift status
     check_if_cluster_deployed

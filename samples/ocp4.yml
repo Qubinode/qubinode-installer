@@ -31,8 +31,8 @@ configure_ocs_storage: no
 
 # deploy local persistent storage
 configure_local_storage: no
-localstorage_version: "{{ major_version }}"
-localstorage_filesystem: yes
+localstorage_version: "{{ minor_version }}"
+localstorage_filesystem: no
 localstorage_block: no
 localstorage_block_disk: /dev/vdc
 localstorage_fs_disk: /dev/vdc
@@ -52,10 +52,11 @@ user_idm_password: "{{ idm_admin_pwd }}"
 
 # Change to reflect the number of masters and workers you want to deploy
 master_count: 3
-compute_count: 3
 master_hd_size: 120
 master_mem_size: 16192
 master_vcpu: 4
+
+compute_count: 3
 compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
