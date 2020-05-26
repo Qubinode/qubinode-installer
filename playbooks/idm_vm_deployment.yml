@@ -22,6 +22,7 @@
     vm_domain: "{{ domain }}"
     inventory_group: "{{ dns_server_vm.dns_group }}"
     extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
+    expand_os_disk: "{{ dns_server_vm.dns_expand_os_disk }}"
     enable: "{{ dns_server_vm.dns_enable }}"
     current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
 
