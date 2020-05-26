@@ -203,12 +203,12 @@ function ask_user_for_custom_idm_server () {
             idm_dm_pwd=$(awk '/idm_dm_pwd:/ {print $2;exit}' ${vaultfile})
             idm_admin_pwd=$(awk '/idm_admin_pwd:/ {print $2;exit}' ${vaultfile})
         fi
-    
-        if [[ "A${idm_ssh_user}" != 'A""' ]] && [[ "A${idm_dm_pwd}" != 'A""' ]] && [[ "A${idm_admin_pwd}" != 'A""' ]] 
+
+        if [[ "A${idm_ssh_user}" != 'A""' ]] && [[ "A${idm_dm_pwd}" != 'A""' ]] && [[ "A${idm_admin_pwd}" != 'A""' ]]
         then
             # Tell installer not to deploy IdM server
             sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
-        fi    
+        fi
     fi
 }
 
@@ -341,7 +341,7 @@ function qubinode_install_idm () {
     then
         printf "\n\n ${yel}*********************************************************************************${end}\n"
         printf " ${yel}**${end}   IdM server is installed                                                   ${yel}**${end}\n"
-        printf "         Url: https://${idm_srv_fqdn}/ipa \n"
+        printf "         Url: https://${idm_srv_fqdn}/ipa/ui/ \n"
         printf "         Username: $(whoami) \n"
         printf "         Password: the vault variable *admin_user_password* \n\n"
         printf "     Run: ansible-vault edit ${vaultfile}} \n"
