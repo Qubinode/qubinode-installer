@@ -458,7 +458,6 @@ openshift4_kvm_health_check () {
     requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
     check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
   
     if ! sudo virsh net-list | grep -q $requested_brigde; then
@@ -479,11 +478,6 @@ openshift4_kvm_health_check () {
     fi
   
     if [ ! -d $check_image_path ]
-    then
-        KVM_STATUS="not ready"
-    fi
-  
-    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'
     then
         KVM_STATUS="not ready"
     fi
@@ -1195,58 +1189,6 @@ function shutdown_cluster () {
 
 }
 
-function deploy_filesystem_local_volume () {
-    localstorage_fs_disk=$(awk '/^localstorage_fs_disk:/ {print $2; exit}' "${ocp4_vars_file}")
-    ansible-playbook "${project_dir}/playbooks/deploy_ocp4.yml" \
-       -e '{ check_existing_cluster: False }' \
-       -e '{ deploy_cluster: False }' \
-       -e '{ configure_nfs_storage: no }' \
-       -e '{ configure_local_storage: yes }' \
-       -e '{ cluster_deployed_msg: "deployed" }' \
-       -e '{ localstorage_fs_disk: $localstorage_fs_disk }' \
-       -e '{ localstorage_filesystem: yes }' \
-       -e '{ localstorage_block: no }' \
-       -t localstorage
-}
-
-
-function deploy_block_local_volume () {
-    localstorage_block_disk=$(awk '/^localstorage_block_disk:/ {print $2; exit}' "${ocp4_vars_file}")
-    ansible-playbook "${project_dir}/playbooks/deploy_ocp4.yml" \
-       -e '{ check_existing_cluster: False }' \
-       -e '{ deploy_cluster: False }' \
-       -e '{ configure_nfs_storage: no }' \
-       -e '{ configure_local_storage: yes }' \
-       -e '{ cluster_deployed_msg: "deployed" }' \
-       -e '{ localstorage_fs_disk: $localstorage_block_disk }' \
-       -e '{ localstorage_filesystem: no }' \
-       -e '{ localstorage_block: yes }' \
-       -t localstorage
-}
-
-function ocp_deploy_options () {
-    # Check for user provided variables
-    for var in "${product_options[@]}"
-    do
-       export $var
-    done
-
-    if [ "A${storage}" != "A" ]
-    then
-            if [ "A${storage}" == "Afilesystem" ]
-            then
-                deploy_filesystem_local_volume
-            elif [ "A${storage}" == "Ablock" ]
-            then
-                deploy_block_local_volume
-            else
-                continue
-            fi
-    else
-        continue
-    fi
-}
-
 openshift4_server_maintenance () {
     case ${product_maintenance} in
        diag)
@@ -1264,14 +1206,6 @@ openshift4_server_maintenance () {
             ;;
        status)
             /usr/local/bin/qubinode-ocp4-status
-            ;;
-       deploy)
-            ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
-            ocp_deploy_options
-            ;;
-       console)
-            CONSOLE=$(oc get -n openshift-console route console| awk '/console/ {print "https://"$2}')
-            printf "%s\n\n" "    $CONSOLE"
             ;;
        *)
            echo "No arguement was passed"

@@ -38,6 +38,7 @@ function qubinode_rhel () {
         rhel_server_hostname="${prefix}-${suffix}${release}-${instance_id}"
     fi
 
+    # Get instance size
     vcpu=1
     memory=800
     disk=20G
@@ -64,17 +65,18 @@ function qubinode_rhel () {
        fi
     fi
 
+
     # Default RHEL release to deploy
     if [ "A${release}" == "A7" ]
     then
-        qcow_image="rhel-server-7.7-update-2-x86_64-kvm.qcow2"
+        qcow_image="rhel-server-7.8-x86_64-kvm.qcow2"
         echo $release is $release and qcow is $qcow_image
     elif [ "A${release}" == "A8" ]
     then
         qcow_image="rhel-8.2-x86_64-kvm.qcow2"
         echo $release is $release and qcow is $qcow_image
     else
-        qcow_image="rhel-server-7.7-update-2-x86_64-kvm.qcow2"
+        qcow_image="rhel-server-7.8-x86_64-kvm.qcow2"
     fi
 
     rhel_server_fqdn="${rhel_server_hostname}.${domain}"
@@ -97,6 +99,7 @@ function qubinode_deploy_rhel () {
     sed -i "s/rhel_memory:.*/rhel_memory: "$memory"/g" "${rhel_vars_file}"
     sed -i "s/rhel_root_disk_size:.*/rhel_root_disk_size: "$disk"/g" "${rhel_vars_file}"
     sed -i "s/cloud_init_vm_image:.*/cloud_init_vm_image: "$qcow_image"/g" "${rhel_vars_file}"
+    sed -i "s/qcow_rhel_release:.*/qcow_rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
 
     # Ensure the RHEL qcow image is at /var/lib/libvirt/images
     RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"

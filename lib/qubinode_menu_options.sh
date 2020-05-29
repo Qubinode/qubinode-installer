@@ -17,6 +17,8 @@ function qubinode_product_deployment () {
               then
                   openshift3_server_maintenance
               else
+                  setup_download_options
+                  download_files
                   openshift_enterprise_deployment
               fi
               ;;
@@ -29,7 +31,7 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
               else
                   ASK_SIZE=true
-                  check_for_rhel_qcow_image
+                  setup_download_options 
                   qubinode_deploy_ocp4
               fi
               ;;
@@ -39,6 +41,8 @@ function qubinode_product_deployment () {
                   qubinode_teardown_satellite
               else
                   echo "Installing Satellite"
+                  setup_download_options
+                  download_files
                   qubinode_deploy_satellite
               fi
               ;;
@@ -47,6 +51,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_tower
               else
+                  setup_download_options
+                  download_files
                   qubinode_deploy_tower
               fi
               ;;
@@ -57,6 +63,8 @@ function qubinode_product_deployment () {
                   qubinode_teardown_idm
               else
                   echo "Running IdM VM deploy function"
+                  setup_download_options
+                  download_files
                   qubinode_deploy_idm
               fi
               ;;
@@ -65,6 +73,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_rhel_teardown
               else
+                  setup_download_options
+                  download_files
                   qubinode_deploy_rhel
               fi
               ;;

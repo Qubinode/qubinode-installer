@@ -70,12 +70,16 @@ function qubinode_deploy_ocp4 () {
     # Deploy IdM Server
     openshift4_idm_health_check
     if [[  "A${IDM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
+      
+        # Download rhel qcow image if rhsm token provided
+        download_files
+      
+        # Deploy IdM
         qubinode_deploy_idm
     fi
 
     # Deploy OCP4
     ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' || exit $?
-    #ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' -e '{ configure_nfs_storage: no}' -e '{ configure_local_storage: no}' || exit $?
 
     # Check the OpenSHift status
     check_if_cluster_deployed
