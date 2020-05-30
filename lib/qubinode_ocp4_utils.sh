@@ -16,6 +16,25 @@ function openshift4_variables () {
 
 function check_for_pull_secret () {
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    #if [[ "A${TOKEN_EXIST}" == "Ayes" ]] && [[ "A${DWL_PULLSECRET}" == "Ayes" ]]
+    if [ -f ${project_dir}/ocp_token ]
+    then
+        OFFLINE_ACCESS_TOKEN=$(cat ${project_dir}/ocp_token)
+        local RELEASE=$(awk '/ocp4_release:/ {print $2}' ${project_dir}/playbooks/vars/ocp4.yml | cut -d. -f1,2)
+        JQ_CMD="${project_dir}/json-processor"
+        JQ_URL=https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+        OCP_SSO_URL=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+        OCP_API_URL=https://api.openshift.com/api/accounts_mgmt/v1/access_token
+        test -f $JQ_CMD || wget $JQ_URL -O $JQ_CMD
+        chmod +x $JQ_CMD 
+        export BEARER=$(curl --silent --data-urlencode "grant_type=refresh_token" \
+                             --data-urlencode "client_id=cloud-services" \
+                             --data-urlencode "refresh_token=${OFFLINE_ACCESS_TOKEN}" $OCP_SSO_URL | $JQ_CMD -r .access_token)
+        curl -X POST $OCP_API_URL --header "Content-Type:application/json" \
+                                  --header "Authorization: Bearer $BEARER" | $JQ_CMD > $ocp4_pull_secret
+    fi
+
+    # verify the pull scret is vailable
     if [ ! -f "${ocp4_pull_secret}" ]
     then
         printf "%s\n\n\n" ""
@@ -25,6 +44,7 @@ function check_for_pull_secret () {
         printf "%s\n\n" "  and save it as ${ocp4_pull_secret}"
         exit
     fi
+
 }
 
 function openshift4_standard_desc() {
@@ -47,6 +67,7 @@ cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Minimal${end}
     ${yel}=========================${end}
+
      3 masters w/8G memory and 2 vcpu
      0 workers
 

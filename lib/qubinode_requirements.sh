@@ -245,27 +245,19 @@ function qcow_check () {
 
 
 function install_rhsm_cli () {
-    if [ ! -f /opt/rh/rh-python36/root/usr/bin/rhsm-cli ]
+    if [ ! -f ${project_dir}/.python/rhsm_cli/bin/rhsm-cli ]
     then
-        if ! rpm -qa | grep -q rh-python36-python-pip
-        then
-            sudo subscription-manager repos --enable rhel-7-server-optional-rpms \
-                                            --enable rhel-server-rhscl-7-rpms
-            sudo yum -y install rh-python36 rh-python36-python-pip
-        fi
-
+        echo "Install install_rhsm_cli"
+        rpm -qa | grep python3-pip || sudo yum install -y python3-pip
+        test -d "${project_dir}/.python" || mkdir "${project_dir}/.python"
+        cd "${project_dir}/.python"
+        python3 -m venv rhsm_cli
+        source "${project_dir}/.python/rhsm_cli/bin/activate"
         git clone https://github.com/antonioromito/rhsm-api-client
         cd rhsm-api-client
-        sudo umask 0022
-        #sudo bash /opt/rh/rh-python36/enable
-        #sudo /opt/rh/rh-python36/root/usr/bin/pip install -r requirements.txt
-        sudo /opt/rh/rh-python36/root/usr/bin/python setup.py install
-        sudo scl enable rh-python36 pip install -r requirements.txt
-        sudo scl enable rh-python36 setup.py install
-        if [ -f /opt/rh/rh-python36/root/usr/bin/rhsm-cli ]
-        then
-            cd ../; rm -rvf rhsm-api-client
-        fi
+        pip install -r requirements.txt
+        python setup.py install --record files.txt
+        deactivate
     fi
 }
 
@@ -275,6 +267,7 @@ setup_download_options () {
     RHSM_TOKEN="${project_dir}/rhsm_token"
     QCOW_EXIST=no
     PULLSECRET_EXIST=no
+    DWL_PULLSECRET=no
     DWL_QCOW=no
 
     # check for user provided token
@@ -301,7 +294,7 @@ setup_download_options () {
     # check for pull secret
     if [ ! -f "${ocp4_pull_secret}" ]
     then
-       DWL_QCOW=yes
+       DWL_PULLSECRET=yes
     else
         PULLSECRET_EXIST=yes
     fi
@@ -333,6 +326,7 @@ download_files () {
     rhel8_qcow_name=$(awk '/^qcow_rhel8_name:/ {print $2}' "${project_dir}/samples/all.yml")
 
 
+    echo download_files && exit
     if [ -f $RHSM_CLI ]
     then
         RHSM_CLI=yes
@@ -341,16 +335,13 @@ download_files () {
     if [[ "A${TOKEN_EXIST}" == "Ayes" ]] && [[ "A${CAN_DWLD}" == "Ayes" ]]
     then
         #. /opt/rh/rh-python36/enable
-        scl enable rh-python36 bash
-        python3.6 -m venv rhsm_cli
-        source "${project_dir}/rhsm_cli/bin/activate"
+        source "${project_dir}/.python/rhsm_cli/bin/activate"
 
         # save token to config file
         if [ ! -f $RHSM_CLI_CONFIG ]
         then
             TOKEN=$(cat $RHSM_TOKEN)
-            #scl enable rh-python36 bash
-            $RHSM_CLI_CMD -t $TOKEN savetoken 2>/dev/null
+            rhsm-cli -t $TOKEN savetoken 2>/dev/null
             if [ $? -ne 0 ]
             then
                 echo "Failure validating token privided by $RHSM_TOKEN"
@@ -363,8 +354,7 @@ download_files () {
         if [[ -f $RHSM_CLI_CONFIG ]] && [[ "A${DWL_QCOW}" == "Ayes" ]]
         then
             echo "Downloading $rhel7_qcow_name"
-            #scl enable rh-python36 bash
-            $RHSM_CLI_CMD images --checksum $rhel7_qcow 2>/dev/null
+            rhsm-cli images --checksum $rhel7_qcow 2>/dev/null
             if [ -f ${project_dir}/${rhel7_qcow_name} ]
             then
                 DWLD_CHECKSUM=$(sha256sum ${project_dir}/${rhel7_qcow_name}|awk '{print $1}')
@@ -375,6 +365,8 @@ download_files () {
                 fi
             fi
         fi
+        # exit virtual environment
+        deactivate
     fi
 }
 

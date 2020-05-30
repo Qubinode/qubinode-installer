@@ -130,9 +130,13 @@ function ask_user_for_custom_idm_server () {
                 sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
                 printf "%s\n" ""
             fi
+            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
         else
             # Ask user for password for IdM
             ask_user_for_idm_password
+
+            # ensure user isn't prompted for existing IdM
+            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
 
             # Ask user if they want to give the IdM server a static IP
             if grep '""' "${idm_vars_file}"|grep -q "idm_check_static_ip:"
