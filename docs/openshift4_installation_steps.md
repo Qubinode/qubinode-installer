@@ -7,10 +7,40 @@ The installation steps deploys a production like OCP4 clsuter, in a enviorment w
 
 ## Prerequisites
 
-#### Get Subscriptions
+### Get Subscriptions
 
 -  Get your [No-cost developer subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/) for RHEL.
 -  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
+
+### OCP4 Pull Secret and RHEL Qcow Image
+
+The installer can requires the latest rhel qcow image and your ocp4 pull secret. You can either download these files or provide two tokens and the installer will download these files for you.
+
+#### Getting the RHEL Qcow Image
+<table>
+  <tr>
+   <td>Using Token
+   </td>
+   <td>Downloading
+   </td>
+  </tr>
+  <tr>
+   <td>Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image. 
+   </td>
+   <td>From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.
+   </td>
+  </tr>
+</table>
+
+```
+cd $HOME/qubinode-installer
+wget -c "insert-url-here" -O rhel-server-7.8-x86_64-kvm.qcow2 
+```
+
+**OpenShift Pull Secret**
+
+- Navigate to [https://cloud.redhat.com/openshift/install/metal/user-provisioned](https://cloud.redhat.com/openshift/install/metal/user-provisioned)
+- Under downloads copy or download you pull secret to ```$HOME/qubinode-installer/pull-secret.txt```
 
 #### Install Red Hat Enterprise Linux
 A bare metal system running RHEL. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
@@ -41,26 +71,6 @@ unzip master.zip
 rm master.zip
 mv qubinode-installer-master qubinode-installer
 ```
-Before you running the qubinode-installer, you will need to grab the RHEL qcow image and your OpenShift 4 pull secret.
-
-**Red Hat Enterprise Linux 7 Qcow Image**
-
-*Download the qcow image*
-From your web browser:
-- Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software
-- Find **Red Hat Enterprise Linux 7.8 KVM Guest Image** and right click on the *Download Now* box
-- Switch to your terminal and run the below command replacing **insert-url-here** 
-
-```
-cd $HOME/qubinode-installer
-wget -c "insert-url-here" -O rhel-server-7.8-x86_64-kvm.qcow2 
-```
-
-**OpenShift Pull Secret**
-
-- Navigate to [https://cloud.redhat.com/openshift/install/metal/user-provisioned](https://cloud.redhat.com/openshift/install/metal/user-provisioned)
-- Under downloads copy or download you pull secret to ```$HOME/qubinode-installer/pull-secret.txt```
-
 
 ### Install Options  
 - Quick Start - Answer questions from the installer to complete installation of OpenmShift 4.x.
