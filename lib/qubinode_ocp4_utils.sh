@@ -16,6 +16,24 @@ function openshift4_variables () {
 
 function check_for_pull_secret () {
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    if [ -f ${project_dir}/ocp_token ]
+    then
+        OFFLINE_ACCESS_TOKEN=$(cat ${project_dir}/ocp_token)
+        local RELEASE=$(awk '/ocp4_release:/ {print $2}' ${project_dir}/playbooks/vars/ocp4.yml | cut -d. -f1,2)
+        JQ_CMD="${project_dir}/json-processor"
+        JQ_URL=https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+        OCP_SSO_URL=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+        OCP_API_URL=https://api.openshift.com/api/accounts_mgmt/v1/access_token
+        test -f $JQ_CMD || wget $JQ_URL -O $JQ_CMD
+        chmod +x $JQ_CMD 
+        export BEARER=$(curl --silent --data-urlencode "grant_type=refresh_token" \
+                             --data-urlencode "client_id=cloud-services" \
+                             --data-urlencode "refresh_token=${OFFLINE_ACCESS_TOKEN}" $OCP_SSO_URL | $JQ_CMD -r .access_token)
+        curl -X POST $OCP_API_URL --header "Content-Type:application/json" \
+                                  --header "Authorization: Bearer $BEARER" | $JQ_CMD > $ocp4_pull_secret
+    fi
+
+    # verify the pull scret is vailable
     if [ ! -f "${ocp4_pull_secret}" ]
     then
         printf "%s\n\n\n" ""
@@ -25,6 +43,10 @@ function check_for_pull_secret () {
         printf "%s\n\n" "  and save it as ${ocp4_pull_secret}"
         exit
     fi
+
+    # remove pull secret token
+    rm -f ${project_dir}/ocp_token
+
 }
 
 function openshift4_standard_desc() {
@@ -47,6 +69,7 @@ cat << EOF
     ${yel}=========================${end}
     ${mag}Deployment Type: Minimal${end}
     ${yel}=========================${end}
+
      3 masters w/8G memory and 2 vcpu
      0 workers
 
@@ -458,7 +481,6 @@ openshift4_kvm_health_check () {
     requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
     check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
   
     if ! sudo virsh net-list | grep -q $requested_brigde; then
@@ -479,11 +501,6 @@ openshift4_kvm_health_check () {
     fi
   
     if [ ! -d $check_image_path ]
-    then
-        KVM_STATUS="not ready"
-    fi
-  
-    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'
     then
         KVM_STATUS="not ready"
     fi
