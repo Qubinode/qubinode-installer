@@ -45,15 +45,9 @@ display_openshift_msg_ocp4 () {
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
-        qubinode_autoinstall_openshift4
-        #confirm "  Proceed with ocp4 install? yes/no"
-        #if [ "A${response}" == "Ayes" ]
-        #then
-        #    echo qubinode_autoinstall_openshift4
-        #    #openshift4_enterprise_deployment
-        #else
-        #    display_other_options
-        #fi
+        ASK_SIZE=false
+        check_for_rhel_qcow_image
+        qubinode_deploy_ocp4
     else
         print "%s\n" " ${red}Unknown issue, please run the installer again${end}"
     fi
@@ -81,12 +75,15 @@ display_other_options () {
         echo "Not implemented yet!"
     elif [ "A${result}" == "ATower" ]
     then
+        check_for_rhel_qcow_image
         qubinode_deploy_tower
     elif [ "A${result}" == "ASatellite" ]
     then
+        check_for_rhel_qcow_image
         qubinode_deploy_satellite
     elif [ "A${result}" == "AIdM" ]
     then
+        check_for_rhel_qcow_image
         qubinode_deploy_idm
     else
         echo "Unknown issue, please run the installer again"

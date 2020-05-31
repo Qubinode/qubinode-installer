@@ -28,7 +28,9 @@ function qubinode_product_deployment () {
               then
                   openshift4_server_maintenance
               else
-                  openshift4_enterprise_deployment
+                  ASK_SIZE=true
+                  check_for_rhel_qcow_image
+                  qubinode_deploy_ocp4
               fi
               ;;
           satellite)
@@ -58,6 +60,14 @@ function qubinode_product_deployment () {
                   qubinode_deploy_idm
               fi
               ;;
+          rhel)
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_rhel_teardown
+              else
+                  qubinode_deploy_rhel
+              fi
+              ;;
           kvmhost)
               echo "Setting up KVM host"
               qubinode_setup_kvm_host
@@ -75,6 +85,10 @@ function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
         qubinode_project_cleanup
+    elif [ "${qubinode_maintenance_opt}" == "hwp" ]
+    then
+        # Collect hardware information
+        create_qubinode_profile_log
     elif [ "${qubinode_maintenance_opt}" == "setup" ]
     then
         qubinode_installer_setup

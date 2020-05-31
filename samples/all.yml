@@ -1,7 +1,7 @@
 ---
 ######################################
 #         USER VARIABLES             #
-# The are autojatically updated or   #
+# The are automatically updated or   #
 # you can update them manually       #
 ######################################
 inventory_dir: ""
@@ -80,8 +80,9 @@ ssh_username: "{{ admin_user }}"
 # ROLE: deploy-kvm-vm
 #--------------------
 # Use to create VM
-# Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)
-os_qcow_image_name: rhel-server-7.7-update-2-x86_64-kvm.qcow2
+# Red Hat Enterprise Linux 7.8 KVM Guest Image
+os_qcow_image_name: rhel-server-7.8-x86_64-kvm.qcow2
+os_qcow_image_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 
 # setting this to true will result is no VMs being created and any existing vms to be deleted
@@ -117,6 +118,8 @@ qubinode_performance_storage: 1340 # actual is 1340
 # your system profile
 storage_profile: ""
 memory_profile: ""
+ocp_cluster_size: ""
+warn_storage_profile: yes
 
 libvirt_host_networks:
   - name: "{{ nat_network_name }}"
@@ -160,7 +163,7 @@ kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_domain: "{{ domain }}"
 
-libvirt_pkgs:
+libvirt_pkgs_8:
    - virt-install
    - libvirt-daemon-config-network
    - libvirt-daemon-kvm
@@ -192,6 +195,39 @@ libvirt_pkgs:
    - python3-dns
    - python3-lxml
    - cockpit-machines
+
+libvirt_pkgs_7:
+   - virt-install
+   - libvirt-daemon-config-network
+   - libvirt-daemon-kvm
+   - libguestfs-tools
+   - libvirt-client
+   - qemu-kvm
+   - nfs-utils
+   - libvirt-daemon
+   - libvirt-client
+   - virt-top
+   - tuned
+   - openssh-server
+   - wget
+   - git
+   - net-tools
+   - bind-utils
+   - yum-utils
+   - iptables-services
+   - bridge-utils
+   - bash-completion
+   - kexec-tools
+   - sos
+   - psacct
+   - vim
+   - pyOpenSSL
+   - device-mapper-event-libs
+   - device-mapper-libs
+   - httpd-tools
+   - java-1.8.0-openjdk-devel.x86_64
+   - tmux
+   - python-dns
 
 ###########################
 # General Networking Info #

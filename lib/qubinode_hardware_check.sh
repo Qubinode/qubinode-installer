@@ -127,37 +127,3 @@ function select_openshift3_cluster_size () {
         fi
     fi 
 }
-
-function custom_ocp4_sizing (){
-cat << EOF
-    ${yel}=========================${end}
-    ${mag}Deployment Type: Custom${end}
-    ${yel}=========================${end}
-
-    ${red}=========================${end}
-    ${mag}This Deployment option is not supported. Limited assitance will be provided.${end}
-    ${red}=========================${end}
-
-    ${cyn}========${end}
-    The Following can be changed
-    Please submit a pull request for additional changes.
-    ${cyn}========${end}
-     - compute count 
-     - local storage 
-EOF
-
-    ## Compute Count 
-    printf "%s\n\n" ""
-    read -p " ${yel}Enter the number of compute nodes your would like?${end} " compute_count
-    compute_num="${compute_count}"
-    confirm " ${blu}You entered${end} ${yel}$compute_num${end}${blu}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
-        printf "%s\n" ""
-        printf "%s\n" " ${blu}Your compute_count is now set to${end} ${yel}$compute_num${end}"
-    fi
-
-    ## Configure local Storage 
-    configure_local_storage
-}

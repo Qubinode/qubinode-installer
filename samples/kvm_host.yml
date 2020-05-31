@@ -12,8 +12,8 @@ libvirt_pool_name_check: yes
 # deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
 qubinode_bridge_name: qubibr0
 
-# RHEL 7.7 is the current tested RHEL 7 minor release.
-# RHEL 8.1 was also tested 
+# RHEL 7.8 is the current tested RHEL 7 minor release.
+# RHEL 8.2  is the current tested RHEL 8 minor release.
 rhel_release: ""
 
 # This variable is being phased out
