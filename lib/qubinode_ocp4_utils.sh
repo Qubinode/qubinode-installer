@@ -16,7 +16,6 @@ function openshift4_variables () {
 
 function check_for_pull_secret () {
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    #if [[ "A${TOKEN_EXIST}" == "Ayes" ]] && [[ "A${DWL_PULLSECRET}" == "Ayes" ]]
     if [ -f ${project_dir}/ocp_token ]
     then
         OFFLINE_ACCESS_TOKEN=$(cat ${project_dir}/ocp_token)
@@ -44,6 +43,9 @@ function check_for_pull_secret () {
         printf "%s\n\n" "  and save it as ${ocp4_pull_secret}"
         exit
     fi
+
+    # remove pull secret token
+    rm -f ${project_dir}/ocp_token
 
 }
 

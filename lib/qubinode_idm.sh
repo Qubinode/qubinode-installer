@@ -293,6 +293,8 @@ function isIdMrunning () {
 
 function qubinode_teardown_idm () {
      IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+     local vmdisk="${libvirt_dir}/${idm_srv_hostname}_vda.qcow2"
      if sudo virsh list --all |grep -q "${idm_srv_hostname}"
      then
          echo "Remove IdM VM"
@@ -300,6 +302,7 @@ function qubinode_teardown_idm () {
      fi
      echo "Ensure IdM server deployment is cleaned up"
      ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+     sudo test -f "${vmdisk}" && sudo rm -f "${vmdisk}"
 
      printf "\n\n*************************\n"
      printf "* IdM server VM deleted *\n"

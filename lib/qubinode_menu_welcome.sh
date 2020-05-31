@@ -46,6 +46,7 @@ display_openshift_msg_ocp4 () {
     elif [ "A${result}" == "AContinue" ]
     then
         ASK_SIZE=false
+        rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
         setup_download_options
         qubinode_deploy_ocp4
     elif [ "A${result}" == "AExit" ]
