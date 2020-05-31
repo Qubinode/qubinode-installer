@@ -70,6 +70,11 @@ function qubinode_deploy_ocp4 () {
     # Deploy IdM Server
     openshift4_idm_health_check
     if [[  "A${IDM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
+      
+        # Download rhel qcow image if rhsm token provided
+        download_files
+      
+        # Deploy IdM
         qubinode_deploy_idm
     fi
 

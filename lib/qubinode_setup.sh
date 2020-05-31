@@ -1,10 +1,10 @@
+#!/bin/bash
+
+
 function qubinode_installer_setup () {
 
     # Ensure configuration files from samples/ are copied to playbooks/vars/
     qubinode_required_prereqs
-
-    # Ensure the RHEL qcow image exists
-    pre_check_for_rhel_qcow_image
 
     # Ensure user is setup for sudoers
     setup_sudoers
@@ -64,6 +64,9 @@ function qubinode_installer_setup () {
     then
        qubinode_setup_ansible
     fi
+
+    # Ensure RHSM cli is installed
+    install_rhsm_cli
 
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"

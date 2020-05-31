@@ -130,9 +130,13 @@ function ask_user_for_custom_idm_server () {
                 sed -i "s/idm_admin_user:.*/idm_admin_user: "$idm_admin_user"/g" "${idm_vars_file}"
                 printf "%s\n" ""
             fi
+            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
         else
             # Ask user for password for IdM
             ask_user_for_idm_password
+
+            # ensure user isn't prompted for existing IdM
+            sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
 
             # Ask user if they want to give the IdM server a static IP
             if grep '""' "${idm_vars_file}"|grep -q "idm_check_static_ip:"
@@ -289,6 +293,8 @@ function isIdMrunning () {
 
 function qubinode_teardown_idm () {
      IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
+     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+     local vmdisk="${libvirt_dir}/${idm_srv_hostname}_vda.qcow2"
      if sudo virsh list --all |grep -q "${idm_srv_hostname}"
      then
          echo "Remove IdM VM"
@@ -296,6 +302,7 @@ function qubinode_teardown_idm () {
      fi
      echo "Ensure IdM server deployment is cleaned up"
      ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
+     sudo test -f "${vmdisk}" && sudo rm -f "${vmdisk}"
 
      printf "\n\n*************************\n"
      printf "* IdM server VM deleted *\n"
