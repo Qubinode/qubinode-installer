@@ -25,7 +25,7 @@ The installer requires the latest rhel qcow image and your ocp4 pull secret. You
    </td>
   </tr>
   <tr>
-   <td>Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image. 
+   <td>Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image.
    </td>
    <td>From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.
    </td>
@@ -41,7 +41,7 @@ The installer requires the latest rhel qcow image and your ocp4 pull secret. You
    </td>
   </tr>
   <tr>
-   <td>Navigate to <a href="https://cloud.redhat.com/openshift/token">OpenShift Cluster Manager API Token</a> to generate a token and save it as <strong>ocp_token</strong>. This token will be used to download your pull secret. 
+   <td>Navigate to <a href="https://cloud.redhat.com/openshift/token">OpenShift Cluster Manager API Token</a> to generate a token and save it as <strong>ocp_token</strong>. This token will be used to download your pull secret.
    </td>
    <td>From your web browser, navigate to <a href="https://cloud.redhat.com/openshift/install/metal/user-provisioned">Red Hat OpenShift Cluster Manager</a>. Find the <strong>Pull secret</strong> heading to either download or copy your pull secret, save it as <strong>pull-secret.txt</strong>.
    </td>
@@ -61,17 +61,11 @@ If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evi
 - Virtualization Hypervisor
 - Virtualization Tools
 
-<<<<<<< HEAD
-_TIPS_
-* If using the recommend storage options install RHEL on the ssd, not the NVME.
-* The RHEL installer will delicate the majority of your storage to /home, you can choose "I will configure partitioning" to have control over this.
-* Set root password and create admin user with sudo privilege
-=======
 **_TIPS_**
-> * If using the recommend storage of one ssd and one NVME, install RHEL on the ssd, not the NVME. 
+> * If using the recommend storage of one ssd and one NVME, install RHEL on the ssd, not the NVME.
 >  * The RHEL installer will delicate the majority of your storage to /home,  you can choose **"I will configure partitioning"** to have control over this.
 >  * Set root password and create admin user with sudo privilege
->>>>>>> c0e320fab81d99f1cf318a3351806d93c7a098be
+
 
 ## Install OpenShift
 
@@ -87,7 +81,7 @@ rm master.zip
 mv qubinode-installer-master qubinode-installer
 ```
 
-Place your pull secret and the rhel qcow image under the qubinode-installer directory. 
+Place your pull secret and the rhel qcow image under the qubinode-installer directory.
 
 If you are using tokens it should be:
 ```
@@ -108,4 +102,3 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 | [Quick Start](ocp4_quickstart.md) | [Advanced Installation](ocp4_adv_install.md) |
 | -------- | -------- |
 | Answer questions from the installer to complete installation of OpenShift 4.x.      | Step through the different Qubinode modules to complete installation.    |
-
