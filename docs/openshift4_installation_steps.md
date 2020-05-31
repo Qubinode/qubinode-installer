@@ -96,7 +96,7 @@ If you downloaded the files instead it should be:
 
 ### Install Options  
 
-Choose one of the below options. The quick start is ideal if you meet your resource requirements documented in our [hardware guide](docs/hardwareguide.md). The advanced option will provide the most flexibilty as you can decide which modules you want to execute and also customize your OCP4 cluster size.
+Choose one of the below options. The quick start is ideal if you meet your resource requirements documented in our [hardware guide](hardwareguide.md). The advanced option will provide the most flexibilty as you can decide which modules you want to execute and also customize your OCP4 cluster size.
 
 | [Quick Start](ocp4_quickstart.md) | [Advanced Installation](ocp4_adv_install.md) |
 | -------- | -------- |
