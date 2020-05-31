@@ -16,9 +16,9 @@ function kvm_host_variables () {
     fi
 
     if [[ $RHEL_VERSION == "RHEL8" ]]; then
-      sed -i "s#libvirt_pkgs_8: \"\"#libvirt_pkgs:g" "${kvm_host_vars_file}"
+      sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-      sed -i "s#libvirt_pkgs_7: \"\"#libvirt_pkgs:#g" "${kvm_host_vars_file}"
+      sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"
     fi
 }
 
