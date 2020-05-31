@@ -17,6 +17,7 @@ function qubinode_product_deployment () {
               then
                   openshift3_server_maintenance
               else
+                  setup_download_options
                   openshift_enterprise_deployment
               fi
               ;;
@@ -29,7 +30,8 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
               else
                   ASK_SIZE=true
-                  check_for_rhel_qcow_image
+                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
+                  setup_download_options 
                   qubinode_deploy_ocp4
               fi
               ;;
@@ -39,6 +41,9 @@ function qubinode_product_deployment () {
                   qubinode_teardown_satellite
               else
                   echo "Installing Satellite"
+                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/satellite.yml")
+                  setup_download_options
+                  download_files
                   qubinode_deploy_satellite
               fi
               ;;
@@ -47,6 +52,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_tower
               else
+                  setup_download_options
+                  download_files
                   qubinode_deploy_tower
               fi
               ;;
@@ -56,7 +63,10 @@ function qubinode_product_deployment () {
                   echo "Running IdM VM teardown function"
                   qubinode_teardown_idm
               else
-                  echo "Running IdM VM deploy function"
+                  echo "Running IdM VM deploy function"m
+                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
+                  setup_download_options
+                  download_files
                   qubinode_deploy_idm
               fi
               ;;
@@ -65,6 +75,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_rhel_teardown
               else
+                  setup_download_options
+                  download_files
                   qubinode_deploy_rhel
               fi
               ;;

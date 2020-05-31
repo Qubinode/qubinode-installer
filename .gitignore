@@ -21,3 +21,7 @@ release.txt
 requirements.txt
 Working/
 .rhel/
+json-processor
+ocp_token
+rhsm_token
+.python/
