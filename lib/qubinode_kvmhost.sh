@@ -409,21 +409,6 @@ function qubinode_check_libvirt_net() {
     fi
 }
 
-function qcow_check() {
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    os_qcow_image_name=$(awk '/^os_qcow_image_name/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-    qcow_image=$( sudo bash -c 'find / -name '${os_qcow_image_name}' | grep -v qubinode | head -n 1')
-    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
-      if [[ -f "${project_dir}/${os_qcow_image_name}" ]]; then
-        sudo bash -c 'cp "'${project_dir}'/'${os_qcow_image_name}'"  '${libvirt_dir}'/'${os_qcow_image_name}''
-      elif [[ -f ${qcow_image} ]]; then
-        sudo bash -c 'cp /'${qcow_image}' '${libvirt_dir}'/'${os_qcow_image_name}''
-      else
-        echo "${os_qcow_image_name} not found on machine please copy over "
-        exit 1
-      fi
-    fi
-}
 
 function qubinode_setup_kvm_host () {
     # set variable to enable prompting user if they want to
