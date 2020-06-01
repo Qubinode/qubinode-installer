@@ -295,7 +295,7 @@ setup_download_options () {
     then
         QCOW_STATUS=exist
     else
-        if [[ ! -f "${libvirt_dir}/${artifact_qcow_image}" ]] || [[ ! -f "${project_dir}/${artifact_qcow_image}" ]]
+        if [[ ! -f "${libvirt_dir}/${artifact_qcow_image}" ]] && [[ ! -f "${project_dir}/${artifact_qcow_image}" ]]
         then
             # check for user provided token
             if [ -f $RHSM_TOKEN ]
@@ -303,6 +303,8 @@ setup_download_options () {
                 TOKEN_STATUS=exist
                 DWL_QCOW=yes
             fi
+        else
+            QCOW_STATUS=exist
         fi
     fi
 
@@ -311,7 +313,7 @@ setup_download_options () {
         PULL_MISSING=yes
         artifact_string="your OCP pull-secret.txt"
     fi
-    
+
     if [[ "A${QCOW_STATUS}" == "Anotexist" ]] && [[ "A${TOKEN_STATUS}" == "Anotexist" ]]
     then
         QCOW_MISSING=yes
@@ -340,7 +342,7 @@ function installer_artifacts_msg () {
 
 
         printf "%s\n" "    ${yel}Tokens:${end}"
-        
+
         if [ "A${QCOW_MISSING}" == "Ayes" ]
         then
             printf "%s\n" "        ${blu}* rhsm_token${end}"
@@ -419,4 +421,3 @@ download_files () {
         fi
     fi
 }
-
