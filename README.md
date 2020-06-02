@@ -2,18 +2,30 @@
 Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 
+## Features in v2.4 RC Version
+
+New Features |
+-- |
+OpenShift 4.4.x |
+OpenShift 4 Ansible Role  |
+NFS Provisioner Role |
+Ansible 2.9 Compatibility  |
+local storage support  |
+Custom VM support  |
+OCP4 Cluster Shutdown |
+OCP4 Cluster Startup |
+OCP4 Cluster Verification  |
+
 ## Qubinode Dev Branch for next release
 
 Feature  |  Status
 --|---
-OpenShift 4 Ansible Role  | Done
-NFS Provisioner Role | Done
-Ansible 2.9 Compatibility  | Done
 Ansible Tower | In progress |  
 Red Hat Satellite Server  | In progress|
-OCP4 Cluster Shutdown | Done |  
-OCP4 Cluster Startup | Done |  
-OCP4 Cluster Verification  | Done |  
+RHEL 8.x Support  | In progress|
+OKD 4.x Support  | In Development |
+OCS Support |  In progress  |   |
+
 
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
@@ -46,7 +58,7 @@ _Optional_
 
 ## Installation Guide
 
-We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.adoc). 
+We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.adoc).
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
 
@@ -55,12 +67,12 @@ We continue to improve our documentation and would like to hear from you on how 
 
 **Workloads**
 - [Application Workloads to try](docs/workloads/README.md)
-  
+
 ## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.3     | 2.6               | 2.3.1 |
+|     Release 2.4     | 2.9               | 2.4 |
 
 
 ## Training
@@ -96,7 +108,8 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 ## Roadmap
 * OCP 4.x Container Native Storage
 * OCP 4.x on RHEV
-* Ansible 2.9 Compatibility
+* Libvirt with KVM  OCP- (Experimental)
+* OpenWrt Router Support - (Experimental)
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
