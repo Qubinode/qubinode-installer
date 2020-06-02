@@ -49,6 +49,7 @@ dns_server_vm:
 
 # Which release of rhel to deploy IDM on
 qcow_rhel_release: 7
+rhel_release: 7
 
 # should qcow template be expanded
 expand_os_disk: no
