@@ -25,8 +25,7 @@ Red Hat Satellite Server  | In progress|
 RHEL 8.x Support  | In progress|
 OKD 4.x Support  | In Development |
 OCS Support |  In progress  |   |
-Libvirt with KVM  OCP |  (Experimental) |
-OpenWrt Router Support | (Experimental)  |  
+
 
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
@@ -109,7 +108,8 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 ## Roadmap
 * OCP 4.x Container Native Storage
 * OCP 4.x on RHEV
-* Ansible 2.9 Compatibility
+* Libvirt with KVM  OCP- (Experimental)
+* OpenWrt Router Support - (Experimental)
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
