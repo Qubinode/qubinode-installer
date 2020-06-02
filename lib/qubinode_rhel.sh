@@ -69,14 +69,15 @@ function qubinode_rhel () {
     # Default RHEL release to deploy
     if [ "A${release}" == "A7" ]
     then
-        qcow_image="rhel-server-7.8-x86_64-kvm.qcow2"
-        echo $release is $release and qcow is $qcow_image
+        rhel_major=7
+        qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     elif [ "A${release}" == "A8" ]
     then
-        qcow_image="rhel-8.2-x86_64-kvm.qcow2"
-        echo $release is $release and qcow is $qcow_image
+        rhel_major=8
+        qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     else
-        qcow_image="rhel-server-7.8-x86_64-kvm.qcow2"
+        rhel_major=7
+        qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     fi
 
     rhel_server_fqdn="${rhel_server_hostname}.${domain}"
@@ -86,6 +87,11 @@ function qubinode_rhel () {
     then
         cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
     fi
+
+    # Ensure RHEL qcow image is available
+    setup_download_options
+    install_rhsm_cli
+    download_files
 
 
 }
@@ -100,6 +106,7 @@ function qubinode_deploy_rhel () {
     sed -i "s/rhel_root_disk_size:.*/rhel_root_disk_size: "$disk"/g" "${rhel_vars_file}"
     sed -i "s/cloud_init_vm_image:.*/cloud_init_vm_image: "$qcow_image"/g" "${rhel_vars_file}"
     sed -i "s/qcow_rhel_release:.*/qcow_rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
+    sed -i "s/rhel_release:.*/rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
 
     # Ensure the RHEL qcow image is at /var/lib/libvirt/images
     RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"
