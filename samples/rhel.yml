@@ -21,3 +21,5 @@ qcow_rhel_release: 7
 rhel_release: 7
 rhel_8_hash:
 rhel_7_hash:
+update_etc_resolv: no
+expand_os_disk: no

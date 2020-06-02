@@ -49,17 +49,20 @@ function qubinode_rhel () {
         then
             vcpu=1
             memory=800
-            disk=20G
+            disk=10G
+            expand_os_disk=no
         elif [ "A${size}" == "Amedium" ]
         then
             vcpu=2
             memory=2048
             disk=60G
+            expand_os_disk=yes
         elif [ "A${size}" == "Alarge" ]
         then
             vcpu=4
             memory=8192
-            disk=200G
+            disk=120G
+            expand_os_disk=yes
         else
             echo "using default size"
        fi
@@ -107,6 +110,8 @@ function qubinode_deploy_rhel () {
     sed -i "s/cloud_init_vm_image:.*/cloud_init_vm_image: "$qcow_image"/g" "${rhel_vars_file}"
     sed -i "s/qcow_rhel_release:.*/qcow_rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
     sed -i "s/rhel_release:.*/rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
+    sed -i "s/expand_os_disk:.*/expand_os_disk: "$expand_os_disk"/g" "${rhel_vars_file}"
+
 
     # Ensure the RHEL qcow image is at /var/lib/libvirt/images
     RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"

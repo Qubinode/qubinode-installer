@@ -859,7 +859,7 @@ function get_cluster_resources () {
                          "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
                          "compute_vcpu  - ${yel}$compute_vcpu${end} vCPU for compute nodes" \
                          "Reset         - Reset to default values" \
-                         "Exit          - Save changes and continue to persistent storage setup")
+                         "Save          - Save changes and continue to persistent storage setup")
 }
 
 function openshift4_custom_desc () {
@@ -942,7 +942,7 @@ EOF
                 reset_cluster_resources_default
 		get_cluster_resources
                 ;;
-            Exit) break;;
+            Save) break;;
             * ) echo "Please answer a valid choice";;
         esac
     done
@@ -951,7 +951,7 @@ EOF
                   "OCS   - Red Hat OpenShift Container Storage" \
                   "Local - Configure local disk for persistent Storage" \
                   "Reset - Reset to default storage options" \
-                  "Exit  - Save changes and exit the custom menu.")
+                  "Save  - Save changes and exit the custom menu.")
     printf "%s\n\n\n" ""
     printf "%s\n\n" "    ${blu}Choose one of the below peristent storage${end}"
     while true
@@ -971,7 +971,7 @@ EOF
             Reset)
                 echo RESET
                 ;;
-            Exit)
+            Save)
                 break
                 ;;
             *)
