@@ -73,7 +73,7 @@ We continue to improve our documentation and would like to hear from you on how 
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.3     | 2.6               | 2.3.1 |
+|     Release 2.4     | 2.9               | 2.4 |
 
 
 ## Training
