@@ -17,6 +17,9 @@ cd $HOME/qubinode-installer
 * Deploy OpenShift 4.
 * Optional: Configure NFS Provisioner
 
+## Adavanced Flags 
+[Additional options](ocp4_adv_install.md)
+
 ## Deployment Post Steps
 
 How to access OpenShift Cluster

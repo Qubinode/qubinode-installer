@@ -54,8 +54,12 @@ $ ansible-playbook playbooks/deploy_ocp4.yml  -t enable_shutdown
 
 *To configure nfs-provisioner for registry*
 ```
-$ cd /home/$USER/qubinode-installer
-$ ansible-playbook playbooks/deploy_ocp4.yml  -t nfs
+./qubinode-installer -p ocp4 -a storage=nfs
+```
+
+*To remove nfs-provisioner for registry*
+```
+./qubinode-installer -p ocp4 -a storage=nfs-remove
 ```
 
 *To configure localstroage*
