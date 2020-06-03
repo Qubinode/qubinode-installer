@@ -287,7 +287,7 @@ function confirm_minimal_deployment () {
     openshift4_minimal_desc
     compute_num=0
     master_vcpu=2
-    master_memory_size=8
+    master_memory_size=8192
     printf "%s\n\n" ""
     printf "%s\n" "    ${blu}Minimal will deploy 3 masters with and 0 computes${end}"
     printf "%s\n" "    ${blu}each master will be configure with with 2 vCPU and 8Gib memory.${end}"
