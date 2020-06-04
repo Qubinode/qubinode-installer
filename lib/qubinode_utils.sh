@@ -154,6 +154,7 @@ function collect_system_information() {
     libvirt_pool_name=$(cat $project_dir/playbooks/vars/kvm_host.yml | grep libvirt_pool_name: | awk '{print $2}')
     if [ "A${libvirt_pool_name}" == "Adefault" ]
     then
+        printf "%s\n\n" "   Getting information about the libvirt storage.."
         if ! sudo virsh pool-info default > /dev/null 2>&1
         then
 cat > /tmp/libvirt-vol.xml <<EOF
