@@ -285,19 +285,30 @@ function set_local_volume_type () {
 function confirm_minimal_deployment () {
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
     openshift4_minimal_desc
-    #confirm " This Option will set your compute count to 2? yes/no"
-    #if [ "A${response}" == "Ayes" ]
-    #then
-        compute_num=0
-        master_vcpu=2
-        master_memory_size=8
-        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory_size"/g" "${ocp4_vars_file}"
-        sed -i "s/compute_count:.*/compute_count: "$compute_num"/g" "${ocp4_vars_file}"
-        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu_count"/g" "${ocp4_vars_file}"
+    masters=3
+    master_vcpu=4
+    master_memory=16384
+    computes=0
+    compute_vcpu=4
+    compute_memory=16384
+    printf "%s\n\n" ""
+    printf "%s\n" "    ${blu}Minimal will deploy ${masters} masters with and ${computes} computes${end}"
+    printf "%s\n" "    ${blu}each master will be configure with with ${master_vcpu} vCPU and ${master_memory}MiB memory.${end}"
+    printf "%s\n\n" ""
+    confirm "    Do you want to continue with a minimal cluster? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory"/g" "${ocp4_vars_file}"
+        sed -i "s/compute_count:.*/compute_count: "$computes"/g" "${ocp4_vars_file}"
+        sed -i "s/master_count:.*/master_count: "$masters"/g" "${ocp4_vars_file}"
+        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu"/g" "${ocp4_vars_file}"
+        sed -i "s/compute_vcpu:.*/compute_vcpu: "$compute_vcpu"/g" "${ocp4_vars_file}"
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
         sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
         sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
-    #fi
+    else
+        ocp4_menu
+    fi
 }
 
 

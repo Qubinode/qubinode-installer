@@ -95,7 +95,7 @@ show_menus() {
     printf "%s\n" "  ${cyn}~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
     printf "%s\n" "  ${yel}Qubinode OpenShift Profiles${end}"
     irintf "%s\n\n" " ${cyn} Please choose an OpenShift Cluster Profile"
-    printf "%s\n" "  ${cyn}~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
+    printf "%s\n" "  ${cy6}~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
     printf "%s\n" "    1. Minimal Deployment"
     printf "%s\n" "    2. Standard Deployment"
     printf "%s\n" "    3. Performance Deployment"
@@ -108,12 +108,13 @@ show_menus_ocp4() {
     printf "%s\n" "    ${yel}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
     printf "%s\n" "    ${cyn}Qubinode OpenShift 4.x Profiles${end}"
     printf "%s\n" "    ${yel}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
-    printf "%s\n" "      1. Minimal Deployment"
-    printf "%s\n" "      2. Standard Deployment"
-    printf "%s\n" "      3. Standard Deployment with local-storage"
-    printf "%s\n" "      4. Standard Deployment with OCS"
-    printf "%s\n" "      5. Custom Deployment"
-    printf "%s\n\n" "      6. Exit"
+    printf "%s\n" "      1. Minimal  3 masters with 0 workers"
+    printf "%s\n" "      2. Standard 3 masters with 0 workers"
+    printf "%s\n" "      3. Standard 3 masters with 2 workers"
+    printf "%s\n" "      4. Standard 3 masters with 3 workers and local storage"
+    printf "%s\n" "      5. Standard 3 masters with 3 workers and OCS"
+    printf "%s\n" "      6. Custom Deployment"
+    printf "%s\n\n" "      7. Exit"
 }
 
 
