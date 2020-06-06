@@ -62,6 +62,8 @@ cat << EOF
     ${cyn}========${end}
      - nfs-provisioner for image registry
 EOF
+    reset_cluster_resources_default
+    sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
 }
 
 function openshift4_minimal_desc() {
@@ -232,6 +234,9 @@ function clean_up_stale_vms(){
 }
 
 function configure_local_storage () {
+
+    # ensure cluster is back to the defaults
+    reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
     read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
@@ -242,7 +247,7 @@ function configure_local_storage () {
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
         printf "%s\n" ""
-        printf "%s" "    ${def}Your compute_hd_size is now set to${end} ${yel}${compute_disk_size}G${end}"
+        printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_disk_size}G${end}"
     fi
 
 cat << EOF
@@ -253,7 +258,7 @@ cat << EOF
     2) Block - Presented to the operating system (OS) as a block device.
 EOF
     local choice
-	read -p " ${cyn}Enter choice [ 1 - 2] ${end}" choice
+	read -p " ${cyn}    Enter choice [ 1 - 2] ${end}" choice
 	case $choice in
 	    1) storage_type=filesystem
             ;;
@@ -262,7 +267,7 @@ EOF
 	    3) exit 0;;
 	    *) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
-        confirm " Continue with  Volume Mode for $storage_type OpenShift deployment? yes/no"
+        confirm "     Continue with $storage_type local storage volume? yes/no"
         if [ "A${response}" == "Ayes" ]
         then
             set_local_volume_type
@@ -273,6 +278,9 @@ EOF
 }
 
 function set_local_volume_type () {
+  # Enable local storage
+  sed -i "s/configure_local_storage:.*/configure_local_storage: yes/g" "${ocp4_vars_file}"
+  sed -i "s/compute_local_storage:.*/compute_local_storage: yes/g" "${ocp4_vars_file}"
   if [[ $storage_type == "filesystem" ]]; then 
     sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${ocp4_vars_file}"
     sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${ocp4_vars_file}"
@@ -284,25 +292,30 @@ function set_local_volume_type () {
 
 function confirm_minimal_deployment () {
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    min_master_count=$(awk '/^min_master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_mem=$(awk '/^min_mem:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     openshift4_minimal_desc
-    masters=3
-    master_vcpu=4
-    master_memory=16384
-    computes=0
-    compute_vcpu=4
-    compute_memory=16384
+
+    # set compute
+    if [ "A${minimal_opt}" == "Amasters_only" ]
+    then
+        min_compute_count=0
+    fi
+
     printf "%s\n\n" ""
-    printf "%s\n" "    ${blu}Minimal will deploy ${masters} masters with and ${computes} computes${end}"
+    printf "%s\n" "    ${blu}This deployment option $deployment_option ${masters} masters with and ${computes} computes${end}"
     printf "%s\n" "    ${blu}each master will be configure with with ${master_vcpu} vCPU and ${master_memory}MiB memory.${end}"
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/master_mem_size:.*/master_mem_size: "$master_memory"/g" "${ocp4_vars_file}"
-        sed -i "s/compute_count:.*/compute_count: "$computes"/g" "${ocp4_vars_file}"
-        sed -i "s/master_count:.*/master_count: "$masters"/g" "${ocp4_vars_file}"
-        sed -i "s/master_vcpu:.*/master_vcpu: "$master_vcpu"/g" "${ocp4_vars_file}"
-        sed -i "s/compute_vcpu:.*/compute_vcpu: "$compute_vcpu"/g" "${ocp4_vars_file}"
+        sed -i "s/master_mem_size:.*/master_mem_size: "$min_mem"/g" "${ocp4_vars_file}"
+        sed -i "s/master_count:.*/master_count: "$min_master_count"/g" "${ocp4_vars_file}"
+        sed -i "s/master_vcpu:.*/master_vcpu: "$min_vcpu"/g" "${ocp4_vars_file}"
+        sed -i "s/compute_vcpu:.*/compute_vcpu: "$min_vcpu"/g" "${ocp4_vars_file}"
+        sed -i "s/compute_count:.*/compute_count: "$min_compute_count"/g" "${ocp4_vars_file}"
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
         sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
         sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
@@ -861,8 +874,17 @@ function get_cluster_resources () {
     compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
-    cluster_custom_opts=("master_count  - ${yel}$master_count${end} master nodes" \
-                         "master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
+#    cluster_custom_opts=("master_count  - ${yel}$master_count${end} master nodes" \
+#                         "master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
+#                         "master_mem    - ${yel}$master_mem_size${end} memory for master nodes" \
+#                         "master_vcpu   - ${yel}$master_vcpu${end} vCPU for master nodes" \
+#                         "compute_count - ${yel}$compute_count${end} compute nodes" \
+#                         "compute_disk  - ${yel}$compute_hd_size${end} size HD for compute nodes" \
+#                         "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
+#                         "compute_vcpu  - ${yel}$compute_vcpu${end} vCPU for compute nodes" \
+#                         "Reset         - Reset to default values" \
+#                         "Save          - Save changes and continue to persistent storage setup")
+    cluster_custom_opts=("master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
                          "master_mem    - ${yel}$master_mem_size${end} memory for master nodes" \
                          "master_vcpu   - ${yel}$master_vcpu${end} vCPU for master nodes" \
                          "compute_count - ${yel}$compute_count${end} compute nodes" \
