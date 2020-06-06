@@ -6,6 +6,7 @@ kvm_host_macaddr: ""
 kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
 libvirt_pool_name_check: yes
+skip_libvirt_pool: no
 
 # We leverage a bridge network for OCP3 installs
 # and other VMS. This sets the name of the bridge to be created and use when
