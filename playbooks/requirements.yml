@@ -1,20 +1,20 @@
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
-  version: dev
+  version: v2.4.0
 
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
-  version: dev
+  version: v2.4.0
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: v1.0.0
 
-- src: https://github.com/flyemsafe/swygue-redhat-subscription.git
-  version: dev
+- src: https://github.com/Qubinode/swygue-redhat-subscription.git
+  version: v2.4.0
 
 - src: https://github.com/flyemsafe/swygue-lvm.git
   version: v1.0.1
 
 - src: https://github.com/ahuffman/ansible-resolv.git
-  version: master
+  version: 1.3.2
 
 - src: https://github.com/tosin2013/openshift-inventory.git
   version: master
@@ -29,7 +29,7 @@
   version: master
 
 - src: https://github.com/Qubinode/openshift-4-loadbalancer.git
-  version: dev
+  version: v2.4.0
 
 - src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
   version: master
@@ -40,11 +40,11 @@
 - src: https://github.com/flyemsafe/swygue.ansible-tower.git
   version: master
 
-- src: https://github.com/flyemsafe/nfs-provisioner-role.git
-  version: dev
+- src: https://github.com/Qubinode/nfs-provisioner-role.git
+  version: v2.4.0
 
-- src: https://github.com/flyemsafe/ocp4-kvm-deployer.git
-  version: dev
+- src: https://github.com/Qubinode/ocp4-kvm-deployer.git
+  version: v2.4.0
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
-  version: dev
+  version: v2.4.0

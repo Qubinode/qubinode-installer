@@ -44,7 +44,7 @@ This may be used when there is an issue with the deployment. Note that idm is re
 ./qubinode-installer -p ocp4
 ```
 
-****Additional options**** 
+**Additional options**  
 
 *To configure shutdown before 24 hours*
 ```
