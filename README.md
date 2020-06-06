@@ -61,6 +61,7 @@ _Optional_
 We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.adoc).
 - [Installing OpenShift 4](docs/openshift4_installation_steps.md)
 - [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
+- [Generic VM Deployment](docs/generic_vms_deployment.adoc)
 
 **Day Two Operations**
 - [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
