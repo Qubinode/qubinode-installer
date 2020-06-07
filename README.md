@@ -1,8 +1,7 @@
 # Qubinode Installer
-Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
+Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 
 ## Motivation
-Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 The primary focus of this project is deploy as close as possible a production type OpenShift cluster on a single bare metal node.
 
 ## What is OpenShift?
