@@ -30,6 +30,7 @@ Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift
 Start the installation with the below command. The installation will run then present you menu to choose from.
 
 ```=shell
+cd $HOME/qubinode-installer
 ./qubinode-installer -p ocp4
 ```
 
@@ -45,3 +46,13 @@ The menu options.
 
    Enter choice [ 1 - 6] 6
 ```
+
+## Deployment Post Steps
+
+Accessing the cluster web console.
+
+* Option 1: Add dns server to /etc/resolv.conf on your computer.
+  - Or run script found under lib/qubinode_dns_configurator.sh
+* Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
+
+**Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**
