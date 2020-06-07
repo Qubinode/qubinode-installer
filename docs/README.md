@@ -48,6 +48,52 @@ rm master.zip
 mv qubinode-installer-master qubinode-installer
 ```
 
-### Deploy a Red Hat Product
+### Qubinode Setup
+
+The below commands ensure your system is setup as a KVM host.
+The qubinode-installer needs to run as a regular users.
+
+* setup   - ensure your username is setup for sudoers
+* rhsm    - ensure your rhel system is registered to Red Hat
+* ansible - ensure your rhel system is setup for to function as a ansible controller
+* host    - ensure your rhel system is setup as a KVM host
+
+```shell=
+./qubinode-installer -m setup
+./qubinode-installer -m rhsm
+./qubinode-installer -m ansible
+./qubinode-installer -m host
+```
+
+## Deploy a Red Hat Product
+
+Most products depends on the latest rhel 7, 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
+
+#### Getting the RHEL Qcow Image
+<table>
+  <tr>
+   <td>Using Token
+   </td>
+   <td>Downloading
+   </td>
+  </tr>
+  <tr>
+   <td>Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image. 
+   </td>
+   <td>From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.
+   </td>
+  </tr>
+</table>
+
+If you are using tokens it should be:
+```
+* $HOME/qubinode-installer/rhsm_token
+```
+
+If you downloaded the files instead it should be:
+```
+* $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
+* $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
+```
 
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
