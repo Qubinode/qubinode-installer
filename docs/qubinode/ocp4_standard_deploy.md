@@ -1,6 +1,10 @@
-# OpenShift 4.x Cluster Deployment Quick start
+# OpenShift 4.x Standard Cluster Deployment
 
 Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing here.
+
+Run the below command to kick off the deployment of 6 node OCP4 cluster.
+This will consist of 3 masters 3 workers and NFS for persistent storage.
+Each node will be deployed with 16 Gib memory and 4 vCPUs.
 
 ```shell=
 cd $HOME/qubinode-installer
@@ -9,7 +13,7 @@ cd $HOME/qubinode-installer
 
 *Select Option 1: Continue with the default installation*
 
-![](https://i.imgur.com/6UmK2Gd.png)
+![](https://i.imgur.com/LS8p6j1.png)
 
 **This will perform the following**
 * Configure server for KVM.
@@ -17,12 +21,13 @@ cd $HOME/qubinode-installer
 * Deploy OpenShift 4.
 * Optional: Configure NFS Provisioner
 
-## Adavanced Flags 
-[Additional options](ocp4_adv_install.md)
-
 ## Deployment Post Steps
 
-How to access OpenShift Cluster
+Accessing the cluster web console.
+
 * Option 1: Add dns server to /etc/resolv.conf on your computer.
   - Or run script found under lib/qubinode_dns_configurator.sh
 * Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
+
+**Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**
+

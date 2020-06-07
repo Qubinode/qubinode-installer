@@ -75,9 +75,14 @@ function qubinode_product_deployment () {
               then
                   qubinode_rhel_teardown
               else
-                  setup_download_options
-                  download_files
-                  qubinode_deploy_rhel
+                  if [ "A${qubinode_maintenance}" == "Atrue" ]
+                  then
+                      qubinode_rhel_maintenance
+                  else
+                      setup_download_options
+                      download_files
+                      qubinode_deploy_rhel
+                  fi
               fi
               ;;
           kvmhost)
