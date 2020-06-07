@@ -1,6 +1,6 @@
-= Troubleshooting an monitoring for Qubinode
+# Troubleshooting an monitoring for Qubinode
 
-===  From the CLI
+###  From the CLI
 *virt-top*
 
 ```
@@ -38,7 +38,7 @@ OPTIONS
   -help             Display this list of options
   --help            Display this list of options
 ```
-https://people.redhat.com/rjones/virt-top/virt-top.txt[virt-top-> more info]
+[virt-top-> more info](https://people.redhat.com/rjones/virt-top/virt-top.txt)
 
 .KVM logs location
 * as administrator
@@ -55,4 +55,4 @@ https://people.redhat.com/rjones/virt-top/virt-top.txt[virt-top-> more info]
 -rw-------. 1 root root 104K Aug 17 10:01 qbn-master01.log
 ```
 
-=== From Cockpit
+### From Cockpit
