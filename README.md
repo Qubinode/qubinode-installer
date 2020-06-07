@@ -81,8 +81,6 @@ If you would like to Contribute to the qubinode project please see the documenta
 * [Testing and Validation](test/README.md)  
 
 ## Support
-If you need support, start with [the troubleshooting guide](docs/qubinode/troubleshooting-monitoring.md)
-
 If you have any direct questions, reach out to us [using the guide](docs/communication.md).
 
 ## Known issues
