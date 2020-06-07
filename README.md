@@ -2,7 +2,8 @@
 Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
 ## Motivation
-Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
+Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
+The primary focus of this project is deploy as close as possible a production type OpenShift cluster on a single bare metal node.
 
 ## What is OpenShift?
 Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
