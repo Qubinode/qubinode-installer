@@ -64,8 +64,11 @@ $ ansible-playbook playbooks/deploy_ocp4.yml  -t enable_shutdown
 
 *To configure localstroage*
 ```
-$ cd /home/$USER/qubinode-installer
-$ ansible-playbook playbooks/deploy_ocp4.yml  -t localstorage
+./qubinode-installer -p ocp4 -a storage=localstorage
+```
+*To configure localstroage*
+```
+./qubinode-installer -p ocp4 -a storage=localstorage-remove
 ```
 
 ## Deployment Post Steps
