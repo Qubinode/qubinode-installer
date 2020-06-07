@@ -65,3 +65,7 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 | [Standard Deployment](ocp4_standard_deploy.md) | [Custom Deployment](ocp4_custom_deploy.md) |
 | -------- | -------- |
 | Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 masters and 3 workers.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
+
+### Additional Documentation
+
+* [Qubinode OpenShift Cluster Operations](ocp4_cluster_ops.md)
