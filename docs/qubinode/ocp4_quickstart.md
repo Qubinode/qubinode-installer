@@ -18,7 +18,7 @@ cd $HOME/qubinode-installer
 * Optional: Configure NFS Provisioner
 
 ## Adavanced Flags 
-[Additional options](ocp4_adv_install.md)
+[Additional options](qubinode/ocp4_adv_install.md)
 
 ## Deployment Post Steps
 

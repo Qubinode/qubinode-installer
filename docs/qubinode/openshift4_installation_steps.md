@@ -7,9 +7,10 @@ The installation steps deploys a production like OCP4 clsuter, in a enviorment w
 
 ## Prerequisites
 
+Refer to the [Getting Started Guide](README.md) to ensure RHEL 7 is installed.
+
 ### Get Subscriptions
 
--  Get your [No-cost developer subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/) for RHEL.
 -  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
 ### OCP4 Pull Secret and RHEL Qcow Image
@@ -49,23 +50,6 @@ The installer requires the latest rhel qcow image and your ocp4 pull secret. You
 </table>
 
 
-
-## Install Red Hat Enterprise Linux
-A bare metal system running RHEL. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
-
-1. Virtualization Host
-2. Server with GUI
-
-If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evironment** you select the following:
-
-- Virtualization Hypervisor 
-- Virtualization Tools
-
-**_TIPS_**
-> * If using the recommend storage of one ssd and one NVME, install RHEL on the ssd, not the NVME. 
->  * The RHEL installer will delicate the majority of your storage to /home,  you can choose **"I will configure partitioning"** to have control over this.
->  * Set root password and create admin user with sudo privilege
-
 ## Install OpenShift
 
 ### The qubinode-installer
@@ -100,5 +84,4 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 
 | [Quick Start](ocp4_quickstart.md) | [Advanced Installation](ocp4_adv_install.md) |
 | -------- | -------- |
-| Answer questions from the installer to complete installation of OpenShift 4.x.      | Step through the different Qubinode modules to complete installation.    |
-
+| Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 masters and 3 workers.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
