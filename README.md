@@ -17,7 +17,8 @@ The qubinode-installer can deploy a 3 node cluster on a system with 32GiB memory
 For the best possible experince 128 GiB of memory is recommended. This will allow
 for the default deployment of a cluster with 3 masters and 3 workers.
 
-Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_
+Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
+
 The required base OS is Red Hat Enterprise Linux 7.7 refer to the [Getting Started Guide](docs/README.md)
 
 ## Deploying a OpenShift cluster
