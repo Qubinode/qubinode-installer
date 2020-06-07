@@ -27,6 +27,9 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
 
+**Qubinode Documenation**
+- [Qubinode Overview](docs/README.md)
+
 ## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |
