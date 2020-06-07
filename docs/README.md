@@ -3,13 +3,13 @@
 A Qubinode is a bare metal node that uses the qubinode-installer to configure RHEL to function as a KVM host. The qubinode-installer can then be used to deploy additional Red Hat products as VMs running atop the Qubinode. 
 
 ## Currently Supported Products
-* [Red Hat OpenShift Platform](openshift4_installation_steps.md)
-* [Red Hat Identity Managment](idm.md)
-* [Red Hat Enterprise Linux](rhel_vms.md)
+* [Red Hat OpenShift Platform](qubinode/openshift4_installation_steps.md)
+* [Red Hat Identity Managment](qubinode/idm.md)
+* [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
 
 ## Products in Development
-* [Ansible Automation Platform](ansible_platform.md)
-* [Red Hat Satellite](redhat_satellite.md)
+* [Ansible Automation Platform](qubinode/ansible_platform.md)
+* [Red Hat Satellite](qubinode/redhat_satellite.md)
 
 # Getting Started
 
