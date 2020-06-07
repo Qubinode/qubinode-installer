@@ -2,7 +2,7 @@
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 
 ## Motivation
-The primary focus of this project is deploy as close as possible a production type OpenShift cluster on a single bare metal node.
+The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
 
 ## What is OpenShift?
 Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
@@ -18,7 +18,6 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 masters and 3 workers.
 
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
-
 The required base OS is Red Hat Enterprise Linux 7.7 refer to the [Getting Started Guide](docs/README.md)
 
 ## Deploying a OpenShift cluster
@@ -34,7 +33,7 @@ The required base OS is Red Hat Enterprise Linux 7.7 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4     | 2.9               | 2.4 |
 
-## Features in v2.4 RC Version
+### Features in v2.4 RC Version
 
 New Features |
 -- |
@@ -48,7 +47,7 @@ OCP4 Cluster Shutdown |
 OCP4 Cluster Startup |
 OCP4 Cluster Verification  |
 
-## Qubinode Dev Branch for next release
+### Qubinode Dev Branch for next release
 
 Feature  |  Status
 --|---
