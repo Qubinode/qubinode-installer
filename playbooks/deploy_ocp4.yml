@@ -1,7 +1,7 @@
 ---
 - name: Deploy OpenShift 4.x Cluster
   hosts: localhost
-  gather_facts: no
+  gather_facts: yes
   become: yes
   vars_files:
     - vars/all.yml
