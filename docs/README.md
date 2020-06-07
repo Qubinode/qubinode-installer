@@ -51,7 +51,7 @@ mv qubinode-installer-master qubinode-installer
 ### Qubinode Setup
 
 The below commands ensure your system is setup as a KVM host.
-The qubinode-installer needs to run as a regular users.
+The qubinode-installer needs to run as a regular user.
 
 * setup   - ensure your username is setup for sudoers
 * rhsm    - ensure your rhel system is registered to Red Hat

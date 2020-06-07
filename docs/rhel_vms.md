@@ -11,7 +11,7 @@ There is also a dependancy on IdM as a dns server, refer to the [IdM install](id
 ### Deploying a RHEL VM
 
 The default RHEL release is RHEL 7. You can deploy RHEL 8 by passing the varible release=8 to the installer -a argument.
-THe -a agrument can be passed multiple times for set different vairables.
+The -a agrument can be passed multiple times for set different vairables.
 
 **Install Options**
 
@@ -21,7 +21,7 @@ THe -a agrument can be passed multiple times for set different vairables.
 * qty - the number of VMs to deploy
 
 The VM name is randomly generated when the **name** option is not specified.
-THe naming convention is qbn-rhel<release>-<random-four-digits>.
+The naming convention is qbn-rhel<release>-<random-four-digits>.
 
 * Example: qbn-rhel8-1076
 
