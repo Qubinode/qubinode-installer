@@ -6,6 +6,7 @@ This gives you a quick way to spin up one or multiple VMs on KVM running RHEL.
 ## Prerequisites
 
 Refer to the [Getting Started Guide](README.md) to ensure RHEL 7 is installed.
+There is also a dependancy on IdM as a dns server, refer to the [IdM install](idm.md).
 
 ### RHEL QCOW Image
 
@@ -138,14 +139,23 @@ Deleting a VM requires the name of the VM with the **-d** argument.
 ```
 
 **Stopping/Starting a VM**
-
-NOT YET IMPLEMENTED
-
 ```=shell
 
 # Stop
 ./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -m stop
 
 # Start
-./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -m stop
+./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -m start
+```
+
+**Get VM status**
+```=shell
+./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -m status
+
+```
+
+**List all RHEL VMs**
+```=shell
+./qubinode-installer -p rhel -m list
+
 ```
