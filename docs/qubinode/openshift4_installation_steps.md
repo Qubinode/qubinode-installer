@@ -8,7 +8,7 @@ The installation steps deploys a production like OCP4 clsuter, in a enviorment w
 
 ## Prerequisites
 
-Refer to the [Getting Started Guide](README.md) to ensure RHEL 7 is installed.
+Refer to the [Getting Started Guide](../README.md) to ensure RHEL 7 is installed.
 
 ### Get Subscriptions
 
