@@ -43,7 +43,7 @@ Qubinode is for users wanting to stand up an OpenShift cluster in a secure and c
 * At least 32 GB of memory, 128 GB is recommended.
 * At least 300 GB SSD or NVME dedicated storage, 1TB is recomneded.
 
-_[Recommend Hardware](docs/qubinode/hardwareguide.md)_
+_[Recommend Hardware](docs/qubinode/qubinode/hardwareguide.md)_
 
 **Software**
 * Red Hat Enteprise Linux 7.7 installed
@@ -58,16 +58,16 @@ _Optional_
 
 ## Installation Guide
 
-We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.adoc).
-- [Installing OpenShift 4](docs/openshift4_installation_steps.md)
-- [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
-- [Generic VM Deployment](docs/generic_vms_deployment.adoc)
+We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/qubinode/communication.md).
+- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
+- [Installing OpenShift 3](docs/qubinode/openshift3_installation_steps.md)
+- [Generic VM Deployment](docs/qubinode/generic_vms_deployment.md)
 
 **Day Two Operations**
 - [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
 
 **Workloads**
-- [Application Workloads to try](docs/workloads/README.md)
+- [Application Workloads to try](docs/qubinode/workloads/README.md)
 
 ## Qubinode Release Information
 
@@ -77,7 +77,7 @@ We continue to improve our documentation and would like to hear from you on how 
 
 
 ## Training
-* [Qubinode for Beginners](docs/beginners.adoc)
+* [Qubinode for Beginners](docs/qubinode/beginners.md)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
@@ -92,17 +92,17 @@ _Ansible_
 - [(RH294) Linux Automation with Ansible](https://www.redhat.com/en/services/training/rh294-red-hat-system-administration-iii-linux-automation)
 
 ## Contribute
-* [Communications](docs/communication.adoc)
+* [Communications](docs/qubinode/communication.md)
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
-* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
+* [Qubinode WorkFlow Process](docs/qubinode/qubinode_git_branching_model.md)  
 * [Testing and Validation](test/README.md)  
 
 ## Support
-If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
+If you need support, start with [the troubleshooting guide](docs/qubinode/troubleshooting-monitoring.md)
 
-If you have any direct questions, reach out to us [using the guide](docs/communication.adoc).
+If you have any direct questions, reach out to us [using the guide](docs/qubinode/communication.md).
 
 ## Known issues
 
