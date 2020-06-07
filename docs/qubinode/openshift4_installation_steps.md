@@ -62,6 +62,6 @@ If you downloaded the files instead it should be:
 
 Choose one of the below options. The quick start is ideal if you meet your resource requirements documented in our [hardware guide](hardwareguide.md). The advanced option will provide the most flexibilty as you can decide which modules you want to execute and also customize your OCP4 cluster size.
 
-| [Quick Start](ocp4_quickstart.md) | [Advanced Installation](ocp4_adv_install.md) |
+| [Standard Deployment](ocp4_standard_deploy.md) | [Custom Deployment](ocp4_custom_deploy.md) |
 | -------- | -------- |
 | Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 masters and 3 workers.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
