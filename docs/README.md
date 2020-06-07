@@ -9,7 +9,7 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
 
 ## Products in Development
 * [Ansible Automation Platform](qubinode/ansible_platform.md)
-* [Red Hat Satellite](qubinode/redhat_satellite.md)
+* [Red Hat Satellite](qubinode/qubinode_satellite_install.md)
 
 # Getting Started
 
