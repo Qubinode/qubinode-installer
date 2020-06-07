@@ -1,32 +1,6 @@
 # Qubinode Installer
 Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
 
-
-## Features in v2.4 RC Version
-
-New Features |
--- |
-OpenShift 4.4.x |
-OpenShift 4 Ansible Role  |
-NFS Provisioner Role |
-Ansible 2.9 Compatibility  |
-local storage support  |
-Custom VM support  |
-OCP4 Cluster Shutdown |
-OCP4 Cluster Startup |
-OCP4 Cluster Verification  |
-
-## Qubinode Dev Branch for next release
-
-Feature  |  Status
---|---
-Ansible Tower | In progress |  
-Red Hat Satellite Server  | In progress|
-RHEL 8.x Support  | In progress|
-OKD 4.x Support  | In Development |
-OCS Support |  In progress  |   |
-
-
 ## Motivation
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
@@ -59,6 +33,29 @@ The required base OS is Red Hat Enterprise Linux 7.7 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4     | 2.9               | 2.4 |
 
+## Features in v2.4 RC Version
+
+New Features |
+-- |
+OpenShift 4.4.x |
+OpenShift 4 Ansible Role  |
+NFS Provisioner Role |
+Ansible 2.9 Compatibility  |
+local storage support  |
+Custom VM support  |
+OCP4 Cluster Shutdown |
+OCP4 Cluster Startup |
+OCP4 Cluster Verification  |
+
+## Qubinode Dev Branch for next release
+
+Feature  |  Status
+--|---
+Ansible Tower | In progress |  
+Red Hat Satellite Server  | In progress|
+RHEL 8.x Support  | In progress|
+OKD 4.x Support  | In Development |
+OCS Support |  In progress  |   |
 
 ## Training
 * [Qubinode for Beginners](docs/beginners.md)
