@@ -13,26 +13,6 @@ Refer to the [Getting Started Guide](README.md) to ensure RHEL 7 is installed.
 
 -  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
-### OCP4 Pull Secret and RHEL Qcow Image
-
-The installer requires the latest rhel qcow image and your ocp4 pull secret. You can either download these files or provide the respective tokens and the installer will download these files for you.
-
-#### Getting the RHEL Qcow Image
-<table>
-  <tr>
-   <td>Using Token
-   </td>
-   <td>Downloading
-   </td>
-  </tr>
-  <tr>
-   <td>Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image. 
-   </td>
-   <td>From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.
-   </td>
-  </tr>
-</table>
-
 #### Getting the OpenShift Pull Secret
 <table>
   <tr>
