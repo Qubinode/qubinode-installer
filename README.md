@@ -43,7 +43,7 @@ Qubinode is for users wanting to stand up an OpenShift cluster in a secure and c
 * At least 32 GB of memory, 128 GB is recommended.
 * At least 300 GB SSD or NVME dedicated storage, 1TB is recomneded.
 
-_[Recommend Hardware](docs/qubinode/qubinode/hardwareguide.md)_
+_[Recommend Hardware](docs/qubinode/hardwareguide.md)_
 
 **Software**
 * Red Hat Enteprise Linux 7.7 installed
@@ -58,13 +58,9 @@ _Optional_
 
 ## Installation Guide
 
-We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/qubinode/communication.md).
+We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.md).
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
-- [Installing OpenShift 3](docs/qubinode/openshift3_installation_steps.md)
-- [Generic VM Deployment](docs/qubinode/generic_vms_deployment.md)
-
-**Day Two Operations**
-- [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
+- [Red Hat Enterprise Linux VM Deployment](docs/qubinode/rhel_vms.md)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
