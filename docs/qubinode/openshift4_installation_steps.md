@@ -84,4 +84,4 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 
 | [Quick Start](ocp4_quickstart.md) | [Advanced Installation](ocp4_adv_install.md) |
 | -------- | -------- |
-| Answer questions from the installer to complete installation of OpenShift 4.x.      | Step through the different Qubinode modules to complete installation.    |
+| Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 masters and 3 workers.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|

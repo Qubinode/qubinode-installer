@@ -1,76 +1,47 @@
-# OpenShift 4.x Cluster Advanced Deployment 
+# OpenShift 4.x Custom Deployment
 
-Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) b
-efore continuing here.
+All custom cluster deployment options defaults to 3 master nodes.
+A cluster with 3 nodes is smallest cluster deployment size
+supported by the OCP4 installer. When deploying 3 nodes only, each node
+gets assigned the role of worker and master. Each cluster is deployed
+with NFS for persistent storage.
 
-****setup playbooks vars and user sudoers****  
-```
-./qubinode-installer -m setup
-```
+1. **Minimal Cluster Deployment Options**
 
-****register host system to Red Hat****  
-```
-./qubinode-installer -m rhsm
-```
-****update to RHEL 7.7 if you are using 7.6****
-```
-sudo yum update -y
-```
+    Two options are available for systems with less than 128 Gib memory:
+      * A 3 node master/woker cluster for systems with only 32 Gib memory
+      * A 4 node cluster, 3 masters and 1 worker for systems with 64 Gib memory
 
-****setup host system as an ansible controller****
-```
-./qubinode-installer -m ansible
-```
+    A minimum of 6 cores is recommended. The 3 node option deploys each node
+    with 10 Gib memory and 4 vCPUs. The 4 node option deploys each node with
+    12 Gib memory and 4 vCPUs.
 
-****setup host system as an ansible controller****
-```
-./qubinode-installer -m host
-```
+2. **Standard and Custom Cluster Deployment Options**
+  
+    Three options are available for systems with more than 128 Gib memory:
+    * A 5 node cluster 3 masters and 2 workers
+    * A 6 node cluster 3 masters and 2 workers with the option for local storage
+    * A custom option to increase the number of workers and memory, vpcu, storage size for each node
+    
+## Deploy the cluster
 
-****install idm dns server****
-```
-./qubinode-installer -p idm
-```
+Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing with this install.
 
-****Optional: Uninstall idm dns server****
+Start the installation with the below command. The installation will run then present you menu to choose from.
 
-This may be used when there is an issue with the deployment. Note that idm is required for OpenShift 4.x installations.
-```
-./qubinode-installer  -p idm -d
-```
-
-****Install OpenShift 4.x****
-```
+```=shell
 ./qubinode-installer -p ocp4
 ```
 
-**Additional options**  
+The menu options.
+```
+      1. Minimal 3 node cluster
+      2. Minimal 4 node cluster
+      3. Standard 5 node cluster
+      4. Standard 6 node cluster with local storage
+      5. Custom Deployment
+      6. Exit
 
-*To configure shutdown before 24 hours*
-```
-$ cd /home/$USER/qubinode-installer
-$ ansible-playbook playbooks/deploy_ocp4.yml  -t enable_shutdown
-```
 
-*To configure nfs-provisioner for registry*
+   Enter choice [ 1 - 6] 6
 ```
-./qubinode-installer -p ocp4 -a storage=nfs
-```
-
-*To remove nfs-provisioner for registry*
-```
-./qubinode-installer -p ocp4 -a storage=nfs-remove
-```
-
-*To configure localstroage*
-```
-$ cd /home/$USER/qubinode-installer
-$ ansible-playbook playbooks/deploy_ocp4.yml  -t localstorage
-```
-
-## Deployment Post Steps
-
-How to access OpenShift Cluster
-* Option 1: Add dns server to /etc/resolv.conf on your computer.
-  - Or run script found under lib/qubinode_dns_configurator.sh
-* Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
