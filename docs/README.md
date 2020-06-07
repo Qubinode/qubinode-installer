@@ -5,7 +5,7 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
 ## Currently Supported Products
 * [Red Hat OpenShift Platform](openshift4_installation_steps.md)
 * [Red Hat Identity Managment](idm.md)
-* [Red Hat Enterprise Linux](rhem_vms.md)
+* [Red Hat Enterprise Linux](rhel_vms.md)
 
 ## Products in Development
 * [Ansible Automation Platform](ansible_platform.md)
