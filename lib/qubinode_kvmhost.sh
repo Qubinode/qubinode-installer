@@ -7,6 +7,19 @@ function kvm_host_variables () {
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
+    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+    # Set the RHEL version
+    if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
+    then
+        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+        sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
+    fi
+
+    if [[ $RHEL_VERSION == "RHEL8" ]]; then
+      sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
+    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+      sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"
+    fi
 }
 
 function getPrimaryDisk () {
