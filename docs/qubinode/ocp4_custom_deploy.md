@@ -55,4 +55,25 @@ Accessing the cluster web console.
   - Or run script found under lib/qubinode_dns_configurator.sh
 * Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
 
+**Optional Install Cockpit**  
+**In order to manage and view cluster from a web ui on RHEL 7**  
+```
+subscription-manager repos --enable=rhel-7-server-extras-rpms
+subscription-manager repos --enable=rhel-7-server-optional-rpms
+sudo yum install  cockpit cockpit-networkmanager cockpit-dashboard \
+  cockpit-storaged cockpit-packagekit cockpit-machines cockpit-sosreport \
+  cockpit-pcp cockpit-bridge -y
+sudo systemctl start cockpit
+sudo systemctl enable cockpit.socket
+sudo firewall-cmd --add-service=cockpit
+sudo firewall-cmd --add-service=cockpit --permanent
+sudo firewall-cmd --reload
+```
+
+**go to your servers url for cockpit ui**
+```
+https://SERVER_IP:9090
+```
+
+
 **Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**

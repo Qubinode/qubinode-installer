@@ -128,3 +128,28 @@ Deleting a VM requires the name of the VM with the **-d** argument.
 ./qubinode-installer -p rhel -m list
 
 ```
+
+**Optional Install Cockpit**  
+**In order to manage and view cluster from a web ui on RHEL 7**  
+```
+subscription-manager repos --enable=rhel-7-server-extras-rpms
+subscription-manager repos --enable=rhel-7-server-optional-rpms
+sudo yum install  cockpit cockpit-networkmanager cockpit-dashboard \
+  cockpit-storaged cockpit-packagekit cockpit-machines cockpit-sosreport \
+  cockpit-pcp cockpit-bridge -y
+sudo systemctl start cockpit
+sudo systemctl enable cockpit.socket
+sudo firewall-cmd --add-service=cockpit
+sudo firewall-cmd --add-service=cockpit --permanent
+sudo firewall-cmd --reload
+```
+
+**In order to manage and view cluster from a web ui on RHEL 8** 
+```
+$ sudo systemctl enable --now cockpit.socket
+```
+
+**go to your servers url for cockpit ui**
+```
+https://SERVER_IP:9090
+```
