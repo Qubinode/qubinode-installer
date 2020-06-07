@@ -73,7 +73,7 @@ We continue to improve our documentation and would like to hear from you on how 
 
 
 ## Training
-* [Qubinode for Beginners](docs/qubinode/beginners.md)
+* [Qubinode for Beginners](docs/beginners.md)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
@@ -98,7 +98,7 @@ If you would like to Contribute to the qubinode project please see the documenta
 ## Support
 If you need support, start with [the troubleshooting guide](docs/qubinode/troubleshooting-monitoring.md)
 
-If you have any direct questions, reach out to us [using the guide](docs/qubinode/communication.md).
+If you have any direct questions, reach out to us [using the guide](docs/communication.md).
 
 ## Known issues
 
