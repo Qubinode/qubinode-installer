@@ -18,14 +18,7 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 masters and 3 workers.
 
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
-The required base OS is Red Hat Enterprise Linux 7.7 refer to the [Getting Started Guide](docs/README.md)
-
-## Deploying a OpenShift cluster
-
-- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
-
-**Workloads**
-- [Application Workloads to try](docs/qubinode/workloads/README.md)
+The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
 ## Qubinode Release Information
 
@@ -56,6 +49,16 @@ Red Hat Satellite Server  | In progress|
 RHEL 8.x Support  | In progress|
 OKD 4.x Support  | In Development |
 OCS Support |  In progress  |   |
+
+## Deploying a OpenShift cluster
+
+- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
+
+**Workloads**
+- [Application Workloads to try](docs/qubinode/workloads/README.md)
+
+**Qubinode Documenation**
+- [Qubinode Overview](docs/README.md)
 
 ## Training
 * [Qubinode for Beginners](docs/beginners.md)

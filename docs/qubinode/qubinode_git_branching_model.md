@@ -1,17 +1,14 @@
-// NOTE: Qubinode git branching strategey
-= Qubinode Git branching  strategy
-:toc: preamble
-:numbered!:
-[abstract]
-== Introduction
+# Qubinode Git branching  strategy
+
+## Introduction
 
 *This guide contains all the information needed to become a contributor on the Qubinode project. Please follow our git branching model so that everyone will have a pleasant experience contributing to this project.*
 
-== Branching and releasing
+## Branching and releasing
 
-=== Qubinode project Branches
+### Qubinode project Branches
 
-The following are the only branches that will exists on the official Qubinode project(https://github.com/Qubinode):
+The following are the only branches that will exists on the official Qubinode project (https://github.com/Qubinode):
 
 - *master* holds the latest production ready code
 * Rules:
@@ -22,7 +19,7 @@ The following are the only branches that will exists on the official Qubinode pr
 ** Merge to *master*  branch when all codes are stable
 ** Tag *master* branch with new release number after merging from *develop* branch
 
-=== Qubinode supporting branches
+### Qubinode supporting branches
 
 The supporting branches will only exist on the developer's repository. Once the code is ready to be pushed to either the master or develop branch. Once the merge request is accepted, the developer can delete the supporting branch.
 
@@ -45,9 +42,9 @@ The supporting branches will only exist on the developer's repository. Once the 
 ** May branch off from *master* branch
 ** Must be merged back into *master* and *develop* branch
 
-== Scenerios
+## Scenerios
 
-=== Adding a new feature
+### Adding a new feature
 
 . switch to the develop branch:
 +
@@ -93,7 +90,7 @@ $ git push origin develop
 
 . Submit a merge request to the Qubinode repository
 
-=== HotFixes
+### HotFixes
 
 . switch to the master branch:
 +
@@ -143,7 +140,7 @@ $ git merge --no-ff hotfix-<issue number>
 $ git branch -d hotfix-<issue number>
 ....
 
-=== Pushing out a new release
+### Pushing out a new release
 
 After coding all features, hotfixes, and meet the requirement for the next Qubinode release, we will create a release branch that's tagged with a code name based on the next alphabetically available fruit ( i.e. apple, banana)
 
