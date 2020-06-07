@@ -40,16 +40,6 @@ OCP4 Cluster Shutdown |
 OCP4 Cluster Startup |
 OCP4 Cluster Verification  |
 
-### Qubinode Dev Branch for next release
-
-Feature  |  Status
---|---
-Ansible Tower | In progress |  
-Red Hat Satellite Server  | In progress|
-RHEL 8.x Support  | In progress|
-OKD 4.x Support  | In Development |
-OCS Support |  In progress  |   |
-
 ## Deploying a OpenShift cluster
 
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
