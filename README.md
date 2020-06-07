@@ -31,36 +31,24 @@ OCS Support |  In progress  |   |
 Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
 
 ## What is OpenShift?
-* Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
-* OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
+Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
 
-**The installer supports installing (OCP) or (OKD)**
- - Current state is the installer primarly supports deploying OKD 3.11.x, OCP 3.11.x, and OCP4 4.3 builds. Installing OCP3 or OCP4 will require a Red Hat subscription.
-
-## Requirements
+## Resource requirements for OpenShift cluster
 
 **Baremetal Hardware**
-* At least 32 GB of memory, 128 GB is recommended.
-* At least 300 GB SSD or NVME dedicated storage, 1TB is recomneded.
+* At least 32 GiB of memory, 128 GiB is recommended.
+* At least 300 GiB SSD or NVME dedicated storage, 1TB is recomneded.
 
-_[Recommend Hardware](docs/qubinode/hardwareguide.md)_
+The qubinode-installer can deploy a 3 node cluster on a system with 32GiB memory.
+For the best possible experince 128 GiB of memory is recommended. This will allow
+for the default deployment of a cluster with 3 masters and 3 workers.
 
-**Software**
-* Red Hat Enteprise Linux 7.7 installed
+Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_
+The required base OS is Red Hat Enterprise Linux 7.7 refer to the [Getting Started Guide](docs/README.md)
 
-**Subscriptions**
+## Deploying a OpenShift cluster
 
-_Required_
-* Red Hat Enteprise Linux [no-cost Red Hat Enterprise Linux Developer Subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/).
-
-_Optional_
-* For deploying Red Hat OpenShift Container Platform (OCP) you can obtain a [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
-
-## Installation Guide
-
-We continue to improve our documentation and would like to hear from you on how to make it better.You may contact us [here](docs/communication.md).
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
-- [Red Hat Enterprise Linux VM Deployment](docs/qubinode/rhel_vms.md)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
