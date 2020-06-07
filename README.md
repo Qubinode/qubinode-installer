@@ -26,19 +26,15 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4     | 2.9               | 2.4 |
 
-### Features in v2.4 RC Version
+### Qubinode Dev Branch for next release
 
-New Features |
--- |
-OpenShift 4.4.x |
-OpenShift 4 Ansible Role  |
-NFS Provisioner Role |
-Ansible 2.9 Compatibility  |
-local storage support  |
-Custom VM support  |
-OCP4 Cluster Shutdown |
-OCP4 Cluster Startup |
-OCP4 Cluster Verification  |
+Feature  |  Status
+--|---
+Ansible Tower | In progress |  
+Red Hat Satellite Server  | In progress|
+RHEL 8.x Support  | In progress|
+OKD 4.x Support  | In Development |
+OCS Support |  In progress  |   |
 
 ## Deploying a OpenShift cluster
 
