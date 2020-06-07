@@ -1,23 +1,13 @@
-// NOTE: this is a draft installation doc
-= Installing The Qubinode
-Rodrique Heron <rheron@rodhouse.org>
-v0.0, 2019-08-25
-:imagesdir: images
-:toc: preamble
-:homepage: https://github.com/Qubinode/qubinode-installer
 
-This guide should get you up and running with qubinode.
-
-:numbered!:
-[abstract]
-= Introduction
+# Installing The Qubinode
+# Introduction
 
 
 The qubinode is a prescriptive installation of either Red Hat OpenShift Platform or The Origin Community Distribution of Kubernetes.
 
 :numbered:
 
-== Installing Red Hat Enterprise Linux
+## Installing Red Hat Enterprise Linux
 
  - [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel)
 
@@ -29,7 +19,7 @@ The qubinode is a prescriptive installation of either Red Hat OpenShift Platform
 * Begin installation
 * set root password and create admin user with sudo privilege
 
-== Prepare the system
+## Prepare the system
 One RHEL has been installed on your system, ensure the system has internet connection. The qubinode-installer expects that your already have DHCP running in your environment for the purpose of supplying IP addresses for the VM nodes.
 
 [NOTE]
@@ -54,13 +44,13 @@ cd qubinode-installer/
 . Download the qcow image
  From your web browser:
 
-. Navigate to: https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software
+. Navigate to: https://access.redhat.com/downloads/content/69/ver#/rhel---7/7.8/x86_64/product-software
 . Find *Red Hat Enterprise Linux 7.8 KVM Guest Image* and right click on the *Download Now" box
 . wget -c "insert-url-here" -O rhel-server-7.8-x86_64-kvm.qcow2 
 
 :numbered:
 
-== Qubinode Installation Quickstart
+## Qubinode Installation Quickstart
 ```
 $ ./qubinode-installer
 Loading function qubinode_required_prereqs
@@ -95,7 +85,7 @@ Loading function qubinode_required_prereqs
 #?
 ```
 
-== Qubinode Advanced OpenShift Installation Steps
+## Qubinode Advanced OpenShift Installation Steps
 **setup        - setup playbooks vars and user sudoers**
 ```
 ./qubinode-installer -m setup
@@ -146,7 +136,7 @@ sudo yum update -y
  ./qubinode-installer -p ocp3
 ```
 
-== Installing the container platform
+## Installing the container platform
 
 The installer supports installing either Red Hat OpenShift (OCP) or The Origin Community Distribution of Kubernetes (OKD).
 
@@ -157,7 +147,7 @@ The continue with the default installation has not been implemented yet.
 
 The installer accepts arguments to either to change the behavior of the installation. The *-p* argument is always required. The options for *-p* are: *ocp* for OpenShift or *okd* for The Origin Community.. .
 
-=== Installing OpenShift in stages
+### Installing OpenShift in stages
 
 In this example we will walk through each stage of the installer to get OpenShift installed.
 
@@ -167,7 +157,7 @@ In this example we will walk through each stage of the installer to get OpenShif
  ./qubinode-installer -p ocp -m setup
 
 ```
-==== The setup run down
+#### The setup run down
 
 . Setup password-less sudoers
 
@@ -193,7 +183,7 @@ If your user is already setup for sudo, you will be prompted for the users passw
 . Collects your RHSM credentials. This is used to register RHEL to the Red Hat Customer Portal and also OpenShift if you have an OpenShift subscription.
   - Prompts you to choose between using a Activation Key or Username and Password. If doing an OpenShift install your RHSM username and password is required and you will be prompted for it if you choose option *(1)*. Unless you understand activation keys, the best option is *(2)*.
 
-==== Register the system to Red Hat
+#### Register the system to Red Hat
 The qubinode-installer leverage Red Hat Enterprise Linux as the foundation. In order to get updates and install additional software all RHEL systems must be registered to the Red Hat Customer Portal (RHSM).
 
 Execute the RHSM stage:
@@ -205,7 +195,7 @@ Execute the RHSM stage:
 - Registers your system to RHSM.
 - Gets the pool id if installing OpenShift.
 
-==== Setup Ansible Engine
+#### Setup Ansible Engine
 The qubinode-installer leverages ansible automation as do the OCP/OKD's own installer.
 
 Execute the Ansible stage:
@@ -219,7 +209,7 @@ Execute the Ansible stage:
 - Generates an ansible vault file *~/.vaultkey* and encrypts the playbooks/vars/vault.yml file.
 - Downloads all the roles specified in playbooks/requirements.yml
 
-==== Setup your system as a KVM host
+#### Setup your system as a KVM host
 The qubinode-installer leverages linux virtualization hypervisor KVM and the Libvirt management tools. This stage configures your system to function as a KVM host.
 
 [NOTE]
@@ -233,7 +223,7 @@ Execute the KVM host stage:
 - Ensure the system is registered to RHSM and installs all required packages
 - Creates a
 
-==== Setup idm for dns server
+#### Setup idm for dns server
 The OpenShift nodes will use this as the external server to the cluster. End users will also point to this dns server to access the OpenShift cluster.
 Execute the IDM stage:
 ```
@@ -248,7 +238,7 @@ To remove IDM run the following
 ```
 *For OKD Deployments please remove the machine from the list of registered systems on https://access.redhat.com/management/systems*
 
-==== Deploy the  vms used for the OpenShift Development
+#### Deploy the  vms used for the OpenShift Development
 This commannd will deploy the VMs that OpenShift will run on. Running the command below will prepare your hosts for OpenShift deployment. Write a-records to the IDM server to be used by OpenShift.
 
 .Summary of actions
@@ -273,7 +263,7 @@ To remove the nodes run the following
 ```
 *For OKD Deployments please remove the machine from the list of registered systems on https://access.redhat.com/management/systems*
 
-==== Deploy OpenShift
+#### Deploy OpenShift
 This command will deploy OpenShift on the vms that where deployed on the previous step.
 
 .Summary of Actions
@@ -299,13 +289,13 @@ To uninstall Openshift across all hosts in the cluster.
 
 ```
 
-== Deployment Post Steps
-==== How to access OpenShift Cluster
+## Deployment Post Steps
+#### How to access OpenShift Cluster
 - Option 1: add dns server to /etc/resolv.conf on your computer
   - Or run script found under lib/qubinode_dns_configurator.sh
 - Option 2: add dns server to router so all machines can access the OpenShift Cluster
 
-==== Testing the Deployment
+#### Testing the Deployment
 - Check Health of cluster
 ```
 ./qubinode-installer  -c checkcluster
@@ -319,7 +309,7 @@ To uninstall Openshift across all hosts in the cluster.
 ./qubinode-installer  -c diag
 ```
 
-== Day Two Operations
+## Day Two Operations
 - Start up OpenShift cluster after shutdown
 ```
 ./qubinode-installer  -c startup

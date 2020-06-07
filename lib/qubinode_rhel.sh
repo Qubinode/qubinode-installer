@@ -4,6 +4,7 @@ function qubinode_rhel () {
     RHEL_VM_PLAY="${project_dir}/playbooks/rhel.yml"
     rhel_vars_file="${project_dir}/playbooks/vars/rhel.yml"
 
+
     product_in_use=rhel
     prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
     suffix=rhel
@@ -33,9 +34,9 @@ function qubinode_rhel () {
 
     if [ "A${name}" != "A" ]
     then
-        rhel_server_hostname="${prefix}-${name}"
+        rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${name}"
     else
-        rhel_server_hostname="${prefix}-${suffix}${release}-${instance_id}"
+        rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${instance_id}"
     fi
 
     # Get instance size
@@ -49,34 +50,37 @@ function qubinode_rhel () {
         then
             vcpu=1
             memory=800
-            disk=20G
+            disk=10G
+            expand_os_disk=no
         elif [ "A${size}" == "Amedium" ]
         then
             vcpu=2
             memory=2048
             disk=60G
+            expand_os_disk=yes
         elif [ "A${size}" == "Alarge" ]
         then
             vcpu=4
             memory=8192
-            disk=200G
+            disk=120G
+            expand_os_disk=yes
         else
             echo "using default size"
        fi
     fi
 
-
     # Default RHEL release to deploy
     if [ "A${release}" == "A7" ]
     then
-        qcow_image="rhel-server-7.8-x86_64-kvm.qcow2"
-        echo $release is $release and qcow is $qcow_image
+        rhel_major=7
+        qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     elif [ "A${release}" == "A8" ]
     then
-        qcow_image="rhel-8.2-x86_64-kvm.qcow2"
-        echo $release is $release and qcow is $qcow_image
+        rhel_major=8
+        qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     else
-        qcow_image="rhel-server-7.8-x86_64-kvm.qcow2"
+        rhel_major=7
+        qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     fi
 
     rhel_server_fqdn="${rhel_server_hostname}.${domain}"
@@ -87,10 +91,11 @@ function qubinode_rhel () {
         cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
     fi
 
-
+    # Ensure RHEL qcow image is available
+    setup_download_options
+    install_rhsm_cli
+    download_files
 }
-
-
 
 function qubinode_deploy_rhel () {
     qubinode_rhel
@@ -100,6 +105,9 @@ function qubinode_deploy_rhel () {
     sed -i "s/rhel_root_disk_size:.*/rhel_root_disk_size: "$disk"/g" "${rhel_vars_file}"
     sed -i "s/cloud_init_vm_image:.*/cloud_init_vm_image: "$qcow_image"/g" "${rhel_vars_file}"
     sed -i "s/qcow_rhel_release:.*/qcow_rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
+    sed -i "s/rhel_release:.*/rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
+    sed -i "s/expand_os_disk:.*/expand_os_disk: "$expand_os_disk"/g" "${rhel_vars_file}"
+
 
     # Ensure the RHEL qcow image is at /var/lib/libvirt/images
     RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"
@@ -191,3 +199,60 @@ function qubinode_rhel_teardown () {
     fi
 }
 
+function qubinode_rhel_maintenance () {
+    qubinode_rhel
+    VM_STATE=unknown
+
+    if sudo virsh dominfo --domain $name >/dev/null 2>&1
+    then
+        VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2$3}')
+        WAIT_TIME=0
+
+        # start up a vm
+        if [[ "A${qubinode_maintenance_opt}" == "Astart" ]] && [[ "A${VM_STATE}" == "Ashutoff" ]]
+        then
+            sudo virsh start $name >/dev/null 2>&1 && printf "%s\n" "$name started"
+        fi
+
+        # shutdown a vm
+        if [[ "A${qubinode_maintenance_opt}" == "Astop" ]] && [[ "A${VM_STATE}" == "Arunning" ]]
+        then
+            ansible $name -m command -a"shutdown +1 'Shutting down the VM'" -b >/dev/null 2>&1
+            printf "\n Shutting down $name. \n"
+            until [[ $VM_STATE != "running" ]] || [[ $WAIT_TIME -eq 10 ]]
+            do
+                ansible $name -m command -a"shutdown +1 'Shutting down'" -b >/dev/null 2>&1
+                VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
+                sleep $(( WAIT_TIME++ ))
+            done
+
+            if [ $VM_STATE != "running" ]
+            then
+                printf "%s\n" "$name stopped"
+            fi
+
+            if [ $VM_STATE == "running" ]
+            then
+                sudo virsh destroy $name >/dev/null 2>&1 && printf "%s\n" "$name stopped"
+            fi
+        fi
+
+        # vm status
+        if [ "A${qubinode_maintenance_opt}" == "Astatus" ]
+        then
+            printf "%s\n" "VM current state is $VM_STATE"
+        fi
+    fi
+
+    # show VM status
+    if [ "A${qubinode_maintenance_opt}" == "Alist" ]
+    then
+        printf "%s\n" " Id    Name                           State"
+        printf "%s\n" " --    ----                           -----"
+        sudo virsh list| awk '/rhel/ {printf "%s\n", $0}'
+    else
+        printf "%s\n" "unknown ${qubinode_maintenance_opt}"
+    fi
+
+    printf "%s\n\n" ""
+}

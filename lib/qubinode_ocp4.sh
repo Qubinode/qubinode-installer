@@ -24,11 +24,47 @@ check_if_cluster_deployed () {
             ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t bootstrap_shut > /dev/null 2>&1 || exit $?
             printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
             /usr/local/bin/qubinode-ocp4-status
+            # Configure Advanced options 
+            advanced_ocp4_options
             exit 0
         fi
     fi
 }
 
+function advanced_ocp4_options(){
+    # -a flags for storage and other openshift modfications
+    # Check for user provided variables
+    for var in "${product_options[@]}"
+    do
+       export $var
+    done
+
+
+    #local storage options 
+    if [ "A${storage}" != "A" ]
+    then
+        if [ "$storage" == "nfs" ]
+        then
+          echo "You are going to reconfigure ${storage}"
+          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed"
+        elif [ "$storage" == "nfs-remove" ]
+        then 
+          echo "You are going to Remove ${storage}  from the openshift cluster"
+          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true"
+        fi
+
+        # localstorage option 
+        if [ "$storage" == "localstorage" ]
+        then
+          echo "You are going to reconfigure ${storage}"
+          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed"
+        elif [ "$storage" == "localstorage-remove" ]
+        then 
+          echo "You are going to Remove ${storage}  from the openshift cluster"
+          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true"
+        fi
+    fi
+}
 
 function qubinode_deploy_ocp4 () {
     product_in_use="ocp4" # Tell the installer which release of OCP

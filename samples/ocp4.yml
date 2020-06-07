@@ -32,6 +32,7 @@ configure_ocs_storage: no
 
 # deploy local persistent storage
 configure_local_storage: no
+compute_local_storage: no
 localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
@@ -51,6 +52,7 @@ idm_server_fqdn: "{{ ipa_host }}"
 user_idm_admin: "{{ idm_admin_user }}"
 user_idm_password: "{{ idm_admin_pwd }}"
 
+# Default values for deploy OCP cluster
 # Change to reflect the number of masters and workers you want to deploy
 master_count: 3
 compute_count: 3
@@ -60,11 +62,19 @@ master_vcpu: 4
 compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
-compute_local_storage: true
 compute_vdb_size: 50
 compute_vdc_size: 150
+bootstrap_hd_size: 120
+bootstrap_mem_size: 16192
+bootstrap_vcpu: 4
 monpod_disk_size: "{{ compute_vdb_size }}"
 osdvolume_disk_size: "{{ monpod_disk_size }}"
+
+# Values for minimal deployment
+min_master_count: 3
+min_compute_count: 1
+min_vcpu: 4
+min_mem: 10240
 
 # The start ranage for IP address make sure there is enough for the
 # master and compute nodes you want to deploy
@@ -179,9 +189,9 @@ ocp4_instances:
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
   - name: bootstrap
-    hd_size: 120G
-    memory_size: 16192
-    cpu_size: 2
+    hd_size: "{{ bootstrap_hd_size }}G"
+    memory_size: "{{ bootstrap_mem_size }}"
+    cpu_size: "{{ bootstrap_vcpu }}"
     extra_storage:
       - size: ""
         name: vdb

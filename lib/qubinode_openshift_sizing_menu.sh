@@ -91,11 +91,11 @@ function user_choose_ocp4_profile () {
 }
 
 # function to display menus
-show_menus() {
+show_menus () {
     printf "%s\n" "  ${cyn}~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
     printf "%s\n" "  ${yel}Qubinode OpenShift Profiles${end}"
     irintf "%s\n\n" " ${cyn} Please choose an OpenShift Cluster Profile"
-    printf "%s\n" "  ${cyn}~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
+    printf "%s\n" "  ${cy6}~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
     printf "%s\n" "    1. Minimal Deployment"
     printf "%s\n" "    2. Standard Deployment"
     printf "%s\n" "    3. Performance Deployment"
@@ -103,17 +103,43 @@ show_menus() {
 }
 
 # function to display menus
-show_menus_ocp4() {
+show_menus_ocp4 () {
     printf "%s\n" ""
     printf "%s\n" "    ${yel}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
     printf "%s\n" "    ${cyn}Qubinode OpenShift 4.x Profiles${end}"
-    printf "%s\n" "    ${yel}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
-    printf "%s\n" "      1. Minimal Deployment"
-    printf "%s\n" "      2. Standard Deployment"
-    printf "%s\n" "      3. Standard Deployment with local-storage"
-    printf "%s\n" "      4. Standard Deployment with OCS"
+    printf "%s\n\n" "    ${yel}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
+
+    printf "%s\n" "    All cluster deployment options defaults to 3 master nodes."
+    printf "%s\n" "    A cluster with 3 nodes is smallest cluster deployment size"
+    printf "%s\n" "    supported by the OCP4 installer. When deploying 3 nodes only, each node"
+    printf "%s\n" "    gets assigned the role of worker and master. Each cluster is deployed"
+    printf "%s\n\n" "    with NFS for persistent storage."
+
+    printf "%s\n" "    ${cyn}Minimal Cluster Deployment Options${end}"
+    printf "%s\n" "    These options require a minimum of 32 Gib memory for the 3 node"
+    printf "%s\n" "    option and 64 Gib for the 4 node option. A minimum of 6 cores"
+    printf "%s\n" "    is recommended . The 3 node option deploys each node with 10 Gib"
+    printf "%s\n" "    memory and 4 vCPUs. The 4 node option deploys each node with 12"
+    printf "%s\n\n" "    Gib memory and 4 vCPUs."
+
+    printf "%s\n" "    ${cyn}Standard Cluster Deployment Options${end}"
+    printf "%s\n" "    These options require a minimum of 96 Gib memory and 8 cores."
+    printf "%s\n" "    This will deploy the default configuration of 3 masters and 3 workers"
+    printf "%s\n" "    or 3 masters and 2 workers. The 6 node option includes the option to"
+    printf "%s\n\n" "    deploy persistent local storage."
+
+    printf "%s\n" "    ${cyn}Custom Cluster Deployment Options${end}"
+    printf "%s\n" "    This option will allow you to: "
+    printf "%s\n" "        * Increase the number of workers "
+    printf "%s\n" "        * Change the memory, storage, and vcpu for each node"
+    printf "%s\n" ""
+    printf "%s\n" "      1. Minimal 3 node cluster"
+    printf "%s\n" "      2. Minimal 4 node cluster"
+    printf "%s\n" "      3. Standard 5 node cluster"
+    printf "%s\n" "      4. Standard 6 node cluster with local storage"
     printf "%s\n" "      5. Custom Deployment"
-    printf "%s\n\n" "      6. Exit"
+    printf "%s\n" "      6. Exit"
+    printf "%s\n\n" ""
 }
 
 
@@ -135,9 +161,13 @@ function read_options(){
 	read -p "   ${cyn}Enter choice [ 1 - 6] ${end}" choice
 	case $choice in
 	1) ocp_size=minimal
-            ;;
-        2) ocp_size=standard
-            ;;
+           minimal_opt=masters_only
+           confirm_minimal_deployment
+           ;;
+        2) ocp_size=minimal
+           minimal_opt=masters_worker
+           confirm_minimal_deployment
+           ;;
         3) ocp_size=performance
             ;;
 	4) exit 0
@@ -145,44 +175,32 @@ function read_options(){
 	*) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
 	esac
         user_choose_profile
-        #confirm " Continue with $ocp_size OpenShift cluster deployment? yes/no"
-        #if [ "A${response}" == "Ayes" ]
-        #then
-        #    continue_with_selected_install
-        #else
-        #    user_choose_profile
-        #fi
 }
 
-function read_options_ocp4(){
+function read_options_ocp4 () {
 	local choice
 	read -p "   ${cyn}Enter choice [ 1 - 6] ${end}" choice
 	case $choice in
-        1) ocp_size=minimal && confirm_minimal_deployment
-                ;;
-        2) ocp_size=standard && openshift4_standard_desc
-            ;;
-        3) ocp_size=local-storage && configure_local_storage
-            ;;
-        4) ocp_size=ocs && configure_ocs_storage
-            ;;
-        5) ocp_size=custom && openshift4_custom_desc
-            ;;
+        1) ocp_size=minimal
+           minimal_opt=masters_only
+           confirm_minimal_deployment
+           ;;
+        2) ocp_size=minimal
+           confirm_minimal_deployment
+           ;;
+        3) ocp_size=standard 
+           openshift4_standard_desc
+           ;;
+        4) ocp_size=local-storage
+           configure_local_storage
+           ;;
+        5) ocp_size=custom
+           openshift4_custom_desc
+           ;;
         6) exit 0
                 ;;
 	*) printf "%s\n\n" " ${red}Error...${end}" && sleep 2
 	esac
-
-        #show_menus_ocp4
-        #read_options_ocp4
- #   confirm " Continue with $ocp_size OpenShift cluster deployment? yes/no"
- #   if [ "A${response}" == "Ayes" ]
- #   then
- #       continue_with_selected_install
- #   else
- #       show_menus_ocp4
- #       read_options_ocp4
- #   fi
 }
 
 # ----------------------------------------------

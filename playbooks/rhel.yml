@@ -7,8 +7,8 @@
     - vars/all.yml
     - vars/kvm_host.yml
     - vars/vault.yml
-    - vars/rhel.yml
     - vars/idm.yml
+    - vars/rhel.yml
   vars:
     vm_name: "{{ rhel_server_vm.rhel_name }}"
     vm_cpu: "{{ rhel_server_vm.rhel_vcpu }}"

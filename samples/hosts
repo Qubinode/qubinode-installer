@@ -1,25 +1,9 @@
 localhost               ansible_connection=local ansible_user=root
 
-[masters]
-
-[infra]
-
-[computes]
-
-[lbs]
-
 [dns]
 
 [satellite]
 
-[rhhi]
-
-[osp]
-
 [tower]
 
-[qbnodes:children]
-masters
-infra
-computes
-lbs
+[rhel]
