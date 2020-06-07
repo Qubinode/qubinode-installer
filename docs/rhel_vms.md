@@ -50,6 +50,10 @@ THe -a agrument can be passed multiple times for set different vairables.
 * release - the release of RHEL to deploy
 * qty - the number of VMs to deploy
 
+The VM name is randomly generated when the **name** option is not specified.
+THe naming convention is qbn-rhel<release>-<random-four-digits>.
+
+* Example: qbn-rhel8-1076
 
 **VM sizes available**
 
@@ -104,9 +108,6 @@ THe -a agrument can be passed multiple times for set different vairables.
 
 **Deploying a RHEL 8 VM**
 
-
-
-
 ```=shell
 ./qubinode-installer -p rhel -a release=8
 ```
@@ -129,3 +130,22 @@ THe -a agrument can be passed multiple times for set different vairables.
 ./qubinode-installer -p rhel -a release=8 -a qty=4 -a name=webserver
 ```
 
+**Deleting a VM**
+Deleting a VM requires the name of the VM with the **-d** argument.
+
+```=shell
+./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -d
+```
+
+**Stopping/Starting a VM**
+
+NOT YET IMPLEMENTED
+
+```=shell
+
+# Stop
+./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -m stop
+
+# Start
+./qubinode-installer -p rhel -a name=qbn-rhel8-1076 -m stop
+```
