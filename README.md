@@ -47,7 +47,7 @@ OCP4 Cluster Verification  |
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
 
-**Qubinode Documenation**
+**Qubinode Documentation**
 - [Qubinode Overview](docs/README.md)
 
 ## Training
