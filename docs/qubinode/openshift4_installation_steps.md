@@ -1,10 +1,8 @@
 #  Installing an OpenShift 4.x Cluster on a Single Node
 
 The following documentation will help you deploy an OpenShift Container Platform (OCP) 4.3 cluster, on a single node.
-The installation steps deploys a production like OCP4 clsuter, in a enviorment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL) 
+The installation steps deploys a production like OCP4 cluster, in a environment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
 ![](https://i.imgur.com/n8TQAyB.png)
-
-![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
 
 ## Prerequisites
 
@@ -23,7 +21,7 @@ Refer to the [Getting Started Guide](../README.md) to ensure RHEL 7 is installed
    </td>
   </tr>
   <tr>
-   <td>Navigate to <a href="https://cloud.redhat.com/openshift/token">OpenShift Cluster Manager API Token</a> to generate a token and save it as <strong>ocp_token</strong>. This token will be used to download your pull secret. 
+   <td>Navigate to <a href="https://cloud.redhat.com/openshift/token">OpenShift Cluster Manager API Token</a> to generate a token and save it as <strong>ocp_token</strong>. This token will be used to download your pull secret.
    </td>
    <td>From your web browser, navigate to <a href="https://cloud.redhat.com/openshift/install/metal/user-provisioned">Red Hat OpenShift Cluster Manager</a>. Find the <strong>Pull secret</strong> heading to either download or copy your pull secret, save it as <strong>pull-secret.txt</strong>.
    </td>
@@ -35,7 +33,7 @@ Refer to the [Getting Started Guide](../README.md) to ensure RHEL 7 is installed
 
 ### The qubinode-installer
 
-Downlaod and extract the qubinode-installer as a non root user.
+Download and extract the qubinode-installer as a non root user.
 
 ```shell=
 cd $HOME
@@ -45,7 +43,7 @@ rm master.zip
 mv qubinode-installer-master qubinode-installer
 ```
 
-Place your pull secret and the rhel qcow image under the qubinode-installer directory. 
+Place your pull secret and the rhel qcow image under the qubinode-installer directory.
 
 If you are using tokens it should be:
 ```

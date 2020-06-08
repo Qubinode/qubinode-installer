@@ -1,6 +1,16 @@
 # Qubinode Installer
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 
+## Qubinode Dev Branch for next release
+Feature  |  Status
+--|---
+Ansible Tower | In progress |  
+Red Hat Satellite Server  | In progress|
+RHEL 8.x Support  | In progress|
+OKD 4.x Support  | In Development |
+OCS Support |  In progress  |   
+Cockpit Integration | Not Started
+
 ## Motivation
 The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
 
@@ -17,6 +27,9 @@ The qubinode-installer can deploy a 3 node cluster on a system with 32GiB memory
 For the best possible experince 128 GiB of memory is recommended. This will allow
 for the default deployment of a cluster with 3 masters and 3 workers.
 
+**Software**
+* Red Hat Enteprise Linux 8.2 installed
+* or Red Hat Enteprise Linux 7.8 installed
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
@@ -26,19 +39,6 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4     | 2.9               | 2.4 |
 
-### Features in v2.4 RC Version
-
-New Features |
--- |
-OpenShift 4.4.x |
-OpenShift 4 Ansible Role  |
-NFS Provisioner Role |
-Ansible 2.9 Compatibility  |
-local storage support  |
-Custom VM support  |
-OCP4 Cluster Shutdown |
-OCP4 Cluster Startup |
-OCP4 Cluster Verification  |
 
 ## Deploying a OpenShift cluster
 

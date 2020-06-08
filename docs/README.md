@@ -2,15 +2,6 @@
 
 A Qubinode is a bare metal node that uses the qubinode-installer to configure RHEL to function as a KVM host. The qubinode-installer can then be used to deploy additional Red Hat products as VMs running atop the Qubinode. 
 
-## Currently Supported Products
-* [Red Hat OpenShift Platform](qubinode/openshift4_installation_steps.md)
-* [Red Hat Identity Managment](qubinode/idm.md)
-* [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
-
-## Products in Development
-* [Ansible Automation Platform](qubinode/ansible_platform.md)
-* [Red Hat Satellite](qubinode/qubinode_satellite_install.md)
-
 # Getting Started
 
 The first step is to get RHEL installed on your hardware
@@ -96,4 +87,38 @@ If you downloaded the files instead it should be:
 * $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
 ```
 
+**Optional Install Cockpit**  
+**In order to manage and view cluster from a web ui on RHEL 7**  
+```
+subscription-manager repos --enable=rhel-7-server-extras-rpms
+subscription-manager repos --enable=rhel-7-server-optional-rpms
+sudo yum install  cockpit cockpit-networkmanager cockpit-dashboard \
+  cockpit-storaged cockpit-packagekit cockpit-machines cockpit-sosreport \
+  cockpit-pcp cockpit-bridge -y
+sudo systemctl start cockpit
+sudo systemctl enable cockpit.socket
+sudo firewall-cmd --add-service=cockpit
+sudo firewall-cmd --add-service=cockpit --permanent
+sudo firewall-cmd --reload
+```
+**In order to manage and view cluster from a web ui on RHEL 8** 
+```
+$ sudo systemctl enable --now cockpit.socket
+```
+
+**go to your servers url for cockpit ui**
+```
+https://SERVER_IP:9090
+```
+
+
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
+
+## Currently Supported Products
+* [Red Hat OpenShift Platform](qubinode/openshift4_installation_steps.md)
+* [Red Hat Identity Managment](qubinode/idm.md)
+* [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
+
+## Products in Development
+* [Ansible Automation Platform](qubinode/ansible_platform.md)
+* [Red Hat Satellite](qubinode/qubinode_satellite_install.md)

@@ -77,6 +77,8 @@
       when: not idm_is_installed|bool
 
     - name: ensure backup folder is created
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
       file:
         path: "{{ project_dir }}/backups"
         state: directory
@@ -84,6 +86,8 @@
       delegate_to: 127.0.0.1
 
     - name: check if resolv.conf backup file exists
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
       stat:
         path: "{{ project_dir }}/backups/resolv.conf"
       register: resolv_backup
@@ -91,6 +95,8 @@
       delegate_to: 127.0.0.1
 
     - name: backup original /etc/resolv.conf file
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
       copy:
         src: /etc/resolv.conf
         dest: "{{ project_dir }}/backups/resolv.conf"
@@ -99,6 +105,8 @@
       delegate_to: 127.0.0.1
 
     - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
       copy:
         content: |
           search {{ search_domains  | first }}

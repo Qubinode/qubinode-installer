@@ -9,7 +9,8 @@ installation_working_dir: "{{ project_dir }}"
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift Version
-ocp4_release: 4.4.3
+ocp4_release: 4.4.5
+ocp4_image: 4.4.3
 
 # User info
 local_user_account: "{{ admin_user }}"
@@ -107,7 +108,7 @@ deploy_ocp4_configs: yes
 ocp4_nat_subnet: 192.168.50.0
 mask: 255.255.255.0
 cluster_name: qbn
-old_libvirt_net: qbn # this was ocp4 need to see what to do with this 
+old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
 libivrt_network_domain: compute.local
 listen_address: "{{ kvm_host_ip }}"
@@ -120,9 +121,9 @@ dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 
 # OpenShift version numbers
-major_version: "{{ ocp4_release[:1] }}"  #e.g. 4
-minor_version: "{{ ocp4_release[:3] }}"  #e.g. 4.4
-micro_version: "{{ ocp4_release[:5] }}"  #e.g. 4.4.3
+major_version: "{{ ocp4_image[:1] }}"  #e.g. 4
+minor_version: "{{ ocp4_image[:3] }}"  #e.g. 4.4
+micro_version: "{{ ocp4_image[:5] }}"  #e.g. 4.4.3
 ocp4_dependencies_version: "{{ minor_version }}"
 ocp4_image_version: "{{ micro_version }}"
 
