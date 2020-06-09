@@ -11,6 +11,7 @@ suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d 
 idm_srv_hostname="$prefix-$suffix"
 idm_srv_fqdn="$prefix-$suffix.$domain"
 idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 
 function display_idmsrv_unavailable () {
     printf "%s\n" "${yel}Either the IdM server variable idm_public_ip is not set.${end}"
@@ -280,6 +281,7 @@ function qubinode_idm_ask_ip_address () {
 
 
 function isIdMrunning () {
+    idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
     if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
     then
         idm_running=false
@@ -334,28 +336,39 @@ function qubinode_deploy_idm_vm () {
      fi
 }
 
-function qubinode_install_idm () {
-    qubinode_vm_deployment_precheck
-    ask_user_input
-    IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
-
-    echo "Install and configure the IdM server"
-    idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-    echo "Current IP of IDM Server ${idm_server_ip}" || exit $?
-    ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+function qubinode_idm_status () {
     isIdMrunning
     if [ "A${idm_running}" == "Atrue" ]
     then
-        printf "\n\n ${yel}*********************************************************************************${end}\n"
-        printf " ${yel}**${end}   IdM server is installed                                                   ${yel}**${end}\n"
-        printf "         Url: https://${idm_srv_fqdn}/ipa/ui/ \n"
-        printf "         Username: $(whoami) \n"
-        printf "         Password: the vault variable *admin_user_password* \n\n"
-        printf "     Run: ansible-vault edit ${vaultfile}} \n"
-        printf " ${yel}*******************************************************************************${end}\n\n"
+        printf "\n\n\n"
+        printf "     ${blu}IdM server is installed${end}\n"
+        printf "   ${yel}****************************************************${end}\n"
+        printf "    Webconsole: ${cyn}https://${idm_srv_fqdn}/ipa/ui/${end} \n"
+        printf "    IP Address: ${cyn}${idm_server_ip}${end} \n"
+        printf "    Username: ${cyn}${idm_admin_user}${end}\n"
+        printf "    Password: the vault variable ${cyn}admin_user_password${end} \n\n"
+        printf "    ${blu}Run:${end} ${grn}ansible-vault edit ${vaultfile}${end} \n\n"
      else
         printf "%s\n" " ${red}IDM Server was not properly deployed please verify deployment.${end}"
         exit 1
+     fi
+}
+
+function qubinode_install_idm () {
+    isIdMrunning
+    if [ "A${idm_running}" != "Atrue" ]
+    then
+        qubinode_vm_deployment_precheck
+        ask_user_input
+        IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
+
+        echo "Install and configure the IdM server"
+        idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+        echo "Current IP of IDM Server ${idm_server_ip}" || exit $?
+        ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+	qubinode_idm_status
+     else
+	qubinode_idm_status
      fi
 }
 
@@ -371,3 +384,23 @@ function qubinode_deploy_idm () {
     qubinode_deploy_idm_vm
     qubinode_install_idm
 }
+
+function qubinode_idm_maintenance () {
+    case ${product_maintenance} in
+       stop)
+            name=$idm_srv_hostname
+	    qubinode_rhel_maintenance
+            ;;
+       start)
+            name=$idm_srv_hostname
+	    qubinode_rhel_maintenance
+            ;;
+       status)
+            qubinode_idm_status
+            ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
+}
+

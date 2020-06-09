@@ -26,3 +26,4 @@ ocp_token
 rhsm_token
 .python/
 *.qcow2
+*.iso

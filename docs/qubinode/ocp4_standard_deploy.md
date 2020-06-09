@@ -15,13 +15,15 @@ cd $HOME/qubinode-installer
 
 ![](https://i.imgur.com/LS8p6j1.png)
 
-![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
-
 **This will perform the following**
 * Configure server for KVM.
 * Deploy an idm server to be used as DNS.
 * Deploy OpenShift 4.
 * Optional: Configure NFS Provisioner
+
+**Installation Screencast**
+
+![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
 
 ## Deployment Post Steps
 

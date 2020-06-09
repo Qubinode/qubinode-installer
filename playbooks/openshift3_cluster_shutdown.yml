@@ -1,6 +1,0 @@
----
-- hosts: master
-  remote_user: admin
-  gather_facts: no
-  roles:
-    - ocp-power-management
