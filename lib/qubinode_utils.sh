@@ -327,3 +327,25 @@ function check_hardware_resources () {
 
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: "$PROFILE"/g" "${vars_file}"
 }
+
+function clean_up_stale_vms(){
+    KILLVM=true
+    stalemachines=$(sudo virsh list  --all | grep $1 | awk '{print $2}')
+    for vm in $stalemachines
+    do
+       KILLVM=false
+    done
+
+    if [[ $KILLVM == "true" ]]; then 
+        stale_vms=$(sudo ls "${libvirt_dir}/" | grep $1)
+        if [[ ! -z $stale_vms ]]; then 
+            for old_vm in $stale_vms
+            do
+            if [[ "$old_vm" == *${1}* ]]; then 
+                sudo rm  -f "${libvirt_dir}/$old_vm"
+            fi
+            done 
+        fi 
+    fi
+
+}
