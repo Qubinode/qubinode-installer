@@ -18,6 +18,13 @@ function tower_variables () {
     IP=$(awk -v var="${tower_hostname}" '$0 ~ var {print $0}' "${project_dir}/inventory/hosts"|grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
     tower_license="${project_dir}/tower-license.txt"
 
+    if [ ! -f ${tower_license} ]
+    then 
+        printf "%s\n" " ${red}Could not find tower-license.txt under${end} ${yel}${project_dir}${end}"
+        printf "%s\n" " ${blu}Please place file there and try again${end}"
+        exit 1
+    fi
+
     if [ -f "${tower_vars_file}" ]
     then
         subscription_name=$(awk -F'"' '/redhat_subscription_name:/ {print $2}' "${tower_vars_file}")
@@ -66,6 +73,15 @@ function update_tower_password () {
     # encrypt vault password
     encrypt_ansible_vault "${vault_vars_file}" >/dev/null
 }
+function state_check(){
+cat << EOF
+    ${yel}**************************************** ${end}
+    ${mag}Checking Machine for stale tower vm ${end}
+    ${yel}**************************************** ${end}
+EOF
+    clean_up_stale_vms tower
+}
+
 
 function deploy_tower_vm () {
     # Run some prechecks before deploying the VM
@@ -74,6 +90,9 @@ function deploy_tower_vm () {
 
     # Load variables
     tower_variables
+
+    # Check for stale vms 
+    state_check
 
     # Run playbook to build Tower VM
     ansible-playbook "${TOWER_VM_PLAYBOOK}" || exit $?
@@ -85,9 +104,10 @@ function deploy_tower () {
     # Load variables
     tower_variables
     update_tower_password
+
     if [ ! -f "${tower_license}" ]
     then
-        printf "%s\n" " ${red}Could not find tower-license.txt under${end} $yel}${project_dir}${end}"
+        printf "%s\n" " ${red}Could not find tower-license.txt under${end} ${yel}${project_dir}${end}"
         printf "%s\n" " ${blu}Please place file there and try again${end}"
         exit 1
     else

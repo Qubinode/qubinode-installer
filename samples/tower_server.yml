@@ -26,10 +26,10 @@ rhsm_pool_ids: "{{ tower_pool_id | default('') }}"
 tower_repos:
   - rhel-7-server-rpms
   - rhel-server-rhscl-7-rpms
-  - rhel-7-server-ansible-2.8-rpms
+  - rhel-7-server-ansible-2.9-rpms
 
 tower_installer_repo: 'https://releases.ansible.com/ansible-tower/setup'
-tower_version: '3.6.0-1'
+tower_version: '3.7.0-4'
 tower_admin_password: "{{ admin_user_password }}"
 tower_ssl_cert: ''
 tower_ssl_key: ''

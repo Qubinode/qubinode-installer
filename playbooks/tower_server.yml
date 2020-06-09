@@ -9,6 +9,8 @@
     - vars/vault.yml
     - vars/idm.yml
     - vars/tower_server.yml
+  vars:
+    vm_name: "{{ tower_server_vm.tower_name }}"
 
   tasks:
   - name: ensure system is registered to Red Hat
@@ -20,3 +22,23 @@
   - name: run ansible tower role
     include_role:
       name: swygue.ansible-tower
+
+  - name: check tower-license.txt exists 
+    stat: 
+      path: "{{ tower_license_file }}"
+    register: tower_license
+    delegate_to: localhost
+
+  - name: Register Ansible tower instance
+    uri:
+      url: "https://{{ vm_name  }}.{{ domain }}/api/v2/config/"
+      user: "{{ tower_user }}"
+      password: "{{ tower_admin_password }}"
+      method: POST
+      body: "{{ lookup('file','{{ tower_license_file }}') }}"
+      force_basic_auth: yes
+      status_code: 200
+      body_format: json
+      validate_certs: no
+    when: tower_license.stat.exists == true
+    delegate_to: localhost
