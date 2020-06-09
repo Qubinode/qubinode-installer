@@ -284,7 +284,6 @@ setup_download_options () {
     fi
 
 
-
     # check for required OS qcow image or token
     TOKEN_STATUS="notexist"
     QCOW_STATUS="notexist"
@@ -372,10 +371,6 @@ download_files () {
     RHSM_CLI=no
     RHSM_CLI_CMD="${project_dir}/.python/rhsm_cli/bin/rhsm-cli"
     RHSM_CLI_CONFIG="/home/${ADMIN_USER}/.config/rhsm-cli.conf"
-    #rhel7_qcow=$(awk '/^qcow_rhel7.*_checksum/ {print $2}' "${project_dir}/samples/all.yml")
-    #rhel8_qcow=$(awk '/^qcow_rhel8.*_checksum/ {print $2}' "${project_dir}/samples/all.yml")
-    #rhel7_qcow_name=$(awk '/^qcow_rhel7_name:/ {print $2}' "${project_dir}/samples/all.yml")
-    #rhel8_qcow_name=$(awk '/^qcow_rhel8_name:/ {print $2}' "${project_dir}/samples/all.yml")
     qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     qcow_image_checksum=$(grep "qcow_rhel${rhel_major}u._checksum:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
 
@@ -394,9 +389,12 @@ download_files () {
             $RHSM_CLI_CMD -t $TOKEN savetoken 2>/dev/null
             if [ $? -ne 0 ]
             then
-                echo "Failure validating token privided by $RHSM_TOKEN"
-                echo "Please verify your token is correct or generate a new one and try again"
-                echo "You can also just download the required files and per the documentation"
+                printf "%s\n" "    Failure validating token provided by $RHSM_TOKEN"
+                printf "%s\n" "    Please verify your token is correct or generate a new one and try again"
+                printf "%s\n\n" "    You can also just download the required files and per the documentation"
+                printf "%s\n" "    If you are certain your token is correct. Then there may be isues with the"
+                printf "%s\n" "    Red Hat API end-point. Please refer to the documentation on how to download"
+                printf "%s\n\n" "    the required files."
                 exit
             else
                 rm -f $RHSM_TOKEN
