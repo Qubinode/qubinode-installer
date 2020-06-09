@@ -305,7 +305,8 @@ function qubinode_networking () {
     CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
-      KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
+      #KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
+      KVM_HOST_PRIMARY_INTERFACE=$(ip link show master qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
       linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:'  | head -2 | tail -1  | awk '{print $1}' | tr -d :)
       sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
@@ -494,7 +495,8 @@ function qubinode_check_kvmhost () {
     DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
     DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
     BRIDGE_IP=$(sudo awk -F'=' '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
-    BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
+    #BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
+    BRIDGE_INTERFACE=$(ip link show master qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
 
     if [ ! -f /usr/bin/virsh ]
     then
@@ -532,7 +534,7 @@ function qubinode_check_kvmhost () {
         if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
         then
             echo "Running network checks"
-            if ! sudo brctl show $DEFINED_BRIDGE > /dev/null 2>&1
+            if ! sudo ip link show master $DEFINED_BRIDGE > /dev/null 2>&1
             then
                 echo "The required bridge $DEFINED_BRIDGE is not setup"
                 qubinode_setup_kvm_host
