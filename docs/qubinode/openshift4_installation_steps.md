@@ -4,8 +4,6 @@ The following documentation will help you deploy an OpenShift Container Platform
 The installation steps deploys a production like OCP4 cluster, in a environment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
 ![](https://i.imgur.com/n8TQAyB.png)
 
-![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
-
 ## Prerequisites
 
 Refer to the [Getting Started Guide](../README.md) to ensure RHEL 7 is installed.

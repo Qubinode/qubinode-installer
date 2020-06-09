@@ -62,8 +62,11 @@ function qubinode_product_deployment () {
               then
                   echo "Running IdM VM teardown function"
                   qubinode_teardown_idm
+              elif [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_idm_maintenance
               else
-                  echo "Running IdM VM deploy function"m
+                  echo "Running IdM VM deploy function"
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options
                   download_files
