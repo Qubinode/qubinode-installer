@@ -1245,6 +1245,93 @@ function shutdown_cluster () {
 
 }
 
+function remove_ocp4_worker () {
+    # Get user provides options
+    for var in "${product_options[@]}"
+    do
+       export $var
+    done
+
+    if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
+    then
+        ocp4_workers_vars="${project_dir}/playbooks/vars/ocp4_workers.yml"
+        all_vars="${project_dir}/playbooks/vars/all.yml"
+        ocp4_vars="${project_dir}/playbooks/vars/ocp4.yml"
+        cluster_name=$(awk '/^cluster_name:/ {print $2; exit}' "${ocp4_vars}")
+        domain=$(awk '/^domain:/ {print $2; exit}' "${all_vars}")
+        subdomain=$(awk '/^ocp4_subdomain:/ {print $2; exit}' "${ocp4_vars}")
+    
+        current_num_workers=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars}")
+	num_workers=$(echo $current_num_workers - 1|bc)
+        numbers_list=$(seq $num_workers -1 0)
+        numbers_array=($numbers_list)
+        workers_to_remove=$count
+        TOTAL=0
+	REMOVAL_COUNT=0
+	#echo numbers_list=$numbers_list
+	#echo current_num_workers=$current_num_workers
+	#echo num_workers=$num_workers
+    
+        # Create ocp4_workers vars file
+        echo "records:" > ${ocp4_workers_vars}
+        for i in ${numbers_array[@]}
+        do
+            if [ $TOTAL -ne $workers_to_remove ]
+            then
+                host=compute-$i
+                hostname="$host.$cluster_name.$subdomain.$domain"
+                IP=$(host $hostname|awk '{print $4}')
+                PTR=$(echo $IP | cut -d"." -f4)
+		echo $IP $hostname $num_workers numbers_list=$numbers_list
+		if [ "A${IP}" != "Afound:" ]
+		then
+                    echo "  - hostname: $host" >> ${ocp4_workers_vars}
+                    echo "    ipaddr: $IP" >> ${ocp4_workers_vars}
+                    echo "    ptr_record: $PTR" >> ${ocp4_workers_vars}
+		    REMOVAL_COUNT=$((REMOVAL_COUNT+1))
+		    RUN_PLAY=yes
+		else
+	            echo "could not find ip address for $hostname"
+		fi
+                TOTAL=$((TOTAL+1))
+            fi
+        done
+   
+        # Run playbook to remove workers
+	if [ "A${RUN_PLAY}" == "Ayes" ]
+	then
+            ansible-playbook ${project_dir}/playbooks/remove_ocp4_workers.yml
+            new_compute_count=$(echo $current_num_workers - $REMOVAL_COUNT|bc)
+	    echo "Setting total workers to $new_compute_count"
+            sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
+	fi
+    else
+        echo "count must be a valid integer"
+        echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"
+    fi
+}
+
+function add_ocp4_worker () {
+    # Check for user provided variables
+    for var in "${product_options[@]}"
+    do
+       export $var
+    done
+
+    ocp4_vars_file="${project_dir}/playbooks/vars//ocp4.yml"
+    current_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars_file}")
+    if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
+    then
+        new_compute_count=$(echo $current_compute_count + $count|bc)
+        sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars_file}"
+        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' -t setup,worker_dns,add_workers
+        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' -t add_workers
+    else
+        echo "count must be a valid integer"
+        echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"
+    fi
+}
+
 openshift4_server_maintenance () {
     case ${product_maintenance} in
        diag)
@@ -1263,6 +1350,12 @@ openshift4_server_maintenance () {
        status)
             /usr/local/bin/qubinode-ocp4-status
             ;;
+       remove-worker)
+           remove_ocp4_worker
+           ;;
+       add-worker)
+	   add_ocp4_worker
+	    ;;
        *)
            echo "No arguement was passed"
            ;;
