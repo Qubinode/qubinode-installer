@@ -1261,6 +1261,7 @@ function remove_ocp4_worker () {
         domain=$(awk '/^domain:/ {print $2; exit}' "${all_vars}")
         subdomain=$(awk '/^ocp4_subdomain:/ {print $2; exit}' "${ocp4_vars}")
     
+        compute_count_update=$(awk '/^compute_count_update:/ {print $2; exit}' "${ocp4_vars}")
         current_num_workers=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars}")
 	num_workers=$(echo $current_num_workers - 1|bc)
         numbers_list=$(seq $num_workers -1 0)
@@ -1273,37 +1274,41 @@ function remove_ocp4_worker () {
 	#echo num_workers=$num_workers
     
         # Create ocp4_workers vars file
-        echo "records:" > ${ocp4_workers_vars}
-        for i in ${numbers_array[@]}
-        do
-            if [ $TOTAL -ne $workers_to_remove ]
-            then
-                host=compute-$i
-                hostname="$host.$cluster_name.$subdomain.$domain"
-                IP=$(host $hostname|awk '{print $4}')
-                PTR=$(echo $IP | cut -d"." -f4)
-		echo $IP $hostname $num_workers numbers_list=$numbers_list
-		if [ "A${IP}" != "Afound:" ]
-		then
-                    echo "  - hostname: $host" >> ${ocp4_workers_vars}
-                    echo "    ipaddr: $IP" >> ${ocp4_workers_vars}
-                    echo "    ptr_record: $PTR" >> ${ocp4_workers_vars}
-		    REMOVAL_COUNT=$((REMOVAL_COUNT+1))
-		    RUN_PLAY=yes
-		else
-	            echo "could not find ip address for $hostname"
-		fi
-                TOTAL=$((TOTAL+1))
-            fi
-        done
+	if [ "A${compute_count_update}" == "Aadd" ]
+        then
+            echo "records:" > ${ocp4_workers_vars}
+            for i in ${numbers_array[@]}
+            do
+                if [ $TOTAL -ne $workers_to_remove ]
+                then
+                    host=compute-$i
+                    hostname="$host.$cluster_name.$subdomain.$domain"
+                    IP=$(host $hostname|awk '{print $4}')
+                    PTR=$(echo $IP | cut -d"." -f4)
+	    	echo $IP $hostname $num_workers numbers_list=$numbers_list
+	    	if [ "A${IP}" != "Afound:" ]
+	    	then
+                        echo "  - hostname: $host" >> ${ocp4_workers_vars}
+                        echo "    ipaddr: $IP" >> ${ocp4_workers_vars}
+                        echo "    ptr_record: $PTR" >> ${ocp4_workers_vars}
+	    	    REMOVAL_COUNT=$((REMOVAL_COUNT+1))
+	    	    RUN_PLAY=yes
+	    	else
+	                echo "could not find ip address for $hostname"
+	    	fi
+                    TOTAL=$((TOTAL+1))
+                fi
+            done
    
-        # Run playbook to remove workers
-	if [ "A${RUN_PLAY}" == "Ayes" ]
-	then
-            ansible-playbook ${project_dir}/playbooks/remove_ocp4_workers.yml
-            new_compute_count=$(echo $current_num_workers - $REMOVAL_COUNT|bc)
-	    echo "Setting total workers to $new_compute_count"
-            sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
+            # Run playbook to remove workers
+	    if [ "A${RUN_PLAY}" == "Ayes" ]
+	    then
+                ansible-playbook ${project_dir}/playbooks/remove_ocp4_workers.yml || exit 1
+                new_compute_count=$(echo $current_num_workers - $REMOVAL_COUNT|bc)
+	        echo "Setting total workers to $new_compute_count"
+                 sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
+                 sed -i "s/compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars_file}"
+	    fi
 	fi
     else
         echo "count must be a valid integer"
@@ -1323,9 +1328,14 @@ function add_ocp4_worker () {
     if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
     then
         new_compute_count=$(echo $current_compute_count + $count|bc)
+        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml \
+		-e '{ check_existing_cluster: False }'  \
+		-e '{ deploy_cluster: True }' \
+		-e "compute_count=$new_compute_count" \
+		-e '{ add_workers: yes }' \
+		-t setup,worker_dns,add_workers,add_workers || exit 1
         sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars_file}"
-        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' -t setup,worker_dns,add_workers
-        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' -t add_workers
+        sed -i "s/compute_count_updated:.*/compute_count_update: add/g" "${ocp4_vars_file}"
     else
         echo "count must be a valid integer"
         echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"

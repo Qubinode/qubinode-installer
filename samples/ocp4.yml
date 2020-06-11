@@ -69,6 +69,7 @@ bootstrap_mem_size: 16192
 bootstrap_vcpu: 4
 monpod_disk_size: "{{ compute_vdb_size }}"
 osdvolume_disk_size: "{{ monpod_disk_size }}"
+performance_disk: no
 
 # Values for minimal deployment
 min_master_count: 3
@@ -158,6 +159,7 @@ idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 product: "{{ openshift_product }}"
+compute_count_update: none
 
 # OCP4 instance sizes
 ocp4_instances:
@@ -203,3 +205,4 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
+
