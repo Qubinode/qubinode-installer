@@ -38,6 +38,7 @@ tower_license_file: "{{ project_dir }}/tower-license.txt"
 tower_user: admin
 
 # LDAP Auth
+configure_ldap: false
 tower_bind_dn: "uid={{ idm_admin_user }},cn=users,cn=accounts,dc=lunchnet,dc=example"
 
 # Configure Tower

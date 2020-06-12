@@ -50,7 +50,7 @@ function advanced_ocp4_options(){
         elif [ "$storage" == "nfs-remove" ]
         then 
           echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true"
+          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true" 
         fi
 
         # localstorage option 
@@ -61,7 +61,7 @@ function advanced_ocp4_options(){
         elif [ "$storage" == "localstorage-remove" ]
         then 
           echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true"
+          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
         fi
     fi
 }
