@@ -20,8 +20,17 @@
   - name: list all libvirt vms
     virt:
       command: list_vms
-      state: running
     register: running_vms
+
+  - name: remove node from cluster
+    vars:
+      vm_name: "{{ item.hostname }}"
+      vm_fqdn: "{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
+    shell: |
+      /usr/local/bin/qubinode-remove-worker-node {{ vm_fqdn }}
+    loop: "{{ records }}"
+    delay: 10
+    when: item.ocp_node_exist|bool
 
   - name: shutdown ocp4 nodes
     vars:
@@ -30,7 +39,8 @@
       name: "{{ vm_name }}"
       command: destroy
     register: shutdown_vms
-    when: vm_name in running_vms.list_vms
+    #when: vm_name in running_vms.list_vms
+    when: item.vm_exist|bool
     loop: "{{ records }}"
     delay: 10
   
@@ -43,6 +53,12 @@
     loop_control:
       #loop_var: item.hostname
       label: "{{ item.hostname }}"
+    when: item.vm_exist|bool
+
+  - name: list all libvirt vms
+    virt:
+      command: list_vms
+    register: running_vms
 
   - name: destroy ocp4 workers 
     vars:
@@ -52,6 +68,8 @@
       command: undefine
     loop: "{{ records }}"
     delay: 10
+    #when: vm_name in running_vms.list_vms
+    when: item.vm_exist|bool
 
   - name: Create/Delete A Records
     ipa_dnsrecord:
@@ -62,6 +80,7 @@
       state: absent
       validate_certs: no
     with_items: "{{ records }}"
+    when: item.ipaddr != 'none'
   
   - name: Create/Delete PTR Records
     ipa_dnsrecord:
@@ -72,4 +91,5 @@
       state: absent
       validate_certs: no
     with_items: "{{ records }}"
+    when: item.ipaddr != 'none'
   

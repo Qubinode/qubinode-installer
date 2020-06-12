@@ -6,6 +6,7 @@
        echo "shutoff"
     fi
   register: vm_shutdown_status
+  ignore_errors: yes
   until: vm_shutdown_status.stdout.find('shutoff') != -1
-  retries: 120
+  retries: 80
   delay: 3

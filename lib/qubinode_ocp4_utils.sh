@@ -635,76 +635,6 @@ function check_openshift4_size_yml () {
     fi
 }
 
-openshift4_enterprise_deployment () {
-    # Ensure all preqs before continuing
-    openshift4_prechecks
-
-    # Setup the host system
-    ansible-playbook playbooks/ocp4_01_deployer_node_setup.yml || exit 1
-
-    # populate IdM with the dns entries required for OCP4
-    ansible-playbook playbooks/ocp4_02_configure_dns_entries.yml  || exit 1
-
-    # deploy the load balancer container
-    ansible-playbook playbooks/ocp4_03_configure_lb.yml  || exit 1
-
-    lb_container_status=$(sudo podman inspect -f '{{.State.Running}}' $lb_name 2>/dev/null)
-    if [ "A${lb_container_status}" != "Atrue" ]
-    then
-        printf "%s\n" " The load balancer container ${cyn}$lb_name${end} did not deploy."
-        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_03_configure_lb.yml${end}"
-        printf "%s\n" " Please investigate and try the intall again!"
-        exit 1
-    fi
-
-    # Download the openshift 4 installer
-    #TODO: this playbook should be renamed to reflect what it actually does
-    ansible-playbook playbooks/ocp4_04_download_openshift_artifacts.yml  || exit 1
-
-    # Create ignition files
-    #TODO: check if the ignition files have been created longer than 24hrs
-    # regenerate if they have been
-    ansible-playbook playbooks/ocp4_05_create_ignition_configs.yml || exit 1
-
-    # runs the role playbooks/roles/swygue.coreos-virt-install-iso
-    # - downloads the cores os qcow images
-    # - deploy httpd podman container
-    # - serve up the ignition files and cores qcow image over the web server
-    # TODO: make this idempotent, skips if the end state is already met
-    # /opt/qubinode_webserver/4.2/images/
-    ansible-playbook playbooks/ocp4_06_deploy_webserver.yml  || exit 1
-    httpd_container_status=$(sudo podman inspect -f '{{.State.Running}}' $podman_webserver 2>/dev/null)
-    if [ "A${httpd_container_status}" != "Atrue" ]
-    then
-        printf "%s\n" " The httpd container ${cyn}$podman_webserver${end} did not deploy."
-        printf "%s\n" " This step is done by running: ${grn}run ansible-playbook playbooks/ocp4_06_deploy_webserver.yml${end}"
-        printf "%s\n" " Please investigate and try the intall again!"
-        exit 1
-    fi
-
-    # Get network information for ocp4 vms
-    NODE_NETINFO=$(mktemp)
-    sudo virsh net-dumpxml ${cluster_name} | grep 'host mac' > $NODE_NETINFO
-
-    # Deploy the coreos nodes required
-    #TODO: playbook should not attempt to start VM's if they are already running
-    deploy_bootstrap_node
-    deploy_master_nodes
-    deploy_compute_nodes
-
-    # Ensure first boot is complete
-    # first boot is the initial deployment of the VMs
-    # followed by a shutdown
-    wait_for_ocp4_nodes_shutdown
-
-    # Boot up the VM's starting the bootstrap node, followed by master, compute
-    # Then start the ignition process
-    start_ocp4_deployment
-
-    # Show user post deployment steps to follow
-    post_deployment_steps
-}
-
 reset_cluster_resources_default () {
     default_master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     default_master_hd_size=$(awk '/^master_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
@@ -1260,6 +1190,10 @@ function remove_ocp4_worker () {
         cluster_name=$(awk '/^cluster_name:/ {print $2; exit}' "${ocp4_vars}")
         domain=$(awk '/^domain:/ {print $2; exit}' "${all_vars}")
         subdomain=$(awk '/^ocp4_subdomain:/ {print $2; exit}' "${ocp4_vars}")
+
+	# Ensure the current number of worker are correct
+        get_current_workers=$(sudo virsh list --all| grep compute | wc -l)
+        sed -i "s/compute_count:.*/compute_count: "$get_current_workers"/g" "${ocp4_vars}"
     
         compute_count_update=$(awk '/^compute_count_update:/ {print $2; exit}' "${ocp4_vars}")
         current_num_workers=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars}")
@@ -1269,47 +1203,88 @@ function remove_ocp4_worker () {
         workers_to_remove=$count
         TOTAL=0
 	REMOVAL_COUNT=0
-	#echo numbers_list=$numbers_list
-	#echo current_num_workers=$current_num_workers
-	#echo num_workers=$num_workers
     
         # Create ocp4_workers vars file
-	if [ "A${compute_count_update}" == "Aadd" ]
-        then
-            echo "records:" > ${ocp4_workers_vars}
-            for i in ${numbers_array[@]}
-            do
-                if [ $TOTAL -ne $workers_to_remove ]
+	#if [ "A${compute_count_update}" == "Aadd" ]
+        echo "records:" > ${ocp4_workers_vars}
+	echo IP hostname num_workers numbers_list
+        for i in ${numbers_array[@]}
+        do
+            if [ $TOTAL -ne $workers_to_remove ]
+            then
+                host=compute-$i
+                hostname="$host.$cluster_name.$subdomain.$domain"
+                IP=$(host $hostname|awk '{print $4}')
+                PTR=$(echo $IP | cut -d"." -f4)
+		
+		# check if the vm exist
+		if sudo virsh list --all | grep $host >/dev/null 2>&1
+	        then
+		    VM_EXIST=yes
+		else
+		    VM_EXIST=no
+		fi
+
+		# check if ocp node exist
+		if oc get nodes | grep $hostname >/dev/null 2>&1
+	        then
+                    OCP_NODE_EXIST=yes
+		else
+                    OCP_NODE_EXIST=no
+		fi
+
+		# Set IP address value
+		if [ "A${IP}" == "Afound:" ]
+		then
+		    IP=none
+		    PTR=none
+		fi
+
+		# Set removal count
+		if [[ "A${VM_EXIST}" == "Ayes" ]] || [[ "A${OCP_NODE_EXIST}" == "Ayes" ]]
                 then
-                    host=compute-$i
-                    hostname="$host.$cluster_name.$subdomain.$domain"
-                    IP=$(host $hostname|awk '{print $4}')
-                    PTR=$(echo $IP | cut -d"." -f4)
-	    	echo $IP $hostname $num_workers numbers_list=$numbers_list
-	    	if [ "A${IP}" != "Afound:" ]
-	    	then
-                        echo "  - hostname: $host" >> ${ocp4_workers_vars}
-                        echo "    ipaddr: $IP" >> ${ocp4_workers_vars}
-                        echo "    ptr_record: $PTR" >> ${ocp4_workers_vars}
-	    	    REMOVAL_COUNT=$((REMOVAL_COUNT+1))
-	    	    RUN_PLAY=yes
-	    	else
-	                echo "could not find ip address for $hostname"
-	    	fi
-                    TOTAL=$((TOTAL+1))
-                fi
-            done
-   
-            # Run playbook to remove workers
-	    if [ "A${RUN_PLAY}" == "Ayes" ]
-	    then
-                ansible-playbook ${project_dir}/playbooks/remove_ocp4_workers.yml || exit 1
+	            REMOVAL_COUNT=$((REMOVAL_COUNT+1))
+		fi
+
+		# add host attributes to ansible vars
+                echo "  - hostname: $host" >> ${ocp4_workers_vars}
+                echo "    ipaddr: $IP" >> ${ocp4_workers_vars}
+                echo "    ptr_record: $PTR" >> ${ocp4_workers_vars}
+                echo "    vm_exist: $VM_EXIST" >> ${ocp4_workers_vars}
+                echo "    ocp_node_exist: $OCP_NODE_EXIST" >> ${ocp4_workers_vars}
+
+		if [ "A${IP}" != "Afound:" ]
+		then
+		    RUN_PLAY=yes
+		else
+	            NOIP=yes
+	            MSG="could not find ip address for $hostname"
+		fi
+
+                TOTAL=$((TOTAL+1))
+		echo $IP $hostname $num_workers numbers_list=$numbers_list
+            fi
+        done
+  
+        # Run playbook to remove workers
+        confirm "     ${cyn}Are you sure you want to delete the above nodes?${end} ${yel}yes/no${end}"
+        if [ "A${response}" == "Ayes" ]
+        then
+            if ansible-playbook ${project_dir}/playbooks/remove_ocp4_workers.yml 
+            then
+	        echo REMOVAL_COUNT=$REMOVAL_COUNT
                 new_compute_count=$(echo $current_num_workers - $REMOVAL_COUNT|bc)
 	        echo "Setting total workers to $new_compute_count"
-                 sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
-                 sed -i "s/compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars_file}"
-	    fi
+                sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
+                sed -i "s/^compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars}"
+	    else
+                get_current_workers=$(sudo virsh list --all| grep compute | wc -l)
+                sed -i "s/compute_count:.*/compute_count: "$get_current_workers"/g" "${ocp4_vars}"
+            fi
+	else
+            exit
 	fi
+	
     else
         echo "count must be a valid integer"
         echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"
@@ -1324,18 +1299,29 @@ function add_ocp4_worker () {
     done
 
     ocp4_vars_file="${project_dir}/playbooks/vars//ocp4.yml"
+
+    # Ensure the current number of worker are correct
+    get_current_workers=$(sudo virsh list --all| grep compute | wc -l)
+    sed -i "s/^compute_count:.*/compute_count: "$get_current_workers"/g" "${ocp4_vars_file}"
+
     current_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars_file}")
     if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
     then
         new_compute_count=$(echo $current_compute_count + $count|bc)
-        ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml \
-		-e '{ check_existing_cluster: False }'  \
-		-e '{ deploy_cluster: True }' \
-		-e "compute_count=$new_compute_count" \
-		-e '{ add_workers: yes }' \
-		-t setup,worker_dns,add_workers,add_workers || exit 1
-        sed -i "s/compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars_file}"
-        sed -i "s/compute_count_updated:.*/compute_count_update: add/g" "${ocp4_vars_file}"
+	if [ $new_compute_count -le 10 ]
+        then
+            ansible-playbook ${project_dir}/playbooks/deploy_ocp4.yml \
+            	-e '{ check_existing_cluster: False }'  \
+            	-e '{ deploy_cluster: True }' \
+            	-e "compute_count=$new_compute_count" \
+            	-e '{ approve_work_csr: True  }' \
+            	-t setup,worker_dns,add_workers,add_workers || exit 1
+            sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars_file}"
+            sed -i "s/^compute_count_updated:.*/compute_count_update: add/g" "${ocp4_vars_file}"
+        else
+            echo "Max allowed workers is 10"
+	    exit
+	fi
     else
         echo "count must be a valid integer"
         echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"
