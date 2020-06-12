@@ -1,0 +1,95 @@
+---
+- name: Remove workers from OCP cluster
+  hosts: localhost
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/kvm_host.yml
+    - vars/ocp4.yml
+    - vars/ocp4_workers.yml
+  environment:
+    IPA_HOST: "{{ idm_server_shortname }}.{{ internal_domain_name }}"
+    IPA_USER: "{{ user_idm_admin }}"
+    IPA_PASS: "{{ user_idm_password }}"
+
+  tasks:
+
+  - name: list all libvirt vms
+    virt:
+      command: list_vms
+    register: running_vms
+
+  - name: remove node from cluster
+    vars:
+      vm_name: "{{ item.hostname }}"
+      vm_fqdn: "{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
+    shell: |
+      /usr/local/bin/qubinode-remove-worker-node {{ vm_fqdn }}
+    loop: "{{ records }}"
+    delay: 10
+    when: item.ocp_node_exist|bool
+
+  - name: shutdown ocp4 nodes
+    vars:
+      vm_name: "{{ item.hostname }}"
+    virt:
+      name: "{{ vm_name }}"
+      command: destroy
+    register: shutdown_vms
+    #when: vm_name in running_vms.list_vms
+    when: item.vm_exist|bool
+    loop: "{{ records }}"
+    delay: 10
+  
+  - name: include wait_for_vm_shutdown.yml
+    vars:
+      vm_name: "{{ item.hostname }}"
+    include_tasks: wait_for_ocp4_vm_shutdown.yml
+    register: shutdown_vms
+    loop: "{{ records }}"
+    loop_control:
+      #loop_var: item.hostname
+      label: "{{ item.hostname }}"
+    when: item.vm_exist|bool
+
+  - name: list all libvirt vms
+    virt:
+      command: list_vms
+    register: running_vms
+
+  - name: destroy ocp4 workers 
+    vars:
+      vm_name: "{{ item.hostname }}"
+    virt:
+      name: "{{ vm_name }}"
+      command: undefine
+    loop: "{{ records }}"
+    delay: 10
+    #when: vm_name in running_vms.list_vms
+    when: item.vm_exist|bool
+
+  - name: Create/Delete A Records
+    ipa_dnsrecord:
+      zone_name: "{{ idm_dns_forward_zone }}"
+      record_name: "{{ item.hostname }}.{{ cluster_name }}"
+      record_type: A
+      record_value: "{{ item.ipaddr }}"
+      state: absent
+      validate_certs: no
+    with_items: "{{ records }}"
+    when: item.ipaddr != 'none'
+  
+  - name: Create/Delete PTR Records
+    ipa_dnsrecord:
+      zone_name: "{{ idm_dns_reverse_zone }}"
+      record_name: "{{ item.ptr_record }}"
+      record_type: PTR
+      record_value: "{{ item.hostname }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}."
+      state: absent
+      validate_certs: no
+    with_items: "{{ records }}"
+    when: item.ipaddr != 'none'
+  
