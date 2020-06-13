@@ -9,7 +9,7 @@ installation_working_dir: "{{ project_dir }}"
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift Version
-ocp4_release: 4.4.5
+ocp4_release: 4.4.6
 ocp4_image: 4.4.3
 
 # User info
