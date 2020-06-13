@@ -1,12 +1,20 @@
+#!/bin/bash
+
+
 function qubinode_installer_setup () {
 
     # Ensure configuration files from samples/ are copied to playbooks/vars/
     qubinode_required_prereqs
 
-    # Ensure the RHEL qcow image exists
-    pre_check_for_rhel_qcow_image
+    # Ensure user is setup for sudoers
+    setup_sudoers
 
-    ask_user_if_qubinode_setup
+    check_additional_storage
+    #ask_user_if_qubinode_setup
+
+    # load kvmhost variables
+    kvm_host_variables
+
     if [ "A${product_in_use}" == "Aocp3" ]
     then
         # Set the QUBINODE_SYSTEM variable based on user response
@@ -41,9 +49,9 @@ function qubinode_installer_setup () {
 
     # Start user input session
     ask_user_input
-    setup_sudoers
     setup_variables
     setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
     if [ "A${rhsm_completed}" == "Ano" ]
@@ -57,10 +65,13 @@ function qubinode_installer_setup () {
        qubinode_setup_ansible
     fi
 
+    # Ensure RHSM cli is installed
+    install_rhsm_cli
+
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
 
-    printf "\n\n${yel}    ***************************${end}\n"
-    printf "${yel}    *   Setup is complete   *${end}\n"
-    printf "${yel}    ***************************${end}\n\n"
+    #printf "\n\n${yel}    ***************************${end}\n"
+    #printf "${yel}    *   Setup is complete   *${end}\n"
+    #printf "${yel}    ***************************${end}\n\n"
 }

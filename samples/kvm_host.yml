@@ -1,87 +1,54 @@
-#######################################################
-# THIS IS CURRENTLY NOT IN USE                        #
-# PLAN IS TO MOVE ALL KVM HOST RELATED VARIABLES HERE #
-#######################################################
-
-# LVM
-logical_volumes:
- - name: qubi_images
-   size: "+100%FREE"
-   mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
-   fstype: xfs
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
-vg_name: vg_qubi
-
-# Libvirt network
-nat_network_name: "{{ cluster_name }}"
-libvirt_host_networks:
-  - name: "{{ nat_network_name }}"
-    create: true
-    mode: nat
-    int_domain: compute.local
-    external_domain: "{{ public_domain }}"
-    mac_start: "52:54:00:"
-    master_count: 3
-    compute_count: 2
-    subnet: "192.168.50.0"
-    mask: "255.255.255.0"
-  - name: "{{ vm_libvirt_net }}"
-    create: true
-    mode: bridge
-    bridge_device: "{{ kvm_host_bridge_name | default(qubinode_bridge_name) }}"
-    ifcfg_type: "{{ kvm_bridge_type }}"
-    ifcfg_bootproto: "{{ kvm_host_bootproto }}"
-    bridge_slave_dev: "{{ kvm_host_interface }}"
-    gateway: "{{ kvm_host_gw }}"
-    mask_prefix: "{{ kvm_host_mask_prefix }}"
-    ipaddress: "{{ kvm_host_ip }}"
-    mac: "{{ kvm_host_macaddr }}"
-
-kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
-kvm_host_domain: "{{ domain }}"
-kvm_bridge_type: Bridge
-kvm_host_bootproto: none
-kvm_host_ip: ""
+---
 kvm_host_gw: ""
+kvm_host_interface: ""
+kvm_host_ip: ""
 kvm_host_macaddr: ""
 kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
-kvm_host_interface: ""
-kvm_host_mask_prefix: ""
-kvm_host_macaddr: ""
-kvm_host_gw: ""
-ssh_username: "{{ admin_user }}"
-kvm_host_domain: "lab.example"
-kvm_host_dns_server: "1.1.1.1"
-kvm_host_bootproto: 'dhcp'
-kvm_bridge_type: 'Bridge'
-dns_servers:
-  - "{{ dns_server }}"
-  - "8.8.8.8"
+libvirt_pool_name_check: yes
+skip_libvirt_pool: no
 
-kvm_host_libvirt_dir: /var/lib/libvirt/images
-
-libvirt_host_storage_pools:
-  - name: default
-    state: active
-    autostart: yes
-    path: "{{ kvm_host_libvirt_dir }}"
-
-# set to false to skip creating a bridge interface
-configure_bridge: true
-
-network_interface_name: eno1
-
-kvm_host_libvirt_dir: /var/lib/libvirt/images
-host_device: nvme0n1
-vg_name: vg_qubi
+# We leverage a bridge network for OCP3 installs
+# and other VMS. This sets the name of the bridge to be created and use when
+# deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
 qubinode_bridge_name: qubibr0
 
-libvirt_host_storage_pools:
-  - name: default
-    state: active
-    autostart: yes
-    path: "{{ kvm_host_libvirt_dir }}"
+# RHEL 7.8 is the current tested RHEL 7 minor release.
+# RHEL 8.2  is the current tested RHEL 8 minor release.
+rhel_release: ""
 
-# set to false to skip creating a bridge interface
+# This variable is being phased out
+run_qubinode_setup: yes
+
+# Run storage check
+run_storage_check: ""
+
+# set path to libvirt images
+kvm_host_libvirt_dir: /var/lib/libvirt/images
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
+vg_name: vg_qubi
+vm_libvirt_net_check: yes
+
+# should a bridge interface be created
 configure_bridge: true
+
+# Set to no prevent the installer from attempting
+# setup a LVM group for qubinode. Also set this to no
+# if you already have you storage for lvm setup
+create_lvm: yes
+
+# used in playbook setup_kvmhost.yml
+network_interface_name: "{{ kvm_host_interface }}"
+
+# set storage device to dedicate to /var/lib/libvirt/images
+kvm_host_libvirt_extra_disk: ""
+
+# use by funciton check_hardware_resources
+libvirt_pool_name: default
+
+qubinode_installer_host_completed: no
+
+# name of the libvirt network to use
+vm_libvirt_net: "qubinet"
+
+libvirt_network_name: "qubinat"

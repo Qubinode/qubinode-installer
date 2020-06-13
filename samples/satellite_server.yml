@@ -1,3 +1,4 @@
+---
 # Dns server VM attributes
 sat_server_hostname: "{{ instance_prefix }}-sat01"
 sat_server_vm:
@@ -60,8 +61,8 @@ satellite_admin_user: "{{ satellite_user }}"
 satellite_user_pass: "{{ satellite_pass }}"
 satellite_url: "https://qbn-sat01.{{ domain }}"
 satellite_verify_ssl: no
-rhsm_password: ""
-rhsm_user: ""
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
 manifest_download_path: /root
 local_manifest_path: "{{ project_dir }}"
 default_subscription:

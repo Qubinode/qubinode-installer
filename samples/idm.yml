@@ -35,7 +35,7 @@ dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
     dns_memory: 2048
-    dns_root_disk_size: 20G
+    dns_root_disk_size: 10G
     dns_teardown: false
     dns_recreate: false
     dns_group: dns
@@ -45,6 +45,14 @@ dns_server_vm:
     dns_mask: "{{ vm_net_netmask | default('', true) }}"
     dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
+    dns_expand_os_disk: no
+
+# Which release of rhel to deploy IDM on
+qcow_rhel_release: 7
+rhel_release: 7
+
+# should qcow template be expanded
+expand_os_disk: no
 
 # This is required ansible-idm role
 idm_admin_password: "{{ idm_admin_pwd }}"

@@ -1,9 +1,11 @@
+---
 - name: Deploy Tower server VM
   hosts: tower
   become: yes
   gather_facts: no
   vars_files:
     - vars/all.yml
+    - vars/kvm_host.yml
     - vars/vault.yml
     - vars/idm.yml
     - vars/tower_server.yml
@@ -60,6 +62,7 @@
         state: present
       loop: "{{ idmusers }}"
       delegate_to: localhost
+      when: configure_ldap|bool
 
     - name: add users to tower_administrators group
       ipa_group:
@@ -70,6 +73,7 @@
         state: present
       loop: "{{ idmusers }}"
       delegate_to: localhost
+      when: configure_ldap|bool
 
     - name: create groups and add users
       ipa_group:
@@ -79,6 +83,7 @@
         state: present
       loop: "{{ idmgroups }}"
       delegate_to: localhost
+      when: configure_ldap|bool
 
     - name: create tower_cli.cfg
       template:
@@ -93,8 +98,10 @@
         dest: ~/tower_ldap_auth.sh
         mode: 0700
       become: no
+      when: configure_ldap|bool
 
     - name: copy over tower ldap_auth script
       shell: ~/tower_ldap_auth.sh
       become: no
+      when: configure_ldap|bool
 

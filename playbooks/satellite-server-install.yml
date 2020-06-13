@@ -1,0 +1,43 @@
+- name: PLAY| install satellite server
+  hosts: satellite
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/kvm_host.yml
+    - vars/vault.yml
+    - vars/satellite_server.yml
+
+  tasks:
+  - name: check if satellite is running
+    uri:
+      url: "https://{{ satellite_hostname }}.{{ satellite_domain }}/api/organizations"
+      user: "{{ satellite_user }}"
+      password: "{{ satellite_pass }}"
+      force_basic_auth: yes
+      validate_certs: no
+    register: satellite_is_installed
+    ignore_errors: yes
+    tags: [ always ]
+
+  - set_fact:
+      satellite_is_installed: "{{ False if satellite_is_installed.failed | default(False) or satellite_is_installed.status != 200 else True }}"
+      tags: [ always ]
+
+  - name: end play if satellite is running
+    meta: end_play
+    when: satellite_is_installed|bool
+
+  - name: ensure system is registered to Red Hat
+    vars:
+      rhsm_repos: "{{ satellite_repos }}"
+    include_role:
+      name: swygue-redhat-subscription
+
+  - name: create satellite paritions
+    include_role:
+      name: swygue-lvm
+
+  - name: TASK| running swygue-install-satellite role
+    include_role:
+      name: swygue-install-satellite

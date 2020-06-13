@@ -5,6 +5,9 @@ function openshift3_variables () {
     # global variables used used in this script
     # for ocp3.
 
+    # load kvmhost variables
+    kvm_host_variables
+
     playbooks_dir="${project_dir}/playbooks"
     vars_file="${playbooks_dir}/vars/all.yml"
     if [[ -f ${playbooks_dir}/vars/ocp3.yml ]]; then
@@ -25,7 +28,7 @@ function openshift3_variables () {
     OCUSER=$ocp_user
     product_in_use="${product}"
     ssh_username=$(awk '/^admin_user:/ {print $2}' "${vars_file}")
-    libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
+    #libvirt_pool_name=$(awk '/^libvirt_pool_name:/ {print $2}' "${vars_file}")
     NODES_POST_PLAY="${playbooks_dir}/openshift3_nodes_post_deployment.yml"
     NODES_DNS_RECORDS="${playbooks_dir}/openshift3_nodes_dns_records.yml"
     NODES_PLAY="${playbooks_dir}/openshift3_deploy_nodes.yml"
@@ -254,61 +257,6 @@ function qubinode_openshift_nodes () {
        printf "* Nodes for OpenShift Cluster deleted   *\n"
        printf "*****************************************\n\n"
    fi
-}
-
-
-function check_for_openshift_subscription () {
-
-    # Make sure the Qubinode is registered
-    qubinode_rhsm_register
-
-    # This function trys to find a subscription that mataches the OpenShift product
-    # then saves the pool id for that function and updates the varaibles file.
-    AVAILABLE=$(sudo subscription-manager list --available --matches 'Red Hat OpenShift Container Platform' | grep Pool | awk '{print $3}' | head -n 1)
-    CONSUMED=$(sudo subscription-manager list --consumed --matches 'Red Hat OpenShift Container Platform' --pool-only)
-
-    if [ "A${CONSUMED}" != "A" ]
-    then
-       echo "The system is already attached to the Red Hat OpenShift Container Platform with pool id: ${CONSUMED}"
-       POOL_ID="${CONSUMED}"
-    elif [ "A${CONSUMED}" == "A" ]
-    then
-       echo "Found the repo id: ${AVAILABLE} for Red Hat OpenShift Container Platform"
-       POOL_ID="${AVAILABLE}"
-
-       echo "Attaching system Red Hat OpenShift Container Platform subscription pool"
-       sudo subscription-manager remove --all
-       sudo subscription-manager attach --pool="${POOL_ID}"
-    else
-        cat "${project_dir}/docs/subscription_pool_message"
-        exit 1
-    fi
-
-    # set subscription pool id
-    if [ "A${POOL_ID}" != "A" ]
-    then
-        echo "Setting pool id for OpenShift Container Platform"
-        if grep '""' "${ocp3_vars_file}"|grep -q openshift_pool_id
-        then
-            echo "${ocp3_vars_file} openshift_pool_id variable"
-            sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${ocp3_vars_file}"
-        fi
-    else
-        echo "The OpenShift Pool ID is not available to playbooks/vars/ocp3.yml"
-    fi
-
-    # Decrypt Ansible Vault
-    decrypt_ansible_vault "${vault_vars_file}" >/dev/null
-    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
-    then
-        printf "%s\n" "The OpenShift 3 Enterprise installer requires your access.redhat.com"
-        printf "%s\n\n" "username and password."
-
-        # Get RHSM username and password.
-        get_rhsm_user_and_pass
-    fi
-    # Encrypt Ansible Vault
-    encrypt_ansible_vault "${vault_vars_file}" >/dev/null
 }
 
 function validate_openshift_pool_id () {
@@ -1104,3 +1052,36 @@ openshift3_smoke_test_fail () {
         printf "%s\n" " *** SMOKE TESTS FAILED                 ***"
         printf "%s\n" " ******************************************"
 }
+
+function select_openshift3_cluster_size () {
+    printf "%s\n" "${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY}"
+    # Set OpenShift deployment size based on available memory
+    if [[ ${AVAILABLE_MEMORY} -ge ${STANDARD_MEMORY} ]]
+    then
+        memory_size=standard
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ ${AVAILABLE_MEMORY} -ge ${SMALL_MEMORY} ]]
+    then
+        memory_size=small
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    elif [[ ${AVAILABLE_MEMORY} -ge ${MINIMAL_MEMORY} ]]
+    then
+        memory_size=minimal
+        bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+    else
+        printf "%s\n" "Your available memory of ${AVAILABLE_HUMAN_MEMORY} is not enough to continue"
+        read -p "Do you want to continue with a minimal instalation? y/n " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Nn]$ ]]
+        then
+            memory_size=minimal
+            printf "%s\n" "Your available memory ${AVAILABLE_HUMAN_MEMORY} does not meet our minimum supported."
+            printf "%s\n" "The installation will continue, but you may run out of memory depending on your workload"
+            bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
+        else
+            printf "%s\n" "Aborting installation, the minium supported memory is ${MINIMAL_MEMORY}"
+            exit $?
+        fi
+    fi
+}
+

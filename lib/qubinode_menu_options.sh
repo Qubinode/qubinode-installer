@@ -17,6 +17,7 @@ function qubinode_product_deployment () {
               then
                   openshift3_server_maintenance
               else
+                  setup_download_options
                   openshift_enterprise_deployment
               fi
               ;;
@@ -40,7 +41,10 @@ function qubinode_product_deployment () {
               then
                   openshift4_server_maintenance
               else
-                  openshift4_enterprise_deployment
+                  ASK_SIZE=true
+                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
+                  setup_download_options 
+                  qubinode_deploy_ocp4
               fi
               ;;
           satellite)
@@ -49,6 +53,9 @@ function qubinode_product_deployment () {
                   qubinode_teardown_satellite
               else
                   echo "Installing Satellite"
+                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/satellite.yml")
+                  setup_download_options
+                  download_files
                   qubinode_deploy_satellite
               fi
               ;;
@@ -57,6 +64,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_tower
               else
+                  setup_download_options
+                  download_files
                   qubinode_deploy_tower
               fi
               ;;
@@ -65,9 +74,30 @@ function qubinode_product_deployment () {
               then
                   echo "Running IdM VM teardown function"
                   qubinode_teardown_idm
+              elif [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_idm_maintenance
               else
                   echo "Running IdM VM deploy function"
+                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
+                  setup_download_options
+                  download_files
                   qubinode_deploy_idm
+              fi
+              ;;
+          rhel)
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_rhel_teardown
+              else
+                  if [ "A${qubinode_maintenance}" == "Atrue" ]
+                  then
+                      qubinode_rhel_maintenance
+                  else
+                      setup_download_options
+                      download_files
+                      qubinode_deploy_rhel
+                  fi
               fi
               ;;
           kvmhost)
@@ -87,6 +117,10 @@ function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
         qubinode_project_cleanup
+    elif [ "${qubinode_maintenance_opt}" == "hwp" ]
+    then
+        # Collect hardware information
+        create_qubinode_profile_log
     elif [ "${qubinode_maintenance_opt}" == "setup" ]
     then
         qubinode_installer_setup
