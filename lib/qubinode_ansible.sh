@@ -64,7 +64,7 @@ function qubinode_setup_ansible () {
     # install python
     if [[ $RHEL_VERSION == "RHEL8" ]]
     then
-        if ! -f /usr/bin/python3
+        if [ ! -f /usr/bin/python3 ]
         then
             sudo subscription-manager repos --enable="rhel-8-for-x86_64-baseos-rpms"
             sudo subscription-manager repos --enable="rhel-8-for-x86_64-appstream-rpms"
@@ -74,7 +74,7 @@ function qubinode_setup_ansible () {
             sudo dnf install -y -q -e 0 python3 python3-pip python3-dns
 	fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-        if ! -f /usr/bin/python
+        if [ ! -f /usr/bin/python ]
         then
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
