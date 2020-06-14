@@ -1088,6 +1088,9 @@ function shutdown_variables () {
 }
 
 function shutdown_nodes () {
+    # https://access.redhat.com/solutions/4037631
+    # https://access.redhat.com/solutions/4271712
+    # https://access.redhat.com/solutions/4218311
     shutdown_variables
     MASTER_ONE=192.168.50.10
     MASTER_STATE=$(ping -c3 ${MASTER_ONE} 1>/dev/null; echo $?)
@@ -1292,6 +1295,7 @@ function remove_ocp4_worker () {
 }
 
 function add_ocp4_worker () {
+    # https://access.redhat.com/solutions/4799921
     # Check for user provided variables
     for var in "${product_options[@]}"
     do
