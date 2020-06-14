@@ -1299,6 +1299,15 @@ function add_ocp4_worker () {
             	-e "compute_count=$new_compute_count" \
             	-e '{ approve_work_csr: True  }' \
             	-t setup,worker_dns,add_workers,add_workers || exit 1
+            numbers_list=$(seq $new_compute_count -1 0)
+            numbers_array=($numbers_list)
+            workers_to_add=$count
+            TOTAL=0
+            REMOVAL_COUNT=0
+            for i in ${numbers_array[@]}
+            do
+	        /usr/local/bin/qubinode-add-worker-node "compute-${i}"
+	    done
             sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars_file}"
             sed -i "s/^compute_count_updated:.*/compute_count_update: add/g" "${ocp4_vars_file}"
         else
