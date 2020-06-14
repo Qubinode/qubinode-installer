@@ -51,23 +51,17 @@ This will remove the cluster, this includes all RHCOS vms and removing dns entri
 
 ## Workers
 
+
+### Add / Remove workers to UPI cluster
+
+[1] https://access.redhat.com/solutions/4799921
+
 Add additional workers to your cluster, the example below will add one
 additional worker to your cluster. If your current worker count was 3, this would 
 make it 4.
 
-The value for **count** can be 1-10, 10 is the max workers you can add.
+The value for **count** can be 1-10. The count is from 0-9, a count value of 10 will result is nodes 0 - 9.
 
-NOTE > This automation currently only supports expanding a cluster that as deployed for less
-than 24 hrs. If 24rs has lasp follow the steps publish [1]. 
-
-[1] https://access.redhat.com/solutions/4799921
-
-Next copy the ignition file to the webserver container
-
-```
-sudo cp /home/admin/qubinode-installer/ocp4/worker.ign /opt/qubinode_webserver/4.4/ignitions/worker.ign
-sudo systemctl restart qbn-httpd.service
-```
 
 **Add new workers**
 ```shell
