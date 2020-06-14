@@ -1299,7 +1299,8 @@ function add_ocp4_worker () {
             	-e "compute_count=$new_compute_count" \
             	-e '{ approve_work_csr: True  }' \
             	-t setup,worker_dns,add_workers,add_workers || exit 1
-            numbers_list=$(seq $new_compute_count -1 0)
+	    num_workers=$(echo $new_compute_count - 1|bc)
+            numbers_list=$(seq $num_workers -1 0)
             numbers_array=($numbers_list)
             workers_to_add=$count
             TOTAL=0
