@@ -20,6 +20,7 @@
   - name: list all libvirt vms
     virt:
       command: list_vms
+      state: running
     register: running_vms
 
   - name: remove node from cluster
@@ -39,8 +40,7 @@
       name: "{{ vm_name }}"
       command: destroy
     register: shutdown_vms
-    #when: vm_name in running_vms.list_vms
-    when: item.vm_exist|bool
+    when: item.vm_exist|bool and vm_name in running_vms.list_vms
     loop: "{{ records }}"
     delay: 10
   
@@ -53,7 +53,7 @@
     loop_control:
       #loop_var: item.hostname
       label: "{{ item.hostname }}"
-    when: item.vm_exist|bool
+    when: item.vm_exist|bool and shutdown_vms.changed
 
   - name: list all libvirt vms
     virt:
