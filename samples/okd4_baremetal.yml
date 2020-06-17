@@ -5,15 +5,20 @@
 # Working dir for OCP install
 installation_working_dir: "{{ project_dir }}"
 
+# Required Files
+pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+
 # OpenShift Version
+ocp4_okd4: okd4
 ocp4_release: 4.4.0-0.okd-2020-05-23-055148-beta5
 ocp4_image: 4.4.3
 ocp4_release_url: "https://github.com/openshift/okd/releases/download/{{ ocp4_release }}"
 
-openshift_install_folder: okd4
 ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
+
+family_tree: "Fedora CoreOS"
 
 # User info
 local_user_account: "{{ admin_user }}"
@@ -92,7 +97,7 @@ compute_ip_octet: 20
 tear_down: false
 
 # OpenShift Download URL
-openshift_mirror: "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/"
+openshift_mirror: "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64"
 
 # OpenShift Dependencies
 coreos_installer_kernel: "fedora-coreos-{{ major_version }}-live-kernel-x86_64"
@@ -103,7 +108,7 @@ coreos_metal_bios: "fedora-coreos-{{ major_version }}-metal.x86_64.raw.xz"
 # These can be left alone unless you have a reason to change them
 
 # OpenShift installer directory
-openshift_install_folder: ocp4
+openshift_install_folder: okd4
 
 # Set to false to not create the install-config
 deploy_ocp4_configs: yes
@@ -114,7 +119,7 @@ mask: 255.255.255.0
 cluster_name: qbn
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
-libivrt_network_domain: compute.local
+libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"
 listen_address: "{{ kvm_host_ip }}"
 lb_name: "{{ ocp4_lb_container }}"
 mac_start: "52:54:00:"
@@ -125,9 +130,9 @@ dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 
 # OpenShift version numbers
-major_version: "31.20200517.3.0"  #e.g. 4
+major_version: "32.20200601.3.0"  #e.g. 4
 ocp4_dependencies_version: "{{ major_version }}"
-ocp4_image_version: "{{ micro_version }}"
+ocp4_image_version: "{{ major_version }}"
 
 # Bootstrap Webserver
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
