@@ -4,7 +4,7 @@ Qubinode is for users wanting to stand up an RHEL based lab environment running 
 ## Qubinode Dev Branch for next release
 Feature  |  Status
 --|---
-Ansible Tower | In progress |  
+Ansible Tower | Testing |  
 Red Hat Satellite Server  | In progress|
 RHEL 8.x Support  | In progress|
 OKD 4.x Support  | In Development |
