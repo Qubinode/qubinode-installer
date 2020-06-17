@@ -33,7 +33,8 @@ rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
 rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
 ansible_version: 2.9.7
 ansible_release: 2.9
-#ansible_rpm: ansible-2.6.20-1.el7ae.noarch
+rhel8_version: 8.2
+rhel7_version: 7.8
 
 # All VMs created name will begin with this prefix.
 instance_prefix: qbn
@@ -153,11 +154,6 @@ libvirt_host_networks:
 ###########################################
 # variables for swygue.edge_host_setup role
 
-
-# This is required for OpenShift 4
-# TODO: the codebase needs to up to look for this
-# variable under playbooks/var/ocp4.yml
-cluster_name: qbn
 
 nat_network_name: "{{ cluster_name }}"
 

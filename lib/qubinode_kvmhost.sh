@@ -85,6 +85,7 @@ function check_additional_storage () {
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
 
+              printf "%s\n" "   The installer will wipe the device $disk and then create a vg,lv and mount it as /var/lib/libvirt/images."
               confirm "    Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then
