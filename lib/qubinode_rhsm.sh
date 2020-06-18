@@ -165,7 +165,7 @@ function qubinode_rhsm_register () {
             if [ "A${RHEL_MAJOR}" == "A8" ]
             then
                RHEL_RELEASE=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-            if [ "A${RHEL_MAJOR}" == "A7" ]
+            elif [ "A${RHEL_MAJOR}" == "A7" ]
             then
                RHEL_RELEASE=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
             else

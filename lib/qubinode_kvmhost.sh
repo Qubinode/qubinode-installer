@@ -15,6 +15,18 @@ function kvm_host_variables () {
         sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
     fi
 
+    RHEL_MAJOR=$(cat /etc/redhat-release | grep -o [7-8])
+    if [ "A${RHEL_MAJOR}" == "A8" ]
+    then
+       rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
+    elif [ "A${RHEL_MAJOR}" == "A7" ]
+    then
+       rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
+    else
+        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+    fi
+
+
     if [[ $RHEL_VERSION == "RHEL8" ]]; then
       sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then

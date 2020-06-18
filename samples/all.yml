@@ -40,6 +40,9 @@ rhel7_version: 7.8
 instance_prefix: qbn
 preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 
+# Cluster name
+# This should be moved
+cluster_name: qbn
 
 vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
 update_inventory: true
