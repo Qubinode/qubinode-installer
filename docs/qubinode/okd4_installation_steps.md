@@ -16,10 +16,10 @@ Download and extract the qubinode-installer as a non root user.
 
 ```shell=
 cd $HOME
-wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
-unzip master.zip
-rm master.zip
-mv qubinode-installer-master qubinode-installer
+wget https://github.com/Qubinode/qubinode-installer/archive/dev.zip
+unzip dev.zip
+rm dev.zip
+mv qubinode-installer-dev qubinode-installer
 ```
 
 Place your pull secret and the rhel qcow image under the qubinode-installer directory.
