@@ -116,6 +116,7 @@ At this point you refer to the [documentation](#Currently-Supported-Products) fo
 
 ## Currently Supported Products
 * [Red Hat OpenShift Platform](qubinode/openshift4_installation_steps.md)
+* [OKD - The Community Distribution of Kubernetes](qubinode/okd4_installation_steps.md)
 * [Red Hat Identity Managment](qubinode/idm.md)
 * [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
 

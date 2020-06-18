@@ -7,7 +7,7 @@ Feature  |  Status
 Ansible Tower | Testing |  
 Red Hat Satellite Server  | In progress|
 RHEL 8.x Support  | In progress|
-OKD 4.x Support  | In Development |
+OKD 4.x Support  | In progress |
 OCS Support |  In progress  |   
 Cockpit Integration | Not Started
 
@@ -43,7 +43,8 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 ## Deploying a OpenShift cluster
 
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
-
+- [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
+- 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
 

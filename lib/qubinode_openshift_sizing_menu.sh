@@ -18,7 +18,7 @@ cyn=$'\e[1;36m'
 end=$'\e[0m'
 
 
-ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
+
 
 
 function config_err_msg () {
