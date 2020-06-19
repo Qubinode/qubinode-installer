@@ -60,7 +60,7 @@ $ ./qubinode-installer -p idm
 $ cp samples/okd4_baremetal.yml  playbooks/vars/okd4_baremetal.yml
 ```
 
-**Optional Steps before installing OKD 4**
+### Optional Steps before installing OKD 4
 ```
 $ vim playbooks/vars/okd4_baremetal.yml
 ```
@@ -83,6 +83,7 @@ https://getfedora.org/en/coreos/download?tab=metal_virtualized&stream=stable
 major_version: "32.20200601.3.0"  #e.g. 4
 ```
 
+### Begin OKD install
 **install OKD 4**  
 ```
 $ ansible-playbook playbooks/deploy_okd4.yml
