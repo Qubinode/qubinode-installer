@@ -60,7 +60,7 @@ $ ./qubinode-installer -p idm
 $ cp samples/okd4_baremetal.yml  playbooks/vars/okd4_baremetal.yml
 ```
 
-**Optional Steps bekfore installing OKD 4**
+**Optional Steps before installing OKD 4**
 ```
 $ vim playbooks/vars/okd4_baremetal.yml
 ```
