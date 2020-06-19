@@ -1,15 +1,5 @@
-# Qubinode Installer
+# Qubinode Installer v2.4.1
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
-
-## Qubinode Dev Branch for next release
-Feature  |  Status
---|---
-Ansible Tower | Testing |  
-Red Hat Satellite Server  | In progress|
-RHEL 8.x Support  | In progress|
-OKD 4.x Support  | In progress |
-OCS Support |  In progress  |   
-Cockpit Integration | Not Started
 
 ## Motivation
 The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
@@ -37,14 +27,14 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4     | 2.9               | 2.4 |
+|     Release 2.4.1    | 2.9               | 2.4.1 |
 
 
 ## Deploying a OpenShift cluster
 
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
 - [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
-- 
+
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
 
@@ -79,10 +69,20 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 
 ## Known issues
 
+## Qubinode Dev Branch for next release
+Feature  |  Status
+--|---
+Ansible Tower | Testing |  
+Red Hat Satellite Server  | In progress|
+RHEL 8.x Support  | In progress|
+OKD 4.x Support  | Testing/Development |
+OCS Support |  In progress  |   
+Cockpit Integration | Not Started
+
 ## Roadmap
 * OCP 4.x Container Native Storage
 * OCP 4.x on RHEV
-* Libvirt with KVM  OCP- (Experimental)
+* Libvirt with KVM  OCP - (Experimental)
 * OpenWrt Router Support - (Experimental)
 
 ## Acknowledgments
