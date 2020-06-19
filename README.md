@@ -44,7 +44,7 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
 - [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
-- 
+
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
 
