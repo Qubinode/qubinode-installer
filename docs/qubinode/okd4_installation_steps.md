@@ -45,11 +45,6 @@ $ cat H$OME/qubinode-installer/pull-secret.txt
 $ cd $HOME/qubinode-installer 
 ```
 
-**install KVM packages and configure bridge and nat networks**
-```
-$ ./qubinode-installer -p kvm
-```
-
 **install idm**  
 ```
 $ ./qubinode-installer -p idm
@@ -78,9 +73,9 @@ https://getfedora.org/en/coreos/download?tab=metal_virtualized&stream=stable
 ![FedoraCoresImage](../img/fedora_coreos_images.png)
 
 
-**Change the following variables in the **
+**Change the following variables in the**
 ```
-major_version: "32.20200601.3.0"  #e.g. 4
+major_version: "32.20200601.3.0"  #e.g. 32.20200601.3.0
 ```
 
 ### Begin OKD install
@@ -172,7 +167,7 @@ Accessing the cluster web console.
 ### Troubleshooting Tips
 [Troubleshooting installation](troubleshooting-monitoring.md)
 
-### Know Issues
+### Known Issues
 ```
 
 TASK [ocp4-kvm-deployer : fail if bootstrap process was attempted] ********************************************************************************************
