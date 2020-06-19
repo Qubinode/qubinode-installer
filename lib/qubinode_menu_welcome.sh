@@ -17,6 +17,24 @@ display_openshift_msg_ocp3 () {
     fi
 }
 
+display_openshift_msg_okd3 () {
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
+    printf "%s\n\n" "        ${cyn}${txb}OKD: The Origin Community Distribution of Kubernetes (OKD)${txend}${end}"
+    printf "%s\n" "    OKD is the Origin community distribution of Kubernetes optimized for "
+    printf "%s\n" "    continuous application development and multi-tenant deployment."
+    printf "%s\n\n" "    Hardware profiles are defined as:"
+    display_hardware_profile_msg
+    printf "%s\n\n" "  ${yel}****************************************************************************${end}"
+
+    confirm "  Do you want to proceed? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        qubinode_autoinstall_okd3
+    else
+        display_other_options
+    fi
+}
+
 display_hardware_profile_msg () {
     printf "%s\n" "      ${blu}Minimal     - 30G Memory and 370G Storage${end}"
     printf "%s\n" "      ${blu}Standard    - 80G Memory and 900G Storage${end}"
@@ -74,11 +92,12 @@ display_other_options () {
         display_help
     elif [ "A${result}" == "AOCP3" ]
     then
-        display_openshift_msg_ocp3
-        qubinode_autoinstall_openshift
+      display_openshift_msg_ocp3
+      qubinode_autoinstall_openshift
     elif [ "A${result}" == "AOKD3" ]
     then
-        echo "Not implemented yet!"
+      display_openshift_msg_okd3
+      qubinode_autoinstall_okd3
     elif [ "A${result}" == "ATower" ]
     then
         setup_download_options

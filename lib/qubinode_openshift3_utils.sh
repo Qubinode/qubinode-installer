@@ -10,7 +10,14 @@ function openshift3_variables () {
 
     playbooks_dir="${project_dir}/playbooks"
     vars_file="${playbooks_dir}/vars/all.yml"
-    ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
+    if [[ -f ${playbooks_dir}/vars/ocp3.yml ]]; then
+      ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
+      product=ocp3
+    elif [[ -f ${playbooks_dir}/vars/okd3.yml ]]; then
+      ocp3_vars_file="${playbooks_dir}/vars/okd3.yml"
+      product=okd3
+    fi
+
     idm_vars_file="${playbooks_dir}/vars/idm.yml"
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
     prefix=$(awk '/^instance_prefix:/ {print $2}' "${vars_file}")
@@ -37,8 +44,11 @@ function openshift3_variables () {
     then
         openshift_deployment_size=$(awk '/openshift_deployment_size:/ {print $2}' "${ocp3_vars_file}")
         openshift_deployment_size_yml="${project_dir}/playbooks/vars/openshift3_size_${openshift_deployment_size}.yml"
-        ocp3_ocp3_vars_files="${project_dir}/playbooks/vars/ocp3.yml ${openshift_deployment_size_yml}"
-        okd3_ocp3_vars_files="${project_dir}/playbooks/vars/okd3.yml ${openshift_deployment_size_yml}"
+        if [[ ${product_in_use} == "ocp3" ]]; then
+          ocp3_ocp3_vars_files="${project_dir}/playbooks/vars/ocp3.yml ${openshift_deployment_size_yml}"
+        elif [[ ${product_in_use} == "okd3" ]]; then
+          okd3_ocp3_vars_files="${project_dir}/playbooks/vars/okd3.yml ${openshift_deployment_size_yml}"
+        fi
     fi
 
 
@@ -64,6 +74,9 @@ function check_openshift3_size_yml () {
         if [ "A${storage_profile}" == "A${memory_profile}" ]
         then
             memory_size="${memory_profile}"
+            if [[  "$memory_size" == '""' ]]; then
+              memory_size=standard
+            fi
             bash ${project_dir}/lib/qubinode_openshift_sizing_menu.sh $memory_size
         else
             printf "%s\n" " Your hardware does not meet our recommended sizing."
@@ -148,14 +161,14 @@ function set_openshift_production_variables () {
     if [ "A${update_variable}" == "Atrue" ]
     then
         echo "Setting OpenShift version to ${openshift_product}"
-        sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
-        sed -i "s/openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/g" "${ocp3_vars_file}"
         if [[ ${openshift_product} == "ocp3" ]]
         then
             # ensure we are deploying openshift enterprise
+            sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
             sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: openshift-enterprise/"   "${ocp3_vars_file}"
         elif [[ ${openshift_product} == "okd3" ]]
         then
+            sed -i "s/openshift_product:.*/openshift_product: "$openshift_product"/g" "${vars_file}"
             sed -i "s/^openshift_deployment_type:.*/openshift_deployment_type: origin/"   "${vars_file}"
         else
             echo "Unsupported OpenShift distro"
@@ -229,7 +242,7 @@ function qubinode_openshift_nodes () {
            check_openshift3_size_yml
        fi
        echo "Deploy ${openshift_product} VMs"
-       ansible-playbook "${NODES_PLAY}" || exit $?
+       ansible-playbook -e @${ocp3_vars_file} "${NODES_PLAY}" || exit $?
        #ansible-playbook "${NODES_POST_PLAY}" || exit $?
        qubinode_openshift3_nodes_postdeployment
    fi
