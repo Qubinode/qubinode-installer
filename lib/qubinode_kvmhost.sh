@@ -315,7 +315,7 @@ function qubinode_networking () {
         DEFINED_BRIDGE=""
     fi
 
-    CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
+    CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       #KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
@@ -373,9 +373,6 @@ function qubinode_networking () {
         #echo "Updating the kvm_host_macaddr to ${foundmac}"
         sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
     fi
-
-    # Check Network
-    #qubinode_check_libvirt_net
 }
 
 
