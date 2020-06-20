@@ -34,6 +34,7 @@ configure_ocs_storage: no
 # deploy local persistent storage
 configure_local_storage: no
 compute_local_storage: no
+storage_local_storage: yes
 localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
@@ -63,8 +64,14 @@ master_vcpu: 4
 compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
-compute_vdb_size: 50
+compute_vdb_size: 10
 compute_vdc_size: 150
+storage_hd_size: 120
+storage_vcpu: 8
+storage_vdb_size: 10
+storage_vdc_size: 200
+storage_mem_size: 24576
+storage_count: 0
 bootstrap_hd_size: 120
 bootstrap_mem_size: 16192
 bootstrap_vcpu: 4
@@ -82,6 +89,7 @@ min_mem: 10240
 # master and compute nodes you want to deploy
 master_ip_octet: 10
 compute_ip_octet: 20
+storage_ip_octet: 30
 
 #############################################################
 # These may change and need updating
@@ -192,6 +200,20 @@ ocp4_instances:
     qty: "{{ compute_count }}"
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
+  - name: storage
+    hd_size: "{{ storage_hd_size }}G"
+    memory_size: "{{ storage_mem_size }}"
+    cpu_size: "{{ storage_vcpu }}"
+    extra_storage:
+      - size: "{{ storage_vdb_size }}G"
+        name: vdb
+        enable: "{{ storage_local_storage }}"
+      - size: "{{ storage_vdc_size }}G"
+        name: vdc
+        enable: "{{ storage_local_storage }}"
+    qty: "{{ storage_count }}"
+    vm_type: worker
+    ip_octet: "{{ storage_ip_octet }}"
   - name: bootstrap
     hd_size: "{{ bootstrap_hd_size }}G"
     memory_size: "{{ bootstrap_mem_size }}"

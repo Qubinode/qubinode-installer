@@ -15,6 +15,18 @@ function kvm_host_variables () {
         sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
     fi
 
+    RHEL_MAJOR=$(cat /etc/redhat-release | grep -o [7-8])
+    if [ "A${RHEL_MAJOR}" == "A8" ]
+    then
+       rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
+    elif [ "A${RHEL_MAJOR}" == "A7" ]
+    then
+       rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
+    else
+        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+    fi
+
+
     if [[ $RHEL_VERSION == "RHEL8" ]]; then
       sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
@@ -85,6 +97,7 @@ function check_additional_storage () {
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
 
+              printf "%s\n" "   The installer will wipe the device $disk and then create a vg,lv and mount it as /var/lib/libvirt/images."
               confirm "    Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then
@@ -302,7 +315,7 @@ function qubinode_networking () {
         DEFINED_BRIDGE=""
     fi
 
-    CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}')
+    CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       #KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
@@ -360,9 +373,6 @@ function qubinode_networking () {
         #echo "Updating the kvm_host_macaddr to ${foundmac}"
         sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
     fi
-
-    # Check Network
-    #qubinode_check_libvirt_net
 }
 
 

@@ -124,7 +124,6 @@ function qubinode_rhsm_register () {
         # load kvmhost variables
         kvm_host_variables
  
-        #RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' "${vars_file}" |grep [0-9])
         IS_REGISTERED_tmp=$(mktemp)
         sudo subscription-manager identity > "${IS_REGISTERED_tmp}" 2>&1
     
@@ -162,7 +161,17 @@ function qubinode_rhsm_register () {
             printf "%s\n" ""
             printf "%s\n" " ${rhsm_msg}"
             rhsm_reg_result=$(mktemp)
-            RHEL_RELEASE=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+            RHEL_MAJOR=$(cat /etc/redhat-release | grep -o [7-8])
+            if [ "A${RHEL_MAJOR}" == "A8" ]
+            then
+               RHEL_RELEASE=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
+            elif [ "A${RHEL_MAJOR}" == "A7" ]
+            then
+               RHEL_RELEASE=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
+            else
+                RHEL_RELEASE=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+            fi
+
             echo sudo subscription-manager register "${rhsm_cmd_opts}" --force --release="'${RHEL_RELEASE}'"|sh > "${rhsm_reg_result}" 2>&1
             RESULT="$?"
             if [ ${RESULT} -eq 0 ]
