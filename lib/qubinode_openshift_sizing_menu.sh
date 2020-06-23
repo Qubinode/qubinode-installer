@@ -140,20 +140,6 @@ show_menus_ocp4 () {
     printf "%s\n\n" ""
 }
 
-
-function continue_with_selected_install () {
-    if [[ -f ${ocp3_vars_file} ]]; then 
-        printf "%s\n" ""
-        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
-        openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
-        cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
-        echo "This is the continue_with_selected_install"
-        exit
-    fi 
-    
-    exit 0
-}
-
 function read_options(){
 	local choice
 	read -p "   ${cyn}Enter choice [ 1 - 6] ${end}" choice
