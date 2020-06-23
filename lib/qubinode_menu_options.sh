@@ -94,7 +94,7 @@ function qubinode_product_deployment () {
                   then
                       qubinode_rhel_maintenance
                   else
-                      setup_download_options
+                      #setup_download_options
                       download_files
                       qubinode_deploy_rhel
                   fi
