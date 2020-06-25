@@ -18,9 +18,6 @@ cyn=$'\e[1;36m'
 end=$'\e[0m'
 
 
-ocp3_vars_file="${playbooks_dir}/vars/ocp3.yml"
-
-
 function config_err_msg () {
     cat << EOH >&2
     printf "%s\n\n" " ${red}There was an error finding the full path to the qubinode-installer project directory.${end}"
@@ -138,22 +135,9 @@ show_menus_ocp4 () {
     printf "%s\n" "      3. Standard 5 node cluster"
     printf "%s\n" "      4. Standard 6 node cluster with local storage"
     printf "%s\n" "      5. Custom Deployment"
-    printf "%s\n" "      6. Exit"
+    printf "%s\n" "      6. Reset to defaults"
+    printf "%s\n" "      7. Continue with install"
     printf "%s\n\n" ""
-}
-
-
-function continue_with_selected_install () {
-    if [[ -f ${ocp3_vars_file} ]]; then 
-        printf "%s\n" ""
-        sed -i "s/openshift_deployment_size:.*/openshift_deployment_size: $ocp_size/g" "${ocp3_vars_file}"
-        openshift_size_vars_file="${project_dir}/playbooks/vars/openshift3_size_${ocp_size}.yml"
-        cp -f ${project_dir}/samples/ocp_vm_sizing/${ocp_size}.yml ${openshift_size_vars_file}
-        echo "This is the continue_with_selected_install"
-        exit
-    fi 
-    
-    exit 0
 }
 
 function read_options(){
@@ -179,25 +163,31 @@ function read_options(){
 
 function read_options_ocp4 () {
 	local choice
-	read -p "   ${cyn}Enter choice [ 1 - 6] ${end}" choice
+	read -p "   ${cyn}Enter choice [ 1 - 7] ${end}" choice
 	case $choice in
         1) ocp_size=minimal
            minimal_opt=masters_only
            confirm_minimal_deployment
            ;;
         2) ocp_size=minimal
+           minimal_opt=masters_worker
            confirm_minimal_deployment
            ;;
         3) ocp_size=standard 
+	   standard_opt=5node
            openshift4_standard_desc
            ;;
         4) ocp_size=local-storage
+	   standard_opt=6node
            configure_local_storage
            ;;
         5) ocp_size=custom
            openshift4_custom_desc
            ;;
-        6) exit 0
+	6) reset_cluster_resources_default
+	   ocp4_menu
+	   ;;
+        7) exit 0
                 ;;
 	*) printf "%s\n\n" " ${red}Error...${end}" && sleep 2
 	esac
@@ -211,55 +201,6 @@ trap '' SIGINT SIGQUIT SIGTSTP
 # -----------------------------------
 # Step #4: Main logic - infinite loop functions 
 # ------------------------------------
-function ocp3_menu(){
-    if [[ ! -z ${INSTALLTYPE} ]]
-    then
-        printf "%s\n\n" " ${cyn}Your OpenShift Cluster deployment profile is ${INSTALLTYPE}${end}"
-        printf "%s\n" "    This will deploy the following. "
-        case "${INSTALLTYPE}" in
-            minimal)
-                    openshift3_minimal_desc
-                    ;;
-            standard)
-                    openshift3_standard_desc
-                    ;;
-            performance)
-                    openshift3_performance_desc
-                    ;;
-            *) exit 0;;
-        esac
-
-        printf "%s\n" ""
-        confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
-        echo    # (optional) move to a new line
-        if [ "A${response}" == "Ayes" ]
-        then
-            user_choose_profile
-        elif [ "A${response}" == "Ano" ]
-        then
-            case $INSTALLTYPE in
-            minimal)
-                ocp_size=minimal
-                continue_with_selected_install
-                ;;
-            standard)
-                ocp_size=standard
-                continue_with_selected_install
-                ;;
-            performance)
-                ocp_size=performance
-                continue_with_selected_install
-                ;;
-                *) exit 0;;
-            esac
-        else
-            while true
-            do
-                user_choose_profile
-            done
-        fi
-    fi
-}
 
 function ocp4_menu(){
     if [[ ! -z ${INSTALLTYPE} ]]
@@ -275,36 +216,6 @@ function ocp4_menu(){
         user_choose_ocp4_profile
 
         printf "%s\n" ""
-        #confirm " ${cyn}Would you like a customize deployment? yes/no${end}"
-        #echo    # (optional) move to a new line
-        #if [ "A${response}" == "Ayes" ]
-        #then
-        #    openshift4_custom_desc
-        #    #user_choose_ocp4_profile
-        #elif [ "A${response}" == "Ano" ]
-        #then
-        #    case $INSTALLTYPE in
-        #    minimal)
-        #        ocp_size=minimal
-        #        continue_with_selected_install
-        #        ;;
-        #    standard)
-        #        ocp_size=standard
-        #        continue_with_selected_install
-        #        ;;
-        #    custom)
-        #        ocp_size=custom
-        #        continue_with_selected_install
-        #        ;;
-        #    *) exit 0;;
-        #    esac
-        #else
-        #    break
-            #while true
-            #do
-            #    user_choose_ocp4_profile
-            #done
-        #fi
     fi
 }
 

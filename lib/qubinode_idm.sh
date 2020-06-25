@@ -6,7 +6,8 @@ product_in_use=idm
 idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 # Check if we should setup qubinode
 DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${idm_vars_file}" | tr -d '"')
-prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
+prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
+idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${vars_file}")
 suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 idm_srv_hostname="$prefix-$suffix"
 idm_srv_fqdn="$prefix-$suffix.$domain"
@@ -168,7 +169,7 @@ function ask_user_for_custom_idm_server () {
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
 
             # Setting default IdM server name
-            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-dns01"/g' "${idm_vars_file}"
+            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
 
             # Setting default IdM server name
             CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')

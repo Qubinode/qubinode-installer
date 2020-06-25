@@ -9,9 +9,25 @@ function openshift4_variables () {
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+    idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
 
     # load kvmhost variables
+    source ${project_dir}/lib/qubinode_kvmhost.sh
     kvm_host_variables
+
+    # OCP nodes vairiables
+    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    min_master_count=$(awk '/^min_master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_mem=$(awk '/^min_mem:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_mem_h=$(echo "$min_mem/1024"|bc)
+    compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    master_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    mem_h=$(echo "$master_mem_size/1000"|bc)
 }
 
 function check_for_pull_secret () {
@@ -49,31 +65,52 @@ function check_for_pull_secret () {
 
 }
 
-function openshift4_standard_desc() {
+function openshift4_standard_desc () {
+    openshift4_variables
+    if [ "A${standard_opt}" == "A5node" ]
+    then
+        reset_cluster_resources_default
+        compute_count=2
+        total_ocp_nodes=$(echo "$compute_count+$master_count"|bc)
+    else
+        reset_cluster_resources_default
+	total_ocp_nodes=$(echo "$compute_count+$master_count"|bc)
+    fi
+    feature_one="- nfs-provisioner for image registry"
+
 cat << EOF
-    ${yel}=========================${end}
-    ${mag}Deployment Type: Standard${end}
-    ${yel}=========================${end}
-     3 masters w/16G and 4 vcpu
-     3 workers w/16G and 4 vcpu
+   ${yel}======================================================${end}
+   ${mag} Standard deployment of $total_ocp_nodes node cluster ${end}
+   ${yel}======================================================${end}
+
+   Each with ${mem_h}G memory and ${master_vcpu}vCPU. 
 
     ${cyn}========${end}
     Features
     ${cyn}========${end}
-     - nfs-provisioner for image registry
+     $feature_one
+     $feature_two
 EOF
-    reset_cluster_resources_default
-    sed -i "s/compute_count:.*/compute_count: 2/g" "${ocp4_vars_file}"
+
+    printf "%s\n\n" ""
+    confirm "    Do you want to continue with this $ocp_size size cluster? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${ocp4_vars_file}"
+    else
+        ocp4_menu
+    fi
 }
 
-function openshift4_minimal_desc() {
+function openshift4_minimal_desc4() {
 cat << EOF
-    ${yel}=========================${end}
-    ${mag}Deployment Type: Minimal${end}
-    ${yel}=========================${end}
+   ${yel}=========================${end}
+   ${mag} Minimal $total_ocp_nodes node cluster ${end}
+   ${yel}=========================${end}
 
-     3 masters w/8G memory and 2 vcpu
-     0 workers
+   $MSG1
+   Each with ${min_mem_h}G memory and ${min_vcpu}vCPU. 
+   $MSG2
 
     ${cyn}========${end}
     Features
@@ -226,7 +263,7 @@ function configure_local_storage () {
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp4_vars_file}"
         printf "%s\n" ""
-        printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_disk_size}G${end}"
+        printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
 
 cat << EOF
@@ -250,10 +287,13 @@ EOF
         if [ "A${response}" == "Ayes" ]
         then
             set_local_volume_type
-            exit 0
         else
             configure_local_storage
         fi
+
+        printf "%s\n\n" ""
+	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
+	openshift4_standard_desc
 }
 
 function set_local_volume_type () {
@@ -270,22 +310,21 @@ function set_local_volume_type () {
 }
 
 function confirm_minimal_deployment () {
-    all_vars_file="${project_dir}/playbooks/vars/all.yml"
-    min_master_count=$(awk '/^min_master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    min_mem=$(awk '/^min_mem:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    openshift4_minimal_desc
-
-    # set compute
-    if [ "A${minimal_opt}" == "Amasters_only" ]
+    # set compute count
+    openshift4_variables
+    if [ "A${minimal_opt}" == "Amasters_worker" ]
     then
+        min_compute_count=1
+	total_ocp_nodes=$( echo "$min_master_count+1"|bc)
+        MSG1="This will $min_master_count control pane nodes and $min_compute_count worker done"
+        MSG2=""
+    else
         min_compute_count=0
+        MSG1="This will deploy a total of $min_master_count nodes."
+        MSG2="The nodes functions as both control and workers."
     fi
 
-    printf "%s\n\n" ""
-    printf "%s\n" "    ${blu}This deployment option $deployment_option ${masters} masters with and ${computes} computes${end}"
-    printf "%s\n" "    ${blu}each master will be configure with with ${master_vcpu} vCPU and ${master_memory}MiB memory.${end}"
+    openshift4_minimal_desc4
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
@@ -302,7 +341,6 @@ function confirm_minimal_deployment () {
         ocp4_menu
     fi
 }
-
 
 is_node_up () {
     IP=$1
@@ -345,17 +383,15 @@ function check_webconsole_status () {
 }
 
 function pingreturnstatus() {
-  ping -q -c3 $1 > /dev/null
-
-  if [ $? -eq 0 ]
-  then
-    true
-    return 0
-  else
-    false
-    return 1
-  fi
-  }
+    if ping -q -c3 $1 > /dev/null 2>&1
+    then
+	true
+        return 0
+    else
+	false
+        return 1
+    fi
+ }
 
 
 function ignite_node () {
@@ -535,8 +571,12 @@ openshift4_idm_health_check () {
     if ! pingreturnstatus ${idm_ipaddress}; then
       IDM_IN_GOOD_HEALTH="not ready"
     fi
-    
-    dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+
+    if dig +short @${idm_ipaddress} ${prefix}-${idm_server_name}.${domain} > /dev/null 2>&1
+    then
+        dns_query=$(dig +short @${idm_ipaddress} ${prefix}-${idm_server_name}.${domain})
+    fi
+       
     if echo $dns_query | grep -q 'no servers could be reached'
     then
           IDM_IN_GOOD_HEALTH="not ready"
@@ -783,16 +823,6 @@ function get_cluster_resources () {
     compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
-#    cluster_custom_opts=("master_count  - ${yel}$master_count${end} master nodes" \
-#                         "master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
-#                         "master_mem    - ${yel}$master_mem_size${end} memory for master nodes" \
-#                         "master_vcpu   - ${yel}$master_vcpu${end} vCPU for master nodes" \
-#                         "compute_count - ${yel}$compute_count${end} compute nodes" \
-#                         "compute_disk  - ${yel}$compute_hd_size${end} size HD for compute nodes" \
-#                         "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
-#                         "compute_vcpu  - ${yel}$compute_vcpu${end} vCPU for compute nodes" \
-#                         "Reset         - Reset to default values" \
-#                         "Save          - Save changes and continue to persistent storage setup")
     cluster_custom_opts=("master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
                          "master_mem    - ${yel}$master_mem_size${end} memory for master nodes" \
                          "master_vcpu   - ${yel}$master_vcpu${end} vCPU for master nodes" \
@@ -877,7 +907,7 @@ EOF
 		get_cluster_resources
                 ;;
             compute_vcpu)
-                update_node_vcpu_size master $master_vcpu_count
+                update_node_vcpu_size compute $compute_vcpu_count
 		get_cluster_resources
                 ;;
             Reset)
@@ -889,11 +919,12 @@ EOF
         esac
     done
 
-    storage_opts=("NFS   - Configure NFS persistent Storage" \
+    storage_opts=("NFS   - Configure NFS persistent Storage (default)" \
                   "OCS   - Red Hat OpenShift Container Storage" \
                   "Local - Configure local disk for persistent Storage" \
                   "Reset - Reset to default storage options" \
-                  "Save  - Save changes and exit the custom menu.")
+                  "Menu  - Return to custom menu" \
+                  "Save  - Save changes or continue with default")
     printf "%s\n\n\n" ""
     printf "%s\n\n" "    ${blu}Choose one of the below peristent storage${end}"
     while true
@@ -909,6 +940,9 @@ EOF
                 ;;
             Local)
                 configure_local_storage
+                ;;
+            Menu)
+                ocp4_menu 
                 ;;
             Reset)
                 echo RESET

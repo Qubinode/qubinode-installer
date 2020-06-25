@@ -1,5 +1,57 @@
 # Troubleshooting an monitoring for Qubinode
 
+While OpenShift is deploying you can open a new terminal sshh into your box and run the following. 
+
+
+When Bootstrap is starting 
+```
+# OpenShift 
+tail -f /home/${USER}/qubinode-installer/ocp4/bootstrap-complete.log
+
+# OKD 
+tail -f /home/${USER}/qubinode-installer/okd/bootstrap-complete.log
+```
+
+Waiting for Installation to Complete
+```
+# OpenShift 
+tail -f /home/${USER}/qubinode-installer/ocp4/.openshift_install.log
+
+# OKD 
+tail -f /home/${USER}/qubinode-installer/okd4/.openshift_install.log
+```
+
+**To exit out of tail hit CTRL+C**
+
+To view Logs and status on Red Hat Cores OS bootstrap node
+```
+$ ssh core@192.168.50.2
+```
+
+To view logs and status on Fedora Cores OS bootstrap node
+```
+$ ssh core@192.168.50.2
+$ journalctl -b -f -u release-image.service -u bootkube.service
+
+```
+
+### OpenShift node info on Qubinode
+
+list vms
+```
+$ sudo virsh list 
+ Id    Name                           State
+----------------------------------------------------
+ 11    qbn-dns01                      running
+ 34    master-0                       running
+ 35    master-1                       running
+ 36    master-2                       running
+ 37    compute-0                      running
+ 38    compute-1                      running
+ 39    compute-2                      running
+
+```
+
 ###  From the CLI
 *virt-top*
 
@@ -41,7 +93,7 @@ OPTIONS
 [virt-top-> more info](https://people.redhat.com/rjones/virt-top/virt-top.txt)
 
 .KVM logs location
-* as administrator
+* as ${USER}istrator
 * cd /var/log/libvirt/qemu
 * tail one of the following based of vm name
 ```

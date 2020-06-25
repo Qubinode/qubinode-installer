@@ -21,6 +21,18 @@ function qubinode_product_deployment () {
                   openshift_enterprise_deployment
               fi
               ;;
+          okd3)
+              openshift3_variables
+              if [ "A${teardown}" == "Atrue" ]
+              then
+                  qubinode_teardown_openshift
+              elif [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  openshift3_server_maintenance
+              else
+                  okd3_deployment
+              fi
+              ;;
           ocp4)
               if [ "A${teardown}" == "Atrue" ]
               then
@@ -82,7 +94,7 @@ function qubinode_product_deployment () {
                   then
                       qubinode_rhel_maintenance
                   else
-                      setup_download_options
+                      #setup_download_options
                       download_files
                       qubinode_deploy_rhel
                   fi
@@ -121,9 +133,9 @@ function qubinode_maintenance_options () {
     elif [ "${qubinode_maintenance_opt}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
     then
         qubinode_setup_kvm_host
-    elif [ "${qubinode_maintenance_opt}" == "deploy_nodes" ]
+    elif [ "${qubinode_maintenance_opt}" == "rebuild_qubinode" ]
     then
-        deploy_openshift3_nodes
+        rebuild_qubinode
     elif [ "${qubinode_maintenance_opt}" == "undeploy" ]
     then
         #TODO: this should remove all VMs and clean up the project folder
