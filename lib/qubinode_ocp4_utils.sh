@@ -9,6 +9,8 @@ function openshift4_variables () {
     podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp4_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+    idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
 
     # load kvmhost variables
     source ${project_dir}/lib/qubinode_kvmhost.sh
@@ -381,17 +383,15 @@ function check_webconsole_status () {
 }
 
 function pingreturnstatus() {
-  ping -q -c3 $1 > /dev/null
-
-  if [ $? -eq 0 ]
-  then
-    true
-    return 0
-  else
-    false
-    return 1
-  fi
-  }
+    if ping -q -c3 $1 > /dev/null 2>&1
+    then
+	true
+        return 0
+    else
+	false
+        return 1
+    fi
+ }
 
 
 function ignite_node () {
@@ -571,8 +571,12 @@ openshift4_idm_health_check () {
     if ! pingreturnstatus ${idm_ipaddress}; then
       IDM_IN_GOOD_HEALTH="not ready"
     fi
-    
-    dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+
+    if dig +short @${idm_ipaddress} ${prefix}-${idm_server_name}.${domain} > /dev/null 2>&1
+    then
+        dns_query=$(dig +short @${idm_ipaddress} ${prefix}-${idm_server_name}.${domain})
+    fi
+       
     if echo $dns_query | grep -q 'no servers could be reached'
     then
           IDM_IN_GOOD_HEALTH="not ready"
