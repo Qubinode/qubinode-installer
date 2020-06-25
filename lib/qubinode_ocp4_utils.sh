@@ -391,7 +391,7 @@ function pingreturnstatus() {
 	false
         return 1
     fi
- }
+}
 
 
 function ignite_node () {
