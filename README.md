@@ -1,4 +1,4 @@
-# Qubinode Installer v2.4.1
+# Qubinode Installer
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 
 ## Motivation
@@ -27,7 +27,7 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4.1    | 2.9               | 2.4.1 |
+|     Release 2.4.2    | 2.9               | 2.4.2 |
 
 
 ## Deploying a OpenShift cluster
