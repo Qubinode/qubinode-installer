@@ -27,7 +27,7 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4.2    | 2.9               | 2.4.2 |
+|     Release 2.4.1    | 2.9               | 2.4.1 |
 
 
 ## Deploying a OpenShift cluster
