@@ -191,16 +191,18 @@ function qubinode_vm_deployment_precheck () {
 function check_for_rhel_qcow_image () {
     # check for required OS qcow image and copy it to right location
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
-    os_qcow_image=$(awk '/^qcow_rhel7_name:/ {print $2}' "${project_dir}/samples/all.yml")
-    if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
+    #qcow_image_name=$(awk '/^qcow_rhel7_name:/ {print $2}' "${project_dir}/samples/all.yml")
+    qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+
+    if [ ! -f "${libvirt_dir}/${qcow_image_name}" ]
     then
-        if [ -f "${project_dir}/${os_qcow_image}" ]
+        if [ -f "${project_dir}/${qcow_image_name}" ]
         then
-            sudo cp "${project_dir}/${os_qcow_image}" "${libvirt_dir}/${os_qcow_image}"
+            sudo cp "${project_dir}/${qcow_image_name}" "${libvirt_dir}/${qcow_image_name}"
         else
             printf "%s\n\n" ""
-            printf "%s\n" " Could not find ${red}${project_dir}/${os_qcow_image}${end},"
-            printf "%s\n\n" " please download the ${yel}${os_qcow_image}${end} to ${blu}${project_dir}${end}."
+            printf "%s\n" " Could not find ${red}${project_dir}/${qcow_image_name}${end},"
+            printf "%s\n\n" " please download the ${yel}${qcow_image_name}${end} to ${blu}${project_dir}${end}."
             printf "%s\n\n" " ${cyn}Please refer the documentation for additional information.${end}"
             exit 1
         fi
@@ -211,14 +213,15 @@ function check_for_rhel_qcow_image () {
 function pre_check_for_rhel_qcow_image () {
     # check for required OS qcow image and copy it to right location
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/samples/all.yml")
-    os_qcow_image=$(awk '/^qcow_rhel7_name:/ {print $2}' "${project_dir}/samples/all.yml")
-    if [ ! -f "${libvirt_dir}/${os_qcow_image}" ]
+    #qcow_image_name=$(awk '/^qcow_rhel7_name:/ {print $2}' "${project_dir}/samples/all.yml")
+    qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    if [ ! -f "${libvirt_dir}/${qcow_image_name}" ]
     then
-        if [ ! -f "${project_dir}/${os_qcow_image}" ]
+        if [ ! -f "${project_dir}/${qcow_image_name}" ]
         then
             printf "%s\n\n" ""
-            printf "%s\n" " Could not find ${red}${project_dir}/${os_qcow_image}${end},"
-            printf "%s\n\n" " please download the ${yel}${os_qcow_image}${end} to ${blu}${project_dir}${end}."
+            printf "%s\n" " Could not find ${red}${project_dir}/${qcow_image_name}${end},"
+            printf "%s\n\n" " please download the ${yel}${qcow_image_name}${end} to ${blu}${project_dir}${end}."
             printf "%s\n\n" " ${cyn}Please refer the documentation for additional information.${end}"
             exit 1
         fi
@@ -228,17 +231,18 @@ function pre_check_for_rhel_qcow_image () {
 function qcow_check () {
     download_files
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    os_qcow_image_name=$(awk '/^qcow_rhel7_name:/ {print $2}' "${project_dir}/playbooks/vars/all.yml")
-    qcow_image=$( sudo bash -c 'find / -name '${os_qcow_image_name}' | grep -v qubinode | head -n 1')
-    if sudo bash -c '[[ ! -f '${libvirt_dir}'/'${os_qcow_image_name}' ]]'; then
-      if [[ -f "${project_dir}/${os_qcow_image_name}" ]]; then
-        sudo bash -c 'cp "'${project_dir}'/'${os_qcow_image_name}'"  '${libvirt_dir}'/'${os_qcow_image_name}''
-      elif [[ -f ${qcow_image} ]]; then
-        sudo bash -c 'cp /'${qcow_image}' '${libvirt_dir}'/'${os_qcow_image_name}''
-      else
-        echo "${os_qcow_image_name} not found on machine please copy over "
-        exit 1
-      fi
+    qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+
+
+    if sudo test ! -f "${libvirt_dir}/${qcow_image_name}"
+    then
+        if [ -f "${project_dir}/${qcow_image_name}" ]
+        then
+            sudo cp "${project_dir}/${qcow_image_name}"  "${libvirt_dir}/${qcow_image_name}"
+        else
+            echo "${qcow_image_name} not found on machine please copy over "
+            exit 1
+        fi
     fi
 }
 

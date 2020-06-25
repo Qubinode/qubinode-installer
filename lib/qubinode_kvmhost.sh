@@ -319,7 +319,7 @@ function qubinode_networking () {
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       #KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
-      KVM_HOST_PRIMARY_INTERFACE=$(ip link show master qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
+      KVM_HOST_PRIMARY_INTERFACE=$(ip link show master qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
       linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:'  | head -2 | tail -1  | awk '{print $1}' | tr -d :)
       sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
@@ -359,10 +359,10 @@ function qubinode_networking () {
         sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${kvm_host_vars_file}"
     fi
 
-    iSkvm_host_interface=$(awk '/^kvm_host_interface/ { print $2}' "${kvm_host_vars_file}")
-    if [[ "A${iSkvm_host_interface}" == "A" ]] || [[ "A${iSkvm_host_interface}" == 'A""' ]]
+    iSkvm_host_interface=$(awk '/^kvm_host_interface:/ { print $2}' "${kvm_host_vars_file}")
+    if [ "A${iSkvm_host_interface}" != "A${KVM_HOST_PRIMARY_INTERFACE}" ]
     then
-        #echo "Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
+        echo "    Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
         sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${kvm_host_vars_file}"
     fi
 
