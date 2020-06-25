@@ -381,17 +381,15 @@ function check_webconsole_status () {
 }
 
 function pingreturnstatus() {
-  ping -q -c3 $1 > /dev/null
-
-  if [ $? -eq 0 ]
-  then
-    true
-    return 0
-  else
-    false
-    return 1
+    if ping -q -c3 $1 > /dev/null 2>&1
+    then
+        true
+        return 0
+    else
+        false
+        return 1
   fi
-  }
+}
 
 
 function ignite_node () {
@@ -571,8 +569,12 @@ openshift4_idm_health_check () {
     if ! pingreturnstatus ${idm_ipaddress}; then
       IDM_IN_GOOD_HEALTH="not ready"
     fi
-    
-    dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+   
+    if dig +short @${idm_ipaddress} qbn-dns01.${domain} > /dev/null 2>&1
+    then 
+        dns_query=$(dig +short @${idm_ipaddress} qbn-dns01.${domain})
+    fi
+
     if echo $dns_query | grep -q 'no servers could be reached'
     then
           IDM_IN_GOOD_HEALTH="not ready"

@@ -98,6 +98,8 @@ function ask_user_for_rhsm_credentials () {
 
     # encrypt ansible vault
     encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+    echo HERE
+    exit
 }
 
 
