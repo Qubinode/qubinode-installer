@@ -49,6 +49,8 @@ The qubinode-installer needs to run as a regular user.
 * ansible - ensure your rhel system is setup for to function as a ansible controller
 * host    - ensure your rhel system is setup as a KVM host
 
+> Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
+
 ```shell=
 ./qubinode-installer -m setup
 ./qubinode-installer -m rhsm
