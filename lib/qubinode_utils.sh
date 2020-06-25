@@ -416,3 +416,21 @@ function removeStorage () {
     fi
 }
 
+rebuild_qubinode () {
+    printf "%s\n\n" ""
+    printf "%s\n" "   This will prepare your qubinode system for a reinstall or to be decommission."
+    confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
+    if [ "A${response}" != "Ayes" ]
+    then
+        exit 1
+    else
+        teardown_idm
+        teardown_ocp4
+        teardown_tower
+        teardown_satellite
+        forceVMteardown
+        removeStorage
+        printf "%s\n" " ${yel}System is ready for rebuild${end}"
+        exit 0
+    fi
+}

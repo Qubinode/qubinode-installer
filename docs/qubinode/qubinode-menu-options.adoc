@@ -3,25 +3,33 @@ Basic usage: qubinode-installer [options]
 Options:
     -p      Deploys the specified product
     -h      Display this help menu
-    -m      Runs operational tasks
-    -d      Pass this agrument where supported will force a deletition
+    -m      Runs operational tasks or modify a product
+    -d      Delete a product
     -v      Verbose output
 
     Supported Products
     ------------------
-        * OpenShift   Supports a -m and -d argument
-            okd3    - deploy upstream OpenShift 3.11
-            ocp3    - deploy Red Hat OpenShift Platform
+        * OpenShift   Supports the -m and -d argument
+              okd4    - deploy upstream OpenShift
+              ocp4    - deploy Red Hat OpenShift Platform
 
-            -m arguments are:
-                   checkcluster - runs a health check of the cluster (not implemented)
-                   diag         - runs a adv health check
-                   smoketest    - runs a smoke test on cluster
-                   startup      - start up OpenShift cluster after shutdown
-                   shutdown     - safely shutdown OpenShift cluster
+              -m arguments are:
+                   startup        - start up OpenShift cluster after shutdown
+                   shutdown       - safely shutdown OpenShift cluster
+                   remove-worker  - remove worker node
+                   add-worker     - add worker node
                 
-        * DNS         Supports -d argument
-            idm     - deploy IDM as a DNS Server
+        * IdM         Supports the -m and -d argument
+              idm     - deploy IDM as a DNS Server
+
+              -m arguments are:
+                   stop   - shutdown the idm vm
+                   start  - starts the idm vm
+                   status - show the status of the idm server and the login info
+
+        * Ansible Tower   Supports the -m and -d argument
+                  tower   - deploy IDM as a DNS Server
+
 
     Standalone -m options 
     ---------------------
@@ -40,10 +48,10 @@ DNS
   * Delete the DNS server: qubinode-installer -p idm -d
 
 OpenShift
-  * Deploy OCP3 cluster: qubinode-installer -p ocp3
-  * Delete the cluster: qubinode-installer -p ocp3 -d
-  * Shutdown the cluster: qubinode-installer -p ocp3 -m shutdown
-  * Startup the cluster: qubinode-installer -p ocp3 -m startup
+  * Deploy OCP4 cluster: qubinode-installer -p ocp4
+  * Delete the cluster: qubinode-installer -p ocp4 -d
+  * Shutdown the cluster: qubinode-installer -p ocp4 -m shutdown
+  * Startup the cluster: qubinode-installer -p ocp4 -m startup
 
 Standalone
   * Deploy just the OpenShift nodes: qubinode-installer -m deploy_nodes
