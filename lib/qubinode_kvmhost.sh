@@ -323,7 +323,7 @@ function qubinode_networking () {
       linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:'  | head -2 | tail -1  | awk '{print $1}' | tr -d :)
       sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
-      KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}')
+      KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
     fi
 
     KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
