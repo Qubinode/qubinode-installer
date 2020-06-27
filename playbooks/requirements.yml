@@ -17,25 +17,25 @@
   version: 1.3.2
 
 - src: https://github.com/amalivert/edge_hosts_validate.git
-  version: master
+  version: ctrlplane
 
 - src: https://github.com/tosin2013/ocp-power-management.git
-  version: master
+  version: ctrlplane
 
 - src: https://github.com/flyemsafe/swygue-install-satellite.git
-  version: master
+  version: ctrlplane
 
 - src: https://github.com/Qubinode/openshift-4-loadbalancer.git
   version: v2.4.0
 
 - src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
-  version: master
+  version: ctrlplane
 
 - src: https://github.com/flyemsafe/redhat-satellite-quickstart.git
-  version: master
+  version: ctrlplane
 
 - src: https://github.com/flyemsafe/swygue.ansible-tower.git
-  version: master
+  version: ctrlplane
 
 - src: https://github.com/Qubinode/nfs-provisioner-role.git
   version: v2.4.1
