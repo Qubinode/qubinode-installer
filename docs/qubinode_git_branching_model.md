@@ -10,18 +10,18 @@
 
 The following are the only branches that will exists on the official Qubinode project (https://github.com/Qubinode):
 
-- *master* holds the latest production ready code
+- *main* holds the latest production ready code
 * Rules:
 ** Should be the same for every Git user
 
 - *develop* holds latest changes for next release
 * Rules:
-** Merge to *master*  branch when all codes are stable
-** Tag *master* branch with new release number after merging from *develop* branch
+** Merge to *main*  branch when all codes are stable
+** Tag *main* branch with new release number after merging from *develop* branch
 
 ### Qubinode supporting branches
 
-The supporting branches will only exist on the developer's repository. Once the code is ready to be pushed to either the master or develop branch. Once the merge request is accepted, the developer can delete the supporting branch.
+The supporting branches will only exist on the developer's repository. Once the code is ready to be pushed to either the main or develop branch. Once the merge request is accepted, the developer can delete the supporting branch.
 
 - *feature* holds code for developed new features that will be merged in the next or future Qubinode release
 * Rules:
@@ -33,14 +33,14 @@ The supporting branches will only exist on the developer's repository. Once the 
 - *release* support preparation of a new production release. Use for minor changes or bugfixes
 * Rules:
 ** May branch off from the *develop* branch
-** Must merge back to the *develop* and *master* branch
+** Must merge back to the *develop* and *main* branch
 ** Exists on developer's repository only
 ** Only core developers can create and push release branch
 
-- *hotfix* Use to push a fix for an error in the *master* branch
+- *hotfix* Use to push a fix for an error in the *main* branch
 * Rules:
-** May branch off from *master* branch
-** Must be merged back into *master* and *develop* branch
+** May branch off from *main* branch
+** Must be merged back into *main* and *develop* branch
 
 ## Scenerios
 
@@ -92,25 +92,25 @@ $ git push origin develop
 
 ### HotFixes
 
-. switch to the master branch:
+. switch to the main branch:
 +
 ....
-$ git checkout master
+$ git checkout main
 ....
 
 . Create new hotfix branch using the nomenclature hotfix-<issue number>
 +
 ....
-$ git checkout -b hotfix-<issue number> master
+$ git checkout -b hotfix-<issue number> main
 ....
 
-. After coding, pushing new code to feature branch, checkout the master branch
+. After coding, pushing new code to feature branch, checkout the main branch
 +
 ....
-$ git checkout master
+$ git checkout main
 ....
 
-. Merge the new hotfix to the Qubinode master branch
+. Merge the new hotfix to the Qubinode main branch
 +
 ....
 $ git merge --no-ff hotfix-<issue number>
@@ -128,7 +128,7 @@ $ git tag -a <release minor release number>
 $ git checkout develop
 ....
 
-. Merge the new hotfix to the Qubinode develop master branch
+. Merge the new hotfix to the Qubinode develop main branch
 +
 ....
 $ git merge --no-ff hotfix-<issue number>
@@ -162,19 +162,19 @@ $ git tag -a <fruit nomenclature, i.e apple>
 $ git commit -a -m "next qubinode release"
 ....
 
-. Merge all changes to master branch, check out the master branch
+. Merge all changes to main branch, check out the main branch
 +
 ....
-$ git checkout master
+$ git checkout main
 ....
 
-. Merge changes to the master branch
+. Merge changes to the main branch
 +
 ....
 $ git merge --no-ff release-<fruit nomenclature, i.e apple>
 ....
 
-. Tag the new release on the master branch
+. Tag the new release on the main branch
 +
 ....
 $ git tag -a <next release version i.e 2.2>

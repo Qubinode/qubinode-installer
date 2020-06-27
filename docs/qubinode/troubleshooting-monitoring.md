@@ -1,5 +1,7 @@
 # Troubleshooting an monitoring for Qubinode
 
+WIP
+
 While OpenShift is deploying you can open a new terminal sshh into your box and run the following. 
 
 
@@ -43,9 +45,9 @@ $ sudo virsh list
  Id    Name                           State
 ----------------------------------------------------
  11    qbn-dns01                      running
- 34    master-0                       running
- 35    master-1                       running
- 36    master-2                       running
+ 34    ctrlplane-0                    running
+ 35    ctrlplane-1                    running
+ 36    ctrlplane-2                    running
  37    compute-0                      running
  38    compute-1                      running
  39    compute-2                      running
@@ -104,7 +106,7 @@ OPTIONS
 -rw-------. 1 root root  54K Aug 17 10:05 qbn-infra01.log
 -rw-------. 1 root root  44K Aug 17 10:04 qbn-node02.log
 -rw-------. 1 root root  50K Aug 17 10:03 qbn-node01.log
--rw-------. 1 root root 104K Aug 17 10:01 qbn-master01.log
+-rw-------. 1 root root 104K Aug 17 10:01 qbn-controlplan01.log
 ```
 
 ### From Cockpit
