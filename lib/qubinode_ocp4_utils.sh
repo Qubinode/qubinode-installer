@@ -18,16 +18,16 @@ function openshift4_variables () {
 
     # OCP nodes vairiables
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
-    min_master_count=$(awk '/^min_master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     min_mem=$(awk '/^min_mem:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     min_mem_h=$(echo "$min_mem/1024"|bc)
     compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    master_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    mem_h=$(echo "$master_mem_size/1000"|bc)
+    ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)
 }
 
 function check_for_pull_secret () {
@@ -71,10 +71,10 @@ function openshift4_standard_desc () {
     then
         reset_cluster_resources_default
         compute_count=2
-        total_ocp_nodes=$(echo "$compute_count+$master_count"|bc)
+        total_ocp_nodes=$(echo "$compute_count+$ctrlplane_count"|bc)
     else
         reset_cluster_resources_default
-	total_ocp_nodes=$(echo "$compute_count+$master_count"|bc)
+	total_ocp_nodes=$(echo "$compute_count+$ctrlplane_count"|bc)
     fi
     feature_one="- nfs-provisioner for image registry"
 
@@ -83,7 +83,7 @@ cat << EOF
    ${mag} Standard deployment of $total_ocp_nodes node cluster ${end}
    ${yel}======================================================${end}
 
-   Each with ${mem_h}G memory and ${master_vcpu}vCPU. 
+   Each with ${mem_h}G memory and ${ctrlplane_vcpu}vCPU. 
 
     ${cyn}========${end}
     Features
@@ -164,8 +164,8 @@ function remove_ocp4_vms () {
     all_vms=(bootstrap)
     deleted_vms=()
 
-    masters=$(sudo virsh list  --all | grep master | awk '{print $2}')
-    for vm in $masters
+    ctrlplane=$(sudo virsh list  --all | grep ctrlplane | awk '{print $2}')
+    for vm in $ctrlplane
     do
         all_vms+=( "$vm" )
     done
@@ -244,7 +244,7 @@ cat << EOF
 EOF
     clean_up_stale_vms dns
     clean_up_stale_vms bootstrap
-    clean_up_stale_vms master
+    clean_up_stale_vms ctrlplane
     clean_up_stale_vms compute
 }
 
@@ -312,16 +312,16 @@ function set_local_volume_type () {
 function confirm_minimal_deployment () {
     # set compute count
     openshift4_variables
-    if [ "A${minimal_opt}" == "Amasters_worker" ]
+    if [ "A${minimal_opt}" == "Actrlplane_compute" ]
     then
         min_compute_count=1
-	total_ocp_nodes=$( echo "$min_master_count+1"|bc)
-        MSG1="This will $min_master_count control pane nodes and $min_compute_count worker done"
+	total_ocp_nodes=$( echo "$min_ctrlplane_count+1"|bc)
+        MSG1="This will $min_ctrlplane_count control pane nodes and $min_compute_count compute done"
         MSG2=""
     else
         min_compute_count=0
-        MSG1="This will deploy a total of $min_master_count nodes."
-        MSG2="The nodes functions as both control and workers."
+        MSG1="This will deploy a total of $min_ctrlplane_count nodes."
+        MSG2="The nodes functions as both control and computes."
     fi
 
     openshift4_minimal_desc4
@@ -329,9 +329,9 @@ function confirm_minimal_deployment () {
     confirm "    Do you want to continue with a minimal cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/master_mem_size:.*/master_mem_size: "$min_mem"/g" "${ocp4_vars_file}"
-        sed -i "s/master_count:.*/master_count: "$min_master_count"/g" "${ocp4_vars_file}"
-        sed -i "s/master_vcpu:.*/master_vcpu: "$min_vcpu"/g" "${ocp4_vars_file}"
+        sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$min_mem"/g" "${ocp4_vars_file}"
+        sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$min_ctrlplane_count"/g" "${ocp4_vars_file}"
+        sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$min_vcpu"/g" "${ocp4_vars_file}"
         sed -i "s/compute_vcpu:.*/compute_vcpu: "$min_vcpu"/g" "${ocp4_vars_file}"
         sed -i "s/compute_count:.*/compute_count: "$min_compute_count"/g" "${ocp4_vars_file}"
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
@@ -451,13 +451,13 @@ deploy_bootstrap_node () {
     sleep 30s
 }
 
-deploy_master_nodes () {
+deploy_ctrlplane_nodes () {
     ## Deploy Master
     for i in {0..2}
     do
-        MASTER=$(sudo virsh net-dumpxml ${cluster_name} | grep  master-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-        COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep  master-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
-        ansible-playbook playbooks/ocp4_07.1_deploy_master_vm.yml  -e vm_mac_address=${MASTER}   -e vm_name=master-${i} -e coreos_host_ip=${COREOS_IP}
+        MASTER=$(sudo virsh net-dumpxml ${cluster_name} | grep  ctrlplane-${i} | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        COREOS_IP=$(sudo virsh net-dumpxml ${cluster_name} | grep  ctrlplane-${i} | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b")
+        ansible-playbook playbooks/ocp4_07.1_deploy_ctrlplane_vm.yml  -e vm_mac_address=${MASTER}   -e vm_name=ctrlplane-${i} -e coreos_host_ip=${COREOS_IP}
         sleep 30s
     done
 
@@ -477,13 +477,13 @@ deploy_compute_nodes () {
 
 
 wait_for_ocp4_nodes_shutdown () {
-  i="$(sudo virsh list | grep running | grep master |wc -l)"
+  i="$(sudo virsh list | grep running | grep ctrlplane |wc -l)"
 
   while [ $i -ne 0 ]
   do
-    echo "waiting master nodes to shutdown ${i}"
+    echo "waiting ctrlplane nodes to shutdown ${i}"
     sleep 10s
-    i="$(sudo virsh list | grep running | grep master  |wc -l)"
+    i="$(sudo virsh list | grep running | grep ctrlplane  |wc -l)"
   done
 
   w="$(sudo virsh list | grep running | grep compute |wc -l)"
@@ -587,13 +587,13 @@ openshift4_idm_health_check () {
 function ping_openshift4_nodes () {
 #TODO: validate if this funciton is still need
     IS_OPENSHIFT4_NODES="not ready"
-    masters=$(cat $ocp4_vars_file | grep master_count:| awk '{print $2}')
+    ctrlplane=$(cat $ocp4_vars_file | grep ctrlplane_count:| awk '{print $2}')
   
-    if [ "A${masters}" != "A" ]
+    if [ "A${ctrlplane}" != "A" ]
     then
-        for i in $(seq $masters)
+        for i in $(seq $ctrlplane)
         do
-            vm="master-$((i-1))"
+            vm="ctrlplane-$((i-1))"
             if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
               echo "${vm}.${cluster_name}.lab.example is online"
               IS_OPENSHIFT4_NODES=ready
@@ -655,20 +655,20 @@ function check_openshift4_size_yml () {
 }
 
 reset_cluster_resources_default () {
-    default_master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    default_master_hd_size=$(awk '/^master_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    default_master_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
-    default_master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_ctrlplane_hd_size=$(awk '/^ctrlplane_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
+    default_ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     default_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     default_compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     default_compute_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     default_compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
     default_compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/samples/ocp4.yml")
 
-    sed -i "s/master_vcpu:.*/master_vcpu: "$default_master_vcpu"/g" "${ocp4_vars_file}"
-    sed -i "s/master_mem_size:.*/master_mem_size: "$default_master_mem_size"/g" "${ocp4_vars_file}"
-    sed -i "s/master_hd_size:.*/master_hd_size: "$default_master_hd_size"/g" "${ocp4_vars_file}"
-    sed -i "s/master_count:.*/master_count: "$default_master_count"/g" "${ocp4_vars_file}"
+    sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$default_ctrlplane_vcpu"/g" "${ocp4_vars_file}"
+    sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$default_ctrlplane_mem_size"/g" "${ocp4_vars_file}"
+    sed -i "s/ctrlplane_hd_size:.*/ctrlplane_hd_size: "$default_ctrlplane_hd_size"/g" "${ocp4_vars_file}"
+    sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$default_ctrlplane_count"/g" "${ocp4_vars_file}"
 
     sed -i "s/compute_vcpu:.*/compute_vcpu: "$default_compute_count"/g" "${ocp4_vars_file}"
     sed -i "s/compute_mem_size:.*/compute_mem_size: "$default_compute_mem_size"/g" "${ocp4_vars_file}"
@@ -692,9 +692,9 @@ function update_node_count () {
     if [ "A${response}" == "Ayes" ]
     then
         printf "%s\n" ""
-        if [ "A${NODE}" == "Amaster" ]
+        if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/master_count:.*/master_count: "$node_num"/g" "${ocp4_vars_file}"
+            sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$node_num"/g" "${ocp4_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
             sed -i "s/compute_count:.*/compute_count: "$node_num"/g" "${ocp4_vars_file}"
@@ -725,9 +725,9 @@ function update_node_disk_size () {
     if [ "A${response}" == "Ayes" ]
     then
         printf "%s\n" ""
-        if [ "A${NODE}" == "Amaster" ]
+        if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/master_hd_size:.*/master_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
+            sed -i "s/ctrlplane_hd_size:.*/ctrlplane_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
             sed -i "s/compute_hd_size:.*/compute_hd_size: "$node_disk_size"/g" "${ocp4_vars_file}"
@@ -758,9 +758,9 @@ function update_node_mem_size () {
     if [ "A${response}" == "Ayes" ]
     then
         printf "%s\n" ""
-        if [ "A${NODE}" == "Amaster" ]
+        if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/master_mem_size:.*/master_mem_size: "$memory_size"/g" "${ocp4_vars_file}"
+            sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$memory_size"/g" "${ocp4_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
             sed -i "s/compute_mem_size:.*/compute_mem_size: "$memory_size"/g" "${ocp4_vars_file}"
@@ -792,9 +792,9 @@ function update_node_vcpu_size () {
     if [ "A${response}" == "Ayes" ]
     then
         printf "%s\n" ""
-        if [ "A${NODE}" == "Amaster" ]
+        if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/master_vcpu:.*/master_vcpu: "$user_vcpu_count"/g" "${ocp4_vars_file}"
+            sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$user_vcpu_count"/g" "${ocp4_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
             sed -i "s/compute_vcpu:.*/compute_vcpu: "$user_vcpu_count"/g" "${ocp4_vars_file}"
@@ -810,12 +810,12 @@ function update_node_vcpu_size () {
 
 function get_cluster_resources () {
     # Get current values
-    master_count=$(awk '/^master_count:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
-    master_hd_size=$(awk '/^master_hd_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
-    m_mem_size=$(awk '/^master_mem_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
-    master_mem_size=$(echo $m_mem_size/1000|bc)
-    master_vcpu=$(awk '/^master_vcpu:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    ctrlplane_hd_size=$(awk '/^ctrlplane_hd_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    m_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
+    ctrlplane_mem_size=$(echo $m_mem_size/1000|bc)
+    ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     c_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_mem_size=$(echo $c_mem_size/1000|bc)
@@ -823,9 +823,9 @@ function get_cluster_resources () {
     compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
     compute_vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${project_dir}/playbooks/vars/ocp4.yml")
-    cluster_custom_opts=("master_disk   - ${yel}$master_hd_size${end} size HD for master nodes" \
-                         "master_mem    - ${yel}$master_mem_size${end} memory for master nodes" \
-                         "master_vcpu   - ${yel}$master_vcpu${end} vCPU for master nodes" \
+    cluster_custom_opts=("ctrlplane_disk   - ${yel}$ctrlplane_hd_size${end} size HD for ctrlplane nodes" \
+                         "ctrlplane_mem    - ${yel}$ctrlplane_mem_size${end} memory for ctrlplane nodes" \
+                         "ctrlplane_vcpu   - ${yel}$ctrlplane_vcpu${end} vCPU for ctrlplane nodes" \
                          "compute_count - ${yel}$compute_count${end} compute nodes" \
                          "compute_disk  - ${yel}$compute_hd_size${end} size HD for compute nodes" \
                          "compute_mem   - ${yel}$compute_mem_size${end} memory for compute nodes " \
@@ -847,9 +847,9 @@ cat << EOF
     ${blu}The Following can be changed${end}
 
      ${mag}Master Nodes:${end}
-       - master node count
-       - master disk size
-       - master vcpu
+       - ctrlplane node count
+       - ctrlplane disk size
+       - ctrlplane vcpu
 
      ${mag}Compute Nodes:${end}
        - compute node count
@@ -878,20 +878,20 @@ EOF
         createmenu "${cluster_custom_opts[@]}"
         result=($(echo "${selected_option}"))
         case $result in
-            master_count) 
-                update_node_count master $master_count
+            ctrlplane_count) 
+                update_node_count ctrlplane $ctrlplane_count
                 get_cluster_resources
                 ;;
-            master_disk)
-                update_node_disk_size master $master_count
+            ctrlplane_disk)
+                update_node_disk_size ctrlplane $ctrlplane_count
                 get_cluster_resources
                 ;;
-            master_mem)
-                update_node_mem_size master $master_mem_size
+            ctrlplane_mem)
+                update_node_mem_size ctrlplane $ctrlplane_mem_size
 		get_cluster_resources
                 ;;
-            master_vcpu)
-                update_node_vcpu_size master $master_vcpu_count
+            ctrlplane_vcpu)
+                update_node_vcpu_size ctrlplane $ctrlplane_vcpu_count
 		get_cluster_resources
                 ;;
             compute_count)
@@ -1086,7 +1086,7 @@ function configure_nfs_storage () {
     fi
 }
 
-function remove_ocp4_worker () {
+function remove_ocp4_compute () {
     # Get user provides options
     for var in "${product_options[@]}"
     do
@@ -1095,33 +1095,33 @@ function remove_ocp4_worker () {
 
     if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
     then
-        ocp4_workers_vars="${project_dir}/playbooks/vars/ocp4_workers.yml"
+        ocp4_computes_vars="${project_dir}/playbooks/vars/ocp4_computes.yml"
         all_vars="${project_dir}/playbooks/vars/all.yml"
         ocp4_vars="${project_dir}/playbooks/vars/ocp4.yml"
         cluster_name=$(awk '/^cluster_name:/ {print $2; exit}' "${ocp4_vars}")
         domain=$(awk '/^domain:/ {print $2; exit}' "${all_vars}")
         subdomain=$(awk '/^ocp4_subdomain:/ {print $2; exit}' "${ocp4_vars}")
 
-	# Ensure the current number of worker are correct
-        get_current_workers=$(sudo virsh list --all| grep compute | wc -l)
-        sed -i "s/compute_count:.*/compute_count: "$get_current_workers"/g" "${ocp4_vars}"
+	# Ensure the current number of compute are correct
+        get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
+        sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
     
         compute_count_update=$(awk '/^compute_count_update:/ {print $2; exit}' "${ocp4_vars}")
-        current_num_workers=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars}")
-	num_workers=$(echo $current_num_workers - 1|bc)
-        numbers_list=$(seq $num_workers -1 0)
+        current_num_computes=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars}")
+	num_computes=$(echo $current_num_computes - 1|bc)
+        numbers_list=$(seq $num_computes -1 0)
         numbers_array=($numbers_list)
-        workers_to_remove=$count
+        computes_to_remove=$count
         TOTAL=0
 	REMOVAL_COUNT=0
     
-        # Create ocp4_workers vars file
+        # Create ocp4_computes vars file
 	#if [ "A${compute_count_update}" == "Aadd" ]
-        echo "records:" > ${ocp4_workers_vars}
-	echo IP hostname num_workers numbers_list
+        echo "records:" > ${ocp4_computes_vars}
+	echo IP hostname num_computes numbers_list
         for i in ${numbers_array[@]}
         do
-            if [ $TOTAL -ne $workers_to_remove ]
+            if [ $TOTAL -ne $computes_to_remove ]
             then
                 host=compute-$i
                 hostname="$host.$cluster_name.$subdomain.$domain"
@@ -1158,11 +1158,11 @@ function remove_ocp4_worker () {
 		fi
 
 		# add host attributes to ansible vars
-                echo "  - hostname: $host" >> ${ocp4_workers_vars}
-                echo "    ipaddr: $IP" >> ${ocp4_workers_vars}
-                echo "    ptr_record: $PTR" >> ${ocp4_workers_vars}
-                echo "    vm_exist: $VM_EXIST" >> ${ocp4_workers_vars}
-                echo "    ocp_node_exist: $OCP_NODE_EXIST" >> ${ocp4_workers_vars}
+                echo "  - hostname: $host" >> ${ocp4_computes_vars}
+                echo "    ipaddr: $IP" >> ${ocp4_computes_vars}
+                echo "    ptr_record: $PTR" >> ${ocp4_computes_vars}
+                echo "    vm_exist: $VM_EXIST" >> ${ocp4_computes_vars}
+                echo "    ocp_node_exist: $OCP_NODE_EXIST" >> ${ocp4_computes_vars}
 
 		if [ "A${IP}" != "Afound:" ]
 		then
@@ -1173,24 +1173,24 @@ function remove_ocp4_worker () {
 		fi
 
                 TOTAL=$((TOTAL+1))
-		echo $IP $hostname $num_workers numbers_list=$numbers_list
+		echo $IP $hostname $num_computes numbers_list=$numbers_list
             fi
         done
   
-        # Run playbook to remove workers
+        # Run playbook to remove computes
         confirm "     ${cyn}Are you sure you want to delete the above nodes?${end} ${yel}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
         then
-            if ansible-playbook ${project_dir}/playbooks/remove_ocp4_workers.yml 
+            if ansible-playbook ${project_dir}/playbooks/remove_ocp4_computes.yml 
             then
 	        echo REMOVAL_COUNT=$REMOVAL_COUNT
-                new_compute_count=$(echo $current_num_workers - $REMOVAL_COUNT|bc)
-	        echo "Setting total workers to $new_compute_count"
+                new_compute_count=$(echo $current_num_computes - $REMOVAL_COUNT|bc)
+	        echo "Setting total computes to $new_compute_count"
                 sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
                 sed -i "s/^compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars}"
 	    else
-                get_current_workers=$(sudo virsh list --all| grep compute | wc -l)
-                sed -i "s/compute_count:.*/compute_count: "$get_current_workers"/g" "${ocp4_vars}"
+                get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
+                sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
             fi
 	else
             exit
@@ -1198,11 +1198,11 @@ function remove_ocp4_worker () {
 	
     else
         echo "count must be a valid integer"
-        echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"
+        echo "./qubinode-installer -p ocp4 -m add-compute -a count=1"
     fi
 }
 
-function add_ocp4_worker () {
+function add_ocp4_compute () {
     # https://access.redhat.com/solutions/4799921
     # Check for user provided variables
     for var in "${product_options[@]}"
@@ -1212,9 +1212,9 @@ function add_ocp4_worker () {
 
     ocp4_vars_file="${project_dir}/playbooks/vars//ocp4.yml"
 
-    # Ensure the current number of worker are correct
-    get_current_workers=$(sudo virsh list --all| grep compute | wc -l)
-    sed -i "s/^compute_count:.*/compute_count: "$get_current_workers"/g" "${ocp4_vars_file}"
+    # Ensure the current number of compute are correct
+    get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
+    sed -i "s/^compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars_file}"
 
     current_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp4_vars_file}")
     if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
@@ -1227,26 +1227,26 @@ function add_ocp4_worker () {
             	-e '{ deploy_cluster: True }' \
             	-e "compute_count=$new_compute_count" \
             	-e '{ approve_work_csr: True  }' \
-            	-t setup,worker_dns,add_workers,add_workers || exit 1
-	    num_workers=$(echo $new_compute_count - 1|bc)
-            numbers_list=$(seq $num_workers -1 0)
+            	-t setup,compute_dns,add_computes,add_computes || exit 1
+	    num_computes=$(echo $new_compute_count - 1|bc)
+            numbers_list=$(seq $num_computes -1 0)
             numbers_array=($numbers_list)
-            workers_to_add=$count
+            computes_to_add=$count
             TOTAL=0
             REMOVAL_COUNT=0
             for i in ${numbers_array[@]}
             do
-	        /usr/local/bin/qubinode-add-worker-node "compute-${i}"
+	        /usr/local/bin/qubinode-add-compute-node "compute-${i}"
 	    done
             sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars_file}"
             sed -i "s/^compute_count_updated:.*/compute_count_update: add/g" "${ocp4_vars_file}"
         else
-            echo "Max allowed workers is 10"
+            echo "Max allowed computes is 10"
 	    exit
 	fi
     else
         echo "count must be a valid integer"
-        echo "./qubinode-installer -p ocp4 -m add-worker -a count=1"
+        echo "./qubinode-installer -p ocp4 -m add-compute -a count=1"
     fi
 }
 
@@ -1268,11 +1268,11 @@ openshift4_server_maintenance () {
        status)
             /usr/local/bin/qubinode-ocp4-status
             ;;
-       remove-worker)
-           remove_ocp4_worker
+       remove-compute)
+           remove_ocp4_compute
            ;;
-       add-worker)
-	   add_ocp4_worker
+       add-compute)
+	   add_ocp4_compute
 	    ;;
        *)
            echo "No arguement was passed"

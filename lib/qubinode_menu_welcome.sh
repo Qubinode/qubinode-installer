@@ -46,7 +46,7 @@ display_openshift_msg_ocp4 () {
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 4 (OCP4)${txend}${end}"
     printf "%s\n" "    The default product option is to install OCP4. The deployment consists of"
-    printf "%s\n" "    ${cyn}3 masters${end} and ${cyn}3 computes${end}. It requires a minimum of ${cyn}96 Gib${end} memory and${cyn} 8 cores${end}."
+    printf "%s\n" "    ${cyn}3 ctrlplane${end} and ${cyn}3 computes${end}. It requires a minimum of ${cyn}96 Gib${end} memory and${cyn} 8 cores${end}."
     printf "%s\n" "    Each node is deployed with ${cyn}16 Gib${end} memory and ${cyn}4 vCPUs${end} with NFS for persistent"
     printf "%s\n" "    storage. If you don't meet these requirements exit the install and run"
     printf "%s\n\n" "    ${cyn}./qubinode-installer -p ocp4${end} for options to deploy a smaller cluster."

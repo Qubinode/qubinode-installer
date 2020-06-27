@@ -3,7 +3,7 @@
 Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing here.
 
 Run the below command to kick off the deployment of 6 node OCP4 cluster.
-This will consist of 3 controlplane 3 workers and NFS for persistent storage.
+This will consist of 3 controlplane 3 computes and NFS for persistent storage.
 Each node will be deployed with 16 Gib memory and 4 vCPUs.
 
 ```shell=

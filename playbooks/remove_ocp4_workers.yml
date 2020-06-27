@@ -1,5 +1,5 @@
 ---
-- name: Remove workers from OCP cluster
+- name: Remove computes from OCP cluster
   hosts: localhost
   gather_facts: yes
   become: yes
@@ -9,7 +9,7 @@
     - vars/idm.yml
     - vars/kvm_host.yml
     - vars/ocp4.yml
-    - vars/ocp4_workers.yml
+    - vars/ocp4_computes.yml
   environment:
     IPA_HOST: "{{ idm_server_shortname }}.{{ internal_domain_name }}"
     IPA_USER: "{{ user_idm_admin }}"
@@ -28,7 +28,7 @@
       vm_name: "{{ item.hostname }}"
       vm_fqdn: "{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
     shell: |
-      /usr/local/bin/qubinode-remove-worker-node {{ vm_fqdn }}
+      /usr/local/bin/qubinode-remove-compute-node {{ vm_fqdn }}
     loop: "{{ records }}"
     delay: 10
     when: item.ocp_node_exist|bool
@@ -60,7 +60,7 @@
       command: list_vms
     register: running_vms
 
-  - name: destroy ocp4 workers 
+  - name: destroy ocp4 computes 
     vars:
       vm_name: "{{ item.hostname }}"
     virt:

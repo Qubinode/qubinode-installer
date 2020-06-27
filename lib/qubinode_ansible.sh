@@ -143,7 +143,7 @@ function qubinode_setup_ansible () {
             test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
             CURRENT_DIR=$(pwd)
             cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
+            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
             cd "${CURRENT_DIR}"
         fi
     else

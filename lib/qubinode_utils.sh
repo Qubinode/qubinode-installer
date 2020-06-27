@@ -365,7 +365,7 @@ function teardown_ocp3 () {
 }
 
 function teardown_ocp4 () {
-    if sudo virsh list --all | grep -q master-0
+    if sudo virsh list --all | grep -q ctrlplane-0
     then
         ./qubinode-installer -p ocp4 -d
     fi

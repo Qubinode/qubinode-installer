@@ -1,7 +1,7 @@
 #  Installing an OpenShift 4.x Cluster on a Single Node
 
 The following documentation will help you deploy an OpenShift Container Platform (OCP) 4.3 cluster, on a single node.
-The installation steps deploys a production like OCP4 cluster, in a environment with 3 controlplane and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
+The installation steps deploys a production like OCP4 cluster, in a environment with 3 controlplane and 3 computes on a KVM hosts running Red Hat Enterprise Linux (RHEL)
 ![](https://i.imgur.com/n8TQAyB.png)
 
 ## Prerequisites
@@ -63,7 +63,7 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 
 | [Standard Deployment](ocp4_standard_deploy.md) | [Custom Deployment](ocp4_custom_deploy.md) |
 | -------- | -------- |
-| Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 controlplane and 3 workers.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
+| Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 controlplane and 3 computes.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
 
 ### Additional Documentation
 
