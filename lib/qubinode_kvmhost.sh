@@ -319,7 +319,7 @@ function qubinode_networking () {
     if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
     then
       #KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
-      KVM_HOST_PRIMARY_INTERFACE=$(ip link show ctrlplane qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
+      KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
       linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:'  | head -2 | tail -1  | awk '{print $1}' | tr -d :)
       sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
     else
@@ -506,7 +506,7 @@ function qubinode_check_kvmhost () {
     DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
     BRIDGE_IP=$(sudo awk -F'=' '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
     #BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
-    BRIDGE_INTERFACE=$(ip link show ctrlplane qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
+    BRIDGE_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}"|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
 
     if [ ! -f /usr/bin/virsh ]
     then

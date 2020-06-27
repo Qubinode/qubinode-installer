@@ -184,7 +184,7 @@ ocp4_instances:
         enable: false
         name: vdc
     qty: "{{ ctrlplane_count }}"
-    vm_type: ctrlplane
+    vm_type: master
     ip_octet: "{{ ctrlplane_ip_octet }}"
   - name: compute
     hd_size: "{{ compute_hd_size }}G"
@@ -198,7 +198,7 @@ ocp4_instances:
         name: vdc
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
-    vm_type: compute
+    vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
   - name: storage
     hd_size: "{{ storage_hd_size }}G"
@@ -212,7 +212,7 @@ ocp4_instances:
         name: vdc
         enable: "{{ storage_local_storage }}"
     qty: "{{ storage_count }}"
-    vm_type: compute
+    vm_type: storage
     ip_octet: "{{ storage_ip_octet }}"
   - name: bootstrap
     hd_size: "{{ bootstrap_hd_size }}G"
