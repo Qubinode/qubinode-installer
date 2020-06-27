@@ -1,5 +1,5 @@
 ---
-- name: Remove workers from OCP cluster
+- name: Remove computes from OCP cluster
   hosts: localhost
   gather_facts: yes
   become: yes

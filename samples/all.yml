@@ -136,7 +136,7 @@ libvirt_host_networks:
     int_domain: compute.local
     external_domain: "{{ public_domain }}"
     mac_start: "52:54:00:"
-    master_count: 3
+    ctrlplane_count: 3
     compute_count: 2
     subnet: "192.168.50.0"
     gateway: "192.168.50.1"

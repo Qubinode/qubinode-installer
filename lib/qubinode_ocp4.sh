@@ -18,7 +18,7 @@ check_if_cluster_deployed () {
     if [[ -f /usr/local/bin/qubinode-ocp4-status ]] && [[ -f /usr/local/bin/oc ]]\
        && [[ -f $HOME/.kube/config ]] || [[ -d ${project_dir}/ocp4/auth ]]
     then
-        NODES=$(/usr/local/bin/oc get nodes 2>&1| grep -i master)
+        NODES=$(/usr/local/bin/oc get nodes 2>&1| grep -i ctrlplane)
         if [ "A${NODES}" != "A" ]
         then
             ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t bootstrap_shut > /dev/null 2>&1 || exit $?

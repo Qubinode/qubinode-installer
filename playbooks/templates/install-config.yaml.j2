@@ -2,12 +2,12 @@ apiVersion: v1
 baseDomain: {{ public_domain }}
 compute:
 -  hyperthreading: Enabled
-   name: worker
+   name: compute
    replicas: {{ compute_count }}
 controlPlane:
   hyperthreading: Enabled
-  name: master
-  replicas: {{ master_count }}
+  name: ctrlplane
+  replicas: {{ ctrlplane_count }}
 metadata:
   name: {{ cluster_name }}
 networking:
