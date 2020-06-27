@@ -79,7 +79,7 @@ function qubinode_rhel () {
         rhel_major=8
         qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     else
-        rhel_major=$(cat /etc/redhat-release | grep -o [7-8])
+	rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
         qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     fi
 

@@ -16,7 +16,6 @@ idm_check_static_ip: ""
 idm_hostname: "{{ instance_prefix }}-none"
 idm_reverse_zones:
   - "{{ qubinode_ptr }}"
-  - "{{ qubinode_ptr_two }}"
 idm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms
