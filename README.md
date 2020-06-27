@@ -15,7 +15,7 @@ Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a 
 
 The qubinode-installer can deploy a 3 node cluster on a system with 32GiB memory.
 For the best possible experince 128 GiB of memory is recommended. This will allow
-for the default deployment of a cluster with 3 masters and 3 workers.
+for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
 * Red Hat Enteprise Linux 8.2 installed
@@ -61,7 +61,7 @@ _Ansible_
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
-* [Qubinode WorkFlow Process](docs/qubinode/qubinode_git_branching_model.md)  
+* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.md)  
 * [Testing and Validation](test/README.md)  
 
 ## Support

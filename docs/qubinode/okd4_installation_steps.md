@@ -1,7 +1,7 @@
 #  Installing OKD - The Community Distribution of Kubernetes 4.x Cluster on a Single Node [Still in Development/Test]
 
 The following documentation will help you deploy an  Community Distribution of Kubernetes  (OKD) 4.x cluster, on a single node.
-The installation steps deploys a production like OCP4 cluster, in a environment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
+The installation steps deploys a production like OCP4 cluster, in a environment with 3 controlplanes and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
 ![](https://i.imgur.com/n8TQAyB.png)
 
 ## Prerequisites
@@ -16,10 +16,10 @@ Download and extract the qubinode-installer as a non root user.
 
 ```shell=
 cd $HOME
-wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
-unzip master.zip
-rm master.zip
-mv qubinode-installer-master qubinode-installer
+wget https://github.com/Qubinode/qubinode-installer/archive/main.zip
+unzip main.zip
+rm main.zip
+mv qubinode-installer-main qubinode-installer
 ```
 
 Place your pull secret and the rhel qcow image under the qubinode-installer directory.
@@ -95,9 +95,9 @@ NAME        STATUS   ROLES    AGE   VERSION
 compute-0   Ready    worker   11m   v1.17.1
 compute-1   Ready    worker   14m   v1.17.1
 compute-2   Ready    worker   15m   v1.17.1
-master-0    Ready    master   29m   v1.17.1
-master-1    Ready    master   28m   v1.17.1
-master-2    Ready    master   29m   v1.17.1
+ctrlplane-0    Ready    controlplane   29m   v1.17.1
+ctrlplane-1    Ready    controlplane   28m   v1.17.1
+ctrlplane-2    Ready    controlplane   29m   v1.17.1
 ```
 
 ```
