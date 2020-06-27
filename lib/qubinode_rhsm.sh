@@ -161,11 +161,11 @@ function qubinode_rhsm_register () {
             printf "%s\n" ""
             printf "%s\n" " ${rhsm_msg}"
             rhsm_reg_result=$(mktemp)
-            RHEL_MAJOR=$(cat /etc/redhat-release | grep -o [7-8])
-            if [ "A${RHEL_MAJOR}" == "A8" ]
+            rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+            if [ "A${rhel_major}" == "A8" ]
             then
                RHEL_RELEASE=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-            elif [ "A${RHEL_MAJOR}" == "A7" ]
+            elif [ "A${rhel_major}" == "A7" ]
             then
                RHEL_RELEASE=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
             else
