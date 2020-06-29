@@ -1,5 +1,5 @@
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
-  version: v2.4.0
+  version: dev
 
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
   version: v2.4.0

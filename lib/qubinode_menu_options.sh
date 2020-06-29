@@ -8,32 +8,21 @@ function qubinode_product_deployment () {
     product_opt="${PRODUCT_OPTION}"
     AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost tower"
     case $PRODUCT_OPTION in
-          ocp3)
-              openshift3_variables
+          okd4)
+	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
-                  qubinode_teardown_openshift
+                  openshift4_qubinode_teardown
               elif [ "A${qubinode_maintenance}" == "Atrue" ]
               then
-                  openshift3_server_maintenance
+                  openshift4_server_maintenance
               else
-                  setup_download_options
-                  openshift_enterprise_deployment
-              fi
-              ;;
-          okd3)
-              openshift3_variables
-              if [ "A${teardown}" == "Atrue" ]
-              then
-                  qubinode_teardown_openshift
-              elif [ "A${qubinode_maintenance}" == "Atrue" ]
-              then
-                  openshift3_server_maintenance
-              else
-                  okd3_deployment
+                  ASK_SIZE=true
+                  qubinode_deploy_ocp4
               fi
               ;;
           ocp4)
+	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
