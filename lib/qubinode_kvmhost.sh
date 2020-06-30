@@ -1,6 +1,8 @@
 #!/bin/bash
 
 function kvm_host_variables () {
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    vars_file="${project_dir}/playbooks/vars/all.yml"
     libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep libvirt_pool_name: | awk '{print $2}')
     host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
     RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' ${kvm_host_vars_file} |grep [0-9])

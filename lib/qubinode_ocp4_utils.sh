@@ -6,20 +6,39 @@ function openshift4_variables () {
     if [ "A${product_opt}" == "Aokd4" ]
     then
         product_samples_vars_file=${project_dir}/samples/okd4.yml
-        product_vars_file=${project_dir}/playbooks/vars/okd4.yml
+        ocp_vars_file=${project_dir}/playbooks/vars/okd4.yml
 	deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
+	cluster_vm_status=$(sudo virsh list --all | awk '/okd-ctrlplane/ {print $3; exit}')
     else
         product_samples_vars_file=${project_dir}/samples/ocp4.yml
-        product_vars_file=${project_dir}/playbooks/vars/ocp4.yml
+        ocp_vars_file=${project_dir}/playbooks/vars/ocp4.yml
 	deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
+	cluster_vm_status=$(sudo virsh list --all | grep -v okd | awk '/okd-ctrlplane/ {print $3; exit}')
+    fi
+
+    # ensure product vars file is in place
+    test -f $ocp_vars_file || cp $product_samples_vars_file $ocp_vars_file
+
+    # set cluster vm ctrlplane status
+    if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
+    then
+        cluster_vm_running=yes
+	cluster_vm_deployed=yes
+    elif [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" == "shut" ]]
+    then
+        cluster_vm_running=no
+	cluster_vm_deployed=yes
+    else
+        cluster_vm_running=no
+	cluster_vm_deployed=no
     fi
 
     playbooks_dir="${project_dir}/playbooks"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${product_vars_file}")
-    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${product_vars_file}")
-    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${product_vars_file}")
-    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${product_vars_file}")
+    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
+    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
+    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
+    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
     lb_name="${lb_name_prefix}-${cluster_name}"
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
     prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
@@ -48,7 +67,7 @@ function check_for_pull_secret () {
     if [ -f ${project_dir}/ocp_token ]
     then
         OFFLINE_ACCESS_TOKEN=$(cat ${project_dir}/ocp_token)
-        local RELEASE=$(awk '/ocp4_release:/ {print $2}' ${product_vars_file} | cut -d. -f1,2)
+        local RELEASE=$(awk '/ocp4_release:/ {print $2}' ${ocp_vars_file} | cut -d. -f1,2)
         JQ_CMD="${project_dir}/json-processor"
         JQ_URL=https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
         OCP_SSO_URL=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
@@ -109,7 +128,7 @@ EOF
     confirm "    Do you want to continue with this $ocp_size size cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${product_vars_file}"
+        sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${ocp_vars_file}"
     else
         ocp4_menu
     fi
@@ -133,12 +152,12 @@ EOF
 }
 
 function openshift4_prechecks () {
-    product_vars_file="${product_vars_file}"
+    ocp_vars_file="${ocp_vars_file}"
     ocp4_sample_vars="${product_samples_vars_file}"
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
-    if [ ! -f "${product_vars_file}" ]
+    if [ ! -f "${ocp_vars_file}" ]
     then
-        cp "${ocp4_sample_vars}" "${product_vars_file}"
+        cp "${ocp4_sample_vars}" "${ocp_vars_file}"
     fi
 
     openshift4_variables
@@ -164,11 +183,13 @@ function openshift4_prechecks () {
     # temporarly removing auto release
     #curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
     #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${product_vars_file}"
+    #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
 
     # Ensure Openshift Subscription Pool is attached
-    check_for_openshift_subscription
-    #get_subscription_pool_id 'Red Hat OpenShift Container Platform'
+    if [ "A${product_opt}" != "Aokd4" ]
+    then
+        check_for_openshift_subscription $ocp_vars_file
+    fi
 }
 
 
@@ -197,7 +218,7 @@ function configure_local_storage () {
     confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${product_vars_file}"
+        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
         printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
@@ -234,14 +255,14 @@ EOF
 
 function set_local_volume_type () {
   # Enable local storage
-  sed -i "s/configure_local_storage:.*/configure_local_storage: yes/g" "${product_vars_file}"
-  sed -i "s/compute_local_storage:.*/compute_local_storage: yes/g" "${product_vars_file}"
+  sed -i "s/configure_local_storage:.*/configure_local_storage: yes/g" "${ocp_vars_file}"
+  sed -i "s/compute_local_storage:.*/compute_local_storage: yes/g" "${ocp_vars_file}"
   if [[ $storage_type == "filesystem" ]]; then 
-    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${product_vars_file}"
-    sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${product_vars_file}"
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: true/g" "${ocp_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: false/g" "${ocp_vars_file}"
   elif [[ $storage_type == "block" ]]; then 
-    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${product_vars_file}"
-    sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${product_vars_file}"
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${ocp_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${ocp_vars_file}"
   fi 
 }
 
@@ -265,11 +286,11 @@ function confirm_minimal_deployment () {
     confirm "    Do you want to continue with a minimal cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$min_mem"/g" "${product_vars_file}"
-        sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$min_ctrlplane_count"/g" "${product_vars_file}"
-        sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$min_vcpu"/g" "${product_vars_file}"
-        sed -i "s/compute_vcpu:.*/compute_vcpu: "$min_vcpu"/g" "${product_vars_file}"
-        sed -i "s/compute_count:.*/compute_count: "$min_compute_count"/g" "${product_vars_file}"
+        sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$min_mem"/g" "${ocp_vars_file}"
+        sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$min_ctrlplane_count"/g" "${ocp_vars_file}"
+        sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$min_vcpu"/g" "${ocp_vars_file}"
+        sed -i "s/compute_vcpu:.*/compute_vcpu: "$min_vcpu"/g" "${ocp_vars_file}"
+        sed -i "s/compute_count:.*/compute_count: "$min_compute_count"/g" "${ocp_vars_file}"
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
         sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
         sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
@@ -390,7 +411,7 @@ openshift4_idm_health_check () {
 function ping_openshift4_nodes () {
 #TODO: validate if this funciton is still need
     IS_OPENSHIFT4_NODES="not ready"
-    ctrlplane=$(cat $product_vars_file | grep ctrlplane_count:| awk '{print $2}')
+    ctrlplane=$(cat $ocp_vars_file | grep ctrlplane_count:| awk '{print $2}')
   
     if [ "A${ctrlplane}" != "A" ]
     then
@@ -410,7 +431,7 @@ function ping_openshift4_nodes () {
         IS_OPENSHIFT4_NODES="not ready"
     fi
 
-    compute=$(cat $product_vars_file | grep compute_count:| awk '{print $2}')
+    compute=$(cat $ocp_vars_file | grep compute_count:| awk '{print $2}')
     if [ "A${compute}" != "A" ]
     then
         for i in $(seq $compute)
@@ -468,15 +489,15 @@ reset_cluster_resources_default () {
     default_compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
     default_compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${product_samples_vars_file}")
 
-    sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$default_ctrlplane_vcpu"/g" "${product_vars_file}"
-    sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$default_ctrlplane_mem_size"/g" "${product_vars_file}"
-    sed -i "s/ctrlplane_hd_size:.*/ctrlplane_hd_size: "$default_ctrlplane_hd_size"/g" "${product_vars_file}"
-    sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$default_ctrlplane_count"/g" "${product_vars_file}"
+    sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$default_ctrlplane_vcpu"/g" "${ocp_vars_file}"
+    sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$default_ctrlplane_mem_size"/g" "${ocp_vars_file}"
+    sed -i "s/ctrlplane_hd_size:.*/ctrlplane_hd_size: "$default_ctrlplane_hd_size"/g" "${ocp_vars_file}"
+    sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$default_ctrlplane_count"/g" "${ocp_vars_file}"
 
-    sed -i "s/compute_vcpu:.*/compute_vcpu: "$default_compute_count"/g" "${product_vars_file}"
-    sed -i "s/compute_mem_size:.*/compute_mem_size: "$default_compute_mem_size"/g" "${product_vars_file}"
-    sed -i "s/compute_hd_size:.*/compute_hd_size: "$default_compute_hd_size"/g" "${product_vars_file}"
-    sed -i "s/compute_count:.*/compute_count: "$default_compute_count"/g" "${product_vars_file}"
+    sed -i "s/compute_vcpu:.*/compute_vcpu: "$default_compute_count"/g" "${ocp_vars_file}"
+    sed -i "s/compute_mem_size:.*/compute_mem_size: "$default_compute_mem_size"/g" "${ocp_vars_file}"
+    sed -i "s/compute_hd_size:.*/compute_hd_size: "$default_compute_hd_size"/g" "${ocp_vars_file}"
+    sed -i "s/compute_count:.*/compute_count: "$default_compute_count"/g" "${ocp_vars_file}"
 }
 
 function update_node_count () {
@@ -497,10 +518,10 @@ function update_node_count () {
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$node_num"/g" "${product_vars_file}"
+            sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$node_num"/g" "${ocp_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
-            sed -i "s/compute_count:.*/compute_count: "$node_num"/g" "${product_vars_file}"
+            sed -i "s/compute_count:.*/compute_count: "$node_num"/g" "${ocp_vars_file}"
         else
             printf "%s" "     ${red}Unknown node type $NODE!{end}"
             RC=1
@@ -530,10 +551,10 @@ function update_node_disk_size () {
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/ctrlplane_hd_size:.*/ctrlplane_hd_size: "$node_disk_size"/g" "${product_vars_file}"
+            sed -i "s/ctrlplane_hd_size:.*/ctrlplane_hd_size: "$node_disk_size"/g" "${ocp_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
-            sed -i "s/compute_hd_size:.*/compute_hd_size: "$node_disk_size"/g" "${product_vars_file}"
+            sed -i "s/compute_hd_size:.*/compute_hd_size: "$node_disk_size"/g" "${ocp_vars_file}"
         else
             printf "%s" "     ${red}Unknown node type $NODE!{end}"
             RC=1
@@ -563,10 +584,10 @@ function update_node_mem_size () {
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$memory_size"/g" "${product_vars_file}"
+            sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$memory_size"/g" "${ocp_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
-            sed -i "s/compute_mem_size:.*/compute_mem_size: "$memory_size"/g" "${product_vars_file}"
+            sed -i "s/compute_mem_size:.*/compute_mem_size: "$memory_size"/g" "${ocp_vars_file}"
         else
             printf "%s" "     ${red}Unknown node type $NODE!{end}"
             RC=1
@@ -597,10 +618,10 @@ function update_node_vcpu_size () {
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
         then
-            sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$user_vcpu_count"/g" "${product_vars_file}"
+            sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$user_vcpu_count"/g" "${ocp_vars_file}"
         elif [ "A${NODE}" == "Acompute" ]
         then
-            sed -i "s/compute_vcpu:.*/compute_vcpu: "$user_vcpu_count"/g" "${product_vars_file}"
+            sed -i "s/compute_vcpu:.*/compute_vcpu: "$user_vcpu_count"/g" "${ocp_vars_file}"
         else
             printf "%s" "     ${red}Unknown node type $NODE!{end}"
             RC=1
@@ -613,19 +634,19 @@ function update_node_vcpu_size () {
 
 function get_cluster_resources () {
     # Get current values
-    ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${product_vars_file}")
-    compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${product_vars_file}")
-    ctrlplane_hd_size=$(awk '/^ctrlplane_hd_size:/ {print $2; exit}' "${product_vars_file}")
-    m_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${product_vars_file}")
+    ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${ocp_vars_file}")
+    compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp_vars_file}")
+    ctrlplane_hd_size=$(awk '/^ctrlplane_hd_size:/ {print $2; exit}' "${ocp_vars_file}")
+    m_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${ocp_vars_file}")
     ctrlplane_mem_size=$(echo $m_mem_size/1000|bc)
-    ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${product_vars_file}")
-    compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${product_vars_file}")
-    c_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${product_vars_file}")
+    ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${ocp_vars_file}")
+    compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${ocp_vars_file}")
+    c_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${ocp_vars_file}")
     compute_mem_size=$(echo $c_mem_size/1000|bc)
-    compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${product_vars_file}")
-    compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${product_vars_file}")
-    compute_vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${product_vars_file}")
-    compute_vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${product_vars_file}")
+    compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${ocp_vars_file}")
+    compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${ocp_vars_file}")
+    compute_vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
+    compute_vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
     cluster_custom_opts=("ctrlplane_disk   - ${yel}$ctrlplane_hd_size${end} size HD for ctrlplane nodes" \
                          "ctrlplane_mem    - ${yel}$ctrlplane_mem_size${end} memory for ctrlplane nodes" \
                          "ctrlplane_vcpu   - ${yel}$ctrlplane_vcpu${end} vCPU for ctrlplane nodes" \
@@ -777,9 +798,9 @@ function configure_ocs_storage () {
     LOCAL_STORAGE_BLOCK=no
     FS_DISK="/dev/vdc"
 
-    configure_ocs_storage=$(awk '/^configure_ocs_storage:/ {print $2; exit}' "${product_vars_file}")
-    vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${product_vars_file}")
-    vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${product_vars_file}")
+    configure_ocs_storage=$(awk '/^configure_ocs_storage:/ {print $2; exit}' "${ocp_vars_file}")
+    vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
+    vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
     printf "%s\n\n" ""
     printf "%s\n" "    ${yel}The deployment of OCS isn't fully automated.${end}"
     printf "%s\n" "    ${yel}Once the cluster is up follow the install guide on the website.${end}"
@@ -806,7 +827,7 @@ function configure_ocs_storage () {
             confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${product_vars_file}"
+                sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
             fi
         fi
     
@@ -821,24 +842,24 @@ function configure_ocs_storage () {
             confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/compute_vdc_size:.*/compute_vdc_size: "$compute_vdc_size"/g" "${product_vars_file}"
+                sed -i "s/compute_vdc_size:.*/compute_vdc_size: "$compute_vdc_size"/g" "${ocp_vars_file}"
             fi
         fi
     fi
 
     # Set OCS storage to deploy
-    sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${product_vars_file}"
+    sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
     # Disable deployment of nfs
-    sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${product_vars_file}"
+    sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp_vars_file}"
     # enable local storage 
-    sed -i "s/configure_local_storage:.*/configure_local_storage: "$LOCAL_STORAGE"/g" "${product_vars_file}"
+    sed -i "s/configure_local_storage:.*/configure_local_storage: "$LOCAL_STORAGE"/g" "${ocp_vars_file}"
     # Enable local storage filesystem
-    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: "$LOCAL_STORAGE_FS"/g" "${product_vars_file}"
+    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: "$LOCAL_STORAGE_FS"/g" "${ocp_vars_file}"
     # Enable local storage block device
-    sed -i "s/localstorage_block:.*/localstorage_block: "$LOCAL_STORAGE_BLOCK"/g" "${product_vars_file}"
+    sed -i "s/localstorage_block:.*/localstorage_block: "$LOCAL_STORAGE_BLOCK"/g" "${ocp_vars_file}"
 
     # Enable local storage block device
-    sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${product_vars_file}"
+    sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${ocp_vars_file}"
 }
 
 function configure_nfs_storage () {
@@ -853,7 +874,7 @@ function configure_nfs_storage () {
     REGISTRY_PVC_SIZE=100Gi
     DEPLOY_NFS=true
 
-    configure_nfs_storage=$(awk '/^configure_nfs_storage:/ {print $2; exit}' "${product_vars_file}")
+    configure_nfs_storage=$(awk '/^configure_nfs_storage:/ {print $2; exit}' "${ocp_vars_file}")
 
     printf "%s\n\n" ""
     printf "%s\n" "    ${yel}This will configure the KVM host as NFS server.${end}"
@@ -869,19 +890,19 @@ function configure_nfs_storage () {
         SET_NFS_DEFAULT=true
 
         # Enable NFS
-        sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${product_vars_file}"
+        sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp_vars_file}"
 
         # Set NFS as default storage
-        sed -i "s/set_as_default:.*/set_as_default: "$SET_NFS_DEFAULT"/g" "${product_vars_file}"
+        sed -i "s/set_as_default:.*/set_as_default: "$SET_NFS_DEFAULT"/g" "${ocp_vars_file}"
 
         # Provision the NFS Server
-        sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${product_vars_file}"
+        sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${ocp_vars_file}"
 
         # Provision the NFS Server
-        sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${product_vars_file}"
+        sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${ocp_vars_file}"
 
         # Disable OCS
-        sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${product_vars_file}"
+        sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
 
         #provision_nfs_provisoner: true      # deploys the nfs provision
         #configure_registry: true
@@ -900,7 +921,7 @@ function remove_ocp4_compute () {
     then
         ocp4_computes_vars="${project_dir}/playbooks/vars/ocp4_computes.yml"
         all_vars="${project_dir}/playbooks/vars/all.yml"
-        ocp4_vars="${product_vars_file}"
+        ocp4_vars="${ocp_vars_file}"
         cluster_name=$(awk '/^cluster_name:/ {print $2; exit}' "${ocp4_vars}")
         domain=$(awk '/^domain:/ {print $2; exit}' "${all_vars}")
         subdomain=$(awk '/^ocp4_subdomain:/ {print $2; exit}' "${ocp4_vars}")
@@ -1013,13 +1034,11 @@ function add_ocp4_compute () {
        export $var
     done
 
-    product_vars_file="${project_dir}/playbooks/vars//ocp4.yml"
-
     # Ensure the current number of compute are correct
     get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
-    sed -i "s/^compute_count:.*/compute_count: "$get_current_computes"/g" "${product_vars_file}"
+    sed -i "s/^compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp_vars_file}"
 
-    current_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${product_vars_file}")
+    current_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp_vars_file}")
     if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
     then
         new_compute_count=$(echo $current_compute_count + $count|bc)
@@ -1041,8 +1060,8 @@ function add_ocp4_compute () {
             do
 	        /usr/local/bin/qubinode-add-compute-node "compute-${i}"
 	    done
-            sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${product_vars_file}"
-            sed -i "s/^compute_count_updated:.*/compute_count_update: add/g" "${product_vars_file}"
+            sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp_vars_file}"
+            sed -i "s/^compute_count_updated:.*/compute_count_update: add/g" "${ocp_vars_file}"
         else
             echo "Max allowed computes is 10"
 	    exit

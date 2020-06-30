@@ -17,6 +17,10 @@ mag=$'\e[1;35m'
 cyn=$'\e[1;36m'
 end=$'\e[0m'
 
+# Uncomment for debugging
+#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+#set -x
+
 
 function config_err_msg () {
     cat << EOH >&2
@@ -45,11 +49,10 @@ setup_required_paths
 source "${project_dir}/lib/qubinode_installer_prereqs.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/qubinode_requirements.sh"
-source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 source "${project_dir}/lib/qubinode_ocp4_utils.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
 
-ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+openshift4_variables
 
 qubinode_required_prereqs
 if [[ -f ${ocp3_vars_file} ]]; then 
@@ -224,7 +227,7 @@ function ocp4_menu(){
 # Step #4: Main Logic
 # ------------------------------------
 
-if [[ -f ${ocp4_vars_file} ]]; then 
+if [[ -f ${ocp_vars_file} ]]; then 
     ocp4_menu
 elif [[ -f ${ocp3_vars_file} ]]; then 
     ocp3_menu

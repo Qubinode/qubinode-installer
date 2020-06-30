@@ -142,7 +142,6 @@ rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_depend
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 rhcos_metal_bios: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_metal_bios }}"
 rhcos_webserver_img_name: rhcos-webserver
-bootstrap_node_name: bootstrap
 coreos_tmp_dir: /tmp/build_coreos_container
 webserver_directory: /opt/qubinode_webserver
 ocp4_release_dir: "{{ ocp4_release }}"
@@ -169,10 +168,15 @@ dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 product: "{{ openshift_product }}"
 compute_count_update: none
+hostname_prefix: "{{ instance_prefix }}"
+bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
+bootstrap_node_ip: "192.168.50.2"
+ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
+compute_node_name: "{{ hostname_prefix }}-compute"
 
 # OCP4 instance sizes
 ocp4_instances:
-  - name: ctrlplane
+  - name: "{{ hostname_prefix }}-ctrlplane"
     hd_size: "{{ ctrlplane_hd_size }}G"
     memory_size: "{{ ctrlplane_mem_size }}"
     cpu_size: "{{ ctrlplane_vcpu }}"
@@ -186,7 +190,7 @@ ocp4_instances:
     qty: "{{ ctrlplane_count }}"
     vm_type: master
     ip_octet: "{{ ctrlplane_ip_octet }}"
-  - name: compute
+  - name: "{{ hostname_prefix }}-compute"
     hd_size: "{{ compute_hd_size }}G"
     memory_size: "{{ compute_mem_size }}"
     cpu_size: "{{ compute_vcpu }}"
@@ -200,6 +204,20 @@ ocp4_instances:
     qty: "{{ compute_count }}"
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
+  - name: "{{ hostname_prefix }}-bootstrap"
+    hd_size: "{{ bootstrap_hd_size }}G"
+    memory_size: "{{ bootstrap_mem_size }}"
+    cpu_size: "{{ bootstrap_vcpu }}"
+    extra_storage:
+      - size: ""
+        name: vdb
+        enable: false
+      - size: ""
+        name: vdc
+        enable: false
+    qty: 1
+    vm_type: bootstrap
+    ip_octet: 30
   - name: storage
     hd_size: "{{ storage_hd_size }}G"
     memory_size: "{{ storage_mem_size }}"
@@ -214,18 +232,3 @@ ocp4_instances:
     qty: "{{ storage_count }}"
     vm_type: storage
     ip_octet: "{{ storage_ip_octet }}"
-  - name: bootstrap
-    hd_size: "{{ bootstrap_hd_size }}G"
-    memory_size: "{{ bootstrap_mem_size }}"
-    cpu_size: "{{ bootstrap_vcpu }}"
-    extra_storage:
-      - size: ""
-        name: vdb
-        enable: false
-      - size: ""
-        name: vdc
-        enable: false
-    qty: 1
-    vm_type: bootstrap
-    ip_octet: 30
-
