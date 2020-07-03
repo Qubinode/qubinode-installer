@@ -52,23 +52,23 @@ This will remove the cluster, this includes all RHCOS vms and removing dns entri
 ## Workers
 
 
-### Add / Remove workers to UPI cluster
+### Add / Remove computes to UPI cluster
 
 [1] https://access.redhat.com/solutions/4799921
 
-Add additional workers to your cluster, the example below will add one
-additional worker to your cluster. If your current worker count was 3, this would 
+Add additional computes to your cluster, the example below will add one
+additional compute to your cluster. If your current compute count was 3, this would 
 make it 4.
 
 The value for **count** can be 1-10. The count is from 0-9, a count value of 10 will result is nodes 0 - 9.
 
 
-**Add new workers**
+**Add new computes**
 ```shell
-./qubinode-installer -p ocp4 -m add-worker -a count=1
+./qubinode-installer -p ocp4 -m add-compute -a count=1
 ```
 
-**Remove workers**
+**Remove computes**
 ```shell
-./qubinode-installer -p ocp4 -m remove-worker -a count=1
+./qubinode-installer -p ocp4 -m remove-compute -a count=1
 ```

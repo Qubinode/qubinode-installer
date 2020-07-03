@@ -18,12 +18,6 @@ function tower_variables () {
     IP=$(awk -v var="${tower_hostname}" '$0 ~ var {print $0}' "${project_dir}/inventory/hosts"|grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
     tower_license="${project_dir}/tower-license.txt"
 
-    if [ ! -f ${tower_license} ]
-    then 
-        printf "%s\n" " ${red}Could not find tower-license.txt under${end} ${yel}${project_dir}${end}"
-        printf "%s\n" " ${blu}Please place file there and try again${end}"
-        exit 1
-    fi
 
     if [ -f "${tower_vars_file}" ]
     then
@@ -35,21 +29,11 @@ function tower_variables () {
     then
         TOWER_SERVER_DNS=$(dig +short -x "${TOWER_SERVER_IP}")
     fi
+
+    # Get python interpreter
+    #ansible_python_interpreter=$(awk '/ansible_python_interpreter:/ {print $2;exit}' "${vars_file}")
 }
 
-#function update_tower_ip () {
-#    tower_variables
-#    if [ "A${IP}" != "A" ]
-#    then
-#        if ! grep 'tower_server_ip:' "${tower_vars_file}" |grep -q $IP
-#        then
-#            sed -i "s/tower_server_ip:.*/tower_server_ip: "$IP"/g" "${tower_vars_file}"
-#        fi
-#    else
-#        echo "Could not find ip address for Tower server."
-#        exit 1
-#    fi
-#}
 
 function update_tower_password () {
     # Load variables
@@ -105,12 +89,14 @@ function deploy_tower () {
     tower_variables
     update_tower_password
 
-    if [ ! -f "${tower_license}" ]
+    #if [ ! -f "${tower_license}" ]
+    #then
+    #    printf "%s\n" " ${red}Could not find tower-license.txt under${end} ${yel}${project_dir}${end}"
+    #    printf "%s\n" " ${blu}Please place file there and try again${end}"
+    #    exit 1
+    #else
+    if [ -f "${tower_license}" ]
     then
-        printf "%s\n" " ${red}Could not find tower-license.txt under${end} ${yel}${project_dir}${end}"
-        printf "%s\n" " ${blu}Please place file there and try again${end}"
-        exit 1
-    else
         if ! grep -q eula_accepted "${tower_license}"
         then
             printf "%s\n" " Adding ${cyn}eula_accepted${end} to ${tower_license}"

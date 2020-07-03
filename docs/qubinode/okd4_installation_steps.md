@@ -1,7 +1,7 @@
 #  Installing OKD - The Community Distribution of Kubernetes 4.x Cluster on a Single Node [Still in Development/Test]
 
 The following documentation will help you deploy an  Community Distribution of Kubernetes  (OKD) 4.x cluster, on a single node.
-The installation steps deploys a production like OCP4 cluster, in a environment with 3 controlplanes and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
+The installation steps deploys a production like OCP4 cluster, in a environment with 3 controlplanes and 3 computes on a KVM hosts running Red Hat Enterprise Linux (RHEL)
 ![](https://i.imgur.com/n8TQAyB.png)
 
 ## Prerequisites
@@ -92,9 +92,9 @@ $ ansible-playbook playbooks/deploy_okd4.yml --extra-vars  "tear_down=true"
 ```
 $ oc get nodes
 NAME        STATUS   ROLES    AGE   VERSION
-compute-0   Ready    worker   11m   v1.17.1
-compute-1   Ready    worker   14m   v1.17.1
-compute-2   Ready    worker   15m   v1.17.1
+compute-0   Ready    compute   11m   v1.17.1
+compute-1   Ready    compute   14m   v1.17.1
+compute-2   Ready    compute   15m   v1.17.1
 ctrlplane-0    Ready    controlplane   29m   v1.17.1
 ctrlplane-1    Ready    controlplane   28m   v1.17.1
 ctrlplane-2    Ready    controlplane   29m   v1.17.1

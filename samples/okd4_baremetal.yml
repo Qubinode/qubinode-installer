@@ -61,12 +61,12 @@ user_idm_admin: "{{ idm_admin_user }}"
 user_idm_password: "{{ idm_admin_pwd }}"
 
 # Default values for deploy OCP cluster
-# Change to reflect the number of masters and workers you want to deploy
-master_count: 3
+# Change to reflect the number of ctrlplane and computes you want to deploy
+ctrlplane_count: 3
 compute_count: 3
-master_hd_size: 120
-master_mem_size: 16192
-master_vcpu: 4
+ctrlplane_hd_size: 120
+ctrlplane_mem_size: 16192
+ctrlplane_vcpu: 4
 compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
@@ -80,14 +80,14 @@ osdvolume_disk_size: "{{ monpod_disk_size }}"
 performance_disk: no
 
 # Values for minimal deployment
-min_master_count: 3
+min_ctrlplane_count: 3
 min_compute_count: 1
 min_vcpu: 4
 min_mem: 10240
 
 # The start ranage for IP address make sure there is enough for the
-# master and compute nodes you want to deploy
-master_ip_octet: 10
+# ctrlplane and compute nodes you want to deploy
+ctrlplane_ip_octet: 10
 compute_ip_octet: 20
 
 #############################################################
@@ -149,7 +149,7 @@ ocp4_lb_container: qbn-lb
 podman_webserver: qbn-httpd
 
 # Your openshift cluster url
-openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
+openshift_url: "https://ctrlplane-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
 
 openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
 ignition_files_dir: "{{ openshift_install_dir }}"
@@ -169,10 +169,10 @@ compute_count_update: none
 
 # OCP4 instance sizes
 ocp4_instances:
-  - name: master
-    hd_size: "{{ master_hd_size }}G"
-    memory_size: "{{ master_mem_size }}"
-    cpu_size: "{{ master_vcpu }}"
+  - name: ctrlplane
+    hd_size: "{{ ctrlplane_hd_size }}G"
+    memory_size: "{{ ctrlplane_mem_size }}"
+    cpu_size: "{{ ctrlplane_vcpu }}"
     extra_storage:
       - size: 10G
         enable: false
@@ -180,9 +180,9 @@ ocp4_instances:
       - size: 50G
         enable: false
         name: vdc
-    qty: "{{ master_count }}"
-    vm_type: master
-    ip_octet: "{{ master_ip_octet }}"
+    qty: "{{ ctrlplane_count }}"
+    vm_type: ctrlplane
+    ip_octet: "{{ ctrlplane_ip_octet }}"
   - name: compute
     hd_size: "{{ compute_hd_size }}G"
     memory_size: "{{ compute_mem_size }}"
@@ -195,7 +195,7 @@ ocp4_instances:
         name: vdc
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
-    vm_type: worker
+    vm_type: compute
     ip_octet: "{{ compute_ip_octet }}"
   - name: bootstrap
     hd_size: "{{ bootstrap_hd_size }}G"

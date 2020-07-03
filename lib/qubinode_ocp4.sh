@@ -11,60 +11,35 @@ function setup_required_paths () {
     if [ ! -d "${project_dir}/playbooks/vars" ] ; then
         config_err_msg; exit 1
     fi
-    DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
 }
 
 check_if_cluster_deployed () {
+
+    # Establish OpenShift variables
+    openshift4_variables
     if [[ -f /usr/local/bin/qubinode-ocp4-status ]] && [[ -f /usr/local/bin/oc ]]\
        && [[ -f $HOME/.kube/config ]] || [[ -d ${project_dir}/ocp4/auth ]]
     then
-        NODES=$(/usr/local/bin/oc get nodes 2>&1| grep -i master)
-        if [ "A${NODES}" != "A" ]
+
+	if [ "A${cluster_vm_running}" == "Ayes" ]
         then
-            ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t bootstrap_shut > /dev/null 2>&1 || exit $?
-            printf "%s\n\n" " ${grn}OpenShift Cluster is already deployed${end}"
-            /usr/local/bin/qubinode-ocp4-status
-            # Configure Advanced options 
-            advanced_ocp4_options
-            exit 0
+            /usr/local/bin/oc get nodes 2>&1| grep -i ctrlplane
+	    RESULT=$?
+            if [ "A${RESULT}" != 'A1' ]
+            then 
+	        # Ensure bootstrap node has been removed
+                ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t bootstrap_shut > /dev/null 2>&1 || exit $?
+                printf "%s\n\n\n" " "
+                /usr/local/bin/qubinode-ocp4-status
+                printf "%s\n\n" " ${grn}    OpenShift Cluster is up!${end}"
+                exit 0
+	    else
+                printf "%s\n\n" " ${grn}    OpenShift Cluster is not up or the deployment is incomplete.${end}"
+            fi
         fi
     fi
 }
 
-function advanced_ocp4_options(){
-    # -a flags for storage and other openshift modfications
-    # Check for user provided variables
-    for var in "${product_options[@]}"
-    do
-       export $var
-    done
-
-
-    #local storage options 
-    if [ "A${storage}" != "A" ]
-    then
-        if [ "$storage" == "nfs" ]
-        then
-          echo "You are going to reconfigure ${storage}"
-          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed"
-        elif [ "$storage" == "nfs-remove" ]
-        then 
-          echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true" 
-        fi
-
-        # localstorage option 
-        if [ "$storage" == "localstorage" ]
-        then
-          echo "You are going to reconfigure ${storage}"
-          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed"
-        elif [ "$storage" == "localstorage-remove" ]
-        then 
-          echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${DEPLOY_OCP4_PLAYBOOK}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
-        fi
-    fi
-}
 
 function qubinode_deploy_ocp4 () {
     product_in_use="ocp4" # Tell the installer which release of OCP
@@ -115,20 +90,20 @@ function qubinode_deploy_ocp4 () {
     fi
 
     # Deploy OCP4
-    ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' || exit $?
+    ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }' || exit $?
 
     # Check the OpenSHift status
     check_if_cluster_deployed
 }
 
 function openshift4_qubinode_teardown () {
-    confirm " Are you sure you want to delete the OpenShift 4 cluster? yes/no"
+    confirm " ${yel}Are you sure you want to delete the${end} ${grn}$product_opt${end} ${yel}cluster${end}? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        DEPLOY_OCP4_PLAYBOOK="${project_dir}/playbooks/deploy_ocp4.yml"
-        ansible-playbook "${DEPLOY_OCP4_PLAYBOOK}" -e '{ tear_down: True }' || exit $?
-        test -f "${project_dir}/playbooks/vars/ocp4.yml" && rm -f "${project_dir}/playbooks/vars/ocp4.yml"
-        printf "%s\n\n\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
+        ansible-playbook "${deploy_product_playbook}" -e '{ tear_down: True }' || exit $?
+        test -f "${ocp_vars_file}" && rm -f "${ocp_vars_file}"
+        printf "%s\n\n\n\n" " }"
+        printf "%s\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
         
     else
         exit 0

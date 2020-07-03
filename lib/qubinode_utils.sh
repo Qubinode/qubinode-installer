@@ -216,10 +216,11 @@ function check_disk_size () {
     MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${vars_file}")
     STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
     PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
+    PREFIX=$(awk '/instance_prefix:/ {print $2}' "${vars_file}")
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
-    POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+    POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v $PREFIX)
     POOL_CAPACITY=$(sudo virsh pool-dumpxml "${POOL}"| grep capacity | grep -Eo "[[:digit:]]{1,100}")
     DISK=$(cat "${kvm_host_vars_file}" | grep kvm_host_libvirt_extra_disk: | awk '{print $2}')
 
@@ -365,7 +366,7 @@ function teardown_ocp3 () {
 }
 
 function teardown_ocp4 () {
-    if sudo virsh list --all | grep -q master-0
+    if sudo virsh list --all | grep -q ctrlplane-0
     then
         ./qubinode-installer -p ocp4 -d
     fi

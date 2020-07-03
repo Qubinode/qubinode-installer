@@ -17,6 +17,10 @@ mag=$'\e[1;35m'
 cyn=$'\e[1;36m'
 end=$'\e[0m'
 
+# Uncomment for debugging
+#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+#set -x
+
 
 function config_err_msg () {
     cat << EOH >&2
@@ -45,11 +49,10 @@ setup_required_paths
 source "${project_dir}/lib/qubinode_installer_prereqs.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
 source "${project_dir}/lib/qubinode_requirements.sh"
-source "${project_dir}/lib/qubinode_openshift3_utils.sh"
 source "${project_dir}/lib/qubinode_ocp4_utils.sh"
 source "${project_dir}/lib/qubinode_utils.sh"
 
-ocp4_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+openshift4_variables
 
 qubinode_required_prereqs
 if [[ -f ${ocp3_vars_file} ]]; then 
@@ -106,10 +109,10 @@ show_menus_ocp4 () {
     printf "%s\n" "    ${cyn}Qubinode OpenShift 4.x Profiles${end}"
     printf "%s\n\n" "    ${yel}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${end}"
 
-    printf "%s\n" "    All cluster deployment options defaults to 3 master nodes."
+    printf "%s\n" "    All cluster deployment options defaults to 3 ctrlplane nodes."
     printf "%s\n" "    A cluster with 3 nodes is smallest cluster deployment size"
     printf "%s\n" "    supported by the OCP4 installer. When deploying 3 nodes only, each node"
-    printf "%s\n" "    gets assigned the role of worker and master. Each cluster is deployed"
+    printf "%s\n" "    gets assigned the role of compute and ctrlplane. Each cluster is deployed"
     printf "%s\n\n" "    with NFS for persistent storage."
 
     printf "%s\n" "    ${cyn}Minimal Cluster Deployment Options${end}"
@@ -121,13 +124,13 @@ show_menus_ocp4 () {
 
     printf "%s\n" "    ${cyn}Standard Cluster Deployment Options${end}"
     printf "%s\n" "    These options require a minimum of 96 Gib memory and 8 cores."
-    printf "%s\n" "    This will deploy the default configuration of 3 masters and 3 workers"
-    printf "%s\n" "    or 3 masters and 2 workers. The 6 node option includes the option to"
+    printf "%s\n" "    This will deploy the default configuration of 3 ctrlplane and 3 computes"
+    printf "%s\n" "    or 3 ctrlplane and 2 computes. The 6 node option includes the option to"
     printf "%s\n\n" "    deploy persistent local storage."
 
     printf "%s\n" "    ${cyn}Custom Cluster Deployment Options${end}"
     printf "%s\n" "    This option will allow you to: "
-    printf "%s\n" "        * Increase the number of workers "
+    printf "%s\n" "        * Increase the number of computes "
     printf "%s\n" "        * Change the memory, storage, and vcpu for each node"
     printf "%s\n" ""
     printf "%s\n" "      1. Minimal 3 node cluster"
@@ -145,11 +148,11 @@ function read_options(){
 	read -p "   ${cyn}Enter choice [ 1 - 6] ${end}" choice
 	case $choice in
 	1) ocp_size=minimal
-           minimal_opt=masters_only
+           minimal_opt=ctrlplane_only
            confirm_minimal_deployment
            ;;
         2) ocp_size=minimal
-           minimal_opt=masters_worker
+           minimal_opt=ctrlplane_compute
            confirm_minimal_deployment
            ;;
         3) ocp_size=performance
@@ -166,11 +169,11 @@ function read_options_ocp4 () {
 	read -p "   ${cyn}Enter choice [ 1 - 7] ${end}" choice
 	case $choice in
         1) ocp_size=minimal
-           minimal_opt=masters_only
+           minimal_opt=ctrlplane_only
            confirm_minimal_deployment
            ;;
         2) ocp_size=minimal
-           minimal_opt=masters_worker
+           minimal_opt=ctrlplane_compute
            confirm_minimal_deployment
            ;;
         3) ocp_size=standard 
@@ -224,7 +227,7 @@ function ocp4_menu(){
 # Step #4: Main Logic
 # ------------------------------------
 
-if [[ -f ${ocp4_vars_file} ]]; then 
+if [[ -f ${ocp_vars_file} ]]; then 
     ocp4_menu
 elif [[ -f ${ocp3_vars_file} ]]; then 
     ocp3_menu

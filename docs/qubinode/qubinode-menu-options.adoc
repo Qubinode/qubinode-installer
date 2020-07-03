@@ -16,8 +16,8 @@ Options:
               -m arguments are:
                    startup        - start up OpenShift cluster after shutdown
                    shutdown       - safely shutdown OpenShift cluster
-                   remove-worker  - remove worker node
-                   add-worker     - add worker node
+                   remove-compute  - remove compute node
+                   add-compute     - add compute node
                 
         * IdM         Supports the -m and -d argument
               idm     - deploy IDM as a DNS Server

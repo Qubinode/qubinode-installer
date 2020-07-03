@@ -248,25 +248,22 @@ function get_subscription_pool_id () {
 
 function check_for_openshift_subscription () {
 
-    if [ -f $ocp3_vars_file ]
+    ocp_vars_file=$1
+
+    if [ ! -f $ocp_vars_file ]
     then
-        openshift_vars_file=$ocp3_vars_file
-    elif [ -f $ocp4_vars_file ]
-    then
-        openshift_vars_file=$ocp4_vars_file
-    else
         printf "%s\n" "    Could not determine the correct openshift vars file"
         exit 1
     fi
 
     # Set OpenShift product
-    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${openshift_vars_file}"
+    sed -i "s/openshift_product:.*/openshift_product: $openshift_product/g" "${ocp_vars_file}"
 
     # Make sure the Qubinode is registered
     qubinode_rhsm_register
  
     # Make sure OpenShift subscription is attached
-    if grep openshift_pool_id: ${openshift_vars_file} | grep '""' > /dev/null 2>&1
+    if grep openshift_pool_id: ${ocp_vars_file} | grep '""' > /dev/null 2>&1
     then
         get_subscription_pool_id 'Red Hat OpenShift Container Platform'
     fi
@@ -298,13 +295,13 @@ function check_for_openshift_subscription () {
     if [ "A${POOL_ID}" != "A" ]
     then
         #echo "Setting pool id for OpenShift Container Platform"
-        if grep '""' "${openshift_vars_file}"|grep -q openshift_pool_id
+        if grep '""' "${ocp_vars_file}"|grep -q openshift_pool_id
         then
-            #echo "${openshift_vars_file} openshift_pool_id variable"
-            sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${openshift_vars_file}"
+            #echo "${ocp_vars_file} openshift_pool_id variable"
+            sed -i "s/openshift_pool_id: \"\"/openshift_pool_id: $POOL_ID/g" "${ocp_vars_file}"
         fi
     else
-        echo "  The OpenShift Pool ID is not available in ${openshift_vars_file}"
+        echo "  The OpenShift Pool ID is not available in ${ocp_vars_file}"
         exit 1
     fi
 

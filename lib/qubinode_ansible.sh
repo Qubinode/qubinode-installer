@@ -72,12 +72,14 @@ function qubinode_setup_ansible () {
             sudo rm -r /var/cache/dnf
             sudo dnf update -y --allowerasing
             sudo dnf install -y -q -e 0 python3 python3-pip python3-dns
+	    sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
 	fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         if [ ! -f /usr/bin/python ]
         then
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
+	    #sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python/g" "${vars_file}"
         fi
     else
        PYTHON=yes
@@ -143,7 +145,7 @@ function qubinode_setup_ansible () {
             test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
             CURRENT_DIR=$(pwd)
             cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
+            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
             cd "${CURRENT_DIR}"
         fi
     else
