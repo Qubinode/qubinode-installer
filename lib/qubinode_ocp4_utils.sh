@@ -8,18 +8,17 @@ function openshift4_variables () {
         product_samples_vars_file=${project_dir}/samples/okd4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/okd4.yml
 	deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
-	cluster_vm_status=$(sudo virsh list --all | awk '/okd-ctrlplane/ {print $3; exit}')
     else
         product_samples_vars_file=${project_dir}/samples/ocp4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/ocp4.yml
 	deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
-	cluster_vm_status=$(sudo virsh list --all | grep -v okd | awk '/okd-ctrlplane/ {print $3; exit}')
     fi
 
     # ensure product vars file is in place
     test -f $ocp_vars_file || cp $product_samples_vars_file $ocp_vars_file
 
     # set cluster vm ctrlplane status
+    cluster_vm_status=$(sudo virsh list --all | awk '/ctrlplane/ {print $3; exit}')
     if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
     then
         cluster_vm_running=yes
@@ -1078,11 +1077,12 @@ openshift4_server_maintenance () {
            echo "Perparing to run full Diagnostics: : not implemented yet"
            ;;
        smoketest)
-           echo  "Running smoke test on environment: : not implemented yet"
+           echo  "Running smoke"
+           ansible-playbook ${deploy_product_playbook} -t smoketest -e smoketest_cluster=yes || exit 1
               ;;
        shutdown)
            printf "%s\n\n" ""
-           confirm "    Continue with shutting down the cluster? yes/no"
+           confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
               ansible-playbook ${deploy_product_playbook} -t shutdown -e shutdown_cluster=yes || exit 1
@@ -1105,8 +1105,46 @@ openshift4_server_maintenance () {
        add-compute)
 	   add_ocp4_compute
 	    ;;
+       storage)
+	   configure_storage
+	    ;;
        *)
            echo "No arguement was passed"
            ;;
     esac
+}
+
+function configure_storage () {
+    # -a flags for storage and other openshift modfications
+    # Check for user provided variables
+    for var in "${product_options[@]}"
+    do
+       export $var
+    done
+
+
+    #local storage options
+    if [ "A${storage}" != "A" ]
+    then
+        if [ "$storage" == "nfs" ]
+        then
+          echo "You are going to reconfigure ${storage}"
+          ansible-playbook  "${deploy_product_playbook}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed"
+        elif [ "$storage" == "nfs-remove" ]
+        then
+          echo "You are going to Remove ${storage}  from the openshift cluster"
+          ansible-playbook  "${deploy_product_playbook}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
+        fi
+
+        # localstorage option
+        if [ "$storage" == "localstorage" ]
+        then
+          echo "You are going to reconfigure ${storage}"
+          ansible-playbook  "${deploy_product_playbook}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed"
+        elif [ "$storage" == "localstorage-remove" ]
+        then
+          echo "You are going to Remove ${storage}  from the openshift cluster"
+          ansible-playbook  "${deploy_product_playbook}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
+        fi
+    fi
 }
