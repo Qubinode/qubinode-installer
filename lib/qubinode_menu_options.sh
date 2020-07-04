@@ -3,6 +3,7 @@
 function qubinode_product_deployment () {
     # this function deploys a supported product
     PRODUCT_OPTION=$1
+    CHECK_PULL_SECRET=yes
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
@@ -32,6 +33,7 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
               else
                   ASK_SIZE=true
+                  CHECK_PULL_SECRET=no
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options 
                   qubinode_deploy_ocp4
@@ -44,6 +46,7 @@ function qubinode_product_deployment () {
               else
                   echo "Installing Satellite"
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/satellite.yml")
+                  CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files
                   qubinode_deploy_satellite
@@ -54,6 +57,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_tower
               else
+                  CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files
                   qubinode_deploy_tower
@@ -68,6 +72,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_idm_maintenance
               else
+                  CHECK_PULL_SECRET=no
                   echo "Running IdM VM deploy function"
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options
@@ -84,6 +89,7 @@ function qubinode_product_deployment () {
                   then
                       qubinode_rhel_maintenance
                   else
+                      CHECK_PULL_SECRET=no
                       #setup_download_options
                       download_files
                       qubinode_deploy_rhel

@@ -169,7 +169,7 @@ function ask_user_for_custom_idm_server () {
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
 
             # Setting default IdM server name
-            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
+            #sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
 
             # Setting default IdM server name
             CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')
