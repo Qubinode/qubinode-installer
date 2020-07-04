@@ -17,6 +17,7 @@ function qubinode_product_deployment () {
               then
                   openshift4_server_maintenance
               else
+                  test -f ${project_dir}/pull-secret.txt || echo '{"auths":{"fake":{"auth": "bar"}}}' > ${project_dir}/pull-secret.txt
                   ASK_SIZE=true
                   qubinode_deploy_ocp4
               fi

@@ -23,7 +23,7 @@ check_if_cluster_deployed () {
 
 	if [ "A${cluster_vm_running}" == "Ayes" ]
         then
-            /usr/local/bin/oc get nodes 2>&1| grep -i ctrlplane
+            /usr/local/bin/oc get nodes 2>&1| grep -qi ctrlplane
 	    RESULT=$?
             if [ "A${RESULT}" != 'A1' ]
             then 
@@ -94,9 +94,17 @@ function qubinode_deploy_ocp4 () {
     ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }'
     RESULT=$?
 
-    # Check the OpenSHift status
-    check_if_cluster_deployed
-    echo "CLUSTER PLAYBOOK RESULT=$RESULT"
+    if [ $RESULT -eq 0 ]
+    then
+        # Check the OpenSHift status
+        check_if_cluster_deployed
+    else
+        printf "%s\n\n" " "
+        printf "%s\n\n" " ${red}Cluster deployment return a nonzero exit code.${end}"
+        # Check the OpenSHift status
+        check_if_cluster_deployed
+    fi
+
 }
 
 function openshift4_qubinode_teardown () {

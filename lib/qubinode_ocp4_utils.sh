@@ -1077,9 +1077,17 @@ openshift4_server_maintenance () {
            echo "Perparing to run full Diagnostics: : not implemented yet"
            ;;
        smoketest)
-           echo  "Running smoke"
-           ansible-playbook ${deploy_product_playbook} -t smoketest -e smoketest_cluster=yes || exit 1
-              ;;
+           printf "%s\n\n" ""
+           printf "%s\n" "    ${yel}Running smoke test on cluster by deploying a PHP LAMP Stack${end}"
+           ansible-playbook ${deploy_product_playbook} -t smoketest -e smoketest_cluster=yes
+           RESULT=$?
+           if [ $RESULT -eq 0 ]
+           then
+               printf "%s\n" "    ${yel}Smoke test was successful${end}"
+           else
+               printf "%s\n" "    ${red}Smoke test returned a non zero error${end}"
+           fi
+           ;;
        shutdown)
            printf "%s\n\n" ""
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
@@ -1087,12 +1095,15 @@ openshift4_server_maintenance () {
            then
               ansible-playbook ${deploy_product_playbook} -t shutdown -e shutdown_cluster=yes || exit 1
 	      sudo virsh list --all| egrep "compute|ctrlplane"
+              printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
                exit
            fi
             ;;
        startup)
+            printf "%s\n\n" ""
+            printf "%s\n" "    ${yel}Starting up ${product_opt} Cluster!${end}"
             ansible-playbook ${deploy_product_playbook} -t startup -e startup_cluster=yes || exit 1
             /usr/local/bin/qubinode-ocp4-status
             ;;
