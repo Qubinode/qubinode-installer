@@ -66,17 +66,18 @@ function qubinode_setup_ansible () {
     then
         if [ ! -f /usr/bin/python3 ]
         then
-            sudo subscription-manager repos --enable="rhel-8-for-x86_64-baseos-rpms"
-            sudo subscription-manager repos --enable="rhel-8-for-x86_64-appstream-rpms"
+            sudo subscription-manager repos --enable="rhel-8-for-x86_64-baseos-rpms" > /dev/null 2>&1
+            sudo subscription-manager repos --enable="rhel-8-for-x86_64-appstream-rpms" > /dev/null 2>&1
+            printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo dnf clean all > /dev/null 2>&1
             sudo rm -r /var/cache/dnf
-            sudo dnf update -y --allowerasing
-            sudo dnf install -y -q -e 0 python3 python3-pip python3-dns
+            sudo yum install -y -q -e 0 python3 python3-pip python3-dns > /dev/null 2>&1
 	    sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
 	fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         if [ ! -f /usr/bin/python ]
         then
+            printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
 	    #sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python/g" "${vars_file}"
@@ -84,6 +85,10 @@ function qubinode_setup_ansible () {
     else
        PYTHON=yes
     fi
+
+    # Update system
+    printf "%s\n" "   ${yel}Updating system...${end}"
+    sudo yum update -y --allowerasing > /dev/null 2>&1
 
     # install ansible
     if [ ! -f /usr/bin/ansible ];

@@ -435,3 +435,70 @@ rebuild_qubinode () {
         exit 0
     fi
 }
+
+function qubinode_setup () {
+    # This functions gets your system ready for the first ansible playbook to be executed
+    # which is the playbooks/setup_kvmhost.yml.
+
+    # Ensure configuration files from samples/ are copied to playbooks/vars/
+    qubinode_required_prereqs
+
+    # Ensure user is setup for sudoers
+    setup_sudoers
+
+    check_additional_storage
+    #ask_user_if_qubinode_setup
+
+    # load kvmhost variables
+    kvm_host_variables
+
+    # Start user input session
+    ask_user_input
+    setup_variables
+    setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
+
+    # Ensure ./qubinode-installer -m rhsm is completed
+    if [ "A${rhsm_completed}" == "Ano" ]
+    then
+       qubinode_rhsm_register
+    fi
+
+    # Ensure ./qubinode-installer -m ansible is completed
+    if [ "A${ansible_completed}" == "Ano" ]
+    then
+       qubinode_setup_ansible
+    fi
+
+    # Ensure RHSM cli is installed
+    install_rhsm_cli
+
+    sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
+    sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
+
+}
+
+function qubinode_installer_setup () {
+    # This function ensures all the minimal base requirements are met.
+
+    # Ensure configuration files from samples/ are copied to playbooks/vars/
+    qubinode_required_prereqs
+
+    # Ensure user is setup for sudoers
+    setup_sudoers
+
+    check_additional_storage
+    #ask_user_if_qubinode_setup
+
+    # load kvmhost variables
+    kvm_host_variables
+
+    # Start user input session
+    ask_user_input
+    setup_variables
+    setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
+
+    sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
+    sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
+}

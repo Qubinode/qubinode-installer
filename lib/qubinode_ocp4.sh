@@ -60,7 +60,7 @@ function qubinode_deploy_ocp4 () {
     # Add current user to sudoers, setup global variables, run additional
     # prereqs, setup current user ssh key, ask user if they want to
     # deploy a qubinode system.
-    qubinode_installer_setup
+    qubinode_setup
 
     # Ensure the KVM host is setup
     # System is attached to the OpenShift subscription
