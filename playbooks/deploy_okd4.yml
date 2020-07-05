@@ -17,4 +17,4 @@
   tasks:
   - name: run the role ocp4-kvm-deployer
     import_role:
-      name: ocp4-kvm-deployer
+      name: ocp4_kvm_deployer
