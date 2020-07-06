@@ -53,12 +53,15 @@ ipaadmin_password: "{{ idm_admin_password }}"
 ipadm_password: "{{ idm_dm_pwd }}"
 ipaserver_forwarders:
   - "{{ dns_forwarder }}"
+idm_repos_8:
+  - rhel-8-for-x86_64-baseos-rpms
+  - rhel-8-for-x86_64-appstream-rpms
 
 #########################
 # IdM on RHEL 7 attributes
 idm_reverse_zones:
   - "{{ qubinode_ptr }}"
-idm_repos:
+idm_repos_7:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms
   - rhel-7-server-optional-rpms

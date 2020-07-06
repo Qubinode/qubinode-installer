@@ -39,6 +39,15 @@
       when: not idm_is_installed
       tags: [always]
 
+    - name: set idm_repos for rhel8
+      set_fact:
+        idm_repos: "{{ idm_repos_8 }}"
+      when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '8')
+
+    - name: set idm_repos for rhel7
+      set_fact:
+        idm_repos: "{{ idm_repos_7 }}"
+      when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '7')
     - name: ensure system is registered to Red Hat
       vars:
         rhsm_repos: "{{ idm_repos }}"
@@ -52,6 +61,7 @@
         - not idm_is_installed
         - (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '8')
       block:
+
         - name: Install IDM server on rhel 8
           include_role:
             name: ipaserver
