@@ -41,16 +41,16 @@
 
     - name: set idm_repos for rhel8
       set_fact:
-        idm_repos: "{{ idm_repos_8 }}"
+        rhsm_repos: "{{ idm_repos_8 }}"
       when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '8')
 
     - name: set idm_repos for rhel7
       set_fact:
-        idm_repos: "{{ idm_repos_7 }}"
+        rhsm_repos: [ "{{ idm_repos_7 }}" ]
       when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '7')
     - name: ensure system is registered to Red Hat
-      vars:
-        rhsm_repos: "{{ idm_repos }}"
+      #vars:
+        #rhsm_repos: "{{ idm_repos }}"
       include_role:
         name: swygue-redhat-subscription
       when: not idm_is_installed
