@@ -453,6 +453,61 @@ function qubinode_check_for_libvirt_nat() {
 }
 
 
+
+kvm_host_health_check () {
+    KVM_IN_GOOD_HEALTH=""
+    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+    check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+    requested_brigde=$(awk '/^qubinode_bridge_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+
+    if ! sudo virsh net-list | grep -q $requested_brigde; then
+      KVM_STATUS="notready"
+      kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
+    fi
+
+    #if ! sudo virsh net-list | grep -q $requested_nat; then
+    #  KVM_IN_GOOD_HEALTH="notready"
+    #fi
+
+    # If dedicated disk for libvirt images, check for the volume group
+    if [ "A${create_lvm}" == "Ayes" ]
+    then
+        if ! sudo vgdisplay | grep -q $vg_name
+        then
+            KVM_STATUS="notready"
+            kvm_host_health_check_results+=(Could not find volume group $vg_name)
+        fi
+    fi
+
+    if [ ! -d $check_image_path ]
+    then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results+=(Could not find libvirt pool dir $check_image_path)
+    fi
+
+    if ! [ -x "$(command -v virsh)" ]
+    then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results+=(Could not find the virsh command)
+    fi
+
+    if ! [ -x "$(command -v firewall-cmd)" ]
+    then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results+=(Could not find the firewall-cmd command)
+    fi
+
+    if [ "A${KVM_STATUS}" == "Aready" ]
+    then
+        KVM_IN_GOOD_HEALTH=ready
+    else
+        KVM_IN_GOOD_HEALTH=$KVM_STATUS
+    fi
+}
+
+
 function qubinode_setup_kvm_host () {
     # set variable to enable prompting user if they want to
     # setup host as a qubinode
@@ -503,10 +558,25 @@ function qubinode_setup_kvm_host () {
       fi
     fi
 
-    sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
-    printf "\n\n${yel}    ******************************${end}\n"
-    printf "${yel}    * KVM Host Setup Complete   *${end}\n"
-    printf "${yel}    *****************************${end}\n\n"
+    # Validate host is setup correctly
+    kvm_host_health_check
+    if [ "A${KVM_IN_GOOD_HEALTH}" == "ready" ]
+    then
+        sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
+        printf "\n\n${yel}    ******************************${end}\n"
+        printf "${yel}    * KVM Host Setup Complete   *${end}\n"
+        printf "${yel}    *****************************${end}\n\n"
+    else
+        sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: no/g" "${kvm_host_vars_file}"
+        printf "\n\n${yel}    ******************************${end}\n"
+        printf "${red}    * KVM Host Setup Fail   *${end}\n"
+        printf "${yel}    *****************************${end}\n\n"
+        for msg in "${kvm_host_health_check_results[*]}"
+        do
+            printf "%s\n\n" " ${red} $msg ${end}"
+        done
+        exit
+    fi
 }
 
 
