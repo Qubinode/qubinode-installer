@@ -3,37 +3,28 @@
 function qubinode_product_deployment () {
     # this function deploys a supported product
     PRODUCT_OPTION=$1
+    CHECK_PULL_SECRET=yes
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
     AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost tower"
     case $PRODUCT_OPTION in
-          ocp3)
-              openshift3_variables
+          okd4)
+	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
-                  qubinode_teardown_openshift
+                  openshift4_qubinode_teardown
               elif [ "A${qubinode_maintenance}" == "Atrue" ]
               then
-                  openshift3_server_maintenance
+                  openshift4_server_maintenance
               else
-                  setup_download_options
-                  openshift_enterprise_deployment
-              fi
-              ;;
-          okd3)
-              openshift3_variables
-              if [ "A${teardown}" == "Atrue" ]
-              then
-                  qubinode_teardown_openshift
-              elif [ "A${qubinode_maintenance}" == "Atrue" ]
-              then
-                  openshift3_server_maintenance
-              else
-                  okd3_deployment
+                  test -f ${project_dir}/pull-secret.txt || echo '{"auths":{"fake":{"auth": "bar"}}}' > ${project_dir}/pull-secret.txt
+                  ASK_SIZE=true
+                  qubinode_deploy_ocp4
               fi
               ;;
           ocp4)
+	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
@@ -42,6 +33,7 @@ function qubinode_product_deployment () {
                   openshift4_server_maintenance
               else
                   ASK_SIZE=true
+                  CHECK_PULL_SECRET=no
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options 
                   qubinode_deploy_ocp4
@@ -54,6 +46,7 @@ function qubinode_product_deployment () {
               else
                   echo "Installing Satellite"
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/satellite.yml")
+                  CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files
                   qubinode_deploy_satellite
@@ -64,6 +57,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_tower
               else
+                  CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files
                   qubinode_deploy_tower
@@ -78,6 +72,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_idm_maintenance
               else
+                  CHECK_PULL_SECRET=no
                   echo "Running IdM VM deploy function"
                   rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options
@@ -94,6 +89,7 @@ function qubinode_product_deployment () {
                   then
                       qubinode_rhel_maintenance
                   else
+                      CHECK_PULL_SECRET=no
                       #setup_download_options
                       download_files
                       qubinode_deploy_rhel

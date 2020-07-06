@@ -129,30 +129,6 @@ memory_profile: ""
 ocp_cluster_size: ""
 warn_storage_profile: yes
 
-libvirt_host_networks:
-  - name: "{{ nat_network_name }}"
-    create: true
-    mode: nat
-    int_domain: compute.local
-    external_domain: "{{ public_domain }}"
-    mac_start: "52:54:00:"
-    master_count: 3
-    compute_count: 2
-    subnet: "192.168.50.0"
-    gateway: "192.168.50.1"
-    mask: "255.255.255.0"
-  - name: "{{ vm_libvirt_net }}"
-    create: true
-    mode: bridge
-    bridge_device: "{{ kvm_host_bridge_name | default(qubinode_bridge_name) }}"
-    ifcfg_type: "{{ kvm_bridge_type }}"
-    ifcfg_bootproto: "{{ kvm_host_bootproto }}"
-    bridge_slave_dev: "{{ kvm_host_interface }}"
-    gateway: "{{ kvm_host_gw }}"
-    mask_prefix: "{{ kvm_host_mask_prefix }}"
-    ipaddress: "{{ kvm_host_ip }}"
-    mask: "{{ kvm_host_netmask }}"
-    mac: "{{ kvm_host_macaddr }}"
 
 ###########################################
 # variables for swygue.edge_host_setup role

@@ -9,14 +9,14 @@ ask_use_existing_idm: yes
 idm_server_name: dns01
 
 # IDM server attributes
+rhel_major: "7"
 idm_server_ip: ""
 idm_public_ip: ""
 idm_admin_user: admin
 idm_check_static_ip: ""
-idm_hostname: "{{ instance_prefix }}-none"
+idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"
 idm_reverse_zones:
   - "{{ qubinode_ptr }}"
-  - "{{ qubinode_ptr_two }}"
 idm_repos:
   - rhel-7-server-rpms
   - rhel-7-server-extras-rpms

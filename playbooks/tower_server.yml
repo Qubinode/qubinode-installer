@@ -23,7 +23,9 @@
     include_role:
       name: swygue.ansible-tower
 
-  - name: check tower-license.txt exists 
+  - name: check tower-license.txt exists
+    vars:
+      ansible_python_interpreter: auto_legacy_silent
     stat: 
       path: "{{ tower_license_file }}"
     register: tower_license

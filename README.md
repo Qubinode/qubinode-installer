@@ -61,7 +61,7 @@ _Ansible_
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
-* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.md)  
+* [Qubinode WorkFlow Process](docs/CONTRIBUTING.md)  
 * [Testing and Validation](test/README.md)  
 
 ## Support

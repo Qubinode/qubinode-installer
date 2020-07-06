@@ -15,6 +15,6 @@
     IPA_PASS: "{{ user_idm_password }}"
 
   tasks:
-  - name: run the role ocp4-kvm-deployer
+  - name: run the role ocp4_kvm_deployer
     import_role:
-      name: ocp4-kvm-deployer
+      name: ocp4_kvm_deployer

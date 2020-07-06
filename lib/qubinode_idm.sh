@@ -8,7 +8,7 @@ idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
 DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${idm_vars_file}" | tr -d '"')
 prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
 idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${vars_file}")
-suffix=$(awk -F '-' '/idm_hostname:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 idm_srv_hostname="$prefix-$suffix"
 idm_srv_fqdn="$prefix-$suffix.$domain"
 idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
@@ -169,12 +169,11 @@ function ask_user_for_custom_idm_server () {
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
 
             # Setting default IdM server name
-            sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
+            #sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
 
             # Setting default IdM server name
             CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')
             sed -i 's#  - "{{ qubinode_ptr }}"#  - '$CHANGE_PTR'#g'  "${idm_vars_file}"
-            sed -i 's#  - "{{ qubinode_ptr_two }}"#  - 50.168.192.in-addr.arpa#g'  "${idm_vars_file}"
         fi
     fi
 
@@ -377,7 +376,7 @@ function qubinode_deploy_idm () {
     check_additional_storage
 
     # Ensure host system is setup as a KVM host
-    openshift4_kvm_health_check
+    kvm_host_health_check
     if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
       qubinode_setup_kvm_host
     fi
