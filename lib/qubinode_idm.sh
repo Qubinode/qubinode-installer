@@ -14,6 +14,9 @@ idm_srv_fqdn="$prefix-$suffix.$domain"
 idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 
+# Set the VM OS release to match the host system
+sed -i "s/^rhel_major:.*/rhel_major: $rhel_major/g" $idm_vars_file
+
 function display_idmsrv_unavailable () {
     printf "%s\n" "${yel}Either the IdM server variable idm_public_ip is not set.${end}"
     printf "%s\n" "${yel}Or the IdM server is not reachable.${end}"
