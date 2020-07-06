@@ -192,6 +192,12 @@ function qcow_check () {
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
 
+    # update IdM server with qcow image file
+    if [ -f $idm_vars_file ]
+    then
+        sed -i "s/^cloud_init_vm_image:.*/cloud_init_vm_image: $qcow_image_name/g" $idm_vars_file
+    fi
+
 
     if sudo test ! -f "${libvirt_dir}/${qcow_image_name}"
     then

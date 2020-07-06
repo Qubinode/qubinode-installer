@@ -51,4 +51,4 @@
         state: "{{ etc_host_status }}"
       when: hostvars[item]['ansible_host'] is defined and hostvars[item]['inventory_hostname_short'] == vm_name
       with_items:
-        - "{{ groups['dns'] }}"
+        - "{{ groups['ipaserver'] }}"

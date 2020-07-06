@@ -64,6 +64,7 @@ function qubinode_product_deployment () {
               fi
               ;;
           idm)
+              rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
               if [ "A${teardown}" == "Atrue" ]
               then
                   echo "Running IdM VM teardown function"
@@ -74,7 +75,6 @@ function qubinode_product_deployment () {
               else
                   CHECK_PULL_SECRET=no
                   echo "Running IdM VM deploy function"
-                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options
                   download_files
                   qubinode_deploy_idm

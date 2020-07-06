@@ -1,6 +1,6 @@
 ---
 - name: deploy IdM server
-  hosts: dns
+  hosts: ipaserver
   remote_user: admin
   become: true
   vars_files:
@@ -22,37 +22,49 @@
       ignore_errors: yes
       tags: [always]
 
-    - set_fact:
+    - name: create the fact idm_is_installed
+      set_fact:
         idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
       tags: [always]
 
-    - name: ensure system is registered to Red Hat
-      vars:
-        rhsm_repos: "{{ idm_repos }}"
-      include_role:
-        name: swygue-redhat-subscription
-      when:  not idm_is_installed
+    - name: deploy idm on RHEL 8
+      when:
+        - not idm_is_installed
+        - (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '8')
+      block:
+        - name: Install IDM server on rhel 8
+          include_role:
+            name: ipaserver
+          tags: [install,preinstall,installer,firewall,always,result]
 
-    - name: update system
-      command: yum update -y
-      args:
-        warn: false
-      changed_when: false
-      when:  not idm_is_installed
+    - name: deploy idm on RHEL 7
+      when:
+        - not idm_is_installed
+        - (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '7')
+      block:
+        - name: ensure system is registered to Red Hat
+          vars:
+            rhsm_repos: "{{ idm_repos }}"
+          include_role:
+            name: swygue-redhat-subscription
 
-    - name: Install IDM server
-      include_role:
-        name: ansible-idm
-      tags: [install,preinstall,installer,firewall,always,result]
-      when:  not idm_is_installed
+        - name: update system
+          command: yum update -y
+          args:
+            warn: false
+          changed_when: false
 
-    - name: ensure firewalld rules are loaded
-      command: systemctl restart firewalld
-      args:
-        warn: no
-      changed_when: False
-      failed_when: False
-      when:  not idm_is_installed
+        - name: Install IDM server
+          include_role:
+            name: ansible-idm
+          tags: [install,preinstall,installer,firewall,always,result]
+
+        - name: ensure firewalld rules are loaded
+          command: systemctl restart firewalld
+          args:
+            warn: no
+          changed_when: False
+          failed_when: False
 
     - name: post IDM server install check if IDM is answering
       vars:
@@ -66,11 +78,13 @@
       ignore_errors: yes
       tags: [always]
 
-    - set_fact:
+    - name: set idm_is_installed fact
+      set_fact:
         idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
       tags: [always]
 
-    - fail:
+    - name: fail playbook if IdM server is not installed
+      fail:
         msg: |
           The IDM server does not appear to have been installed.
           Please re-run qubinode-installer or undeploy and start again.
