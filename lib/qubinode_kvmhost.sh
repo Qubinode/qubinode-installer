@@ -458,7 +458,11 @@ kvm_host_health_check () {
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
 
-    if ! sudo virsh net-list | grep -q $requested_brigde; then
+    bash -c "sudo virsh net-list | grep -q $requested_brigde"
+    RESULT=$?
+    if [ $RESULT -ne 0 ]
+    then
+    #if ! sudo virsh net-list | grep -q $requested_brigde; then
       KVM_STATUS="notready"
       kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
     fi
@@ -495,7 +499,7 @@ kvm_host_health_check () {
         kvm_host_health_check_results+=(Could not find the firewall-cmd command)
     fi
 
-    if [ "A${KVM_STATUS}" == "Aready" ]
+    if [ "A${KVM_STATUS}" != "Anotready" ]
     then
         KVM_IN_GOOD_HEALTH=ready
     else
@@ -556,7 +560,7 @@ function qubinode_setup_kvm_host () {
 
     # Validate host is setup correctly
     kvm_host_health_check
-    if [ "A${KVM_IN_GOOD_HEALTH}" == "ready" ]
+    if [ "A${KVM_IN_GOOD_HEALTH}" == "Aready" ]
     then
         sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
         printf "\n\n${yel}    ******************************${end}\n"

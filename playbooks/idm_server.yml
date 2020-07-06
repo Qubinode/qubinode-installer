@@ -1,6 +1,6 @@
 ---
 - name: deploy IdM server
-  hosts: dns
+  hosts: ipaserver
   remote_user: admin
   become: true
   vars_files:
