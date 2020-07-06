@@ -69,7 +69,14 @@ function qubinode_deploy_ocp4 () {
 
     # Ensure host system is setup as a KVM host
     if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
-        qubinode_setup_kvm_host
+        printf "%s\n\n" " "
+        printf "%s\n\n" " ${red}The system did not pass all KVM host checks${end}"
+        for msg in "${kvm_host_health_check_results[*]}"
+        do
+            printf "%s\n\n" " ${red} $msg ${end}"
+        done
+        printf "%s\n" " ${red}Please try running ./qubinode-installer -m host${end}"
+        exit 1
     fi
 
     # Ensure the system meets the requirement for a standard OCP deployment

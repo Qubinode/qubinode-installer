@@ -18,7 +18,13 @@ function openshift4_variables () {
     test -f $ocp_vars_file || cp $product_samples_vars_file $ocp_vars_file
 
     # set cluster vm ctrlplane status
-    cluster_vm_status=$(sudo virsh list --all | awk '/ctrlplane/ {print $3; exit}')
+    if [ -f /usr/bin/virsh ]
+    then
+        cluster_vm_status=$(sudo virsh list --all | awk '/ctrlplane/ {print $3; exit}')
+    else
+        cluster_vm_status=""
+    fi
+
     if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
     then
         cluster_vm_running=yes
@@ -166,7 +172,7 @@ function openshift4_prechecks () {
 
     # Check for OCP4 pull sceret
     check_for_pull_secret
-    openshift4_kvm_health_check
+    kvm_host_health_check
     if [[ ${KVM_IN_GOOD_HEALTH} == "ready" ]]; then
       # Ensure firewall rules
       if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
@@ -338,15 +344,17 @@ function pingreturnstatus() {
 }
 
 
-openshift4_kvm_health_check () {
+kvm_host_health_check () {
     KVM_IN_GOOD_HEALTH=""
     requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
     check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+    requested_brigde=$(awk '/^qubinode_bridge_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
   
     if ! sudo virsh net-list | grep -q $requested_brigde; then
       KVM_STATUS="not ready"
+      kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
     fi
   
     #if ! sudo virsh net-list | grep -q $requested_nat; then
@@ -359,27 +367,33 @@ openshift4_kvm_health_check () {
         if ! sudo vgdisplay | grep -q $vg_name
         then
             KVM_STATUS="not ready"
+            kvm_host_health_check_results+=(Could not find volume group $vg_name)
         fi
     fi
   
     if [ ! -d $check_image_path ]
     then
         KVM_STATUS="not ready"
+        kvm_host_health_check_results+=(Could not find libvirt pool dir $check_image_path)
     fi
   
     if ! [ -x "$(command -v virsh)" ]
     then
         KVM_STATUS="not ready"
+        kvm_host_health_check_results+=(Could not find the virsh command)
     fi
   
     if ! [ -x "$(command -v firewall-cmd)" ]
     then
         KVM_STATUS="not ready"
+        kvm_host_health_check_results+=(Could not find the firewall-cmd command)
     fi
   
     if [ "A$KVM_STATUS" != "Anot ready" ]
     then
         KVM_IN_GOOD_HEALTH=ready
+    else
+        KVM_IN_GOOD_HEALTH=$KVM_STATUS
     fi
 }
 
@@ -1093,8 +1107,8 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
+              ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t generate_inventory > /dev/null 2>&1 || exit $?
               ansible-playbook ${deploy_product_playbook} -t shutdown -e shutdown_cluster=yes || exit 1
-	      sudo virsh list --all| egrep "compute|ctrlplane"
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else

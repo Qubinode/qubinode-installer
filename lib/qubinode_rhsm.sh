@@ -182,7 +182,9 @@ function qubinode_rhsm_register () {
                 cat "${rhsm_reg_result}"
             fi
         else
-            printf "%s\n" " ${yel}$(hostname)${end} ${blu}is already registered${end}"
+            # this variables isn't being used at the moment
+            system_already_registered=yes
+            #printf "%s\n" " ${yel}$(hostname)${end} ${blu}is already registered${end}"
         fi
     fi
 

@@ -470,6 +470,12 @@ function qubinode_setup () {
        qubinode_setup_ansible
     fi
 
+    # Ensure ./qubinode-installer -m host is completed
+    if [ "A${host_completed}" == "Ano" ]
+    then
+       qubinode_setup_kvm_host
+    fi
+
     # Ensure RHSM cli is installed
     install_rhsm_cli
 

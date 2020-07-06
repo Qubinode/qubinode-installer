@@ -328,7 +328,7 @@ function qubinode_networking () {
         CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
         KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
     else
-        if [ "A${iSkvm_host_interface}" != "A" ]
+        if echo ${iSkvm_host_interface} | grep -q [0-9]
         then
             CURRENT_KVM_HOST_PRIMARY_INTERFACE="${iSkvm_host_interface}"
         else

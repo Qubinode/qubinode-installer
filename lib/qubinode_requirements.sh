@@ -230,6 +230,8 @@ setup_download_options () {
     OCP_TOKEN="${project_dir}/ocp_token"
     DWL_PULLSECRET=no
 
+    # Ensure user is setup for sudo
+    setup_sudoers
 
     # check for user provided ocp token or pull secret
     OCP_TOKEN_STATUS="notexist"
@@ -241,16 +243,18 @@ setup_download_options () {
     fi
 
     # check for pull secret
-    if [ "${CHECK_PULL_SECRET}" == "Ayes" ]
+    if [ "A${CHECK_PULL_SECRET}" != "Ayes" ]
     then
+        # set status to exist to prevent check for pull secret when it's not required
+        PULLSECRET_STATUS="exist"
+    else
         if [ -f "${project_dir}/pull-secret.txt" ]
         then
             PULLSECRET_STATUS="exist"
+        else
+            PULLSECRET_STATUS="notexist"
         fi
-    else
-            PULLSECRET_STATUS="exist"
     fi
-
 
     # check for required OS qcow image or token
     TOKEN_STATUS="notexist"
