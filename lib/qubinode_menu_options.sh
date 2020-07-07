@@ -3,7 +3,6 @@
 function qubinode_product_deployment () {
     # this function deploys a supported product
     PRODUCT_OPTION=$1
-    CHECK_PULL_SECRET=yes
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
@@ -24,6 +23,7 @@ function qubinode_product_deployment () {
               fi
               ;;
           ocp4)
+              CHECK_PULL_SECRET=yes
 	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
@@ -34,7 +34,6 @@ function qubinode_product_deployment () {
               else
                   ASK_SIZE=true
                   CHECK_PULL_SECRET=no
-                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/idm.yml")
                   setup_download_options 
                   qubinode_deploy_ocp4
               fi
@@ -45,7 +44,6 @@ function qubinode_product_deployment () {
                   qubinode_teardown_satellite
               else
                   echo "Installing Satellite"
-                  rhel_major=$(awk '/^qcow_rhel_release:/ {print $2}' "${project_dir}/playbooks/vars/satellite.yml")
                   CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files
@@ -64,7 +62,6 @@ function qubinode_product_deployment () {
               fi
               ;;
           idm)
-              rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
               if [ "A${teardown}" == "Atrue" ]
               then
                   echo "Running IdM VM teardown function"

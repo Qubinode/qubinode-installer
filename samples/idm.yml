@@ -31,7 +31,7 @@ dns_server_vm:
     dns_root_disk_size: 10G
     dns_teardown: false
     dns_recreate: false
-    dns_group: dns
+    dns_group: ipaserver
     dns_extra_storage: []
     dns_enable: true
     dns_ip: "{{ idm_server_ip | default('', true) }}"

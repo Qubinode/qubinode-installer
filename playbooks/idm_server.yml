@@ -56,6 +56,7 @@
       when: not idm_is_installed
       tags: [always]
 
+    ###############################################################
     - name: deploy idm on RHEL 8
       when:
         - not idm_is_installed
@@ -67,6 +68,8 @@
             name: ipaserver
           tags: [install,preinstall,installer,firewall,always,result]
 
+
+    ###############################################################
     - name: deploy idm on RHEL 7
       when:
         - not idm_is_installed
@@ -91,6 +94,7 @@
           changed_when: False
           failed_when: False
 
+    ###############################################################
     - name: post IDM server install check if IDM is answering
       vars:
         vm_name: "{{ dns_server_vm.dns_name }}"
