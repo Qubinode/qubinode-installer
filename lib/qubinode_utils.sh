@@ -440,6 +440,9 @@ function qubinode_setup () {
     # This functions gets your system ready for the first ansible playbook to be executed
     # which is the playbooks/setup_kvmhost.yml.
 
+    # This variable is use to ensure this function isn't called inside of qubinode_base_requirements
+    running_qubinode_setup=yes
+
     # Ensure configuration files from samples/ are copied to playbooks/vars/
     qubinode_required_prereqs
 
@@ -484,27 +487,36 @@ function qubinode_setup () {
 
 }
 
-function qubinode_installer_setup () {
+function qubinode_base_requirements () {
     # This function ensures all the minimal base requirements are met.
+    if [ "A${running_qubinode_setup}" != "Ayes" ]
+    then
+        # Ensure configuration files from samples/ are copied to playbooks/vars/
+        qubinode_required_prereqs
 
-    # Ensure configuration files from samples/ are copied to playbooks/vars/
-    qubinode_required_prereqs
+        # Ensure user is setup for sudoers
+        setup_sudoers
 
-    # Ensure user is setup for sudoers
-    setup_sudoers
+        check_additional_storage
+        #ask_user_if_qubinode_setup
 
-    check_additional_storage
-    #ask_user_if_qubinode_setup
+        # load kvmhost variables
+        kvm_host_variables
 
-    # load kvmhost variables
-    kvm_host_variables
+        # Start user input session
+        ask_user_input
+        setup_variables
+        setup_user_ssh_key
 
-    # Start user input session
-    ask_user_input
-    setup_variables
-    setup_user_ssh_key
-    #ask_user_for_networking_info "${vars_file}"
+        # Tell installer base requires have been met
+        sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
+fi
+}
 
-    sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
-    sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
+function qubinode_vm_deployment_precheck () {
+    # Ensures the system is ready for VM deployment.
+    if [ "A${qubinode_installer_setup_completed}" != "Ayes" ]
+    then
+        qubinode_setup
+    fi
 }

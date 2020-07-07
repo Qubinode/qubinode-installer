@@ -119,7 +119,9 @@ function qubinode_maintenance_options () {
         create_qubinode_profile_log
     elif [ "${qubinode_maintenance_opt}" == "setup" ]
     then
-        qubinode_installer_setup
+        # This ensures the system is base requires are met
+        # before -m ansible -m rhsm -m host can be executed
+        qubinode_base_requirements
     elif [ "${qubinode_maintenance_opt}" == "rhsm" ]
     then
         qubinode_rhsm_register

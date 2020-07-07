@@ -137,54 +137,6 @@ function get_rhel_version() {
 
 }
 
-function qubinode_base_requirements () {
-# Ensures the system is ready for VM deployment.
-
-    setup_variables
-    # Ensure ./qubinode-installer -m setup is completed
-    if [ "A${setup_completed}" == "Ano" ]
-    then
-       qubinode_installer_setup
-    fi
-
-    # Ensure ./qubinode-installer -m rhsm is completed
-    if [ "A${rhsm_completed}" == "Ano" ]
-    then
-       qubinode_rhsm_register
-    fi
-
-    # Ensure ./qubinode-installer -m ansible is completed
-    if [ "A${ansible_completed}" == "Ano" ]
-    then
-       qubinode_setup_ansible
-    fi
-
-    sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
-}
-
-function qubinode_vm_deployment_precheck () {
-# Ensures the system is ready for VM deployment.
-
-    qubinode_base_requirements
-    # Ensure the ansible function has bee executed
-    if [ ! -f /usr/bin/ansible ]
-    then
-        qubinode_setup_ansible
-    else
-        STATUS=$(ansible-galaxy list | grep deploy-kvm-vm >/dev/null 2>&1; echo $?)
-        if [ "A${STATUS}" != "A0" ]
-        then
-            qubinode_setup_ansible
-        fi
-    fi
-
-    # Ensure ./qubinode-installer -m host is completed
-    if [ "A${host_completed}" == "Ano" ]
-    then
-       qubinode_setup_kvm_host
-    fi
-}
-
 
 function qcow_check () {
     # TODO: this should be removed

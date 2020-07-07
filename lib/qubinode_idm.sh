@@ -361,7 +361,6 @@ function qubinode_install_idm () {
     isIdMrunning
     if [ "A${idm_running}" != "Atrue" ]
     then
-        qubinode_vm_deployment_precheck
         ask_user_input
         IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
 

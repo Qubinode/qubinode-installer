@@ -517,7 +517,7 @@ function qubinode_setup_kvm_host () {
     setup_variables
     if [ "A${base_setup_completed}" == "Ano" ]
     then
-        qubinode_setup
+        qubinode_base_requirements
     fi
 
     # Check if we should setup qubinode
