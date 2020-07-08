@@ -63,11 +63,29 @@
         - (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '8')
       block:
 
+        - name: ensure ansible-freeipa is installed
+          package:
+            name: ansible-freeipa
+            state: present
+          delegate_to: 127.0.0.1
+          become: yes
+
+        - name: copy ansible-freeipa roles to {{ project_dir }}
+          copy:
+            src: "/usr/share/ansible/roles/{{ item }}"
+            dest: "{{ project_dir }}/playbooks/roles"
+            owner: "{{ admin_user }}"
+            group: "{{ admin_user }}"
+          loop:
+            - ipaclient
+            - ipareplica
+            - ipaserver
+          delegate_to: 127.0.0.1
+
         - name: Install IDM server on rhel 8
           include_role:
             name: ipaserver
           tags: [install,preinstall,installer,firewall,always,result]
-
 
     ###############################################################
     - name: deploy idm on RHEL 7
