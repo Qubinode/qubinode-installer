@@ -343,29 +343,6 @@ function pingreturnstatus() {
     fi
 }
 
-openshift4_idm_health_check () {
-    IDM_IN_GOOD_HEALTH=ready
-    
-    if [[ ! -f $idm_vars_file ]]; then
-      IDM_IN_GOOD_HEALTH="not ready"
-    fi
-    
-    idm_ipaddress=$(cat ${idm_vars_file} | grep idm_server_ip: | awk '{print $2}')
-    if ! pingreturnstatus ${idm_ipaddress}; then
-      IDM_IN_GOOD_HEALTH="not ready"
-    fi
-
-    if dig +short @${idm_ipaddress} ${prefix}-${idm_server_name}.${domain} > /dev/null 2>&1
-    then
-        dns_query=$(dig +short @${idm_ipaddress} ${prefix}-${idm_server_name}.${domain})
-    fi
-       
-    if echo $dns_query | grep -q 'no servers could be reached'
-    then
-          IDM_IN_GOOD_HEALTH="not ready"
-    fi
-}
-
 
 function ping_openshift4_nodes () {
 #TODO: validate if this funciton is still need
