@@ -31,7 +31,7 @@ rhsm_reg_method: ""
 # Ansible 2.9 on rhel 7  rhel-7-server-ansible-2.9-rpms
 rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
 rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
-ansible_version: 2.9.7
+ansible_version: 2.9.10
 ansible_release: 2.9
 rhel8_version: 8.2
 rhel7_version: 7.8
@@ -62,6 +62,7 @@ public_domain: "{{ domain }}"
 
 qubinode_installer_setup_completed: no
 qubinode_installer_rhsm_completed: no
+user_input_complete: no
 qubinode_installer_ansible_completed: no
 qubinode_base_reqs_completed: no
 
