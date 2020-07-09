@@ -254,6 +254,19 @@ setup_download_options () {
         installer_artifacts_msg
         exit 1
     fi
+
+    # Ensure qcow image is copied to the libvirt directory
+    if sudo test ! -f "${libvirt_dir}/${artifact_qcow_image}"
+    then
+        if [ -f "${project_dir}/${artifact_qcow_image}" ]
+        then
+            sudo cp "${project_dir}/${artifact_qcow_image}"  "${libvirt_dir}/${artifact_qcow_image}"
+        else
+            echo "${artifact_qcow_image} not found on machine please copy over "
+            exit 1
+        fi
+    fi
+
 }
 
 function installer_artifacts_msg () {
