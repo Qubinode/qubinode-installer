@@ -1,5 +1,58 @@
 # Qubinode Openshift Cluster Operations 
 
+The cluster is deployed with a DNS server by default to provide DNS resolution. You will have
+to point to the DNS server running on the Qubinode in order to access your cluster.
+
+## Get the IP address of the dns server
+
+```
+./qubinode-installer -p idm -m status
+```
+
+Should return some similar to this:
+
+```
+     IdM server is installed
+   ****************************************************
+    Webconsole: https://qbn-dns01.lab.example/ipa/ui/
+    IP Address: 192.168.11.13
+    Username: admin
+    Password: the vault variable admin_user_password
+
+    Run: ansible-vault edit
+```
+
+### Option 1: Update /etc/resolv.conf
+
+**Manually**
+
+Edit /etc/resolv.conf and add the ip address of the IdM server.
+
+```
+sudo vi /etc/resolv.conf
+```
+
+The result should be:
+
+```
+search lab.example
+nameserver 192.168.11.13
+```
+
+**Using a script**
+
+```
+curl -OL https://raw.githubusercontent.com/Qubinode/qubinode-installer/master/lib/qubinode_dns_configurator.sh
+chmod +x qubinode_dns_configurator.sh
+./qubinode_dns_configurator.sh idm_server_ip openshift_url
+```
+
+### Option 2: Have your home router or NetworkManager forward DNS queries
+
+If your home router is built on openwrt or uses dnsmasq for DNS, you can have it forward all dns entries for your OKD domain to the IdM server.
+
+You can also do the same thing with [NetworkManager](https://fedoramagazine.org/using-the-networkmanagers-dnsmasq-plugin/).
+
 ## Cluster
 
 **Tear down the cluster**
