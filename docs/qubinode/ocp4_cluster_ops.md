@@ -55,6 +55,8 @@ You can also do the same thing with [NetworkManager](https://fedoramagazine.org/
 
 ## Cluster
 
+The examples below assume you have ocp4 deployed. If you have deployed okd4, just replace ocp4 with okd4.
+
 **Tear down the cluster**
 
 This will remove the cluster, this includes all RHCOS vms and removing dns entries.

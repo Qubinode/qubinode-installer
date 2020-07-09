@@ -36,10 +36,11 @@ The install will prompt with for input, one of those input is the **Custom Clust
 You can just choose option 7 to continue with the default deployment as described in the above diagram.
 Or you can choose any of the other options to deploy a different size cluster.
 
-#### Other options
+#### Deploy the lastest OKD4
 You can deploy the latest release of OKD4 and use the latest Fedora CorOS by following the steps below before running the qubinode-installer.
 
 **Get the lastest OKD4 release name**
+
 Grab the release name from the [okd Github](https://github.com/openshift/okd/releases).
 
 Then follow the steps below.
