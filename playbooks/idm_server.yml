@@ -48,18 +48,19 @@
       set_fact:
         rhsm_repos: [ "{{ idm_repos_7 }}" ]
       when: (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '7')
+
     - name: ensure system is registered to Red Hat
       #vars:
         #rhsm_repos: "{{ idm_repos }}"
       include_role:
         name: swygue-redhat-subscription
-      when: not idm_is_installed
+      when: not idm_is_installed or force_idm_redeployment|bool
       tags: [always]
 
     ###############################################################
     - name: deploy idm on RHEL 8
       when:
-        - not idm_is_installed
+        - not idm_is_installed or force_idm_redeployment|bool
         - (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '8')
       block:
 
@@ -90,7 +91,7 @@
     ###############################################################
     - name: deploy idm on RHEL 7
       when:
-        - not idm_is_installed
+        - not idm_is_installed or force_idm_redeployment
         - (ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == '7')
       block:
 
@@ -173,5 +174,5 @@
           search {{ search_domains  | first }}
           nameserver {{ idm_server_ip }}
         dest: /etc/resolv.conf
-      when: not vm_teardown|bool and idm_is_installed|bool
+      when: not idm_is_installed|bool or force_idm_redeployment|bool and not vm_teardown|bool
       delegate_to: 127.0.0.1

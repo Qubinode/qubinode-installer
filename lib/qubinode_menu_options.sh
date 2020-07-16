@@ -6,7 +6,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd3 ocp3 ocp4 satellite idm kvmhost tower"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -17,7 +17,6 @@ function qubinode_product_deployment () {
               then
                   openshift4_server_maintenance
               else
-                  test -f ${project_dir}/pull-secret.txt || echo '{"auths":{"fake":{"auth": "bar"}}}' > ${project_dir}/pull-secret.txt
                   ASK_SIZE=true
                   qubinode_deploy_ocp4
               fi
