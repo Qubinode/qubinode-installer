@@ -1,16 +1,17 @@
-display_openshift_msg_okd3 () {
+display_openshift_msg_okd4 () {
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}OKD: The Origin Community Distribution of Kubernetes (OKD)${txend}${end}"
     printf "%s\n" "    OKD is the Origin community distribution of Kubernetes optimized for "
     printf "%s\n" "    continuous application development and multi-tenant deployment."
-    printf "%s\n\n" "    Hardware profiles are defined as:"
-    display_hardware_profile_msg
     printf "%s\n\n" "  ${yel}****************************************************************************${end}"
 
     confirm "  Do you want to proceed? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        qubinode_autoinstall_okd3
+        product_opt=okd4
+        ASK_SIZE=false
+        setup_download_options
+        qubinode_deploy_ocp4
     else
         display_other_options
     fi
@@ -60,10 +61,9 @@ display_openshift_msg_ocp4 () {
 
 display_other_options () {
     printf "%s\n\n" ""
+    other_options=("OKD4 - ${cyn}Origin Community Distribution${end}" "Tower - ${cyn}Ansible Tower${end}" "IdM - ${cyn}Red Hat Identity Management${end}" "Display the help menu" "Exit the menu")
     #other_options=("${cyn}OCP4${end} - OpenShift 4" "${cyn}OKD3${end} - Origin Community Distribution" "${cyn}Tower${end} - Ansible Tower" "${cyn}Satellite${end} - Red Hat Satellite Server" "${cyn}IdM${end} - Red Hat Identity Management" "${cyn}Display the help menu${end}")
 
-    other_options=("IdM - Red Hat Identity Management" "Display the help menu")
-    #other_options=("Tower - Ansible Tower" "Satellite - Red Hat Satellite Server" "IdM - Red Hat Identity Management" "Display the help menu")
 
     createmenu "${other_options[@]}"
     result=($(echo "${selected_option}"))
@@ -71,25 +71,27 @@ display_other_options () {
     if [ "A${result}" == "ADisplay" ]
     then
         display_help
-    elif [ "A${result}" == "AOCP3" ]
+    elif [ "A${result}" == "AExit" ]
     then
-      CHECK_PULL_SECRET=no
-      display_openshift_msg_ocp3
-      qubinode_autoinstall_openshift
-    elif [ "A${result}" == "AOKD3" ]
+        exit 0
+    elif [ "A${result}" == "AOKD4" ]
     then
-      display_openshift_msg_okd3
-      qubinode_autoinstall_okd3
+        display_openshift_msg_okd4
     elif [ "A${result}" == "ATower" ]
     then
-        CHECK_PULL_SECRET=no
-        setup_download_options
-        qubinode_deploy_tower
-    elif [ "A${result}" == "ASatellite" ]
-    then
-        CHECK_PULL_SECRET=no
-        setup_download_options
-        qubinode_deploy_satellite
+        printf "%s\n" "        ${yel}********************************************${end}"
+        printf "%s\n" "        ${cyn}${txb}Install Red Hat Ansible Tower${txend}${end}"
+        printf "%s\n\n" "        ${yel}*******************************************${end}"
+        confirm "  Do you want to proceed? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            CHECK_PULL_SECRET=no
+            setup_download_options
+            download_files
+            qubinode_deploy_tower
+        else
+            display_other_options
+        fi
     elif [ "A${result}" == "AIdM" ]
     then
         CHECK_PULL_SECRET=no

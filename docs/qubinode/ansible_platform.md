@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Refer to the [Getting Started Guide](../README.md) to ensure RHEL 7 or RHEL 8 is installed.
+Refer to the [Getting Started Guide](../README.md) to ensure RHEL 8 is installed.
 There is also a dependancy on IdM as a dns server, refer to the [IdM install](idm.md).
 
 #### Get a Red Hat Ansible Automation Platform license 

@@ -24,9 +24,9 @@ tower_pool_id: ""
 rhsm_pool_ids: "{{ tower_pool_id | default('') }}"
 
 tower_repos:
-  - rhel-7-server-rpms
-  - rhel-server-rhscl-7-rpms
-  - rhel-7-server-ansible-2.9-rpms
+  - rhel-8-for-x86_64-baseos-rpms
+  - rhel-8-for-x86_64-appstream-rpms
+  - ansible-2.9-for-rhel-8-x86_64-rpms
 
 tower_installer_repo: 'https://releases.ansible.com/ansible-tower/setup'
 tower_version: '3.7.0-4'
