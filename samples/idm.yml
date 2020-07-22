@@ -60,7 +60,7 @@ idm_repos_8:
   - rhel-8-for-x86_64-baseos-rpms
   - rhel-8-for-x86_64-appstream-rpms
 ipaserver_allow_zone_overlap: "{{ idm_zone_overlap }}"
-ipaserver_reverse_zones: "{{ idm_reverse-zones }}"
+ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
 
 #########################
 # IdM on RHEL 7 attributes

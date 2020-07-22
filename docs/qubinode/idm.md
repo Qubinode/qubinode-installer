@@ -20,7 +20,7 @@ These values are either set during the install or can be set by the user:
 The IdM server can be deployed by executing.
 
 ```
-./qubinode-installer -m deploy_dns
+./qubinode-installer -m idm
 ```
 
 This in turn executes the function **qubinode_vm_manager** which then excutes the following:
