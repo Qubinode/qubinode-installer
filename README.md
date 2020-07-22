@@ -15,8 +15,11 @@ Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a 
 
 The qubinode-installer can deploy a 3 node cluster on a system with 32GiB memory.
 For the best possible experince 128 GiB of memory is recommended. This will allow
-for the default deployment of a cluster with 3 masters and 3 workers.
+for the default deployment of a cluster with 3 controlplane and 3 computes.
 
+**Software**
+* Red Hat Enteprise Linux 8.2 installed
+* or Red Hat Enteprise Linux 7.8 installed
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
@@ -24,25 +27,13 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4     | 2.9               | 2.4 |
+|     Release 2.4.1    | 2.9               | 2.4.1 |
 
-### Features in v2.4 RC Version
-
-New Features |
--- |
-OpenShift 4.4.x |
-OpenShift 4 Ansible Role  |
-NFS Provisioner Role |
-Ansible 2.9 Compatibility  |
-local storage support  |
-Custom VM support  |
-OCP4 Cluster Shutdown |
-OCP4 Cluster Startup |
-OCP4 Cluster Verification  |
 
 ## Deploying a OpenShift cluster
 
 - [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
+- [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
@@ -70,7 +61,7 @@ _Ansible_
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
-* [Qubinode WorkFlow Process](docs/qubinode/qubinode_git_branching_model.md)  
+* [Qubinode WorkFlow Process](docs/CONTRIBUTING.md)  
 * [Testing and Validation](test/README.md)  
 
 ## Support
@@ -78,10 +69,20 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 
 ## Known issues
 
+## Qubinode Dev Branch for next release
+Feature  |  Status
+--|---
+Ansible Tower | Testing |  
+Red Hat Satellite Server  | In progress|
+RHEL 8.x Support  | In progress|
+OKD 4.x Support  | Testing/Development |
+OCS Support |  In progress  |   
+Cockpit Integration | Not Started
+
 ## Roadmap
 * OCP 4.x Container Native Storage
 * OCP 4.x on RHEV
-* Libvirt with KVM  OCP- (Experimental)
+* Libvirt with KVM  OCP - (Experimental)
 * OpenWrt Router Support - (Experimental)
 
 ## Acknowledgments

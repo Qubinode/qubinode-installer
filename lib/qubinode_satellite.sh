@@ -136,7 +136,7 @@ function qubinode_install_satellite () {
             #rintf "%s\n" " You can also specefiy a alternate manifest byt edit playbooks/vars/satellite_server.yml"
             exit
         fi
-        qubinode_installer_setup
+        qubinode_setup
         ask_user_input
         qubinode_vm_deployment_precheck
 

@@ -18,7 +18,7 @@ inventory_destination: "{{ inventory_dir }}"
 
 product: "{{ openshift_product }}"
 preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
-openshift_web_console_url: "https://{{preappend_host_name}}-master01.{{domain}:8443"
+openshift_web_console_url: "https://{{preappend_host_name}}-ctrlplane01.{{domain}:8443"
 accept_openshift_release: false
 openshift_release: "3.11"
 openshift_image_tag: v3.11.170

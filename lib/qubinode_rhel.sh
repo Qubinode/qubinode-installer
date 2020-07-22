@@ -3,6 +3,7 @@ function qubinode_rhel () {
     setup_variables
     RHEL_VM_PLAY="${project_dir}/playbooks/rhel.yml"
     rhel_vars_file="${project_dir}/playbooks/vars/rhel.yml"
+    rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 
 
     product_in_use=rhel
@@ -29,7 +30,7 @@ function qubinode_rhel () {
     then
         rhel_release="$release"
     else
-        rhel_release=7
+        rhel_release=${rhel_major}
     fi
 
     if [ "A${name}" != "A" ]
@@ -79,7 +80,6 @@ function qubinode_rhel () {
         rhel_major=8
         qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     else
-        rhel_major=7
         qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     fi
 
