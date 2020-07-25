@@ -3,6 +3,7 @@
   hosts: ipaserver
   remote_user: admin
   become: true
+  gather_facts: true
   vars_files:
     - vars/all.yml
     - vars/kvm_host.yml

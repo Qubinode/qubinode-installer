@@ -146,6 +146,4 @@ idm_users:
    telephonenumber: []
    sshpubkey:
      - "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-     #- "{{ lookup('file', 'files/'+ item.username + '.key.pub') }}"
    update_password: "{{ update_idm_user_pass }}"
-
