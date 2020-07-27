@@ -64,7 +64,7 @@
                 dn: {{ openshift_binddn }}
                 add:objectclass:account
                 add:objectclass:simplesecurityobject
-                add:uid:gitlabbdn
+                add:uid:{{ openshift_bind_user }}
                 add:userPassword: {{ openshift_binddn_password }}
                 add:passwordExpirationTime: {{ openshift_binddn_password_expiration }}
                 add:nsIdleTimeout:0
