@@ -127,3 +127,9 @@ The value for **count** can be 1-10. The count is from 0-9, a count value of 10 
 ```shell
 ./qubinode-installer -p ocp4 -m remove-compute -a count=1
 ```
+
+**Configure 20 users on OpenShift using .htaccess**
+```
+sudo pip3 install passlib
+ansible-playbook  -vv playbooks/ocp_htpasswd_users.yml
+```
