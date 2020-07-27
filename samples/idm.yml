@@ -77,3 +77,73 @@ ipa_host: "{{ idm_hostname }}.{{ domain }}"
 
 # Set this if you want the playbook to run eventhough IdM is already deployed
 force_idm_redeployment: false
+
+###############
+# Populate IdM
+
+# Bulk Sample Accounts
+create_student_accounts: yes
+total_users: 4
+idm_group_desc: "A group of students"
+idm_group: student
+idm_group_state: present
+idm_group_type_posix: no
+idm_group_users: []
+idm_user_generated_prefix: student
+user_name_format: "{{ idm_user_generated_prefix }}%02d"
+idm_user_pass_expiration: 20290119235959
+idm_user_state: present
+idm_user_shell: "/usr/bin/bash"
+idm_user_sn: "learner"
+update_idm_user_pass: on_create
+
+# openshift bind user
+openshift_binddn_password: "{{ ocp_bind_pass | default('') }}"
+openshift_bind_user: openshiftbind
+openshift_binddn_password_expiration: 20380119031407Z
+idm_users:
+ - name: clusteradmin
+   groups:
+     - openshift-admin
+     - openshiftusers
+   password: clusteradmin
+   givenname: OpenShift
+   sn: Clusteradmin
+   state: present
+   loginshell: /usr/sbin/nologin
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey: []
+   update_password: "{{ update_idm_user_pass }}"
+ - name: clusterviewer
+   groups:
+     - openshift-viewer
+     - openshiftusers
+   password: clusterviewer
+   givenname: OpenShift
+   sn: Clusterviewer
+   state: present
+   loginshell: /usr/sbin/nologin
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey: []
+   update_password: "{{ update_idm_user_pass }}"
+ - name: "{{ admin_user }}"
+   groups:
+     - satellite-admin
+     - tower-admin
+     - openshift-admin
+     - openshiftusers
+   password: "{{ admin_user }}"
+   givenname: "Admin"
+   sn: User
+   state: present
+   loginshell: /usr/bin/bash
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey:
+     - "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+   update_password: "{{ update_idm_user_pass }}"
