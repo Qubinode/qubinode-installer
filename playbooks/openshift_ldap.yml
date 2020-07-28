@@ -135,7 +135,7 @@
                   ca:
                     name: ca-config-map
                   insecure: false
-                  url: "ldap://{{ ipa_host }}/{{ openshift_base_dn }}?uid"
+                  url: "ldaps://{{ ipa_host }}/{{ openshift_base_dn }}?uid"
       shell: |
         cat > /tmp/ldap_csr <<EOF
         {{ ldap_cr }}
