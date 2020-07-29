@@ -82,6 +82,7 @@ force_idm_redeployment: false
 # Populate IdM
 
 # Bulk Sample Accounts
+create_students: false
 create_student_accounts: yes
 total_users: 4
 idm_group_desc: "A group of students"
@@ -128,7 +129,7 @@ idm_users:
      - openshift-admins
      - openshift-users
    password: clusteradmin
-   givenname: OpenShift
+   givenname: Qubinode1
    sn: Clusteradmin
    state: present
    loginshell: /usr/sbin/nologin
@@ -142,7 +143,7 @@ idm_users:
      - openshift-viewers
      - openshift-users
    password: clusterviewer
-   givenname: OpenShift
+   givenname: Qubinode2
    sn: Clusterviewer
    state: present
    loginshell: /usr/sbin/nologin
@@ -151,7 +152,7 @@ idm_users:
    telephonenumber: []
    sshpubkey: []
    update_password: "{{ update_idm_user_pass }}"
- - name: "{{ admin_user }}"
+ - name: "idm_{{ admin_user }}"
    groups:
      - satellite-admins
      - tower-admins

@@ -88,6 +88,21 @@ function qubinode_deploy_ocp4 () {
     # Deploy IdM Server
     qubinode_deploy_idm
 
+    # Test idm server 
+    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
+    suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+    idm_srv_fqdn="$prefix-$suffix.$domain"
+
+    printf "%s\n" "  ${cyn}Checking dns status against ${idm_srv_fqdn}${end}"
+    printf "%s\n\n" "  ${cyn}*********************************${end}"
+    if [ "$(dig +short  ${idm_srv_fqdn})" ];
+    then 
+      echo "DNS found in resolv.conf."
+    else
+      idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+      update_resolv_conf ${idm_server_ip}
+    fi 
+
     # Deploy OCP4
     ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }'
     RESULT=$?
