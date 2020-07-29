@@ -86,27 +86,48 @@ create_students: false
 create_student_accounts: yes
 total_users: 4
 idm_group_desc: "A group of students"
-idm_group: student
+idm_group: "students"
 idm_group_state: present
-idm_group_type_posix: no
-idm_group_users: []
-idm_user_generated_prefix: student
+idm_user_generated_prefix: "student"
+idm_user_sn: "learner"
 user_name_format: "{{ idm_user_generated_prefix }}%02d"
+
+# Default user attributes
 idm_user_pass_expiration: 20290119235959
 idm_user_state: present
 idm_user_shell: "/usr/bin/bash"
-idm_user_sn: "learner"
 update_idm_user_pass: on_create
+idm_group_type_posix: no
 
 # openshift bind user
 openshift_binddn_password: "{{ ocp_bind_pass | default('') }}"
 openshift_bind_user: openshiftbind
 openshift_binddn_password_expiration: 20380119031407Z
+
+# List of IdM groups to create
+idm_groups:
+  - name: openshift-users
+    desc: "Users allowed to log into OpenShift Container Platform"
+  - name: openshift-admins
+    desc: "OpenShift Administrators"
+  - name: openshift-viewers
+    desc: "OpenShift Viewers"
+  - name: satellite-users
+    desc: "Users allowed to log into Red Hat Satellite"
+  - name: satellite-admins
+    desc: "Red Hat Satellite administrators"
+  - name: tower-users
+    desc: "Users allowed to log into Red Hat Ansible Tower"
+  - name: tower-admins
+    desc: "Red Hat Ansible Tower administrators"
+
+
+# List of IdM users to create
 idm_users:
  - name: clusteradmin
    groups:
-     - openshift-admin
-     - openshiftusers
+     - openshift-admins
+     - openshift-users
    password: clusteradmin
    givenname: Qubinode1
    sn: Clusteradmin
@@ -119,8 +140,8 @@ idm_users:
    update_password: "{{ update_idm_user_pass }}"
  - name: clusterviewer
    groups:
-     - openshift-viewer
-     - openshiftusers
+     - openshift-viewers
+     - openshift-users
    password: clusterviewer
    givenname: Qubinode2
    sn: Clusterviewer
@@ -133,11 +154,11 @@ idm_users:
    update_password: "{{ update_idm_user_pass }}"
  - name: "idm_{{ admin_user }}"
    groups:
-     - satellite-admin
-     - tower-admin
-     - openshift-admin
-     - openshiftusers
-   password: "idm_{{ admin_user }}"
+     - satellite-admins
+     - tower-admins
+     - openshift-admins
+     - openshift-users
+   password: "{{ admin_user }}"
    givenname: "Admin"
    sn: User
    state: present
