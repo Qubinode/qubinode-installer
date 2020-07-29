@@ -1103,6 +1103,6 @@ function update_resolv_conf(){
     echo "nameserver ${1} found"
     cat /etc/resolv.conf
   else
-    sudo sed -i '/domain.*/a\nameserver '${1}'' /etc/resolv.conf
+    sudo sed -i 's/nameserver.*/nameserver '${1}'/' /etc/resolv.conf
   fi
 }
