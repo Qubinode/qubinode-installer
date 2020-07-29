@@ -266,7 +266,6 @@ setup_download_options () {
             exit 1
         fi
     fi
-
 }
 
 function installer_artifacts_msg () {

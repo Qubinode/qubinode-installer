@@ -42,7 +42,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_satellite
               else
-                  echo "Installing Satellite"
+                  rhel_major=7
                   CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files

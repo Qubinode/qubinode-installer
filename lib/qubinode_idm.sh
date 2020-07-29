@@ -317,8 +317,11 @@ function qubinode_teardown_idm () {
 function qubinode_deploy_idm_vm () {
     if grep deploy_idm_server "${idm_vars_file}" | grep -q yes
     then
-        qubinode_vm_deployment_precheck
         isIdMrunning
+        if [ "A${idm_running}" == "Afalse" ]
+        then
+            qubinode_setup
+        fi
 
         IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
         SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
