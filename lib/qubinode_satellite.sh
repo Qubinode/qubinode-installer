@@ -69,59 +69,25 @@ function satellite_configure_msg () {
     printf " ${yel}*******************************************************************************${end}\n\n"
 }
 
-function qubinode_setup_satellite () {
-    CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
-    ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
+function qubinode_configure_satellite () {
     local error_msg="${red}The configuration of the Satellite server was unsuccessful.${end}"
     local success_msg="${cyn}The configuration of the Satellite server was successful.${end}"
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" == "AYES" ]
+    ansible-galaxy collection install -r playbooks/requirements.yml
+    pip install --user apypie
+    pip install --user ipaddress
+    pip install --user PyYAML
+
+    # configure satellite
+    if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml
+    #ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml -e "install_apypie=yes"
     then
-        if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml
-        then
-            SATELLITE_SETUP=success
-            satellite_server_setup_msg="${success_msg}"
-        else
-            SATELLITE_SETUP=failed
-            satellite_server_setup_msg="${error_msg}"
-        fi
+        SATELLITE_SETUP=success
+        satellite_server_setup_msg="${success_msg}"
+        satellite_configure_msg
     else
         SATELLITE_SETUP=failed
         satellite_server_setup_msg="${error_msg}"
-        printf "%s\n" " The version of Ansible needs to be at least $ANSIBLE_VERSION for setting up Satellite."
-        printf "%s\n" " Your current Ansible version is $CURRENT_ANSIBLE_VERSION."
-
-        if ! rpm -qa | grep -q rh-python36-python-pip
-        then
-            sudo subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-server-rhscl-7-rpms
-            sudo yum -y install rh-python36 rh-python36-python-pip
-        fi
-
-        if [ ! -f ${project_dir}/../.ansible/collections/ansible_collections/theforeman/foreman/MANIFEST.json ]
-        then
-            test -d "${project_dir}/python-env" || mkdir "${project_dir}/python-env"
-            cd "${project_dir}/python-env"
-            source /opt/rh/rh-python36/enable
-            python3 -m venv ansible2.9.5
-            source ./ansible2.9.5/bin/activate
-            pip install --upgrade pip setuptools
-            pip install ansible==2.9.5
-            pip install apypie
-            pip install ipaddress
-            pip install PyYAML
-            ansible-galaxy collection install theforeman.foreman
-            deactivate
-        fi
-
-        cd "${project_dir}"
-        source "${project_dir}/python-env/ansible2.9.5/bin/activate"
-        if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml -e "install_apypie=yes"
-        then
-            satellite_configure_msg
-        else
-            printf "%s\n" "The configuration of Satellite was not completely successful."
-        fi
-        deactivate
     fi
 }
 
@@ -201,8 +167,8 @@ function qubinode_install_satellite () {
                 ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
                 update_satellite_ip
                 ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-                #qubinode_setup_satellite
-                #satellite_install_msg
+                #qubinode_configure_satellite
+                satellite_install_msg
             elif [ "A${SATELLITE_SERVER_DNS}" == "A" ]
             then
             # Deploy the satellite server VM if the ip address
@@ -211,8 +177,8 @@ function qubinode_install_satellite () {
                 ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                 update_satellite_ip
                 ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-                #qubinode_setup_satellite
-                #satellite_install_msg
+                qubinode_configure_satellite
+                satellite_install_msg
             else
                 # need to add a check to verify login to the satellite server then
                 # and if not run other steps
@@ -220,16 +186,16 @@ function qubinode_install_satellite () {
                 ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                 update_satellite_ip
                 ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-                #qubinode_setup_satellite
-                #satellite_install_msg
+                qubinode_configure_satellite
+                satellite_install_msg
             fi
         else
             echo "Deploy Satellite VM and create DNS records"
             ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
             update_satellite_ip
             ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
-            #qubinode_setup_satellite
-            #satellite_install_msg
+            qubinode_configure_satellite
+            satellite_install_msg
         fi
     else
         exit

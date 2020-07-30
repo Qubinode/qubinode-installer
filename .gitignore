@@ -1,4 +1,6 @@
 ansible.log
+playbooks/collections/*
+!playbooks/collections/.gitkeep
 playbooks/roles/*
 !playbooks/roles/.gitkeep
 playbooks/vars/*
