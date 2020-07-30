@@ -1,0 +1,131 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: ldap-group-syncer
+  namespace: openshift-authentication
+  labels:
+    app: cronjob-ldap-group-sync
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ldap-group-syncer
+  labels:
+    app: cronjob-ldap-group-sync
+rules:
+  - apiGroups:
+      - ''
+      - user.openshift.io
+    resources:
+      - groups
+    verbs:
+      - get
+      - list
+      - create
+      - update
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ldap-group-syncer
+  labels:
+    app: cronjob-ldap-group-sync
+subjects:
+  - kind: ServiceAccount
+    name: ldap-group-syncer
+    namespace: openshift-authentication
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ldap-group-syncer
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: ldap-group-syncer
+  namespace: openshift-authentication
+  labels:
+    app: cronjob-ldap-group-sync
+data:
+  ldap-group-sync.yaml: |
+    kind: LDAPSyncConfig
+    apiVersion: v1
+    url: ldaps://qbn-dns01.qubinode-lab.com
+    insecure: false
+    bindDN: uid=openshiftbind,cn=openshift-users,dc=qubinode-lab,dc=com
+    bindPassword:
+      file: "/etc/secrets/bindPassword"
+    ca: /etc/ldap-ca/ca.crt
+    rfc2307:
+        groupsQuery:
+            baseDN: "ou=profile,dc=qubinode-lab,dc=com"
+            scope: sub
+            filter: "(objectClass=groupOfMembers)"
+            derefAliases: never
+            pageSize: 0
+        groupUIDAttribute: dn 
+        groupNameAttributes: [ cn ] 
+        groupMembershipAttributes: [ member ]
+        usersQuery:
+            baseDN: "ou=profile,dc=qubinode-lab,dc=com"
+            scope: sub
+            derefAliases: never
+            pageSize: 0
+        userUIDAttribute: dn 
+        userNameAttributes: [ uid ]
+        tolerateMemberNotFoundErrors: false
+        tolerateMemberOutOfScopeErrors: false
+---
+kind: CronJob
+apiVersion: batch/v1beta1
+metadata:
+  name: ldap-group-syncer
+  namespace: openshift-authentication
+  labels:
+    app: cronjob-ldap-group-sync
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app: cronjob-ldap-group-sync
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: cronjob-ldap-group-sync
+        spec:
+          containers:
+            - name: ldap-group-sync
+              image: "openshift/origin-cli:latest"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - oc adm groups sync --sync-config=/etc/config/ldap-group-sync.yaml --confirm
+              volumeMounts:
+                - mountPath: "/etc/config"
+                  name: "ldap-sync-volume"
+                - mountPath: "/etc/secrets"
+                  name: "ldap-bind-password"
+                - mountPath: "/etc/ldap-ca"
+                  name: "ldap-ca"
+          volumes:
+            - name: "ldap-sync-volume"
+              configMap:
+                name: "ldap-group-syncer"
+            - name: "ldap-bind-password"
+              secret:
+                secretName: "v4-0-config-user-idp-0-bind-password"
+            - name: "ldap-ca"
+              configMap:
+                name: "v4-0-config-user-idp-0-ca"
+          restartPolicy: "Never"
+          terminationGracePeriodSeconds: 30
+          activeDeadlineSeconds: 500
+          dnsPolicy: "ClusterFirst"
+          serviceAccountName: "ldap-group-syncer"
+          serviceAccount: "ldap-group-syncer"

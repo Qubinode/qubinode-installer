@@ -129,7 +129,7 @@ idm_users:
      - openshift-admins
      - openshift-users
    password: clusteradmin
-   givenname: Qubinode1
+   givenname: OpenShift
    sn: Clusteradmin
    state: present
    loginshell: /usr/sbin/nologin
@@ -143,7 +143,7 @@ idm_users:
      - openshift-viewers
      - openshift-users
    password: clusterviewer
-   givenname: Qubinode2
+   givenname: OpenShift
    sn: Clusterviewer
    state: present
    loginshell: /usr/sbin/nologin
@@ -152,14 +152,14 @@ idm_users:
    telephonenumber: []
    sshpubkey: []
    update_password: "{{ update_idm_user_pass }}"
- - name: "idm_{{ admin_user }}"
+ - name: "qubinode_{{ admin_user }}"
    groups:
      - satellite-admins
      - tower-admins
      - openshift-admins
      - openshift-users
    password: "{{ admin_user }}"
-   givenname: "Admin"
+   givenname: OpenShift
    sn: User
    state: present
    loginshell: /usr/bin/bash
