@@ -114,6 +114,7 @@
       get_url:
         url: https://{{ ipa_host }}/ipa/config/ca.crt
         dest: /tmp/idm_ca.crt
+        validate_certs: false
       when: ca_config_map.rc != 0
 
     - name: create openshift ldap secret
