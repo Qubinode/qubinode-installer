@@ -19,6 +19,7 @@ $ ipa user-show student00
 ```
 
 ## Configure OpenShift 
+
 **run the playbook**
 ```
 ansible-playbook -v playbooks/openshift_ldap.yml
