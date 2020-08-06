@@ -115,30 +115,6 @@
           failed_when: False
 
     ###############################################################
-    - name: post IDM server install check if IDM is answering
-      vars:
-        vm_name: "{{ dns_server_vm.dns_name }}"
-      uri:
-        url: "https://{{ vm_name  }}.{{ domain }}/ipa/ui"
-        user: "{{ idm_admin_user }}"
-        password: "{{ idm_admin_password }}"
-        force_basic_auth: yes
-      register: idm_is_installed
-      ignore_errors: yes
-      tags: [always]
-
-    - name: set idm_is_installed fact
-      set_fact:
-        idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
-      tags: [always]
-
-    - name: fail playbook if IdM server is not installed
-      fail:
-        msg: |
-          The IDM server does not appear to have been installed.
-          Please re-run qubinode-installer or undeploy and start again.
-      when: not idm_is_installed|bool
-
     - name: ensure backup folder is created
       vars:
         ansible_python_interpreter: /usr/bin/python3
@@ -177,3 +153,27 @@
         dest: /etc/resolv.conf
       when: not idm_is_installed|bool or force_idm_redeployment|bool and not vm_teardown|bool
       delegate_to: 127.0.0.1
+
+    - name: post IDM server install check if IDM is answering
+      vars:
+        vm_name: "{{ dns_server_vm.dns_name }}"
+      uri:
+        url: "https://{{ vm_name  }}.{{ domain }}/ipa/ui"
+        user: "{{ idm_admin_user }}"
+        password: "{{ idm_admin_password }}"
+        force_basic_auth: yes
+      register: idm_is_installed
+      ignore_errors: yes
+      tags: [always]
+
+    - name: set idm_is_installed fact
+      set_fact:
+        idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
+      tags: [always]
+
+    - name: fail playbook if IdM server is not installed
+      fail:
+        msg: |
+          The IDM server does not appear to have been installed.
+          Please re-run qubinode-installer or undeploy and start again.
+      when: not idm_is_installed|bool
