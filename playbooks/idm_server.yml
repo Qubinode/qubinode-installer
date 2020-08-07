@@ -179,7 +179,8 @@
         dest: /etc/resolv.conf
         follow: yes
       when: not idm_is_installed|bool   
-
+      delegate_to: 127.0.0.1
+      
     - name: fail playbook if IdM server is not installed
       fail:
         msg: |
