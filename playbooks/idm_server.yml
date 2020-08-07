@@ -130,7 +130,6 @@
       stat:
         path: "{{ project_dir }}/backups/resolv.conf"
       register: resolv_backup
-      when:  idm_is_installed|bool
       delegate_to: 127.0.0.1
 
     - name: backup original /etc/resolv.conf file
