@@ -130,7 +130,6 @@
       stat:
         path: "{{ project_dir }}/backups/resolv.conf"
       register: resolv_backup
-      when:  idm_is_installed|bool
       delegate_to: 127.0.0.1
 
     - name: backup original /etc/resolv.conf file
@@ -140,7 +139,7 @@
         src: /etc/resolv.conf
         dest: "{{ project_dir }}/backups/resolv.conf"
         follow: yes
-      when: not vm_teardown|bool and not resolv_backup.stat.exists and idm_is_installed|bool
+      when: not vm_teardown|bool and not resolv_backup.stat.exists 
       delegate_to: 127.0.0.1
 
     - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
@@ -151,7 +150,7 @@
           search {{ search_domains  | first }}
           nameserver {{ idm_server_ip }}
         dest: /etc/resolv.conf
-      when: not idm_is_installed|bool or force_idm_redeployment|bool and not vm_teardown|bool
+      when: force_idm_redeployment|bool and not vm_teardown|bool
       delegate_to: 127.0.0.1
 
     - name: post IDM server install check if IDM is answering
