@@ -10,7 +10,7 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift Version
 ocp4_okd4: ocp4
-ocp4_release: 4.5.3
+ocp4_release: 4.5.4
 ocp4_image: 4.5.2
 
 # User info
@@ -21,7 +21,7 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 ########################
 # NFS Persistent Storage
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
-set_as_default: true        # set NFS as the default persistent storage
+set_as_default: false        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /export
 nfs_server_ip:  "{{ kvm_host_ip }}"
@@ -38,8 +38,28 @@ storage_local_storage: yes
 localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
-localstorage_block_disk: /dev/vdc
-localstorage_fs_disk: /dev/vdc
+localstorage_block_disk: 
+  - /dev/vdc
+  - /dev/vdd
+  - /dev/vde
+  - /dev/vdf
+  - /dev/vdg
+  - /dev/vdh
+  - /dev/vdi
+  - /dev/vdj
+  - /dev/vdk
+  - /dev/vdl
+localstorage_fs_disk: 
+  - /dev/vdc
+  - /dev/vdd
+  - /dev/vde
+  - /dev/vdf
+  - /dev/vdg
+  - /dev/vdh
+  - /dev/vdi
+  - /dev/vdj
+  - /dev/vdk
+  - /dev/vdl
 
 # configure OCP register
 configure_registry: true
@@ -65,7 +85,7 @@ compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
 compute_vdb_size: 10
-compute_vdc_size: 150
+compute_vdx_size: 10
 storage_hd_size: 120
 storage_vcpu: 8
 storage_vdb_size: 10
@@ -203,8 +223,35 @@ ocp4_instances:
       - size: "{{ compute_vdb_size }}G"
         name: vdb
         enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdc_size }}G"
+      - size: "{{ compute_vdx_size }}G"
         name: vdc
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdd
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vde
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdf
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdg
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdh
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdi
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdj
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdk
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdl
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker

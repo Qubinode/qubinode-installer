@@ -96,12 +96,12 @@ This will remove the cluster, this includes all RHCOS vms and removing dns entri
 
 **To configure localstorage**
 ```shell
-./qubinode-installer -p ocp4 -a storage=localstorage
+./qubinode-installer -p ocp4 -m storage -a storage=localstorage
 ```
 
 **To remove localstorage**
 ```shell
-./qubinode-installer -p ocp4 -a storage=localstorage-remove
+./qubinode-installer -p ocp4 -m storage -a storage=localstorage-remove
 ```
 
 ## Workers
