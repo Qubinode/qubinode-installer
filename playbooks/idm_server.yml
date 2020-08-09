@@ -115,6 +115,44 @@
           failed_when: False
 
     ###############################################################
+    - name: ensure backup folder is created
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+      file:
+        path: "{{ project_dir }}/backups"
+        state: directory
+        mode: '0755'
+      delegate_to: 127.0.0.1
+
+    - name: check if resolv.conf backup file exists
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+      stat:
+        path: "{{ project_dir }}/backups/resolv.conf"
+      register: resolv_backup
+      delegate_to: 127.0.0.1
+
+    - name: backup original /etc/resolv.conf file
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+      copy:
+        src: /etc/resolv.conf
+        dest: "{{ project_dir }}/backups/resolv.conf"
+        follow: yes
+      when: not vm_teardown|bool and not resolv_backup.stat.exists 
+      delegate_to: 127.0.0.1
+
+    - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+      copy:
+        content: |
+          search {{ search_domains  | first }}
+          nameserver {{ idm_server_ip }}
+        dest: /etc/resolv.conf
+      when: not force_idm_redeployment|bool and not vm_teardown|bool
+      delegate_to: 127.0.0.1
+
     - name: post IDM server install check if IDM is answering
       vars:
         vm_name: "{{ dns_server_vm.dns_name }}"
@@ -131,49 +169,20 @@
       set_fact:
         idm_is_installed: "{{ False if idm_is_installed.failed | default(False) or idm_is_installed.status != 200 else True }}"
       tags: [always]
-
+    
+    - name: Undo resolv.conf file change 
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+      copy:
+        src: "{{ project_dir }}/backups/resolv.conf"
+        dest: /etc/resolv.conf
+        follow: yes
+      when: not idm_is_installed|bool   
+      delegate_to: 127.0.0.1
+      
     - name: fail playbook if IdM server is not installed
       fail:
         msg: |
           The IDM server does not appear to have been installed.
           Please re-run qubinode-installer or undeploy and start again.
       when: not idm_is_installed|bool
-
-    - name: ensure backup folder is created
-      vars:
-        ansible_python_interpreter: /usr/bin/python3
-      file:
-        path: "{{ project_dir }}/backups"
-        state: directory
-        mode: '0755'
-      delegate_to: 127.0.0.1
-
-    - name: check if resolv.conf backup file exists
-      vars:
-        ansible_python_interpreter: /usr/bin/python3
-      stat:
-        path: "{{ project_dir }}/backups/resolv.conf"
-      register: resolv_backup
-      when:  idm_is_installed|bool
-      delegate_to: 127.0.0.1
-
-    - name: backup original /etc/resolv.conf file
-      vars:
-        ansible_python_interpreter: /usr/bin/python3
-      copy:
-        src: /etc/resolv.conf
-        dest: "{{ project_dir }}/backups/resolv.conf"
-        follow: yes
-      when: not vm_teardown|bool and not resolv_backup.stat.exists and idm_is_installed|bool
-      delegate_to: 127.0.0.1
-
-    - name: update KVM host /etc/resolv.conf to point to the IdM server {{ vm_name }}
-      vars:
-        ansible_python_interpreter: /usr/bin/python3
-      copy:
-        content: |
-          search {{ search_domains  | first }}
-          nameserver {{ idm_server_ip }}
-        dest: /etc/resolv.conf
-      when: not idm_is_installed|bool or force_idm_redeployment|bool and not vm_teardown|bool
-      delegate_to: 127.0.0.1
