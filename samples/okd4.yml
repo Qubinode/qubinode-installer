@@ -10,12 +10,12 @@ pull_secret: "{{ installation_working_dir }}/okd4-pull-secret.txt"
 
 # OpenShift/OKD Version
 ocp4_okd4: okd4
-ocp4_release: 4.5.0-0.okd-2020-06-29-110348-beta6
-ocp4_image: 4.4.3
+ocp4_release: 4.5.0-0.okd-2020-07-14-153706-ga
+ocp4_image: 4.4.15
 ocp4_release_url: "https://github.com/openshift/okd/releases/download/{{ ocp4_release }}"
 
 # OpenShift/OKD version numbers
-major_version: "32.20200615.3.0"  #e.g. 32.20200601.3.0
+major_version: "32.20200715.3.0"  #e.g. 32.20200601.3.0
 ocp4_dependencies_version: "{{ major_version }}"
 ocp4_image_version: "{{ major_version }}"
 
