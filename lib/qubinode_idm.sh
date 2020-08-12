@@ -284,7 +284,21 @@ function qubinode_idm_ask_ip_address () {
 
 
 function isIdMrunning () {
-    idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+     # Test idm server 
+    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
+    suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+    idm_srv_fqdn="$prefix-$suffix.$domain"
+
+    printf "%s\n" "  ${cyn}Checking dns status against ${idm_srv_fqdn}${end}"
+    printf "%s\n\n" "  ${cyn}*********************************${end}"
+    if [ "$(dig +short  ${idm_srv_fqdn})" ];
+    then 
+      echo "DNS found in resolv.conf."
+    else
+      idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
+      update_resolv_conf ${idm_server_ip}
+    fi 
+
     if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
     then
         idm_running=false
@@ -385,21 +399,6 @@ function qubinode_deploy_idm () {
 
     qubinode_deploy_idm_vm
     qubinode_install_idm
-
-    # Test idm server 
-    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
-    suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-    idm_srv_fqdn="$prefix-$suffix.$domain"
-
-    printf "%s\n" "  ${cyn}Checking dns status against ${idm_srv_fqdn}${end}"
-    printf "%s\n\n" "  ${cyn}*********************************${end}"
-    if [ "$(dig +short  ${idm_srv_fqdn})" ];
-    then 
-      echo "DNS found in resolv.conf."
-    else
-      idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-      update_resolv_conf ${idm_server_ip}
-    fi 
 }
 
 function qubinode_idm_maintenance () {
