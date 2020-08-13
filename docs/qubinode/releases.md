@@ -6,7 +6,7 @@
 https://github.com/Qubinode/qubinode-installer/releases
 
 
-**Qubinode v2.4.1 Release notes**
+**Qubinode v2.4.2 Release notes**
 * RHEL 8.2 Support
 * OpenShift sizing menu fixes
 * OpenShift 4.4.x
@@ -17,7 +17,7 @@ https://github.com/Qubinode/qubinode-installer/releases
 * Fixed IDM bugs
 * Ansible Tower Support
 
-**Qubinode 2.4.0 Release notes**
+**Qubinode 2.4.1 Release notes**
 * Move qubinode install options doc to qubinode/doc
 * Add link for main documentation to the qubinode install options
 * Fix search for existing qcow image
