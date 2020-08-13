@@ -216,10 +216,11 @@ function check_disk_size () {
     MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${vars_file}")
     STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
     PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
+    PREFIX=$(awk '/instance_prefix:/ {print $2}' "${vars_file}")
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
-    POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v qbn)
+    POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v $PREFIX)
     POOL_CAPACITY=$(sudo virsh pool-dumpxml "${POOL}"| grep capacity | grep -Eo "[[:digit:]]{1,100}")
     DISK=$(cat "${kvm_host_vars_file}" | grep kvm_host_libvirt_extra_disk: | awk '{print $2}')
 
@@ -326,4 +327,205 @@ function check_hardware_resources () {
     fi
 
     sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: "$PROFILE"/g" "${vars_file}"
+}
+
+function clean_up_stale_vms(){
+    KILLVM=true
+    stalemachines=$(sudo virsh list  --all | grep $1 | awk '{print $2}')
+    for vm in $stalemachines
+    do
+       KILLVM=false
+    done
+
+    if [[ $KILLVM == "true" ]]; then 
+        stale_vms=$(sudo ls "${libvirt_dir}/" | grep $1)
+        if [[ ! -z $stale_vms ]]; then 
+            for old_vm in $stale_vms
+            do
+            if [[ "$old_vm" == *${1}* ]]; then 
+                sudo rm  -f "${libvirt_dir}/$old_vm"
+            fi
+            done 
+        fi 
+    fi
+
+}
+
+function teardown_idm () {
+    if sudo virsh list --all | grep -q qbn-dns01
+    then
+        ./qubinode-installer -p idm -d
+    fi
+}
+
+function teardown_ocp3 () {
+    if sudo virsh list --all | grep -q qbn-ocp3-node01
+    then
+        ./qubinode-installer -p ocp3 -d
+    fi
+}
+
+function teardown_ocp4 () {
+    if sudo virsh list --all | grep -q ctrlplane-0
+    then
+        ./qubinode-installer -p ocp4 -d
+    fi
+}
+
+function teardown_tower () {
+    if sudo virsh list --all | grep -q tower
+    then
+        ./qubinode-installer -p tower -d
+    fi
+}
+
+function teardown_satellite () {
+    if sudo virsh list --all | grep -q tower
+    then
+        ./qubinode-installer -p satellite -d
+    fi
+}
+
+function isvmRunning () {
+    sudo virsh list |grep $vm|awk '/running/ {print $2}'
+}
+
+function forceVMteardown () {
+    for vm in $(sudo virsh list --name --all)
+    do
+        isvmRunning | while read VM
+        do
+            sudo virsh shutdown $vm
+            sleep 3
+        done
+        sudo virsh destroy $vm
+        sudo virsh undefine $vm --remove-all-storage
+    done
+}
+
+function removeStorage () {
+    #libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    while sudo systemctl list-units --type=service | grep -q libvirtd
+    do
+        sudo systemctl stop libvirtd
+    done
+
+    if ! sudo systemctl list-units --type=service | grep -q libvirtd
+    then
+        sudo umount /var/lib/libvirt/images
+        sudo vgremove --force -y vg_qubi
+    fi
+}
+
+rebuild_qubinode () {
+    printf "%s\n\n" ""
+    printf "%s\n" "   This will prepare your qubinode system for a reinstall or to be decommission."
+    confirm "${yel} Do you want to continue?${end} ${blu}yes/no ${end}"
+    if [ "A${response}" != "Ayes" ]
+    then
+        exit 1
+    else
+        teardown_idm
+        teardown_ocp4
+        teardown_tower
+        teardown_satellite
+        forceVMteardown
+        removeStorage
+        printf "%s\n" " ${yel}System is ready for rebuild${end}"
+        exit 0
+    fi
+}
+
+function qubinode_setup () {
+    # This functions gets your system ready for the first ansible playbook to be executed
+    # which is the playbooks/setup_kvmhost.yml.
+
+    # This variable is use to ensure this function isn't called inside of qubinode_base_requirements
+    running_qubinode_setup=yes
+
+    # Ensure configuration files from samples/ are copied to playbooks/vars/
+    qubinode_required_prereqs
+
+    # Ensure user is setup for sudoers
+    setup_sudoers
+
+    check_additional_storage
+    #ask_user_if_qubinode_setup
+
+    # load kvmhost variables
+    kvm_host_variables
+
+    # Start user input session
+    ask_user_input
+    setup_variables
+    setup_user_ssh_key
+    #ask_user_for_networking_info "${vars_file}"
+
+    # Ensure ./qubinode-installer -m rhsm is completed
+    if [ "A${rhsm_completed}" == "Ano" ]
+    then
+       qubinode_rhsm_register
+    fi
+
+    # Ensure ./qubinode-installer -m ansible is completed
+    if [ "A${ansible_completed}" == "Ano" ]
+    then
+       qubinode_setup_ansible
+    fi
+
+    # Ensure ./qubinode-installer -m host is completed
+    if [ "A${host_completed}" == "Ano" ]
+    then
+       qubinode_setup_kvm_host
+    fi
+
+    # Ensure RHSM cli is installed
+    install_rhsm_cli
+
+    sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
+    sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
+
+}
+
+function qubinode_base_requirements () {
+    # This function ensures all the minimal base requirements are met.
+    if [ "A${running_qubinode_setup}" != "Ayes" ]
+    then
+        # Ensure configuration files from samples/ are copied to playbooks/vars/
+        qubinode_required_prereqs
+
+        # Ensure user is setup for sudoers
+        setup_sudoers
+
+        check_additional_storage
+        #ask_user_if_qubinode_setup
+
+        # load kvmhost variables
+        kvm_host_variables
+
+        # Start user input session
+        ask_user_input
+        setup_variables
+        setup_user_ssh_key
+
+        # Tell installer base requires have been met
+        sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
+fi
+}
+
+function qubinode_vm_deployment_precheck () {
+    # Ensures the system is ready for VM deployment.
+    if [ "A${qubinode_installer_setup_completed}" != "Ayes" ]
+    then
+        qubinode_setup
+    fi
+}
+
+function update_resolv_conf(){
+  if grep -q ${1} /etc/resolv.conf; then
+    echo "nameserver ${1} found"
+    cat /etc/resolv.conf
+  else
+    sudo sed -i 's/nameserver.*/nameserver '${1}'/' /etc/resolv.conf
+  fi
 }

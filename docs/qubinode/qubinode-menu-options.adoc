@@ -1,0 +1,63 @@
+Basic usage: qubinode-installer [options]
+
+Options:
+    -p      Deploys the specified product
+    -h      Display this help menu
+    -m      Runs operational tasks or modify a product
+    -d      Delete a product
+    -v      Verbose output
+
+    Supported Products
+    ------------------
+        * OpenShift   Supports the -m and -d argument
+              okd4    - deploy upstream OpenShift
+              ocp4    - deploy Red Hat OpenShift Platform
+
+              -m arguments are:
+                   startup        - start up OpenShift cluster after shutdown
+                   shutdown       - safely shutdown OpenShift cluster
+                   remove-compute  - remove compute node
+                   add-compute     - add compute node
+                
+        * IdM         Supports the -m and -d argument
+              idm     - deploy IDM as a DNS Server
+
+              -m arguments are:
+                   stop   - shutdown the idm vm
+                   start  - starts the idm vm
+                   status - show the status of the idm server and the login info
+
+        * Ansible Tower   Supports the -m and -d argument
+                  tower   - deploy IDM as a DNS Server
+
+
+    Standalone -m options 
+    ---------------------
+        clean            - remove all files created in the project folder
+        setup            - setup playbooks vars and user sudoers
+        rhsm             - register host system to Red Hat
+        ansible          - setup host system as an ansible controller
+        host             - setup the host system as an KVM host
+        rebuild_qubinode - prep the qubinode system for a reinstall of the OS
+
+
+Examples:
+
+DNS
+  * Deploy DNS server: qubinode-installer -p idm
+  * Delete the DNS server: qubinode-installer -p idm -d
+
+OpenShift
+  * Deploy OCP4 cluster: qubinode-installer -p ocp4
+  * Delete the cluster: qubinode-installer -p ocp4 -d
+  * Shutdown the cluster: qubinode-installer -p ocp4 -m shutdown
+  * Startup the cluster: qubinode-installer -p ocp4 -m startup
+
+Standalone
+  * Deploy just the OpenShift nodes: qubinode-installer -m deploy_nodes
+  * Delete the OpenShift nodes: qubinode-installer -m deploy_nodes -d
+  * Setup the system as a KVM host: qubinode-installer -m host
+  * Clean up all configuration and playbook variables files created:
+        qubinode-installer -m clean
+
+

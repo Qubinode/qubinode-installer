@@ -40,7 +40,8 @@ function setup_sudoers () {
 function has_sudo() {
     local prompt
 
-    prompt=$(sudo -nv 2>&1)
+    prompt=$(sudo -n ls 2>&1)
+    #prompt=$(sudo -nv 2>&1)
     if [ $? -eq 0 ]
     then
         echo "has_sudo__pass_set"

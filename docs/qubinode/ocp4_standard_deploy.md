@@ -3,7 +3,7 @@
 Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing here.
 
 Run the below command to kick off the deployment of 6 node OCP4 cluster.
-This will consist of 3 masters 3 workers and NFS for persistent storage.
+This will consist of 3 controlplane 3 computes and NFS for persistent storage.
 Each node will be deployed with 16 Gib memory and 4 vCPUs.
 
 ```shell=
@@ -21,7 +21,12 @@ cd $HOME/qubinode-installer
 * Deploy OpenShift 4.
 * Optional: Configure NFS Provisioner
 
+**Installation Screencast**
+
+![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
+
 ## Deployment Post Steps
+* [LDAP OpenShift configuration](openshift_ldap_config.md)
 
 Accessing the cluster web console.
 
@@ -29,25 +34,7 @@ Accessing the cluster web console.
   - Or run script found under lib/qubinode_dns_configurator.sh
 * Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
 
-**Optional Install Cockpit**  
-**In order to manage and view cluster from a web ui on RHEL 7**  
-```
-subscription-manager repos --enable=rhel-7-server-extras-rpms
-subscription-manager repos --enable=rhel-7-server-optional-rpms
-sudo yum install  cockpit cockpit-networkmanager cockpit-dashboard \
-  cockpit-storaged cockpit-packagekit cockpit-machines cockpit-sosreport \
-  cockpit-pcp cockpit-bridge -y
-sudo systemctl start cockpit
-sudo systemctl enable cockpit.socket
-sudo firewall-cmd --add-service=cockpit
-sudo firewall-cmd --add-service=cockpit --permanent
-sudo firewall-cmd --reload
-```
+**Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**  
 
-**go to your servers url for cockpit ui**
-```
-https://SERVER_IP:9090
-```
-
-**Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**
-
+## Troubleshooting Guide
+[Troubleshooting installation](troubleshooting-monitoring.md)

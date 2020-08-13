@@ -10,8 +10,8 @@ There is also a dependancy on IdM as a dns server, refer to the [IdM install](id
 
 ### Deploying a RHEL VM
 
-The default RHEL release is RHEL 7. You can deploy RHEL 8 by passing the varible release=8 to the installer -a argument.
-The -a agrument can be passed multiple times for set different vairables.
+The RHEL release deployed will default to the release your system in running. You can deploy RHEL 8 or 7 by passing the varible **release=<7 or >** to the installer **-a** argument.
+The **-a** agrument can be passed multiple times for set different vairables.
 
 **Install Options**
 
@@ -127,29 +127,4 @@ Deleting a VM requires the name of the VM with the **-d** argument.
 ```=shell
 ./qubinode-installer -p rhel -m list
 
-```
-
-**Optional Install Cockpit**  
-**In order to manage and view cluster from a web ui on RHEL 7**  
-```
-subscription-manager repos --enable=rhel-7-server-extras-rpms
-subscription-manager repos --enable=rhel-7-server-optional-rpms
-sudo yum install  cockpit cockpit-networkmanager cockpit-dashboard \
-  cockpit-storaged cockpit-packagekit cockpit-machines cockpit-sosreport \
-  cockpit-pcp cockpit-bridge -y
-sudo systemctl start cockpit
-sudo systemctl enable cockpit.socket
-sudo firewall-cmd --add-service=cockpit
-sudo firewall-cmd --add-service=cockpit --permanent
-sudo firewall-cmd --reload
-```
-
-**In order to manage and view cluster from a web ui on RHEL 8** 
-```
-$ sudo systemctl enable --now cockpit.socket
-```
-
-**go to your servers url for cockpit ui**
-```
-https://SERVER_IP:9090
 ```

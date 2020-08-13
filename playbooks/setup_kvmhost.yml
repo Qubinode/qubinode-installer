@@ -40,9 +40,10 @@
       register: interfacecheck
       delegate_to: 127.0.0.1
 
-    - name: backup  ifcfg-{{ network_interface_name }}
+    - name: backup ifcfg-{{ network_interface_name }}
       shell: "cat /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }} > {{ project_dir }}/backups/ifcfg-{{ network_interface_name }}"
-      when: not interfacecheck.stat.exists
+      ignore_errors: yes
+      when: interfacecheck.stat.exists
       delegate_to: 127.0.0.1
 
     - name: running KVM host setup
