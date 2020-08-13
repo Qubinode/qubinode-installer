@@ -130,7 +130,7 @@ dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 
 # OpenShift version numbers
-major_version: "32.20200601.3.0"  #e.g. 32.20200601.3.0
+major_version: "32.20200715.3.0"  #e.g. 32.20200601.3.0
 ocp4_dependencies_version: "{{ major_version }}"
 ocp4_image_version: "{{ major_version }}"
 
