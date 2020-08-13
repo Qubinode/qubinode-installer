@@ -18,7 +18,7 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.2 installed
+* Red Hat Enteprise Linux 8.2 installed (Recommended)
 * or Red Hat Enteprise Linux 7.8 installed
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
@@ -27,8 +27,23 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4.1    | 2.9               | 2.4.1 |
+|     Release 2.4.2     | 2.9               | 2.4.2 |
 
+### Features in v2.4.2 Version
+
+New Features |
+-- |
+RHEL 8.2 Support |
+OpenShift sizing menu fixes |
+OpenShift 4.4.x |
+OpenShift 4.5.x (Optional) |
+OKD 4 menu Option |
+Ansible 2.9 Compatibility  |
+local storage support mutliple disk support |
+Fixed IDM bugs  |
+Ansible Tower Support |
+
+See [Release Document](docs/qubinode/releases.md) for features history.
 
 ## Deploying a OpenShift cluster
 
@@ -72,16 +87,12 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 ## Qubinode Dev Branch for next release
 Feature  |  Status
 --|---
-Ansible Tower | Testing |  
 Red Hat Satellite Server  | In progress|
-RHEL 8.x Support  | In progress|
-OKD 4.x Support  | Testing/Development |
 OCS Support |  In progress  |   
-Cockpit Integration | Not Started
+Cockpit Integration | In progress
 
 ## Roadmap
 * OCP 4.x Container Native Storage
-* OCP 4.x on RHEV
 * Libvirt with KVM  OCP - (Experimental)
 * OpenWrt Router Support - (Experimental)
 

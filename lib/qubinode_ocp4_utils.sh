@@ -1096,13 +1096,3 @@ function configure_storage () {
         fi
     fi
 }
-
-
-function update_resolv_conf(){
-  if grep -q ${1} /etc/resolv.conf; then
-    echo "nameserver ${1} found"
-    cat /etc/resolv.conf
-  else
-    sudo sed -i 's/nameserver.*/nameserver '${1}'/' /etc/resolv.conf
-  fi
-}
