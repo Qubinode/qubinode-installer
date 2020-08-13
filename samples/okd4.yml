@@ -6,13 +6,18 @@
 installation_working_dir: "{{ project_dir }}"
 
 # Required Files
-pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+pull_secret: "{{ installation_working_dir }}/okd4-pull-secret.txt"
 
-# OpenShift Version
+# OpenShift/OKD Version
 ocp4_okd4: okd4
 ocp4_release: 4.5.0-0.okd-2020-07-14-153706-ga
-ocp4_image: 4.4.3
+ocp4_image: 4.4.15
 ocp4_release_url: "https://github.com/openshift/okd/releases/download/{{ ocp4_release }}"
+
+# OpenShift/OKD version numbers
+major_version: "32.20200715.3.0"  #e.g. 32.20200601.3.0
+ocp4_dependencies_version: "{{ major_version }}"
+ocp4_image_version: "{{ major_version }}"
 
 ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
@@ -116,7 +121,7 @@ deploy_ocp4_configs: yes
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
 mask: 255.255.255.0
-cluster_name: qbn
+cluster_name: qub01
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
 libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"
@@ -129,17 +134,12 @@ dns_domain: "{{ domain }}"
 dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 
-# OpenShift version numbers
-major_version: "32.20200715.3.0"  #e.g. 32.20200601.3.0
-ocp4_dependencies_version: "{{ major_version }}"
-ocp4_image_version: "{{ major_version }}"
 
 # Bootstrap Webserver
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 rhcos_metal_bios: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_metal_bios }}"
 rhcos_webserver_img_name: rhcos-webserver
-bootstrap_node_name: bootstrap
 coreos_tmp_dir: /tmp/build_coreos_container
 webserver_directory: /opt/qubinode_webserver
 ocp4_release_dir: "{{ ocp4_release }}"
@@ -166,10 +166,15 @@ dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 product: "{{ openshift_product }}"
 compute_count_update: none
+hostname_prefix: "{{ instance_prefix }}-okd"
+bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
+bootstrap_node_ip: "192.168.50.2"
+ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
+compute_node_name: "{{ hostname_prefix }}-compute"
 
 # OCP4 instance sizes
 ocp4_instances:
-  - name: ctrlplane
+  - name: "{{ hostname_prefix }}-ctrlplane"
     hd_size: "{{ ctrlplane_hd_size }}G"
     memory_size: "{{ ctrlplane_mem_size }}"
     cpu_size: "{{ ctrlplane_vcpu }}"
@@ -181,9 +186,9 @@ ocp4_instances:
         enable: false
         name: vdc
     qty: "{{ ctrlplane_count }}"
-    vm_type: ctrlplane
+    vm_type: master
     ip_octet: "{{ ctrlplane_ip_octet }}"
-  - name: compute
+  - name: "{{ hostname_prefix }}-compute"
     hd_size: "{{ compute_hd_size }}G"
     memory_size: "{{ compute_mem_size }}"
     cpu_size: "{{ compute_vcpu }}"
@@ -195,9 +200,9 @@ ocp4_instances:
         name: vdc
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
-    vm_type: compute
+    vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
-  - name: bootstrap
+  - name: "{{ hostname_prefix }}-bootstrap"
     hd_size: "{{ bootstrap_hd_size }}G"
     memory_size: "{{ bootstrap_mem_size }}"
     cpu_size: "{{ bootstrap_vcpu }}"

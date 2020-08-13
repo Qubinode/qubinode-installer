@@ -1,13 +1,15 @@
 #!/bin/bash
 
 function kvm_host_variables () {
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    vars_file="${project_dir}/playbooks/vars/all.yml"
     libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep libvirt_pool_name: | awk '{print $2}')
     host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
-    RHEL_RELEASE=$(awk '/rhel_release/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
+    RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
-    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+    RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
     # Set the RHEL version
     if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
     then
@@ -15,11 +17,11 @@ function kvm_host_variables () {
         sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
     fi
 
-    RHEL_MAJOR=$(cat /etc/redhat-release | grep -o [7-8])
-    if [ "A${RHEL_MAJOR}" == "A8" ]
+    rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    if [ "A${rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-    elif [ "A${RHEL_MAJOR}" == "A7" ]
+    elif [ "A${rhel_major}" == "A7" ]
     then
        rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
     else
@@ -97,7 +99,7 @@ function check_additional_storage () {
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
 
-              printf "%s\n" "   The installer will wipe the device $disk and then create a vg,lv and mount it as /var/lib/libvirt/images."
+              printf "%s\n" "   ${yel}The installer will wipe the device${end} ${blu}$disk${end} ${yel}and then create a vg,lv and mount it as /var/lib/libvirt/images.${end}"
               confirm "    Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then
@@ -308,128 +310,200 @@ function qubinode_networking () {
         test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
     fi
 
+    DEFINED_BRIDGE=""
+    DEFINED_BRIDGE_ACTIVE=no
     if [ -f "${kvm_host_vars_file}" ]
     then
-        DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; }' "${kvm_host_vars_file}")
+        iSkvm_host_interface=$(awk '/^kvm_host_interface:/ { print $2}' "${kvm_host_vars_file}")
+        DEFINED_BRIDGE=$(awk '/^qubinode_bridge_name:/ {print $2; }' "${kvm_host_vars_file}")
+        if sudo ip addr show "${DEFINED_BRIDGE}" > /dev/null 2>&1
+        then
+            DEFINED_BRIDGE_ACTIVE=yes
+        fi
+    fi
+
+    KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
+    if [ "A${DEFINED_BRIDGE_ACTIVE}" == "Ayes" ]
+    then
+        CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
+        KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
     else
-        DEFINED_BRIDGE=""
+        if echo ${iSkvm_host_interface} | grep -q [0-9]
+        then
+            CURRENT_KVM_HOST_PRIMARY_INTERFACE="${iSkvm_host_interface}"
+        else
+            CURRENT_KVM_HOST_PRIMARY_INTERFACE="${KVM_HOST_PRIMARY_INTERFACE}"
+        fi
     fi
 
-    CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
-    if [ "A${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" == "A${DEFINED_BRIDGE}" ]
+    if sudo ip addr show "${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" > /dev/null 2>&1
     then
-      #KVM_HOST_PRIMARY_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | grep "${DEFINED_BRIDGE}"| awk '{print $4}')
-      KVM_HOST_PRIMARY_INTERFACE=$(ip link show master qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
-      linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:'  | head -2 | tail -1  | awk '{print $1}' | tr -d :)
-      sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
+        KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+        mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+        KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
+
+        # Set KVM host ip info
+        iSkvm_host_netmask=$(awk '/^kvm_host_netmask:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
+        then
+            #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
+            sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${kvm_host_vars_file}"
+        fi
+
+        iSkvm_host_ip=$(awk '/^kvm_host_ip:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
+        then
+            #echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
+            sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${kvm_host_vars_file}"
+        fi
+
+        iSkvm_host_gw=$(awk '/^kvm_host_gw:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
+        then
+            #echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
+            sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${kvm_host_vars_file}"
+        fi
+
+        iSkvm_host_mask_prefix=$(awk '/^kvm_host_mask_prefix:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
+        then
+            #echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
+            sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${kvm_host_vars_file}"
+        fi
+
+        iSkvm_host_interface=$(awk '/^kvm_host_interface:/ { print $2}' "${kvm_host_vars_file}")
+        if [ "A${iSkvm_host_interface}" != "A${KVM_HOST_PRIMARY_INTERFACE}" ]
+        then
+            echo "    Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
+            sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${kvm_host_vars_file}"
+        fi
+
+        iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
+        then
+            foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
+            #echo "Updating the kvm_host_macaddr to ${foundmac}"
+            sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
+        fi
     else
-      KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
-    fi
-
-    KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
-    mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
-    KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
-
-   # Set KVM host ip info
-    iSkvm_host_netmask=$(awk '/^kvm_host_netmask/ { print $2}' "${kvm_host_vars_file}")
-    if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
-    then
-        #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
-        sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${kvm_host_vars_file}"
-    fi
-
-    iSkvm_host_ip=$(awk '/^kvm_host_ip/ { print $2}' "${kvm_host_vars_file}")
-    if [[ "A${iSkvm_host_ip}" == "A" ]] || [[ "A${iSkvm_host_ip}" == 'A""' ]]
-    then
-        #echo "Updating the kvm_host_ip to $KVM_HOST_IPADDR"
-        sed -i "s#kvm_host_ip:.*#kvm_host_ip: "$KVM_HOST_IPADDR"#g" "${kvm_host_vars_file}"
-    fi
-
-    iSkvm_host_gw=$(awk '/^kvm_host_gw/ { print $2}' "${kvm_host_vars_file}")
-    if [[ "A${iSkvm_host_gw}" == "A" ]] || [[ "A${iSkvm_host_gw}" == 'A""' ]]
-    then
-        #echo "Updating the kvm_host_gw to $KVM_HOST_GTWAY"
-        sed -i "s#kvm_host_gw:.*#kvm_host_gw: "$KVM_HOST_GTWAY"#g" "${kvm_host_vars_file}"
-    fi
-
-    iSkvm_host_mask_prefix=$(awk '/^kvm_host_mask_prefix/ { print $2}' "${kvm_host_vars_file}")
-    if [[ "A${iSkvm_host_mask_prefix}" == "A" ]] || [[ "A${iSkvm_host_mask_prefix}" == 'A""' ]]
-    then
-        #echo "Updating the kvm_host_mask_prefix to $KVM_HOST_MASK_PREFIX"
-        sed -i "s#kvm_host_mask_prefix:.*#kvm_host_mask_prefix: "$KVM_HOST_MASK_PREFIX"#g" "${kvm_host_vars_file}"
-    fi
-
-    iSkvm_host_interface=$(awk '/^kvm_host_interface:/ { print $2}' "${kvm_host_vars_file}")
-    if [ "A${iSkvm_host_interface}" != "A${KVM_HOST_PRIMARY_INTERFACE}" ]
-    then
-        echo "    Updating the kvm_host_interface to $KVM_HOST_PRIMARY_INTERFACE"
-        sed -i "s#kvm_host_interface:.*#kvm_host_interface: "$KVM_HOST_PRIMARY_INTERFACE"#g" "${kvm_host_vars_file}"
-    fi
-
-    iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr/ { print $2}' "${kvm_host_vars_file}")
-    if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
-    then
-        foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
-        #echo "Updating the kvm_host_macaddr to ${foundmac}"
-        sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
+            printf "%s\n\n\n" " "
+            printf "%s\n" "    ${red}Could not properly determine your current active network interface${end}"
+            printf "%s\n" "    ${blu}You can set the interface value ${end}${yel}kvm_host_interface${end} ${blu}in ${end}${yel}${project_dir}/playbooks/vars/kvm_host.yml${end}"
+            exit 1
     fi
 }
 
 
-function qubinode_check_libvirt_net() {
-    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-    DEFINED_LIBVIRT_NETWORK=qubinat
-    RESULT=$(sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}")
-    if [[ "A${RESULT}" == "A" ]];
+#function qubinode_check_for_libvirt_nat() {
+#    #TODO: This function is no longer needed and should be removed
+#    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+#    RESULT=$(sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}")
+#    if [[ "A${RESULT}" == "A" ]];
+#    then
+#        printf "%s\n" "    skipping ${DEFINED_LIBVIRT_NETWORK} configuration"
+#        linenum=$(cat "${kvm_host_vars_file}" | grep -n 'create:' | head -1| awk '{print $1}' | tr -d :)
+#        sed -i ''${linenum}'s/create:.*/create: false/' "${kvm_host_vars_file}"
+#    else
+#        printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
+#        printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"
+#
+#        nets=$(sudo virsh net-list --all --name)
+#        NAT_ARRAY=()
+#        printf "%s\n" "   Found libvirt networks:"
+#        for item in $(echo $nets)
+#        do
+#            mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
+#            if [ "A${mode}" == "Anat" ]
+#            then
+#                NAT_ARRAY+=(${item})
+#            fi
+#        done
+#
+#        for nat in ${NAT_ARRAY[@]}
+#        do
+#           printf "%s\n" "     ${yel} * ${end}${blu}$nat${end}"
+#        done
+#
+#        printf "%s\n" " "
+#        printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
+#        printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
+#
+#        confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
+#        printf "%s\n" " "
+#        if [ "A${response}" == "Ayes" ]
+#        then
+#          createmenu "${NAT_ARRAY[@]}"
+#          nat_network=($(echo "${selected_option}"))
+#          confirm "    Continue with $nat_network? ${blu}yes/no${end}"
+#          if [ "A${response}" == "Ayes" ]
+#          then
+#              printf "%s\n\n" ""
+#              printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
+#              sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
+#              linenum=$(cat "${kvm_host_vars_file}" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
+#              sed -i ''${linenum}'s/create:.*/create: false/' "${kvm_host_vars_file}"
+#          else
+#              printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
+#              exit 0
+#          fi
+#      fi
+#    fi
+#}
+
+kvm_host_health_check () {
+    KVM_IN_GOOD_HEALTH=""
+    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+    check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+    requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+
+    bash -c "sudo virsh net-list | grep -q $requested_brigde"
+    RESULT=$?
+    if [ $RESULT -ne 0 ]
     then
-        echo "skipping ${DEFINED_LIBVIRT_NETWORK} configuration"
-        linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1| awk '{print $1}' | tr -d :)
-        sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
-    else
-        printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
-        printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"echo "skipping ${DEFINED_LIBVIRT_NETWORK}"
+    #if ! sudo virsh net-list | grep -q $requested_brigde; then
+      KVM_STATUS="notready"
+      kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
+    fi
 
-        nets=$(sudo virsh net-list --all --name)
-        NAT_ARRAY=()
-        printf "%s\n" "   Found NAT networks:"
+    #if ! sudo virsh net-list | grep -q $requested_nat; then
+    #  KVM_IN_GOOD_HEALTH="notready"
+    #fi
 
-        for item in $(echo $nets)
-        do
-          mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
-          if [ "A${mode}" == "Anat" ]
-          then
-            NAT_ARRAY+=(${item})
-          fi
-        done
-
-        for nat in ${NAT_ARRAY[@]}
-        do
-           printf "%s\n" "     ${yel} * ${end}${blu}$nat${end}"
-        done
-
-        printf "%s\n" " "
-        printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
-        printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
-
-        confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
-        printf "%s\n" " "
-        if [ "A${response}" == "Ayes" ]
+    # If dedicated disk for libvirt images, check for the volume group
+    if [ "A${create_lvm}" == "Ayes" ]
+    then
+        if ! sudo vgdisplay | grep -q $vg_name
         then
-          createmenu "${NAT_ARRAY[@]}"
-          nat_network=($(echo "${selected_option}"))
-          confirm "    Continue with $nat_network? ${blu}yes/no${end}"
-          if [ "A${response}" == "Ayes" ]
-          then
-              printf "%s\n\n" ""
-              printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
-              sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
-              linenum=$(cat "${project_dir}/playbooks/vars/all.yml" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
-              sed -i ''${linenum}'s/create:.*/create: false/' "${project_dir}/playbooks/vars/all.yml"
-          else
-              printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
-              exit 0
-          fi
-      fi
+            KVM_STATUS="notready"
+            kvm_host_health_check_results+=(Could not find volume group $vg_name)
+        fi
+    fi
+
+    if [ ! -d $check_image_path ]
+    then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results+=(Could not find libvirt pool dir $check_image_path)
+    fi
+
+    if ! [ -x "$(command -v virsh)" ]
+    then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results+=(Could not find the virsh command)
+    fi
+
+    if ! [ -x "$(command -v firewall-cmd)" ]
+    then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results+=(Could not find the firewall-cmd command)
+    fi
+
+    if [ "A${KVM_STATUS}" != "Anotready" ]
+    then
+        KVM_IN_GOOD_HEALTH=ready
+    else
+        KVM_IN_GOOD_HEALTH=$KVM_STATUS
     fi
 }
 
@@ -443,35 +517,30 @@ function qubinode_setup_kvm_host () {
     setup_variables
     if [ "A${base_setup_completed}" == "Ano" ]
     then
-       qubinode_base_requirements
+        qubinode_base_requirements
     fi
 
     # Check if we should setup qubinode
-    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
+    QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
 
     if [ "A${OS}" != "AFedora" ]
     then
         set_rhel_release
     fi
 
-    HARDWARE_ROLE=$(sudo  dmidecode -t 3 | grep Type | awk '{print $2}')
+    HARDWARE_ROLE=$(sudo dmidecode -t 3 | grep Type | awk '{print $2}')
 
     if [ "A${HARDWARE_ROLE}" != "ALaptop" ]
     then
-       # Check for ansible and required role
-       check_for_required_role swygue.edge_host_setup
-
        ask_user_if_qubinode_setup
 
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           qcow_check
-           qubinode_check_libvirt_net
+           #qcow_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
-           qubinode_check_libvirt_net
        fi
     else
       ask_user_if_qubinode_setup
@@ -480,33 +549,45 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-        qcow_check
-        qubinode_check_libvirt_net
+        #qcow_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
-          echo "Installing required packages"
-          sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns
-          qcow_check
-          qubinode_check_libvirt_net
+          printf "%s\n" "   Installing required packages"
+          sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
+          #qcow_check
       fi
     fi
 
-    sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
-    printf "\n\n${yel}    ******************************${end}\n"
-    printf "${yel}    * KVM Host Setup Complete   *${end}\n"
-    printf "${yel}    *****************************${end}\n\n"
+    # Validate host is setup correctly
+    kvm_host_health_check
+    if [ "A${KVM_IN_GOOD_HEALTH}" == "Aready" ]
+    then
+        sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: yes/g" "${kvm_host_vars_file}"
+        printf "\n\n${yel}    ******************************${end}\n"
+        printf "${yel}    * KVM Host Setup Complete   *${end}\n"
+        printf "${yel}    *****************************${end}\n\n"
+    else
+        sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: no/g" "${kvm_host_vars_file}"
+        printf "\n\n${yel}    ******************************${end}\n"
+        printf "${red}    * KVM Host Setup Fail   *${end}\n"
+        printf "${yel}    *****************************${end}\n\n"
+        for msg in "${kvm_host_health_check_results[*]}"
+        do
+            printf "%s\n\n" " ${red} $msg ${end}"
+        done
+        exit
+    fi
 }
 
 
 function qubinode_check_kvmhost () {
     qubinode_networking
     echo "Validating the KVMHOST setup"
-    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
-    DEFINED_VG=$(awk '/vg_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-    DEFINED_BRIDGE=$(awk '/qubinode_bridge_name/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
+    DEFINED_VG=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+    DEFINED_BRIDGE=$(awk '/qubinode_bridge_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
     BRIDGE_IP=$(sudo awk -F'=' '/IPADDR=/ {print $2}' "/etc/sysconfig/network-scripts/ifcfg-${DEFINED_BRIDGE}")
-    #BRIDGE_INTERFACE=$(sudo brctl show "${DEFINED_BRIDGE}" | awk -v var="${DEFINED_BRIDGE}" '$1 == var {print $4}')
-    BRIDGE_INTERFACE=$(ip link show master qubibr0|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
+    BRIDGE_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}"|awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}')
 
     if [ ! -f /usr/bin/virsh ]
     then
@@ -544,7 +625,7 @@ function qubinode_check_kvmhost () {
         if [ "A${HARDWARE_ROLE}" != "Alaptop" ]
         then
             echo "Running network checks"
-            if ! sudo ip link show master $DEFINED_BRIDGE > /dev/null 2>&1
+            if ! sudo ip link show ctrlplane $DEFINED_BRIDGE > /dev/null 2>&1
             then
                 echo "The required bridge $DEFINED_BRIDGE is not setup"
                 qubinode_setup_kvm_host

@@ -12,7 +12,7 @@ The first step is to get RHEL installed on your hardware
 -  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
 ## Install Red Hat Enterprise Linux
-A bare metal system running RHEL. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
+A bare metal system running Red Hat Enterprise Linux 8. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
 
 1. Virtualization Host
 2. Server with GUI
@@ -33,10 +33,10 @@ Downlaod and extract the qubinode-installer as a non root user.
 
 ```shell=
 cd $HOME
-wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
-unzip master.zip
-rm master.zip
-mv qubinode-installer-master qubinode-installer
+wget https://github.com/Qubinode/qubinode-installer/archive/main.zip
+unzip main.zip
+rm main.zip
+mv qubinode-installer-main qubinode-installer
 ```
 
 ### Qubinode Setup
@@ -58,11 +58,15 @@ The qubinode-installer needs to run as a regular user.
 ./qubinode-installer -m host
 ```
 
+At this point you should be able to acces the RHEL system via the cockpit web interface on:
+```
+https://SERVER_IP:9090
+```
 ## Deploy a Red Hat Product
 
-Most products depends on the latest rhel 7, 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
+Most products depends on the latest rhel 7 or 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
-#### Getting the RHEL Qcow Image
+#### Getting the RHEL 7 Qcow Image
 <table>
   <tr>
    <td>Using Token
@@ -78,41 +82,18 @@ Most products depends on the latest rhel 7, 8 qcow image. You can either manuall
   </tr>
 </table>
 
+Follow the same steps to get the RHEL 8 qcow image.
+
 If you are using tokens it should be:
 ```
 * $HOME/qubinode-installer/rhsm_token
 ```
 
-If you downloaded the files instead it should be:
+If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions:
 ```
 * $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
 * $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
 ```
-
-**Optional Install Cockpit**  
-**In order to manage and view cluster from a web ui on RHEL 7**  
-```
-subscription-manager repos --enable=rhel-7-server-extras-rpms
-subscription-manager repos --enable=rhel-7-server-optional-rpms
-sudo yum install  cockpit cockpit-networkmanager cockpit-dashboard \
-  cockpit-storaged cockpit-packagekit cockpit-machines cockpit-sosreport \
-  cockpit-pcp cockpit-bridge -y
-sudo systemctl start cockpit
-sudo systemctl enable cockpit.socket
-sudo firewall-cmd --add-service=cockpit
-sudo firewall-cmd --add-service=cockpit --permanent
-sudo firewall-cmd --reload
-```
-**In order to manage and view cluster from a web ui on RHEL 8** 
-```
-$ sudo systemctl enable --now cockpit.socket
-```
-
-**go to your servers url for cockpit ui**
-```
-https://SERVER_IP:9090
-```
-
 
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
 

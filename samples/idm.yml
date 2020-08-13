@@ -1,37 +1,33 @@
+---
 ###################
 # IDM DNS Server  #
 ###################
 
+###################
+# common variables
 # The qubinode-installer depends on IdM as the DNS server.
 # If there is an existing Idm, then set this to no.
 deploy_idm_server: yes
 ask_use_existing_idm: yes
 idm_server_name: dns01
-
-# IDM server attributes
-idm_server_ip: ""
-idm_public_ip: ""
-idm_admin_user: admin
 idm_check_static_ip: ""
-idm_hostname: "{{ instance_prefix }}-none"
-idm_reverse_zones:
-  - "{{ qubinode_ptr }}"
-  - "{{ qubinode_ptr_two }}"
-idm_repos:
-  - rhel-7-server-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-server-optional-rpms
-idm_packages:
-  - ipa-server
-  - ipa-server-dns
+idm_admin_user: admin
 idm_realm: "{{ domain | upper }}"
 idm_forward_ip: "{{ dns_forwarder }}"
-idm_ssh_pwd: "{{ admin_user_password }}"
-idm_ssh_user: "{{ admin_user }}"
-ipa_host: "{{ idm_hostname }}.{{ domain }}"
-idm_zone_overlap: false
+idm_admin_password: "{{ idm_admin_pwd }}"
+idm_reverse_zones:
+  - "{{ qubinode_ptr }}"
 
-# Dns server VM attributes
+########################
+# RHEL IdM VM attributes
+rhel_major: "8"
+qcow_rhel_release: "{{ rhel_major }}"
+rhel_release: "{{ rhel_major }}"
+cloud_init_vm_image: rhel-8.2-x86_64-kvm.qcow2
+idm_server_ip: ""
+idm_public_ip: ""
+idm_zone_overlap: false
+idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"
 dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
@@ -39,7 +35,7 @@ dns_server_vm:
     dns_root_disk_size: 10G
     dns_teardown: false
     dns_recreate: false
-    dns_group: dns
+    dns_group: ipaserver
     dns_extra_storage: []
     dns_enable: true
     dns_ip: "{{ idm_server_ip | default('', true) }}"
@@ -47,13 +43,130 @@ dns_server_vm:
     dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
     dns_expand_os_disk: no
-
-# Which release of rhel to deploy IDM on
-qcow_rhel_release: 7
-rhel_release: 7
-
 # should qcow template be expanded
 expand_os_disk: no
 
-# This is required ansible-idm role
-idm_admin_password: "{{ idm_admin_pwd }}"
+#######################
+# IdM on RHEL 8 attributes
+ipaserver_domain: "{{ domain }}"
+ipaserver_realm: "{{ idm_realm }}"
+ipaserver_setup_dns: "yes"
+ipaserver_no_host_dns: yes
+ipaserver_setup_kra: yes
+ipaadmin_password: "{{ idm_admin_password }}"
+ipadm_password: "{{ idm_dm_pwd }}"
+ipaserver_forwarders:
+  - "{{ dns_forwarder }}"
+idm_repos_8:
+  - rhel-8-for-x86_64-baseos-rpms
+  - rhel-8-for-x86_64-appstream-rpms
+ipaserver_allow_zone_overlap: "{{ idm_zone_overlap }}"
+ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
+
+#########################
+# IdM on RHEL 7 attributes
+idm_repos_7:
+  - rhel-7-server-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-optional-rpms
+idm_packages:
+  - ipa-server
+  - ipa-server-dns
+idm_ssh_pwd: "{{ admin_user_password }}"
+idm_ssh_user: "{{ admin_user }}"
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+
+# Set this if you want the playbook to run eventhough IdM is already deployed
+force_idm_redeployment: false
+
+###############
+# Populate IdM
+
+# Bulk Sample Accounts
+create_students: false
+create_student_accounts: yes
+total_users: 4
+idm_group_desc: "A group of students"
+idm_group: "students"
+idm_group_state: present
+idm_user_generated_prefix: "student"
+idm_user_sn: "learner"
+user_name_format: "{{ idm_user_generated_prefix }}%02d"
+
+# Default user attributes
+idm_user_pass_expiration: 20290119235959
+idm_user_state: present
+idm_user_shell: "/usr/bin/bash"
+update_idm_user_pass: on_create
+idm_group_type_posix: no
+
+# openshift bind user
+openshift_binddn_password: "{{ ocp_bind_pass | default('') }}"
+openshift_bind_user: openshiftbind
+openshift_binddn_password_expiration: 20380119031407Z
+
+# List of IdM groups to create
+idm_groups:
+  - name: openshift-users
+    desc: "Users allowed to log into OpenShift Container Platform"
+  - name: openshift-admins
+    desc: "OpenShift Administrators"
+  - name: openshift-viewers
+    desc: "OpenShift Viewers"
+  - name: satellite-users
+    desc: "Users allowed to log into Red Hat Satellite"
+  - name: satellite-admins
+    desc: "Red Hat Satellite administrators"
+  - name: tower-users
+    desc: "Users allowed to log into Red Hat Ansible Tower"
+  - name: tower-admins
+    desc: "Red Hat Ansible Tower administrators"
+
+
+# List of IdM users to create
+idm_users:
+ - name: clusteradmin
+   groups:
+     - openshift-admins
+     - openshift-users
+   password: clusteradmin
+   givenname: OpenShift
+   sn: Clusteradmin
+   state: present
+   loginshell: /usr/sbin/nologin
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey: []
+   update_password: "{{ update_idm_user_pass }}"
+ - name: clusterviewer
+   groups:
+     - openshift-viewers
+     - openshift-users
+   password: clusterviewer
+   givenname: OpenShift
+   sn: Clusterviewer
+   state: present
+   loginshell: /usr/sbin/nologin
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey: []
+   update_password: "{{ update_idm_user_pass }}"
+ - name: "qubinode_{{ admin_user }}"
+   groups:
+     - satellite-admins
+     - tower-admins
+     - openshift-admins
+     - openshift-users
+   password: "{{ admin_user }}"
+   givenname: OpenShift
+   sn: User
+   state: present
+   loginshell: /usr/bin/bash
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey:
+     - "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+   update_password: "{{ update_idm_user_pass }}"

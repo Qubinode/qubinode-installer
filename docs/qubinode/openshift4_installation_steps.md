@@ -1,7 +1,7 @@
 #  Installing an OpenShift 4.x Cluster on a Single Node
 
 The following documentation will help you deploy an OpenShift Container Platform (OCP) 4.3 cluster, on a single node.
-The installation steps deploys a production like OCP4 cluster, in a environment with 3 masters and 3 workers on a KVM hosts running Red Hat Enterprise Linux (RHEL)
+The installation steps deploys a production like OCP4 cluster, in a environment with 3 controlplane and 3 computes on a KVM hosts running Red Hat Enterprise Linux (RHEL)
 ![](https://i.imgur.com/n8TQAyB.png)
 
 ## Prerequisites
@@ -37,10 +37,10 @@ Download and extract the qubinode-installer as a non root user.
 
 ```shell=
 cd $HOME
-wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
-unzip master.zip
-rm master.zip
-mv qubinode-installer-master qubinode-installer
+wget https://github.com/Qubinode/qubinode-installer/archive/main.zip
+unzip main.zip
+rm main.zip
+mv qubinode-installer-main qubinode-installer
 ```
 
 Place your pull secret and the rhel qcow image under the qubinode-installer directory.
@@ -63,11 +63,12 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 
 | [Standard Deployment](ocp4_standard_deploy.md) | [Custom Deployment](ocp4_custom_deploy.md) |
 | -------- | -------- |
-| Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 masters and 3 workers.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
+| Answer questions from the installer to deploy a 6 node OpenShift 4.x cluster, 3 controlplane and 3 computes.| This option will allow you to deploy a 3 only or 4 node cluster or to customize the size of the cluster.|
 
 ### Additional Documentation
 
 * [Qubinode OpenShift Cluster Operations](ocp4_cluster_ops.md)
+* [LDAP OpenShift configuration](openshift_ldap_config.md)
 
 
 ### Troubleshooting Tips

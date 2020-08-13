@@ -10,7 +10,7 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift Version
 ocp4_okd4: ocp4
-ocp4_release: 4.4.6
+ocp4_release: 4.4.15
 ocp4_image: 4.4.3
 
 # User info
@@ -21,7 +21,7 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 ########################
 # NFS Persistent Storage
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
-set_as_default: true        # set NFS as the default persistent storage
+set_as_default: false        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /export
 nfs_server_ip:  "{{ kvm_host_ip }}"
@@ -38,8 +38,28 @@ storage_local_storage: yes
 localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
-localstorage_block_disk: /dev/vdc
-localstorage_fs_disk: /dev/vdc
+localstorage_block_disk: 
+  - /dev/vdc
+  - /dev/vdd
+  - /dev/vde
+  - /dev/vdf
+  - /dev/vdg
+  - /dev/vdh
+  - /dev/vdi
+  - /dev/vdj
+  - /dev/vdk
+  - /dev/vdl
+localstorage_fs_disk: 
+  - /dev/vdc
+  - /dev/vdd
+  - /dev/vde
+  - /dev/vdf
+  - /dev/vdg
+  - /dev/vdh
+  - /dev/vdi
+  - /dev/vdj
+  - /dev/vdk
+  - /dev/vdl
 
 # configure OCP register
 configure_registry: true
@@ -55,17 +75,17 @@ user_idm_admin: "{{ idm_admin_user }}"
 user_idm_password: "{{ idm_admin_pwd }}"
 
 # Default values for deploy OCP cluster
-# Change to reflect the number of masters and workers you want to deploy
-master_count: 3
+# Change to reflect the number of ctrlplane and computes you want to deploy
+ctrlplane_count: 3
 compute_count: 3
-master_hd_size: 120
-master_mem_size: 16192
-master_vcpu: 4
+ctrlplane_hd_size: 120
+ctrlplane_mem_size: 16192
+ctrlplane_vcpu: 4
 compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
 compute_vdb_size: 10
-compute_vdc_size: 150
+compute_vdx_size: 10
 storage_hd_size: 120
 storage_vcpu: 8
 storage_vdb_size: 10
@@ -80,14 +100,14 @@ osdvolume_disk_size: "{{ monpod_disk_size }}"
 performance_disk: no
 
 # Values for minimal deployment
-min_master_count: 3
+min_ctrlplane_count: 3
 min_compute_count: 1
 min_vcpu: 4
 min_mem: 10240
 
 # The start ranage for IP address make sure there is enough for the
-# master and compute nodes you want to deploy
-master_ip_octet: 10
+# ctrlplane and compute nodes you want to deploy
+ctrlplane_ip_octet: 10
 compute_ip_octet: 20
 storage_ip_octet: 30
 
@@ -113,6 +133,11 @@ openshift_install_folder: ocp4
 
 # Set to false to not create the install-config
 deploy_ocp4_configs: yes
+
+# IdM user 
+openshift_binddn_password: "{{ ocp_bind_pass | default('') }}"
+openshift_bind_user: openshiftbind
+openshift_binddn_password_expiration: 20380119031407Z
 
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
@@ -142,7 +167,6 @@ rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_depend
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 rhcos_metal_bios: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_metal_bios }}"
 rhcos_webserver_img_name: rhcos-webserver
-bootstrap_node_name: bootstrap
 coreos_tmp_dir: /tmp/build_coreos_container
 webserver_directory: /opt/qubinode_webserver
 ocp4_release_dir: "{{ ocp4_release }}"
@@ -152,7 +176,7 @@ ocp4_lb_container: qbn-lb
 podman_webserver: qbn-httpd
 
 # Your openshift cluster url
-openshift_url: "https://master-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
+openshift_url: "https://ctrlplane-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
 
 openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
 ignition_files_dir: "{{ openshift_install_dir }}"
@@ -169,13 +193,18 @@ dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 product: "{{ openshift_product }}"
 compute_count_update: none
+hostname_prefix: "{{ instance_prefix }}"
+bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
+bootstrap_node_ip: "192.168.50.2"
+ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
+compute_node_name: "{{ hostname_prefix }}-compute"
 
 # OCP4 instance sizes
 ocp4_instances:
-  - name: master
-    hd_size: "{{ master_hd_size }}G"
-    memory_size: "{{ master_mem_size }}"
-    cpu_size: "{{ master_vcpu }}"
+  - name: "{{ hostname_prefix }}-ctrlplane"
+    hd_size: "{{ ctrlplane_hd_size }}G"
+    memory_size: "{{ ctrlplane_mem_size }}"
+    cpu_size: "{{ ctrlplane_vcpu }}"
     extra_storage:
       - size: 10G
         enable: false
@@ -183,10 +212,10 @@ ocp4_instances:
       - size: 50G
         enable: false
         name: vdc
-    qty: "{{ master_count }}"
+    qty: "{{ ctrlplane_count }}"
     vm_type: master
-    ip_octet: "{{ master_ip_octet }}"
-  - name: compute
+    ip_octet: "{{ ctrlplane_ip_octet }}"
+  - name: "{{ hostname_prefix }}-compute"
     hd_size: "{{ compute_hd_size }}G"
     memory_size: "{{ compute_mem_size }}"
     cpu_size: "{{ compute_vcpu }}"
@@ -194,27 +223,40 @@ ocp4_instances:
       - size: "{{ compute_vdb_size }}G"
         name: vdb
         enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdc_size }}G"
+      - size: "{{ compute_vdx_size }}G"
         name: vdc
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdd
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vde
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdf
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdg
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdh
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdi
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdj
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdk
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdl
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
-  - name: storage
-    hd_size: "{{ storage_hd_size }}G"
-    memory_size: "{{ storage_mem_size }}"
-    cpu_size: "{{ storage_vcpu }}"
-    extra_storage:
-      - size: "{{ storage_vdb_size }}G"
-        name: vdb
-        enable: "{{ storage_local_storage }}"
-      - size: "{{ storage_vdc_size }}G"
-        name: vdc
-        enable: "{{ storage_local_storage }}"
-    qty: "{{ storage_count }}"
-    vm_type: worker
-    ip_octet: "{{ storage_ip_octet }}"
-  - name: bootstrap
+  - name: "{{ hostname_prefix }}-bootstrap"
     hd_size: "{{ bootstrap_hd_size }}G"
     memory_size: "{{ bootstrap_mem_size }}"
     cpu_size: "{{ bootstrap_vcpu }}"
@@ -228,4 +270,17 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
-
+  - name: storage
+    hd_size: "{{ storage_hd_size }}G"
+    memory_size: "{{ storage_mem_size }}"
+    cpu_size: "{{ storage_vcpu }}"
+    extra_storage:
+      - size: "{{ storage_vdb_size }}G"
+        name: vdb
+        enable: "{{ storage_local_storage }}"
+      - size: "{{ storage_vdc_size }}G"
+        name: vdc
+        enable: "{{ storage_local_storage }}"
+    qty: "{{ storage_count }}"
+    vm_type: storage
+    ip_octet: "{{ storage_ip_octet }}"
