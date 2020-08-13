@@ -24,7 +24,7 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4     | 2.9               | 2.4 |
+|     Release 2.4.2     | 2.9               | 2.4.2 |
 
 ### Features in v2.4 RC Version
 
