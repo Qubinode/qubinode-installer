@@ -68,6 +68,7 @@ Choose one of the below options. The quick start is ideal if you meet your resou
 ### Additional Documentation
 
 * [Qubinode OpenShift Cluster Operations](ocp4_cluster_ops.md)
+* [LDAP OpenShift configuration](openshift_ldap_config.md)
 
 
 ### Troubleshooting Tips

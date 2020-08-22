@@ -1,3 +1,4 @@
+---
 ###################
 # IDM DNS Server  #
 ###################
@@ -82,6 +83,7 @@ force_idm_redeployment: false
 # Populate IdM
 
 # Bulk Sample Accounts
+create_students: false
 create_student_accounts: yes
 total_users: 4
 idm_group_desc: "A group of students"
@@ -151,14 +153,14 @@ idm_users:
    telephonenumber: []
    sshpubkey: []
    update_password: "{{ update_idm_user_pass }}"
- - name: "{{ admin_user }}"
+ - name: "qubinode_{{ admin_user }}"
    groups:
      - satellite-admins
      - tower-admins
      - openshift-admins
      - openshift-users
    password: "{{ admin_user }}"
-   givenname: "Admin"
+   givenname: OpenShift
    sn: User
    state: present
    loginshell: /usr/bin/bash

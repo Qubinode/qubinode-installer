@@ -45,12 +45,33 @@
     - name: create bind user
       when: bind_user_exist.rc != 0
       block:
+        - set_fact:
+            set_bind_password: "{{ bind_user_pass }}"
+          when: openshift_binddn_password == ''
+
         - name: update vault with bind_user password
           shell: >
             ansible-vault decrypt {{ vault_file }} --vault-password-file={{ vault_pass_file }};
-            echo "ocp_bind_pass: {{ bind_user_pass }}" >> {{  vault_file }};
+            echo "ocp_bind_pass: {{ set_bind_password }}" >> {{  vault_file }};
             ansible-vault encrypt {{ vault_file }} --vault-password-file={{ vault_pass_file }}
           when: openshift_binddn_password == ''
+
+        - name: debug openshift set_bind_password
+          debug:
+            var: set_bind_password
+            verbosity: 3
+          when: openshift_binddn_password == ''
+
+        - name: Set OpenShift Bind Fact
+          set_fact:
+            openshift_binddn_password: "{{ set_bind_password }}"
+          when: openshift_binddn_password == ''
+          
+        - name: debug openshift openshift_binddn_password 
+          debug:
+            var: openshift_binddn_password
+            verbosity: 3
+          when: openshift_binddn_password != ''
 
         - name: get user {{ idm_admin_user }} keytab
           shell: echo "{{ idm_admin_pwd }}" | kinit {{ idm_admin_user }}@{{ idm_realm }}
@@ -91,8 +112,9 @@
 
     - name: download IdM server certificate
       get_url:
-        url: http://{{ ipa_host }}/ipa/config/ca.crt
+        url: https://{{ ipa_host }}/ipa/config/ca.crt
         dest: /tmp/idm_ca.crt
+        validate_certs: false
       when: ca_config_map.rc != 0
 
     - name: create openshift ldap secret
@@ -135,7 +157,7 @@
                   ca:
                     name: ca-config-map
                   insecure: false
-                  url: "ldap://{{ ipa_host }}/{{ openshift_base_dn }}?uid"
+                  url: "ldaps://{{ ipa_host }}/{{ openshift_base_dn }}?uid"
       shell: |
         cat > /tmp/ldap_csr <<EOF
         {{ ldap_cr }}

@@ -26,6 +26,7 @@ cd $HOME/qubinode-installer
 ![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
 
 ## Deployment Post Steps
+* [LDAP OpenShift configuration](openshift_ldap_config.md)
 
 Accessing the cluster web console.
 
@@ -33,5 +34,7 @@ Accessing the cluster web console.
   - Or run script found under lib/qubinode_dns_configurator.sh
 * Option 2: Add dns server to router so all machines can access the OpenShift Cluster.
 
-**Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**
+**Additional cluster operations commands are avialable [here](ocp4_cluster_ops.md)**  
 
+## Troubleshooting Guide
+[Troubleshooting installation](troubleshooting-monitoring.md)
