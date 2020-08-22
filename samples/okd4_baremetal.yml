@@ -10,7 +10,7 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift Version
 ocp4_okd4: okd4
-ocp4_release: 4.4.0-0.okd-2020-05-23-055148-beta5
+ocp4_release: 4.5.0-0.okd-2020-07-14-153706-ga
 ocp4_image: 4.4.3
 ocp4_release_url: "https://github.com/openshift/okd/releases/download/{{ ocp4_release }}"
 
@@ -130,7 +130,7 @@ dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 
 # OpenShift version numbers
-major_version: "32.20200601.3.0"  #e.g. 32.20200601.3.0
+major_version: "32.20200715.3.0"  #e.g. 32.20200601.3.0
 ocp4_dependencies_version: "{{ major_version }}"
 ocp4_image_version: "{{ major_version }}"
 

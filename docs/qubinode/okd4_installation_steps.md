@@ -66,6 +66,8 @@ major_version: "32.20200601.3.0"  #e.g. 32.20200601.3.0
 ```
 
 ### Post deployment
+* [LDAP OpenShift configuration](openshift_ldap_config.md)
 * [Qubinode OpenShift Cluster Operations](ocp4_cluster_ops.md)
 * [Troubleshooting installation](troubleshooting-monitoring.md)
+
 
