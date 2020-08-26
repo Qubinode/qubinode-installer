@@ -47,7 +47,7 @@ The qubinode-installer needs to run as a regular user.
 * setup   - ensure your username is setup for sudoers
 * rhsm    - ensure your rhel system is registered to Red Hat
 * ansible - ensure your rhel system is setup for to function as a ansible controller
-* host    - ensure your rhel system is setup as a KVM host
+* kvmhost    - ensure your rhel system is setup as a KVM host
 
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
@@ -55,7 +55,7 @@ The qubinode-installer needs to run as a regular user.
 ./qubinode-installer -m setup
 ./qubinode-installer -m rhsm
 ./qubinode-installer -m ansible
-./qubinode-installer -m host
+./qubinode-installer -m kvmhost
 ```
 
 At this point you should be able to acces the RHEL system via the cockpit web interface on:
