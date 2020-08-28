@@ -18,7 +18,7 @@
   - name: set nfs mount point fact
     set_fact: nfs_mount_point="{{ item }}"
     loop: "{{ mount }}"
-    when: (item.size_total / 1000000000) > 300.00 and nfs_mount_point.mount == "/home" or  nfs_mount_point.mount == "/"
+    when: (item.size_total / 1000000000) > 300.00 and item.mount == "/home" or  item.mount == "/"
 
   - name: checking if / is greater that 300 GB
     debug:
