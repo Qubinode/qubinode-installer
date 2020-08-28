@@ -1,4 +1,4 @@
-- name: setup KVM host
+- name: Configure NFS Server
   hosts: localhost
   become: yes
   vars_files:
@@ -18,7 +18,7 @@
   - name: set nfs mount point fact
     set_fact: nfs_mount_point="{{ item }}"
     loop: "{{ mount }}"
-    when: (item.size_total / 1000000000) > 300.00
+    when: (item.size_total / 1000000000) > 300.00 and nfs_mount_point.mount == "/home" or  nfs_mount_point.mount == "/"
 
   - name: checking if / is greater that 300 GB
     debug:
@@ -28,22 +28,22 @@
   - name: check if item that is not / mount is greater than 300 GB
     debug:
       msg: "Using mount {{ nfs_mount_point.mount }}/nfs_mount/data"
-    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount != "/"
+    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/home"
 
   - name: set directory location under /
     set_fact: nfs_directory="{{ nfs_mount_point.mount }}nfs_mount/data"
     when: (item.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/"
     ignore_errors: true 
 
-  - name: set directory location under alternative path other than /
+  - name: "set directory location under /home if found" 
     set_fact: nfs_directory="{{ nfs_mount_point.mount }}/nfs_mount/data"
-    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount != "/"
+    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/home"
     ignore_errors: true 
 
   - name: fail when nfsmount point cannot be created
     fail:
       msg: The system may not create nfs server you do not have at least 300 GB mount. 
-    when: nfs_mount_point is undefined
+    when: nfs_directory is undefined
 
   - name: Create a directory nfs mount data directory
     file:
