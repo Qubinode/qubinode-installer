@@ -43,6 +43,10 @@ network_interface_name: "{{ kvm_host_interface }}"
 # set storage device to dedicate to /var/lib/libvirt/images
 kvm_host_libvirt_extra_disk: ""
 
+# setup NFS Server 
+setup_nfs: true
+remove_nfs: false 
+
 # use by funciton check_hardware_resources
 libvirt_pool_name: default
 

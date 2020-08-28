@@ -10,8 +10,8 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift Version
 ocp4_okd4: ocp4
-ocp4_release: 4.4.15
-ocp4_image: 4.4.3
+ocp4_release: 4.5.7
+ocp4_image: 4.5.6
 
 # User info
 local_user_account: "{{ admin_user }}"
@@ -23,7 +23,7 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
 set_as_default: false        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
-nfs_server_directory_path: /export
+nfs_server_directory_path: /home/nfs_mount/data/
 nfs_server_ip:  "{{ kvm_host_ip }}"
 provision_nfs_provisoner: true      # deploys the nfs provision
 project_namespace: nfs-provisioner

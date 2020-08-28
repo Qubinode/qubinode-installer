@@ -538,6 +538,7 @@ function qubinode_setup_kvm_host () {
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+           ansible-playbook "${project_dir}/playbooks/configure-nfs.yml" || exit $?
            #qcow_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
@@ -549,6 +550,7 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+        ansible-playbook "${project_dir}/playbooks/configure-nfs.yml" || exit $?
         #qcow_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
