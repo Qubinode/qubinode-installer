@@ -157,7 +157,8 @@ function qcow_check () {
         then
             sudo cp "${project_dir}/${qcow_image_name}"  "${libvirt_dir}/${qcow_image_name}"
         else
-            echo "${qcow_image_name} not found on machine please copy over "
+            echo "  Did not find ${qcow_image_name} in path ${project_dir}."
+            echo "  Download and copy ${qcow_image_name} to ${project_dir}."
             exit 1
         fi
     fi
@@ -262,7 +263,8 @@ setup_download_options () {
         then
             sudo cp "${project_dir}/${artifact_qcow_image}"  "${libvirt_dir}/${artifact_qcow_image}"
         else
-            echo "${artifact_qcow_image} not found on machine please copy over "
+            echo "  Did not find ${artifact_qcow_image} in path ${project_dir}."
+            echo "  Download and copy ${artifact_qcow_image} to ${project_dir}."
             exit 1
         fi
     fi
