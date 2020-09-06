@@ -174,10 +174,10 @@ function install_rhsm_cli () {
         cd "${project_dir}/.python"
         python3 -m venv rhsm_cli
         source "${project_dir}/.python/rhsm_cli/bin/activate"
-        git clone https://github.com/antonioromito/rhsm-api-client
+        git clone https://github.com/antonioromito/rhsm-api-client > /dev/null 2>&1
         cd rhsm-api-client
-        pip install -r requirements.txt
-        python setup.py install --record files.txt
+        pip install -r requirements.txt > /dev/null 2>&1
+        python setup.py install --record files.txt > /dev/null 2>&1
         deactivate
         cd "${project_dir}"
     fi

@@ -488,6 +488,7 @@ function qubinode_setup () {
 }
 
 function qubinode_base_requirements () {
+    ## 9/9/2020 this function should be replaced with qubinode_setup
     # This function ensures all the minimal base requirements are met.
     if [ "A${running_qubinode_setup}" != "Ayes" ]
     then
