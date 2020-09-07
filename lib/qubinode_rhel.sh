@@ -115,7 +115,7 @@ function qubinode_deploy_rhel () {
     then
         if [ -f "${project_dir}/${qcow_image}" ]
         then
-	     echo "Copying ${project_dir}/${qcow_image} to ${RHEL_QCOW_SOURCE}"
+	     #echo "Copying ${project_dir}/${qcow_image} to ${RHEL_QCOW_SOURCE}"
              sudo cp "${project_dir}/${qcow_image}" "${RHEL_QCOW_SOURCE}" 
         else
             echo "Please download ${qcow_image} to ${RHEL_QCOW_SOURCE}"
