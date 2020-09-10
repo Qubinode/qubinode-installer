@@ -60,14 +60,18 @@ dns_servers:
 
 public_domain: "{{ domain }}"
 
+## When this var is set to true and the host gets it's ip address from
+## dhcp. It was take that IP address and configure the host to use static
+## ip address assignment. It's recommended that you create a DHCP reservation
+## for this host to ensure the DHCP lease does not expire and get consume by
+## another host on the network.
+convert_dhcp_to_static: true
+
 qubinode_installer_setup_completed: no
 qubinode_installer_rhsm_completed: no
 user_input_complete: no
 qubinode_installer_ansible_completed: no
 qubinode_base_reqs_completed: no
-
-# Ensure VMs are always using static IP even when DHCP issued
-static_ip: true
 
 # ROLE: swygue-redhat-subscription
 rhsm_org: "{{ rhsm_org }}"

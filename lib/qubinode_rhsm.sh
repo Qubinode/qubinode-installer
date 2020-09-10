@@ -151,7 +151,6 @@ function qubinode_rhsm_register () {
             exit 1
         fi
     
-        #encrupt vault file
         encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
     
         IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")

@@ -459,6 +459,7 @@ function qubinode_setup () {
     ask_user_input
     setup_variables
     setup_user_ssh_key
+    ask_user_for_idm_password
     #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
