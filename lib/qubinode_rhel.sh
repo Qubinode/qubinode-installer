@@ -166,15 +166,19 @@ function run_rhel_deployment () {
         PLAYBOOK_STATUS=$?
     fi
 
+    # Run function to remove vm vars file
+    delete_vm_vars_file
+}
+
+function delete_vm_vars_file () {
     # check if VM was deployed, if not delete the qcow image created for the vm
+    VM_DELETED=no
     if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
     then
         sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file
         rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
+	VM_DELETED=yes
     fi
-
-    # return the status of the playbook run
-    #return $PLAYBOOK_STATUS
 }
 
 function qubinode_deploy_rhel () {
@@ -241,15 +245,17 @@ function qubinode_rhel_teardown () {
         ansible-playbook "${RHEL_VM_PLAY}" --extra-vars "vm_teardown=true" -e @"${VARS_FILE}"
         RESULT=$?
 
-        if [ $RESULT -eq 0 ]
+	echo "RESULT=$RESULT"
+	delete_vm_vars_file
+        if [ "A${VM_DELETED}" == "Ayes" ]
         then
-            rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
-            printf "\n\n*************************\n"
+            printf "\n\n"
             printf "  * VM $name deleted *\n"
-            printf "*************************\n\n"
         fi
     else 
         echo "The VM $name does not exist"
+        printf "\n\n"
+        printf "  The VM $name does not exit\n"
     fi
 }
 
