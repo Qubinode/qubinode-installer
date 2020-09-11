@@ -29,3 +29,5 @@ rhsm_token
 .python/
 *.qcow2
 *.iso
+.gitignore.dev
+.gitignore.master
