@@ -50,9 +50,11 @@ do
         done
         SNAPSHOT_DISK_NAME=${SS_DISK_NAME}
         VM_SNAPSHOT_NAME="${VM_NAME}_snap_${i}"
+	SUFFIX="${i}"
     else
         SNAPSHOT_DISK_NAME="${SNAPSHOT_DISK_TMP_NAME}"
         VM_SNAPSHOT_NAME="${VM_NAME}_snap_0"
+	SUFFIX="0"
     fi
 
     SOURCE_DISK_PATH=$(sudo virsh domblklist ${VM_NAME}| awk -v var=$disk -e '$0 ~ var {print $2}')
@@ -62,7 +64,8 @@ do
 
     if sudo virsh domblklist ${VM_NAME} | grep -q $SNAPSHOT_DISK_NAME
     then
-        sudo cp $SOURCE_DISK_PATH $VM_BACKUP_DIR/
+	DISK_NAME=$(basename $SOURCE_DISK_PATH)
+        sudo cp $SOURCE_DISK_PATH $VM_BACKUP_DIR/${DISK_NAME}.${SUFFIX}
         sudo virsh blockcommit ${VM_NAME} ${disk} --active --verbose --pivot
     fi
 
