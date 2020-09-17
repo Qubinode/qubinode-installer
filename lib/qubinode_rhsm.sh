@@ -151,7 +151,6 @@ function qubinode_rhsm_register () {
             exit 1
         fi
     
-        #encrupt vault file
         encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
     
         IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")
@@ -161,11 +160,11 @@ function qubinode_rhsm_register () {
             printf "%s\n" ""
             printf "%s\n" " ${rhsm_msg}"
             rhsm_reg_result=$(mktemp)
-            rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
-            if [ "A${rhel_major}" == "A8" ]
+            local rhsm_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+            if [ "A${rhsm_rhel_major}" == "A8" ]
             then
                RHEL_RELEASE=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-            elif [ "A${rhel_major}" == "A7" ]
+            elif [ "A${rhsm_rhel_major}" == "A7" ]
             then
                RHEL_RELEASE=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
             else

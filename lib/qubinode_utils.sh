@@ -459,6 +459,7 @@ function qubinode_setup () {
     ask_user_input
     setup_variables
     setup_user_ssh_key
+    ask_user_for_idm_password
     #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
@@ -488,6 +489,7 @@ function qubinode_setup () {
 }
 
 function qubinode_base_requirements () {
+    ## 9/9/2020 this function should be replaced with qubinode_setup
     # This function ensures all the minimal base requirements are met.
     if [ "A${running_qubinode_setup}" != "Ayes" ]
     then
