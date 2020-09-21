@@ -5,6 +5,9 @@
 ### Release web page
 https://github.com/Qubinode/qubinode-installer/releases
 
+**Qubinode Dev Release notes**
+* Support for creating Let's Encrypt Certs and updating cluster
+* Add simple VM snapshot script lib/qubinode_snapshot_vm.sh
 
 **Qubinode v2.4.1 Release notes**
 * RHEL 8.2 Support

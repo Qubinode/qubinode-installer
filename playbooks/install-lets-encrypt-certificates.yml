@@ -1,0 +1,128 @@
+- name: Deploy Custom Signed Certificates
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - vars/all.yml
+
+  vars:
+    certdir: "{{ project_dir }}/acme/certs"
+
+  tasks:
+  - name: ensure playbook/files directory exist
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: '0755'
+    loop:
+      - "{{ project_dir }}/acme/bin"
+      - "{{ project_dir }}/acme/data"
+      - "{{ project_dir }}/acme/certs"
+      - "{{ playbook_dir }}/files"
+
+  - name: Download ACME Shell Script
+    git:
+      repo: https://github.com/Neilpang/acme.sh.git
+      dest: /tmp/acme.sh
+
+  - name: copy acme install script
+    template:
+      src: acme_install.j2
+      dest: "{{ project_dir }}/lib/qubinode_acme_install.sh"
+
+  - name: install ACME Shell Script
+    shell: "{{ lookup('template', 'acme_install.j2') }}"
+    args:
+      warn: no
+      executable: /bin/bash
+      creates: "{{ project_dir }}/acme/bin/acme.sh"
+    register: install_acme
+
+  - name: issue new certficiates for domain
+    vars:
+      dns_provider: dns_cf
+      acme_cmd: "{{ project_dir }}/acme/bin/acme.sh"
+    shell: "{{ acme_cmd }} --issue --force -d ${LE_API} -d *.${LE_WILDCARD} --dns {{ dns_provider }}"
+    args:
+    register: issue_cert
+    environment:
+      CF_Token: "{{ cloudflare_token }}"
+      CF_Account_ID: "{{ cloudflare_account_id }}"
+      CF_Zone_ID: "{{ cloudflare_zone_id }}"
+    when: use_cloudflare|bool and not skip_acme|bool
+
+  - name: deploy recently issued certs
+    vars:
+      cert_domain: "{{ user_domain|default(domain) }}"
+      certdir: "{{ project_dir }}/acme/certs"
+      dns_provider: dns_cf
+    shell: "{{ lookup('template', 'acme_issue.j2') }}"
+    args:
+    register: issue_cert
+    environment:
+      CF_Token: "{{ cloudflare_token }}"
+      CF_Account_ID: "{{ cloudflare_account_id }}"
+      CF_Zone_ID: "{{ cloudflare_zone_id }}"
+      LE_WILDCARD: "{{ le_wildcard }}"
+      LE_API: "{{ le_api }}"
+    when: use_cloudflare|bool and not skip_acme|bool
+
+  - name: check if ingress cert exists
+    shell: oc get secret ingress-certs -n openshift-ingress
+    register: ingress_certs
+    ignore_errors: yes
+    changed_when: False
+
+  - name: check if api-certs exist
+    shell: oc get secret api-certs -n openshift-config
+    register: api_certs
+    ignore_errors: yes
+    changed_when: False
+
+  - name: Installing Certificates for Ingress Controllers
+    vars:
+      cert_fullchain: "{{ certdir }}/fullchain.pem"
+      cert_privkey: "{{ certdir }}/privkey"
+    when: ingress_certs.rc != 0
+    block:
+      - name: create ingress-certs secret
+        shell: "oc create secret tls ingress-certs --cert={{ cert_fullchain }} --key={{ cert_privkey }} -n openshift-ingress"
+        register: create_ingress_cert
+      - name: patch ingress-certs
+        when: create_ingress_cert.rc == 0
+        vars:
+          oc_cmd: "oc patch ingresscontroller default -n openshift-ingress-operator --type=merge"
+        shell: "{{ oc_cmd }} --patch='\{"spec": \{ "defaultCertificate": \{ "name": "ingress-certs" \}\}\}'"
+
+  - name: Installing Certificates for API
+    vars:
+      cert_fullchain: "{{ certdir }}/fullchain.pem"
+      cert_privkey: "{{ certdir }}/privkey"
+    when: api_certs.rc != 0
+    block:
+      - name: create api-certs secret
+        shell: "oc create secret tls api-certs --cert={{ cert_fullchain }} --key={{ cert_privkey }} -n openshift-config"
+        register: create_api_cert
+      - name: patch api-certs
+        when: create_api_cert.rc == 0
+        shell: oc patch apiserver cluster --type=merge --patch='\{"spec": \{"servingCerts": \{"namedCertificates": [\{"names": [" '$LE_API' "], "servingCertificate": \{"name": "api-certs"\}\}]\}\}\}'
+
+  - name: Find all Kube Configs
+    become: yes
+    find:
+      file_type: file
+      hidden: true
+      paths:
+      - /root
+      - /home
+      contains: "^ +certificate-authority-data:"
+      patterns: "*config*"
+      recurse: yes
+    register: r_config_files
+
+  - name: Fix Kube Configs
+    become: yes
+    replace:
+      path: "{{ item.path }}"
+      regexp: "^ +certificate-authority-data:"
+    loop: "{{r_config_files.files}}"
