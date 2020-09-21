@@ -1,4 +1,7 @@
 ---
+collections:
+- name: containers.podman
+
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
   version: refactoring
 

@@ -31,3 +31,6 @@ rhsm_token
 *.iso
 .gitignore.dev
 .gitignore.master
+lib/qubinode_acme_install.sh
+playbooks/files
+acme/
