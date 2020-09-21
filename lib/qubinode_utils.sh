@@ -80,7 +80,6 @@ function canSSH () {
     user=$1
     host=$2
     RESULT=$(ssh -q -o StrictHostKeyChecking=no -o "BatchMode=yes" -i /home/${user}/.ssh/id_rsa "${user}@${host}" "echo 2>&1" && echo SSH_OK || echo SSH_NOK)
-    echo $RESULT
 }
 
 
