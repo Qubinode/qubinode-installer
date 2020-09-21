@@ -73,15 +73,21 @@ function qubinode_rhel () {
             memory=800
             disk=10G
             expand_os_disk=no
-        elif [ "A${size}" == "Amedium" ]
+        elif [ "A${size}" == "Astandard" ]
         then
             vcpu=2
-            memory=2048
+            memory=4096
+            disk=40G
+            expand_os_disk=yes
+        elif [ "A${size}" == "Amedium" ]
+        then
+            vcpu=4
+            memory=4096
             disk=60G
             expand_os_disk=yes
         elif [ "A${size}" == "Alarge" ]
         then
-            vcpu=4
+            vcpu=6
             memory=8192
             disk=120G
             expand_os_disk=yes
@@ -245,7 +251,6 @@ function qubinode_rhel_teardown () {
         ansible-playbook "${RHEL_VM_PLAY}" --extra-vars "vm_teardown=true" -e @"${VARS_FILE}"
         RESULT=$?
 
-	echo "RESULT=$RESULT"
 	delete_vm_vars_file
         if [ "A${VM_DELETED}" == "Ayes" ]
         then
