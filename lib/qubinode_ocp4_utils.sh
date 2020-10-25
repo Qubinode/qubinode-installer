@@ -190,11 +190,6 @@ function openshift4_prechecks () {
     #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
 
-    # Ensure Openshift Subscription Pool is attached
-    if [ "A${product_opt}" != "Aokd4" ]
-    then
-        check_for_openshift_subscription $ocp_vars_file
-    fi
 }
 
 
