@@ -54,11 +54,10 @@ function ask_user_for_idm_domain () {
 }
 
 function ask_user_for_idm_password () {
-    # decrypt ansible vault file
-    decrypt_ansible_vault "${vaultfile}" > /dev/null
-
     # This is the password used to log into the IDM server webconsole and also the admin user
-    if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
+    #if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
+    idm_admin_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_admin_pwd:/ {print $2;exit}')
+    if [ "A${idm_admin_pwd}" == 'A""' ];
     then
         unset idm_admin_pwd
         while [[ ${#idm_admin_pwd} -lt 8 ]]
@@ -75,6 +74,7 @@ function ask_user_for_idm_password () {
                 printf "%s\n" "  The password must be at least ${yel}8${end} characters long."
             fi
         done
+        decrypt_ansible_vault "${vaultfile}" > /dev/null
         sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
         echo ""
     fi
@@ -136,6 +136,9 @@ function ask_user_for_custom_idm_server () {
                 printf "%s\n" ""
             fi
             sed -i "s/ask_use_existing_idm:.*/ask_use_existing_idm: skip/g" "${idm_vars_file}"
+
+            # Ask user for password for IdM
+            ask_user_for_idm_password
         else
             # Ask user for password for IdM
             ask_user_for_idm_password
@@ -322,8 +325,11 @@ function qubinode_teardown_idm () {
 function qubinode_deploy_idm_vm () {
     if grep deploy_idm_server "${idm_vars_file}" | grep -q yes
     then
-        qubinode_vm_deployment_precheck
         isIdMrunning
+        if [ "A${idm_running}" == "Afalse" ]
+        then
+            qubinode_setup
+        fi
 
         IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
         SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')

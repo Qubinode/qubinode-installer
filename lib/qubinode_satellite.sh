@@ -1,6 +1,20 @@
 #!/bin/bash
 
-SATELLITE_SERVER_NAME="qbn-sat01"
+
+# VARIBLES
+SAMPLE_VARS_FILE="${project_dir}/samples/satellite_server.yml"
+test -f "${SATELLITE_VARS_FILE}" || cp "${SAMPLE_VARS_FILE}" "${SATELLITE_VARS_FILE}"
+PREFIX=$(awk '/^instance_prefix:/ {print $2}' $project_dir/playbooks/vars/all.yml)
+SUFFIX=$(awk '/^hostname_suffix:/ {print $2}' "${SATELLITE_VARS_FILE}")
+SATELLITE_SERVER_NAME="${PREFIX}-${SUFFIX}"
+SATELLITE_SERVER_IP=$(awk -v var="${SATELLITE_SERVER_NAME}" '$0 ~ var {print $2}' "${project_dir}/inventory/hosts" |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+ANSIBLE_VERSION=$(awk '/^ansible_release:/ {print $2}' $project_dir/playbooks/vars/all.yml)
+
+# Playbooks
+SATELLITE_VM_PLAYBOOK="${project_dir}/playbooks/deploy_satellite_vm.yml"
+SATELLITE_SERVER_PLAYBOOK="${project_dir}/playbooks/satellite-server-install.yml"
+
+
 function satellite_server_maintenance () {
    STATUS=$(sudo virsh list --all|awk -v var="${SATELLITE_SERVER_NAME}" '$0 ~ var {print $3}')
    if [ "${product_maintenance}" == "shutdown" ]
@@ -55,60 +69,25 @@ function satellite_configure_msg () {
     printf " ${yel}*******************************************************************************${end}\n\n"
 }
 
-function qubinode_setup_satellite () {
-    ANSIBLE_VERSION="2.8"
-    CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
-    ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
+function qubinode_configure_satellite () {
     local error_msg="${red}The configuration of the Satellite server was unsuccessful.${end}"
     local success_msg="${cyn}The configuration of the Satellite server was successful.${end}"
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" == "AYES" ]
+    ansible-galaxy collection install -r playbooks/requirements.yml
+    pip install --user apypie
+    pip install --user ipaddress
+    pip install --user PyYAML
+
+    # configure satellite
+    if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml
+    #ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml -e "install_apypie=yes"
     then
-        if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml
-        then
-            SATELLITE_SETUP=success
-            satellite_server_setup_msg="${success_msg}"
-        else
-            SATELLITE_SETUP=failed
-            satellite_server_setup_msg="${error_msg}"
-        fi
+        SATELLITE_SETUP=success
+        satellite_server_setup_msg="${success_msg}"
+        satellite_configure_msg
     else
         SATELLITE_SETUP=failed
         satellite_server_setup_msg="${error_msg}"
-        printf "%s\n" " The version of Ansible needs to be at least $ANSIBLE_VERSION for setting up Satellite."
-        printf "%s\n" " Your current Ansible version is $CURRENT_ANSIBLE_VERSION."
-
-        if ! rpm -qa | grep -q rh-python36-python-pip
-        then
-            sudo subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-server-rhscl-7-rpms
-            sudo yum -y install rh-python36 rh-python36-python-pip
-        fi
-
-        if [ ! -f ${project_dir}/../.ansible/collections/ansible_collections/theforeman/foreman/MANIFEST.json ]
-        then
-            test -d "${project_dir}/python-env" || mkdir "${project_dir}/python-env"
-            cd "${project_dir}/python-env"
-            source /opt/rh/rh-python36/enable
-            python3 -m venv ansible2.9.5
-            source ./ansible2.9.5/bin/activate
-            pip install --upgrade pip setuptools
-            pip install ansible==2.9.5
-            pip install apypie
-            pip install ipaddress
-            pip install PyYAML
-            ansible-galaxy collection install theforeman.foreman
-            deactivate
-        fi
-
-        cd "${project_dir}"
-        source "${project_dir}/python-env/ansible2.9.5/bin/activate"
-        if ansible-playbook ${project_dir}/playbooks/satellite_server_setup.yml -e "install_apypie=yes"
-        then
-            satellite_configure_msg
-        else
-            printf "%s\n" "The configuration of Satellite was not completely successful."
-        fi
-        deactivate
     fi
 }
 
@@ -133,31 +112,26 @@ function qubinode_install_satellite () {
             printf "%s\n\n" "  Could not find a Satellite manifest."
             printf "%s\n" "  Please save your satellite manifest to ${project_dir}/satellite-server-manifest.zip"
             printf "%s\n" "  and run the installer again."
-            #rintf "%s\n" " You can also specefiy a alternate manifest byt edit playbooks/vars/satellite_server.yml"
             exit
         fi
-        qubinode_setup
-        ask_user_input
-        qubinode_vm_deployment_precheck
 
-        # Ensure IdM is deployed
-        qubinode_deploy_idm
-
-        # Start of Satellite deployment
-        ACTIVE_VARS_FILE="${project_dir}/playbooks/vars/satellite_server.ymll"
-        SAMPLE_VARS_FILE="${project_dir}/samples/satellite_server.yml"
-        test -f "${ACTIVE_VARS_FILE}" || cp "${SAMPLE_VARS_FILE}" "${ACTIVE_VARS_FILE}"
-        SATELLITE_VM_PLAYBOOK="${project_dir}/playbooks/deploy_satellite_vm.yml"
-        SATELLITE_SERVER_IP=$(awk '/qbn-sat/ {print $2}' "${project_dir}/inventory/hosts" |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-        SATELLITE_SERVER_PLAYBOOK="${project_dir}/playbooks/satellite-server-install.yml"
-
-        # Check if Satellite DNS has been created
+        #Check if Satellite DNS has been created
         if [ "A${SATELLITE_SERVER_IP}" != "A" ]
         then
             SATELLITE_SERVER_DNS=$(dig +short -x "${SATELLITE_SERVER_IP}")
         fi
-   
-     
+
+        # Ensure host is setup as a qubinode
+        qubinode_setup
+
+        # Ensure IdM is deployed
+        isIdMrunning
+        if [ "A${idm_running}" == "Afalse" ]
+        then
+            qubinode_deploy_idm
+        fi
+
+        # Start of Satellite deployment
         if grep '""' "${SATELLITE_VARS_FILE}"|grep -q satellite_pool_id
         then
             echo "Checking for Red Hat Satellite Subscription Pool"
@@ -172,36 +146,47 @@ function qubinode_install_satellite () {
                     sed -i "s/satellite_pool_id: \"\"/satellite_pool_id: $POOL_ID/g" "${SATELLITE_VARS_FILE}"
                 fi
             else
-                echo "The OpenShift Pool ID is not available to playbooks/vars/all.yml"
+                echo "Could locate a Red Hat Satellite Subscription Pool"
+                echo "You can manually add it to ${SATELLITE_VARS_FILE} and run the script again"
+                exit 1
             fi
         fi
+
+        # set the qcow image to be used
+        sed -i "s/cloud_init_vm_image:.*/cloud_init_vm_image: "$qcow_image_name"/g" "${SATELLITE_VARS_FILE}"
 
         # Ensure required role exist
         check_for_required_role swygue-install-satellite
         if [ "A${SATELLITE_SERVER_IP}" != "A" ]
         then
-            echo "Checking if Satellite deployment is needed"
+            # Satellite server ip found in inventory host
+            #Checking if Satellite deployment is needed
             if ! ssh -o StrictHostKeyChecking=no "${ADMIN_USER}@${SATELLITE_SERVER_IP}" 'exit'
             then
                 echo "Deploy Satellite VM and create DNS records"
                 ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
                 update_satellite_ip
                 ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+                #qubinode_configure_satellite
                 satellite_install_msg
             elif [ "A${SATELLITE_SERVER_DNS}" == "A" ]
             then
+            # Deploy the satellite server VM if the ip address
+            # wasn't already in inventory/hosts
                 echo "Create Satellite server DNS records"
                 ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                 update_satellite_ip
                 ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+                qubinode_configure_satellite
                 satellite_install_msg
             else
                 # need to add a check to verify login to the satellite server then
                 # and if not run other steps
-                echo "Update DNS and Satellite server IP"
+                #echo "Update DNS and Satellite server IP"
                 ansible-playbook "${SATELLITE_VM_PLAYBOOK}" -t create_dns_records || exit $?
                 update_satellite_ip
                 ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+                qubinode_configure_satellite
                 satellite_install_msg
             fi
         else
@@ -209,6 +194,7 @@ function qubinode_install_satellite () {
             ansible-playbook "${SATELLITE_VM_PLAYBOOK}" || exit $?
             update_satellite_ip
             ansible-playbook "${SATELLITE_SERVER_PLAYBOOK}" || exit $?
+            qubinode_configure_satellite
             satellite_install_msg
         fi
     else
@@ -217,16 +203,24 @@ function qubinode_install_satellite () {
 }
 
 function qubinode_deploy_satellite () {
+    SATELLITE_STATUS=$(ansible-playbook "${project_dir}/playbooks/satellite-server-install.yml" -t check-satellite | grep 'status:')
+    RESULT=$(echo $SATELLITE_STATUS | awk -F: '{print $2}'|tr -d '[:space:]')
+
     if [ "A${product_maintenance}" != "A" ]
     then
        satellite_server_maintenance
     elif [ "A${teardown}" == "Atrue" ]
     then
         echo "Tear Down Satellite"
-        requirements.yml
+        qubinode_teardown_satellite
     else
-        qubinode_install_satellite
-        qubinode_setup_satellite
+        if [[ "${RESULT}" == "-1" ]] || [[ "${RESULT}" == "" ]]
+        then
+            qubinode_install_satellite
+        else
+            echo "Satellite server appears to be already deployed"
+            echo "https://{{ satellite_hostname }}.{{ satellite_domain }}"
+        fi
     fi
 }
 

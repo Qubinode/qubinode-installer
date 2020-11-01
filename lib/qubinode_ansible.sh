@@ -166,21 +166,22 @@ function qubinode_setup_ansible () {
 }
 
 function decrypt_ansible_vault () {
-    vaulted_file="$1"
-    grep -q VAULT "${vaulted_file}"
+    vaultfile="${project_dir}/playbooks/vars/vault.yml"
+    grep -q VAULT "${vault_vars_file}"
     if [ "A$?" == "A0" ]
     then
         cd "${project_dir}/"
-        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
+        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaultfile}"
         ansible_encrypt=yes
     fi
 }
 
 function encrypt_ansible_vault () {
-    vaulted_file="$1"
-    if [ "A${ansible_encrypt}" == "Ayes" ]
+    vaultfile="${project_dir}/playbooks/vars/vault.yml"
+    grep -q VAULT "${vaultfile}"
+    if [ "A$?" != "A0" ]
     then
         cd "${project_dir}/"
-        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaulted_file}"
+        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
     fi
 }

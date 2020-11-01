@@ -1,0 +1,83 @@
+- name: Configure NFS Server
+  hosts: localhost
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/kvm_host.yml
+    - vars/vault.yml
+  gather_facts: true
+  tasks:
+  - name: Collect only facts about hardware
+    setup:
+      gather_subset:
+      - hardware
+
+  - name: Collecting xfs mounts
+    set_fact: mount="{{ ansible_mounts|json_query('[?fstype == `xfs`]') }}"
+
+  - name: set nfs mount point fact
+    set_fact: nfs_mount_point="{{ item }}"
+    loop: "{{ mount }}"
+    when: (item.size_total / 1000000000) > 300.00 and item.mount == "/home" or  item.mount == "/"
+
+  - name: checking if / is greater that 300 GB
+    debug:
+      msg: "Using mount {{ nfs_mount_point.mount }}nfs_mount/data"
+    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/"
+
+  - name: check if item that is not / mount is greater than 300 GB
+    debug:
+      msg: "Using mount {{ nfs_mount_point.mount }}/nfs_mount/data"
+    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/home"
+
+  - name: set directory location under /
+    set_fact: nfs_directory="{{ nfs_mount_point.mount }}nfs_mount/data"
+    when: (item.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/"
+    ignore_errors: true 
+
+  - name: "set directory location under /home if found" 
+    set_fact: nfs_directory="{{ nfs_mount_point.mount }}/nfs_mount/data"
+    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/home"
+    ignore_errors: true 
+
+  - name: fail when nfsmount point cannot be created
+    fail:
+      msg: The system may not create nfs server you do not have at least 300 GB mount. 
+    when: nfs_directory is undefined
+
+  - name: Create a directory nfs mount data directory
+    file:
+      path: "{{ nfs_directory }}"
+      state: directory
+      mode: '0755'
+    when: setup_nfs | bool
+
+  - name: Configure NFS Server
+    vars:
+      provision_nfs_server: true
+      nfs_server_directory_path: "{{ nfs_directory }}"
+      provision_nfs_provisoner: false
+      configure_registry: false
+      nfs_server_ip:  "{{ kvm_host_ip }}"
+      registry_pvc_size: 100Gi
+    import_role:
+      name: nfs-provisioner-role
+    when: setup_nfs  | bool
+
+  - name: Remove NFS Server
+    vars:
+      provision_nfs_server: false
+      nfs_server_directory_path: "{{ nfs_directory }}"
+      provision_nfs_provisoner: false
+      configure_registry: false
+      nfs_server_ip:  "{{ kvm_host_ip }}"
+      registry_pvc_size: 100Gi
+    import_role:
+      name: nfs-provisioner-role
+    when: remove_nfs | bool
+
+  - name: Recursively remove directory
+    file:
+      path: "{{ nfs_directory }}"
+      state: absent
+    when: remove_nfs | bool
