@@ -71,7 +71,7 @@ function qubinode_setup_ansible () {
             printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo dnf clean all > /dev/null 2>&1
             sudo rm -r /var/cache/dnf
-            sudo yum install -y -q -e 0 python3 python3-pip python3-dns > /dev/null 2>&1
+            sudo yum install -y -q -e 0 python3 python3-pip python3-dns bc bind-utils> /dev/null 2>&1
 	    sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
 	fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
@@ -79,7 +79,7 @@ function qubinode_setup_ansible () {
         then
             printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
+            sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns  bc bind-utils
 	    #sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python/g" "${vars_file}"
         fi
     else
@@ -107,10 +107,10 @@ function qubinode_setup_ansible () {
        fi
        if [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils
         fi
        ensure_supported_ansible_version
     else

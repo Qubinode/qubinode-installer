@@ -8,20 +8,34 @@ installation_working_dir: "{{ project_dir }}"
 # Required Files
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
-# OpenShift Version
+# OpenShift/OKD Version
 ocp4_okd4: ocp4
-ocp4_release: 4.5.7
-ocp4_image: 4.5.6
+ocp4_release: latest
+ocp4_image: 4.6.1
+ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}"
+
+# OpenShift/OKD version numbers
+major_version: 4.6.1
+ocp4_dependencies_version: "{{ major_version }}"
+ocp4_image_version: 4.6.1
+
+ocp4_client: "openshift-client-linux-{{ major_version }}.tar.gz"
+ocp4_installer: "openshift-install-linux-{{ major_version }}.tar.gz"
+tools_missing: false
+
+family_tree: "Red Hat CoreOS"
+
 
 # User info
 local_user_account: "{{ admin_user }}"
 local_user_ssh_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
 ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 
+
 ########################
 # NFS Persistent Storage
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
-set_as_default: false        # set NFS as the default persistent storage
+set_as_default: true        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /home/nfs_mount/data/
 nfs_server_ip:  "{{ kvm_host_ip }}"
@@ -34,7 +48,6 @@ configure_ocs_storage: no
 # deploy local persistent storage
 configure_local_storage: no
 compute_local_storage: no
-storage_local_storage: yes
 localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
@@ -84,14 +97,8 @@ ctrlplane_vcpu: 4
 compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
-compute_vdb_size: 10
-compute_vdx_size: 10
-storage_hd_size: 120
-storage_vcpu: 8
-storage_vdb_size: 10
-storage_vdc_size: 200
-storage_mem_size: 24576
-storage_count: 0
+compute_vdb_size: 50
+compute_vdc_size: 150
 bootstrap_hd_size: 120
 bootstrap_mem_size: 16192
 bootstrap_vcpu: 4
@@ -118,12 +125,12 @@ storage_ip_octet: 30
 tear_down: false
 
 # OpenShift Download URL
-openshift_mirror: "http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ minor_version }}/{{ micro_version }}"
+openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_release }}/{{ major_version }}"
 
 # OpenShift Dependencies
-coreos_installer_kernel: "rhcos-{{ micro_version }}-x86_64-installer-kernel-x86_64"
-coreos_installer_initramfs: "rhcos-{{ micro_version }}-x86_64-installer-initramfs.x86_64.img"
-coreos_metal_bios: "rhcos-{{ micro_version }}-x86_64-metal.x86_64.raw.gz"
+coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
+coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
+coreos_metal_bios: "rhcos-{{ major_version }}-x86_64-metal.x86_64.raw.gz"
 
 #################################################################
 # These can be left alone unless you have a reason to change them
@@ -134,18 +141,20 @@ openshift_install_folder: ocp4
 # Set to false to not create the install-config
 deploy_ocp4_configs: yes
 
-# IdM user 
-openshift_binddn_password: "{{ ocp_bind_pass | default('') }}"
-openshift_bind_user: openshiftbind
-openshift_binddn_password_expiration: 20380119031407Z
+
+#######################
+# Configure Network 
+libvirt_network_name: qubinat 
+use_external_bridge: false  # set to qubinet for external network and set use_external_bridge: true 
+external_bridge_network: qubinet
 
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
 mask: 255.255.255.0
-cluster_name: qbn
+cluster_name: qub01
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
-libivrt_network_domain: compute.local
+libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"
 listen_address: "{{ kvm_host_ip }}"
 lb_name: "{{ ocp4_lb_container }}"
 mac_start: "52:54:00:"
@@ -155,12 +164,6 @@ dns_domain: "{{ domain }}"
 dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 
-# OpenShift version numbers
-major_version: "{{ ocp4_image[:1] }}"  #e.g. 4
-minor_version: "{{ ocp4_image[:3] }}"  #e.g. 4.4
-micro_version: "{{ ocp4_image[:5] }}"  #e.g. 4.4.3
-ocp4_dependencies_version: "{{ minor_version }}"
-ocp4_image_version: "{{ micro_version }}"
 
 # Bootstrap Webserver
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
@@ -193,7 +196,7 @@ dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 product: "{{ openshift_product }}"
 compute_count_update: none
-hostname_prefix: "{{ instance_prefix }}"
+hostname_prefix: "{{ instance_prefix }}-ocp4"
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
 bootstrap_node_ip: "192.168.50.2"
 ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
@@ -223,35 +226,8 @@ ocp4_instances:
       - size: "{{ compute_vdb_size }}G"
         name: vdb
         enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
+      - size: "{{ compute_vdc_size }}G"
         name: vdc
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdd
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vde
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdf
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdg
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdh
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdi
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdj
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdk
-        enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdx_size }}G"
-        name: vdl
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker
@@ -270,17 +246,4 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
-  - name: storage
-    hd_size: "{{ storage_hd_size }}G"
-    memory_size: "{{ storage_mem_size }}"
-    cpu_size: "{{ storage_vcpu }}"
-    extra_storage:
-      - size: "{{ storage_vdb_size }}G"
-        name: vdb
-        enable: "{{ storage_local_storage }}"
-      - size: "{{ storage_vdc_size }}G"
-        name: vdc
-        enable: "{{ storage_local_storage }}"
-    qty: "{{ storage_count }}"
-    vm_type: storage
-    ip_octet: "{{ storage_ip_octet }}"
+
