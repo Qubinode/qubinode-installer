@@ -212,7 +212,7 @@ function configure_local_storage () {
     reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
-    read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
     vdb_size="${vdb:-10}"
     compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
