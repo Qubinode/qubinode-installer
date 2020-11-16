@@ -61,15 +61,15 @@ function setup_required_paths () {
 # load pre functions
 teardown="false"
 CURRENT_USER=$(whoami)
-rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 CHECK_PULL_SECRET=no
 setup_required_paths
+rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 
 # Include all required functions
+. "${project_dir}/lib/qubinode_menu_options.sh"
 . "${project_dir}/lib/qubinode_menu_welcome.sh"
 . "${project_dir}/lib/qubinode_installer_prereqs.sh"
 . "${project_dir}/lib/qubinode_utils.sh"
-. "${project_dir}/lib/qubinode_menu_options.sh"
 . "${project_dir}/lib/setup_sudo.sh"
 . "${project_dir}/lib/qubinode_userinput.sh"
 . "${project_dir}/lib/qubinode_kvmhost.sh"
@@ -149,9 +149,27 @@ then
     qubinode_product_deployment $qubinode_product_opt
 elif [ "A${qubinode_maintenance}" == "Atrue" ]
 then
+    ## run a product maintenace option
     qubinode_maintenance_options
 elif [ "A${qubinode_product}" == "Atrue" ]
 then
+    ## Deploys a product ##
+
+    # Check if qubinode setup was executed
+    kvmhost_vars="${project_dir}/playbooks/vars/kvm_host.yml"
+    if [ -f ${kvmhost_vars} ]
+    then
+        IS_QUBINODE_SETUP=$(awk '/^qubinode_installer_host_completed:/ {print $2}' "${kvmhost_vars}")
+    else
+        IS_QUBINODE_SETUP=no
+    fi
+
+    # Exit if qubinode setup was not completed
+    if [ "A${IS_QUBINODE_SETUP}" == "Ano" ]
+    then
+        printf "%s\n" " You must run './qubinode_installer -m setup' before you can deploy a product. "
+        exit 1
+    fi
     qubinode_product_deployment $qubinode_product_opt
 else
     display_help

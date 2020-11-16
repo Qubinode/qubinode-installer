@@ -1,72 +1,130 @@
 ---
-# Dns server VM attributes
-sat_server_hostname: "{{ instance_prefix }}-sat01"
+####################################
+# Empty values need to be updated
+# and existing values can be changed
+
+# set to true to uninstall satellite
+teardown_satelite: no
+
+# set to true to rebuild satellite
+recreate_satellite: no
+
+# server VM attributes
+sat_memory: 20480
+sat_vcpu: 4
+sat_root_disk_size: "60G"
+sat_content_disk_size: "300G"
+
+# Satelite volume group name
+satellite_vg_name: satdata
+
+# Satellite logical volumes
+pgsql_lv_size: "10g"
+mongodb_lv_size: "50g"
+pulp_lv_size: "100g"
+
+# Satellite server attributes
+satellite_default_location: Orlando
+satellite_default_organization: ACME
+subnet: 172.24.24.0
+subnet_dhcp_start: 172.24.24.200
+subnet_dhcp_end: 172.24.24.205
+subnet_name: lunchnet
+compute_resource_name: "KVMhost"
+
+# This is the default tested verion
+# if you change this value you must ensure varaible *satellite_repos*
+# below refeclts the correct repos needed
+satellite_version: 6.7
+
+# Satellite hostname suffix, default prefix is qbn
+# default hostname would be qbn-sat01
+hostname_suffix: sat01
+
+# Which release of RHEL the satellite_version is supported on
+rhel_major: 7
+rhel_release: 7
+
+# Satellite RHSM pool id
+satellite_pool_id: ""
+
+###################################################
+# These values don't need to be change since they
+# either reference above variables or they are
+# updated by the installer script each time it's
+# executed.
 sat_server_vm:
     sat_name: "{{ sat_server_hostname }}"
-    sat_vcpu: 4
-    sat_memory: 20480
-    sat_root_disk_size: 60G
-    sat_teardown: false
-    sat_recreate: false
+    sat_vcpu: "{{ sat_vcpu }}"
+    sat_memory: "{{ sat_memory }}"
+    sat_root_disk_size: "{{ sat_root_disk_size }}"
+    sat_teardown: "{{ teardown_satelite }}"
+    sat_recreate: "{{ recreate_satellite }}"
     sat_group: satellite
     sat_extra_storage:
-      - size: 300G
+      - size: "{{ sat_content_disk_size }}"
         enable: true
     sat_enable: true
 
+# The cloud image value gets updated by the install script
+cloud_init_vm_image: ""
+
+# IP address of the satellite server
 sat_server_ip: ""
 
+# Satellite server hostname
+sat_server_hostname: "{{ instance_prefix }}-{{ hostname_suffix }}"
+
 # RHSM info
-satellite_pool_id: ""
 rhsm_pool_ids: "{{ satellite_pool_id | default('') }}"
 
 # Filesystems
 device: vdb
 host_device: "{{ device }}"
-vgname: satdata
+vgname: "{{ satellite_vg_name }}"
 
 logical_volumes:
   - name: pgsql
-    size: 10g
+    size: "{{ pgsql_lv_size }}"
     mount_dir: /var/lib/pgsql
     fstype: xfs
   - name: mongodb
-    size: 50g
+    size: "{{ mongodb_lv_size }}"
     mount_dir: /var/lib/mongodb
     fstype: xfs
   - name: pulp
-    size: 100g
+    size: "{{ pulp_lv_size }}"
     mount_dir: /var/lib/pulp
     fstype: xfs
 
 # For Satellite installation
-satellite_default_location: Orlando
-satellite_default_organization: ACME
 satellite_domain: "{{ domain }}"
-satellite_hostname: "{{ sat_server_vm.sat_name }}"
+satellite_hostname: "{{ sat_server_hostname }}"
 satellite_ip_address: "{{ sat_server_ip }}"
 satellite_user: "{{ admin_user }}"
 satellite_pass: "{{ admin_user_password }}"
-satellite_version: 6.6
 
 satellite_repos:
   - rhel-7-server-rpms
   - rhel-server-rhscl-7-rpms
   - "rhel-7-server-satellite-{{ satellite_version }}-rpms"
   - rhel-7-server-satellite-maintenance-6-rpms
-  - rhel-7-server-ansible-2.6-rpms
+  - rhel-7-server-ansible-2.8-rpms
 
 # The below is for Satellite post installation
 satellite_admin_user: "{{ satellite_user }}"
 satellite_user_pass: "{{ satellite_pass }}"
-satellite_url: "https://qbn-sat01.{{ domain }}"
+satellite_url: "https://{{ satellite_hostname }}.{{ domain }}"
 satellite_verify_ssl: no
 rhsm_user: "{{ rhsm_username }}"
 rhsm_pass: "{{ rhsm_password }}"
 manifest_download_path: /root
 local_manifest_path: "{{ project_dir }}"
 default_subscription:
-  - name: "Red Hat Cloud Suite (2-sockets), Premium"
+  - name: "Red Hat Satellite Infrastructure Subscription"
+
+# This dictionary defines the Satellite organizaitons along with
+# All the associated objects
 satellite_orgs:
   - name: "{{ satellite_default_organization }}"
     state: present
@@ -116,22 +174,22 @@ satellite_orgs:
         state: present
         description: "{{ domain }}"
     subnets:
-      - name: lunchnet
+      - name: "{{ subnet_name }}"
         locations:
           - "{{ satellite_default_location }}"
         organizations:
           - "{{ satellite_default_organization }}"
-        network: 172.24.24.0
+        network: "{{ subnet }}"
         mask: "{{ kvm_host_netmask }}"
         gateway: "{{ kvm_host_gw }}"
-        from_ip: 172.24.24.200
-        to_ip: 172.24.24.205
+        from_ip: "{{ subnet_dhcp_start }}"
+        to_ip: "{{ subnet_dhcp_end }}"
         domains:
           - "{{ domain }}"
         state: present
-        description: 172.24.24.0
+        description: "{{ subnet }}"
     compute_resource:
-      - name: lunchnet
+      - name: "{{ compute_resource_name }}"
         locations:
           - "{{ satellite_default_location }}"
         organizations:

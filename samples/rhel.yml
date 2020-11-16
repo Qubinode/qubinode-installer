@@ -24,3 +24,9 @@ rhel_7_hash:
 update_etc_resolv: no
 expand_os_disk: no
 vm_root_disk_size: "{{ rhel_server_vm.rhel_root_disk_size }}"
+
+## Static network configuration
+vm_gateway: ""
+vm_ipaddress: ""
+vm_mask_prefix: ""
+vm_mac: ""

@@ -1,4 +1,6 @@
 ansible.log
+playbooks/collections/*
+!playbooks/collections/.gitkeep
 playbooks/roles/*
 !playbooks/roles/.gitkeep
 playbooks/vars/*
@@ -27,3 +29,5 @@ rhsm_token
 .python/
 *.qcow2
 *.iso
+.gitignore.dev
+.gitignore.master
