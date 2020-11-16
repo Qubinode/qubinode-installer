@@ -134,7 +134,7 @@ openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependen
 #coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
 #coreos_metal_bios: "rhcos-{{ major_version }}-x86_64-metal.x86_64.raw.gz"
 coreos_installer_kernel: "rhcos-live-kernel-x86_64"
-coreos_installer_initramfs: "rhcos-live-rootfs.x86_64.img"
+coreos_installer_initramfs: "rhcos-live-initramfs.x86_64.img"
 coreos_metal_bios: "rhcos-metal.x86_64.raw.gz"
 
 #################################################################
