@@ -19,8 +19,10 @@ major_version: 4.6.1
 ocp4_dependencies_version: "{{ major_version }}"
 ocp4_image_version: 4.6.1
 
-ocp4_client: "openshift-client-linux-{{ major_version }}.tar.gz"
-ocp4_installer: "openshift-install-linux-{{ major_version }}.tar.gz"
+#ocp4_client: "openshift-client-linux-{{ major_version }}.tar.gz"
+#ocp4_installer: "openshift-install-linux-{{ major_version }}.tar.gz"
+ocp4_client: "openshift-client-linux.tar.gz"
+ocp4_installer: "openshift-install-linux.tar.gz"
 tools_missing: false
 
 family_tree: "Red Hat CoreOS"
@@ -128,9 +130,12 @@ tear_down: false
 openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_release }}/{{ major_version }}"
 
 # OpenShift Dependencies
-coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
-coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
-coreos_metal_bios: "rhcos-{{ major_version }}-x86_64-metal.x86_64.raw.gz"
+#coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
+#coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
+#coreos_metal_bios: "rhcos-{{ major_version }}-x86_64-metal.x86_64.raw.gz"
+coreos_installer_kernel: "rhcos-live-kernel-x86_64"
+coreos_installer_initramfs: "rhcos-live-rootfs.x86_64.img"
+coreos_metal_bios: "rhcos-metal.x86_64.raw.gz"
 
 #################################################################
 # These can be left alone unless you have a reason to change them
