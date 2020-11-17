@@ -100,7 +100,7 @@ compute_hd_size: 120
 compute_mem_size: 16192
 compute_vcpu: 4
 compute_vdb_size: 50
-compute_vdc_size: 150
+compute_vdx_size: 10
 bootstrap_hd_size: 120
 bootstrap_mem_size: 16192
 bootstrap_vcpu: 4
@@ -231,8 +231,35 @@ ocp4_instances:
       - size: "{{ compute_vdb_size }}G"
         name: vdb
         enable: "{{ compute_local_storage }}"
-      - size: "{{ compute_vdc_size }}G"
+      - size: "{{ compute_vdx_size }}G"
         name: vdc
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdd
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vde
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdf
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdg
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdh
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdi
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdj
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdk
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_vdx_size }}G"
+        name: vdl
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker
