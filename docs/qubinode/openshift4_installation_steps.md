@@ -55,6 +55,7 @@ If you downloaded the files instead it should be:
 ```
 * $HOME/qubinode-installer/pull-secret.txt
 * $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
+* $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
 ```
 
 ### Install Options  
