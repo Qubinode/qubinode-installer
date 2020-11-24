@@ -47,15 +47,16 @@ The qubinode-installer needs to run as a regular user.
 * setup   - ensure your username is setup for sudoers
 * rhsm    - ensure your rhel system is registered to Red Hat
 * ansible - ensure your rhel system is setup for to function as a ansible controller
-* kvmhost    - ensure your rhel system is setup as a KVM host
+* host    - ensure your rhel system is setup as a KVM host
 
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
 ```shell
+cd ~/qubinode-installer
 ./qubinode-installer -m setup
 ./qubinode-installer -m rhsm
 ./qubinode-installer -m ansible
-./qubinode-installer -p kvmhost
+./qubinode-installer -m host
 ```
 
 At this point you should be able to acces the RHEL system via the cockpit web interface on:
@@ -66,7 +67,7 @@ https://SERVER_IP:9090
 
 Most products depends on the latest rhel 7 or 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
-#### Getting the RHEL 7 Qcow Image
+#### Getting the RHEL 7 or 8 Qcow Image
 <table>
   <tr>
    <td>Using Token
@@ -94,6 +95,9 @@ If you downloaded the files instead, confirm that the project directory list the
 * $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
 * $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
 ```
+
+## Install DNS server 
+* [Red Hat Identity Managment](qubinode/idm.md)
 
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
 

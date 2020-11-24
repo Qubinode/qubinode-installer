@@ -214,7 +214,7 @@ function get_rhsm_user_and_pass () {
         printf "%s\n\n" ""
         echo -n "   ${blu}Enter your RHSM username and press${end} ${grn}[ENTER]${end}: "
         read rhsm_username
-        sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vaulted_file}"
+        sed -i "s/rhsm_username: \"\"/rhsm_username: "$rhsm_username"/g" "${vault_vars_file}"
     fi
 
     if grep '""' "${vault_vars_file}"|grep -q rhsm_password
@@ -223,7 +223,7 @@ function get_rhsm_user_and_pass () {
         echo -n "   ${blu}Enter your RHSM password and press${end} ${grn}[ENTER]${end}: "
         read_sensitive_data
         rhsm_password="${sensitive_data}"
-        sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vaulted_file}"
+        sed -i "s/rhsm_password: \"\"/rhsm_password: "$rhsm_password"/g" "${vault_vars_file}"
         printf "%s\n" ""
     fi
 }
