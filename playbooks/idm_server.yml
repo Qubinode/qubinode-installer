@@ -97,6 +97,8 @@
             - ipaserver_forwarders:
               - "{{ dns_forwarder }}"
             - ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
+            - ipaadmin_password: "{{ idm_admin_password }}"
+            - ipadm_password: "{{ idm_dm_pwd }}"
           tags: [install,preinstall,installer,firewall,always,result]
 
     ###############################################################
