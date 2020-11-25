@@ -48,20 +48,9 @@ expand_os_disk: no
 
 #######################
 # IdM on RHEL 8 attributes
-ipaserver_domain: "{{ domain }}"
-ipaserver_realm: "{{ idm_realm }}"
-ipaserver_setup_dns: "yes"
-ipaserver_no_host_dns: yes
-ipaserver_setup_kra: yes
-ipaadmin_password: "{{ idm_admin_password }}"
-ipadm_password: "{{ idm_dm_pwd }}"
-ipaserver_forwarders:
-  - "{{ dns_forwarder }}"
 idm_repos_8:
   - rhel-8-for-x86_64-baseos-rpms
   - rhel-8-for-x86_64-appstream-rpms
-ipaserver_allow_zone_overlap: "{{ idm_zone_overlap }}"
-ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
 
 #########################
 # IdM on RHEL 7 attributes
