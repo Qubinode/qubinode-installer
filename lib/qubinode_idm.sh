@@ -80,7 +80,7 @@ function ask_user_for_idm_password () {
     fi
     # encrypt ansible vault
     encrypt_ansible_vault "${vaultfile}" > /dev/null
-    
+
     generate_idm_dm_pwd
 
 
@@ -362,6 +362,14 @@ function qubinode_deploy_idm_vm () {
             if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
             then
                 echo "Deploy with custom IP"
+                idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+                if [ "A${idm_server_ip}" == 'A""' ];
+                then
+                  printf "%s\n" ""
+                  printf "%s\n" "  The IdM server does not have a static ip defined"
+                  printf "%s\n\n" "  Please enter desiered static ip."
+                  set_idm_static_ip
+                fi
                 idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
                 ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
              else
