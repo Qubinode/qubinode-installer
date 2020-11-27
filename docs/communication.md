@@ -9,6 +9,6 @@ We are actively working on content for Social Media, please check back later for
 ## Connect with us on Discord
 
 The fastest way to contact us is via our Discord group.  
-https://discord.gg/VQBRvjs
+https://discord.gg/RdqJrMJudf
 
 Join our Discord group to receive assistance with any issue. Post issues under ` quibinode-issues', and please include the code in your post.
