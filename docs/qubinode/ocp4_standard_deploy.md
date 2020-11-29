@@ -21,9 +21,19 @@ cd $HOME/qubinode-installer
 * Deploy OpenShift 4.
 * Optional: Configure NFS Provisioner
 
+
 **Installation Screencast**
 
 ![Qubinode-installer-option-1](../img/qubinode-installer-option-1.gif)
+
+##  For Recommened Deployment: Standard 6 node cluster with local storage
+See [ocp4_custom_deploy.md](ocp4_custom_deploy.md)  
+**This will perform the following**
+* Configure server for KVM.
+* Deploy an idm server to be used as DNS.
+* Deploy OpenShift 4.
+* Optional: Configure NFS Provisioner
+* Local storage Operator for Application Storage 
 
 ## Deployment Post Steps
 * [LDAP OpenShift configuration](openshift_ldap_config.md)

@@ -267,6 +267,19 @@ function set_local_volume_type () {
   fi 
 }
 
+function ask_to_use_external_bridge () {
+    echo "Would you like to deploy your OpenShift Nodes on to an external Bridge Network?"
+    echo "The Default deployment Option is No this will deploy your OpenShift Nodes on the NAT Network?"
+    echo "Default choice is to choose: No"
+    confirm " Yes/No"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
+    else
+        sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
+    fi
+}
+
 function confirm_minimal_deployment () {
     # set compute count
     openshift4_variables
