@@ -40,7 +40,6 @@ check_if_cluster_deployed () {
     fi
 }
 
-
 function qubinode_deploy_ocp4 () {
     product_in_use="ocp4" # Tell the installer which release of OCP
     openshift_product="${product_in_use}"
@@ -81,6 +80,9 @@ function qubinode_deploy_ocp4 () {
 
     # Ensure the system meets the requirement for a standard OCP deployment
     check_openshift4_size_yml
+
+    # Ensure the Deployment Network is configured
+    ask_to_use_external_bridge
 
     # make sure no old VMs from previous deployments are still around
     state_check

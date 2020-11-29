@@ -23,17 +23,10 @@ with NFS for persistent storage.
     * A 6 node cluster 3 controlplane and 2 computes with the option for local storage
     * A custom option to increase the number of computes and memory, vpcu, storage size for each node
 
-## 4.4.15 is deployed by default to change see below 
-*  4.4.15 deployed by default
-* Optional Deploy 4.5.5
-```
-# Update the following file and variables before deployment
-vim samples/ocp4.yml
-ocp4_release: 4.5.5
-ocp4_image: 4.5.2
-
-```
-
+3. **Recommened Deployment: Standard 6 node cluster with local storage**
+  For systems with more than 128 Gib memory and 1 TB of stroage:
+    * A 6 node cluster 3 controlplane and 3 computes with the option for local storage
+    
 ## Deploy the cluster
 
 Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing with this install.
