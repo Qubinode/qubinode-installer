@@ -26,7 +26,17 @@ with NFS for persistent storage.
 3. **Recommened Deployment: Standard 6 node cluster with local storage**
   For systems with more than 128 Gib memory and 1 TB of stroage:
     * A 6 node cluster 3 controlplane and 3 computes with the option for local storage
-    
+
+```shell
+cd ~/qubinode-installer
+./qubinode-installer -m setup
+./qubinode-installer -m rhsm
+./qubinode-installer -m ansible
+./qubinode-installer -m host
+./qubinode-installer -m idm
+./qubinode-installer -m ocp4
+```
+
 ## Deploy the cluster
 
 Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing with this install.
