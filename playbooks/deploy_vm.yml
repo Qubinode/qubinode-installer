@@ -1,0 +1,28 @@
+---
+- name: Deploy RHEL VM
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  vars_files:
+    - vars/all.yml
+    - vars/kvm_host.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/rhel.yml
+  vars:
+    vm_name: "{{ rhel_server_vm.rhel_name }}"
+    vm_cpu: "{{ rhel_server_vm.rhel_vcpu }}"
+    vm_memory: "{{ rhel_server_vm.rhel_memory }}"
+    vm_root_disk_size: "{{ rhel_server_vm.rhel_root_disk_size }}"
+    vm_teardown: "{{ rhel_server_vm.rhel_teardown }}"
+    vm_recreate: "{{ rhel_server_vm.rhel_recreate }}"
+    vm_domain: "{{ domain }}"
+    inventory_group: "{{ rhel_server_vm.rhel_group }}"
+    extra_storage: "{{ rhel_server_vm.rhel_extra_storage }}"
+    #enable: "{{ rhel_server_vm.rhel_enable }}"
+    current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
+
+  tasks:
+    - name: deploy a kvm node
+      include_role:
+        name: deploy-kvm-vm

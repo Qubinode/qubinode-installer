@@ -212,13 +212,14 @@ function configure_local_storage () {
     reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
-    read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
-    vdb_size="${vdb:-100}"
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
+    vdb_size="${vdb:-10}"
     compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
         printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
@@ -264,6 +265,19 @@ function set_local_volume_type () {
     sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${ocp_vars_file}"
     sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${ocp_vars_file}"
   fi 
+}
+
+function ask_to_use_external_bridge () {
+    echo "Would you like to deploy your OpenShift Nodes on to an external Bridge Network?"
+    echo "The Default deployment Option is No this will deploy your OpenShift Nodes on the NAT Network?"
+    echo "Default choice is to choose: No"
+    confirm " Yes/No"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
+    else
+        sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
+    fi
 }
 
 function confirm_minimal_deployment () {

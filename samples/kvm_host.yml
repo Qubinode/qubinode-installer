@@ -5,6 +5,7 @@ kvm_host_ip: ""
 kvm_host_macaddr: ""
 kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
+kvm_host_mtu: 1500
 libvirt_pool_name_check: yes
 skip_libvirt_pool: no
 
@@ -43,6 +44,10 @@ network_interface_name: "{{ kvm_host_interface }}"
 # set storage device to dedicate to /var/lib/libvirt/images
 kvm_host_libvirt_extra_disk: ""
 
+# setup NFS Server 
+setup_nfs: true
+remove_nfs: false 
+
 # use by funciton check_hardware_resources
 libvirt_pool_name: default
 
@@ -67,4 +72,5 @@ libvirt_host_networks:
     mask: "{{ kvm_host_netmask }}"
     subnet: "not currently in use"
     mac: "{{ kvm_host_macaddr }}"
+    mtu: 1500
 

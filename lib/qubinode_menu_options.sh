@@ -42,7 +42,7 @@ function qubinode_product_deployment () {
               then
                   qubinode_teardown_satellite
               else
-                  echo "Installing Satellite"
+                  rhel_major=7
                   CHECK_PULL_SECRET=no
                   setup_download_options
                   download_files
@@ -126,7 +126,9 @@ function qubinode_maintenance_options () {
         qubinode_setup_ansible
     elif [ "${qubinode_maintenance_opt}" == "host" ] || [ "${maintenance}" == "kvmhost" ]
     then
-        qubinode_setup_kvm_host
+	## this should be replace as qubinode_setup does everthing that's required
+        #qubinode_setup_kvm_host
+	qubinode_setup
     elif [ "${qubinode_maintenance_opt}" == "rebuild_qubinode" ]
     then
         rebuild_qubinode

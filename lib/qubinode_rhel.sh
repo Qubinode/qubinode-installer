@@ -1,16 +1,25 @@
 #!/bin/bash
 function qubinode_rhel () {
+    ## This function sets up globally required variables
     setup_variables
+
+    ## Gather networking information about the KVM host
+    qubinode_networking
+
+    ## Varibles required for deploying RHEL
     RHEL_VM_PLAY="${project_dir}/playbooks/rhel.yml"
     rhel_vars_file="${project_dir}/playbooks/vars/rhel.yml"
     rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
-
-
     product_in_use=rhel
     prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
     suffix=rhel
 
-    # Generate a random id that's not already is use for the cattle vms
+    ## Default resources for VMs
+    vcpu=1
+    memory=800
+    disk=20G
+
+    ## Generate a random id that's not already is use for the cattle vms
     while true
     do
         instance_id=$((1 + RANDOM % 4096))
@@ -20,7 +29,14 @@ function qubinode_rhel () {
         fi
     done
 
-    # Check for user provided variables
+    ## Ensure rhel vars file is active
+    if [ ! -f "${rhel_vars_file}" ]
+    then
+        cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
+    fi
+
+    ####################################
+    ## Check for user provided variables
     for var in "${product_options[@]}"
     do
        export $var
@@ -35,16 +51,20 @@ function qubinode_rhel () {
 
     if [ "A${name}" != "A" ]
     then
-        rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${name}"
+        rhel_server_hostname="${name}"
+        if [ "A${teardown}" != "Atrue" ]
+        then
+            if sudo virsh list --all | grep "${name}" > /dev/null 2>&1
+            then
+                echo "The name "${name}" is already in use. Please try again with a different name."
+                exit 0
+            fi
+        fi
     else
         rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${instance_id}"
     fi
 
-    # Get instance size
-    vcpu=1
-    memory=800
-    disk=20G
-    # Get instance size
+    ## Get User Requested Instance size
     if [ "A${size}" != "A" ]
     then
         if [ "A${size}" == "Asmall" ]
@@ -70,7 +90,7 @@ function qubinode_rhel () {
        fi
     fi
 
-    # Default RHEL release to deploy
+    ## Which RHEL release to deploy
     if [ "A${release}" == "A7" ]
     then
         rhel_major=7
@@ -83,21 +103,86 @@ function qubinode_rhel () {
         qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     fi
 
-    rhel_server_fqdn="${rhel_server_hostname}.${domain}"
-
-    # Ensure rhel vars file is active
-    if [ ! -f "${rhel_vars_file}" ]
+    ## Use static ip address if provided
+    if [ "A${ip}" != "A" ]
     then
-        cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
+        sed -i "s/vm_ipaddress:.*/vm_ipaddress: "$ip"/g" "${rhel_vars_file}"
     fi
 
-    # Ensure RHEL qcow image is available
+    ## Use netmask prefix if provided
+    if [ "A${cidr}" != "A" ]
+    then
+        sed -i "s/vm_mask_prefix:.*/vm_mask_prefix: "$cidr"/g" "${rhel_vars_file}"
+    elif [ "A${ip}" != "A" ]
+    then
+        sed -i "s/vm_mask_prefix:.*/vm_mask_prefix: "$KVM_HOST_MASK_PREFIX"/g" "${rhel_vars_file}"
+    else
+        sed -i "s/vm_mask_prefix:.*/vm_mask_prefix: '""'/g" "${rhel_vars_file}"
+    fi   
+
+    ## Use gateway if provided if provided
+    if [ "A${gw}" != "A" ]
+    then
+        sed -i "s/vm_gateway:.*/vm_gateway:: "$gw"/g" "${rhel_vars_file}"
+    elif [ "A${ip}" != "A" ]
+    then
+        sed -i "s/vm_gateway:.*/vm_gateway:: "$KVM_HOST_GTWAY"/g" "${rhel_vars_file}"
+    else
+        sed -i "s/vm_gateway:.*/vm_gateway:: '""'/g" "${rhel_vars_file}"
+    fi
+
+    ## Use mac address if provided
+    if [ "A${mac}" != "A" ]
+    then
+        sed -i "s/vm_mac:.*/vm_mac: "$mac"/g" "${rhel_vars_file}"
+    fi
+
+    ## End user input via -a agruments
+    ##################################
+
+    ## Ensure RHEL qcow image is available
     setup_download_options
     install_rhsm_cli
     download_files
 }
 
+function run_rhel_deployment () {
+    ## This performs the actual deployment of RHEL and it's called by the funciton qubinode_deploy_rhel
+    local rhel_server_hostname=$1
+    sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
+
+    ## define the qcow disk image to use for the libvirt VM
+    qcow_image_file="/var/lib/libvirt/images/${rhel_server_hostname}_vda.qcow2"
+
+    #if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
+    if ! sudo virsh dominfo "${rhel_server_hostname}" >/dev/null 2>&1
+    then
+        PLAYBOOK_STATUS=0
+        sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file 
+        test -d ${project_dir}/.rhel || mkdir ${project_dir}/.rhel
+        cp ${rhel_vars_file} "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
+        echo "Deploying $rhel_server_hostname"
+        ansible-playbook "${RHEL_VM_PLAY}"
+        PLAYBOOK_STATUS=$?
+    fi
+
+    # Run function to remove vm vars file
+    delete_vm_vars_file
+}
+
+function delete_vm_vars_file () {
+    # check if VM was deployed, if not delete the qcow image created for the vm
+    VM_DELETED=no
+    if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
+    then
+        sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file
+        rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
+	VM_DELETED=yes
+    fi
+}
+
 function qubinode_deploy_rhel () {
+    ## This is the primary function that iniatiates when qubinode-installer -p rhel is call.
     qubinode_rhel
     sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
     sed -i "s/rhel_vcpu:.*/rhel_vcpu: "$vcpu"/g" "${rhel_vars_file}"
@@ -108,20 +193,21 @@ function qubinode_deploy_rhel () {
     sed -i "s/rhel_release:.*/rhel_release: "$rhel_release"/g" "${rhel_vars_file}"
     sed -i "s/expand_os_disk:.*/expand_os_disk: "$expand_os_disk"/g" "${rhel_vars_file}"
 
-
-    # Ensure the RHEL qcow image is at /var/lib/libvirt/images
-    RHEL_QCOW_SOURCE="/var/lib/libvirt/images/${qcow_image_file}"
-    if [ ! -f "{RHEL_QCOW_SOURCE}" ]
+    ## Ensure the RHEL qcow image is at /var/lib/libvirt/images
+    RHEL_QCOW_DEST="/var/lib/libvirt/images/${qcow_image_file}"
+    if [ ! -f "{RHEL_QCOW_DEST}" ]
     then
         if [ -f "${project_dir}/${qcow_image}" ]
         then
-             sudo cp "${project_dir}/${qcow_image}" "${RHEL_QCOW_SOURCE}" 
+             sudo cp "${project_dir}/${qcow_image}" "${RHEL_QCOW_DEST}" 
         else
-            echo "Please download ${qcow_image} to ${RHEL_QCOW_SOURCE}"
+            echo "  Could not find ${RHEL_QCOW_DEST}."
+            echo "  Please download ${qcow_image} to ${RHEL_QCOW_DEST}"
             exit 1
         fi
     fi
 
+    ## Check if user requested more than one VMs and deploy the requested count
     if [ "A${qty}" != "A" ]
     then
         re='^[0-9]+$'
@@ -137,40 +223,12 @@ function qubinode_deploy_rhel () {
     else
         run_rhel_deployment "${rhel_server_hostname}"
     fi
-
 }
-
-function run_rhel_deployment () {
-    local rhel_server_hostname=$1
-    sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
-    qubinode_networking
-    qcow_image_file="/var/lib/libvirt/images/${rhel_server_hostname}_vda.qcow2"
-    #if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
-    if ! sudo virsh dominfo "${rhel_server_hostname}" >/dev/null 2>&1
-    then
-        PLAYBOOK_STATUS=0
-        sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file 
-        test -d ${project_dir}/.rhel || mkdir ${project_dir}/.rhel
-        cp ${rhel_vars_file} "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
-        echo "Deploying $rhel_server_hostname"
-        ansible-playbook "${RHEL_VM_PLAY}"
-        PLAYBOOK_STATUS=$?
-    fi
-
-    # check if VM was deployed, if not delete the qcow image created for the vm
-    if ! sudo virsh list --all |grep -q "${rhel_server_hostname}"
-    then
-        sudo test -f $qcow_image_file && sudo rm -f $qcow_image_file
-        rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
-    fi
-
-    # return the status of the playbook run
-    #return $PLAYBOOK_STATUS
-}
-
 
 function qubinode_rhel_teardown () {
-    qubinode_rhel
+    ## Run the qubinode_rhel function to gather required variables
+    qubinode_rhel 
+
     if [ "A${name}" == "A" ]
     then
         echo "Please specify the name of the instance to delete"
@@ -187,20 +245,24 @@ function qubinode_rhel_teardown () {
         ansible-playbook "${RHEL_VM_PLAY}" --extra-vars "vm_teardown=true" -e @"${VARS_FILE}"
         RESULT=$?
 
-        if [ $RESULT -eq 0 ]
+	echo "RESULT=$RESULT"
+	delete_vm_vars_file
+        if [ "A${VM_DELETED}" == "Ayes" ]
         then
-            rm -f "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
-            printf "\n\n*************************\n"
+            printf "\n\n"
             printf "  * VM $name deleted *\n"
-            printf "*************************\n\n"
         fi
     else 
         echo "The VM $name does not exist"
+        printf "\n\n"
+        printf "  The VM $name does not exit\n"
     fi
 }
 
 function qubinode_rhel_maintenance () {
-    qubinode_rhel
+    ## Run the qubinode_rhel function to gather required variables
+    qubinode_rhel 
+
     VM_STATE=unknown
 
     if sudo virsh dominfo --domain $name >/dev/null 2>&1

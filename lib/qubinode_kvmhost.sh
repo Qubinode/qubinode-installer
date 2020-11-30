@@ -17,11 +17,11 @@ function kvm_host_variables () {
         sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
     fi
 
-    rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
-    if [ "A${rhel_major}" == "A8" ]
+    local host_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    if [ "A${host_rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-    elif [ "A${rhel_major}" == "A7" ]
+    elif [ "A${host_rhel_major}" == "A7" ]
     then
        rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
     else
@@ -538,6 +538,7 @@ function qubinode_setup_kvm_host () {
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+           ansible-playbook "${project_dir}/playbooks/configure-nfs.yml" || exit $?
            #qcow_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
@@ -549,6 +550,7 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+        ansible-playbook "${project_dir}/playbooks/configure-nfs.yml" || exit $?
         #qcow_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
