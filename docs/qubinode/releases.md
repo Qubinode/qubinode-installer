@@ -5,6 +5,12 @@
 ### Release web page
 https://github.com/Qubinode/qubinode-installer/releases
 
+**Qubinode v2.4.3 Release notes**
+* OpenShift 4.6.x support
+* fix IDM Bugs
+* Local Storage Option Recommend deployment option
+* External Bridge Deployment Support for OpenShift Nodes
+
 **Qubinode v2.4.2 Release notes**
 * fixed NFS server bug adding nfs server mount to the correct location `/home/nfs_mount/data`
 * adding NFS Server as default for remote storage
