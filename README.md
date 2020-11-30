@@ -29,7 +29,7 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4.3     | 2.9               |  |
 
-### Features in v2.4.3 DEV Version
+### Features in v2.4.3
 
 New Features |
 -- |
@@ -37,8 +37,6 @@ IDM Server Fixes|
 OpenShift 4.6 Deployment by default |
 Bridge network Deployment Option |
 Local Storage Deployment Recommended Option |
-
-
 
 See [Release Document](docs/qubinode/releases.md) for features history.
 
