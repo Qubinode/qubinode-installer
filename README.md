@@ -2,10 +2,10 @@
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 
 ## Motivation
-The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
+The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal RHEL node with production like characteristics.
 
 ## What is OpenShift?
-Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
+Red Hat OpenShift Container Platform (OCP) - is Red Hat's enterprise kubernetes PaaS product. OpenShift is built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
 
 ## Resource requirements for OpenShift cluster
 
