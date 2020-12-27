@@ -1,6 +1,6 @@
 ---
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
-  version: v2.4.2
+  version: dev
 
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
   version: v2.4.2
@@ -42,7 +42,7 @@
   version: v2.4.1
 
 - src: https://github.com/Qubinode/ocp4_kvm_deployer.git
-  version: v2.4.3
+  version: dev
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
   version: v2.4.3
