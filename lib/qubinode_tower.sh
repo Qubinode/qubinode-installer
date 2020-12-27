@@ -154,6 +154,6 @@ function tower_install_msg () {
     printf "    Username: ${blu}$(whoami)${end} \n"
     printf "    Password: ${blu}the vault variable${end} ${yel}admin_user_password${end} \n\n"
     printf " To view your password run the below command.\n"
-    printf "       ${grn}ansible-vault edit ${project_dir}/playbooks/vars/vault.yml${end} \n"
+    printf "       ${grn}ansible-vault view ${project_dir}/playbooks/vars/vault.yml${end} \n"
     printf " ${cyn}*******************************************************************************${end}\n\n"
 }

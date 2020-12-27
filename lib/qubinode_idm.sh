@@ -384,14 +384,14 @@ function qubinode_idm_status () {
     isIdMrunning
     if [ "A${idm_running}" == "Atrue" ]
     then
-        printf "\n\n\n"
+        printf "\n"
         printf "     ${blu}IdM server is installed${end}\n"
         printf "   ${yel}****************************************************${end}\n"
         printf "    Webconsole: ${cyn}https://${idm_srv_fqdn}/ipa/ui/${end} \n"
         printf "    IP Address: ${cyn}${idm_server_ip}${end} \n"
         printf "    Username: ${cyn}${idm_admin_user}${end}\n"
-        printf "    Password: the vault variable ${cyn}admin_user_password${end} \n\n"
-        printf "    ${blu}Run:${end} ${grn}ansible-vault edit ${vaultfile}${end} \n\n"
+        printf "    Password: Run the below command to view the vault variable ${cyn}admin_user_password${end} \n\n"
+        printf "    ${blu}Run:${end} ${grn}ansible-vault view $HOME/qubinode-installer/playbooks/vars/vault.yml ${vaultfile}${end} \n\n"
      else
         printf "%s\n" " ${red}IDM Server was not properly deployed please verify deployment.${end}"
         exit 1
