@@ -16,9 +16,11 @@
     set_fact: mount="{{ ansible_mounts|json_query('[?fstype == `xfs`]') }}"
 
   - name: set nfs mount point fact
-    set_fact: nfs_mount_point="{{ item }}"
+    set_fact: 
+      nfs_mount_point: "{{ item }}"
+      mount_point_size: "{{ item.size_total }}"
     loop: "{{ mount }}"
-    when: (item.size_total / 1000000000) > 300.00 and item.mount == "/home" or  item.mount == "/"
+    when: (item.size_total / 1000000000) > 300.00 and item.mount == "/home" or item.mount == "/"
 
   - name: checking if / is greater that 300 GB
     debug:
@@ -32,7 +34,7 @@
 
   - name: set directory location under /
     set_fact: nfs_directory="{{ nfs_mount_point.mount }}nfs_mount/data"
-    when: (item.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/"
+    when: (nfs_mount_point.size_total / 1000000000) > 300.00 and  nfs_mount_point.mount == "/"
     ignore_errors: true 
 
   - name: "set directory location under /home if found" 
