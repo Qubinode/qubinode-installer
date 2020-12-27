@@ -67,5 +67,5 @@ The web console
 You can view this password by runing this command.
 
 ```
-ansible-vault edit playbooks/vars/vault.yml
+ansible-vault view $HOME/qubinode-installer/playbooks/vars/vault.yml 
 ```
