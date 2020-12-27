@@ -134,14 +134,33 @@ function qubinode_setup_ansible () {
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi
 
+	# use the ansible requirements file that matches the current branch
+	branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
+	if [ "A${branch}" != "A" ]
+	then
+	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
+	    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
+
+	    # create a matching branch requirements file if one does not exist
+	    if [ ! -f "$ANSIBLE_REQUIREMENTS_FILE" ]
+            then
+                cp $DEFAULT_ANSIBLE_REQUIREMENTS_FILE $ANSIBLE_REQUIREMENTS_BRANCH_FILE
+		#revert changes made to the default requirements file
+		git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
+	    fi
+	else
+	    ANSIBLE_REQUIREMENTS_FILE="${DEFAULT_ANSIBLE_REQUIREMENTS_FILE}"
+	fi
+
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
             printf "%s\n" " Downloading required roles overwriting existing"
-            ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
+            ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " Downloading required roles"
-            ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
+            ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 
         # Ensure required modules are downloaded
