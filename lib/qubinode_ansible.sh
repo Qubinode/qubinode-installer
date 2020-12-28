@@ -135,7 +135,7 @@ function qubinode_setup_ansible () {
         fi
 
 	# use the ansible requirements file that matches the current branch
-	branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+	branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
 	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
 	if [ "A${branch}" != "A" ]
 	then
