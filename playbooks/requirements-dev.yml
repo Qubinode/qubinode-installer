@@ -9,7 +9,7 @@
   version: v1.0.0
 
 - src: https://github.com/Qubinode/swygue-redhat-subscription.git
-  version: v2.4.2
+  version: dev
 
 - src: https://github.com/flyemsafe/swygue-lvm.git
   version: v1.0.1
