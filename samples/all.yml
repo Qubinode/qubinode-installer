@@ -84,7 +84,7 @@ org_id: "{{ rhsm_org }}"
 
 # ROLE: swygue.edge_host_setup role
 # the user that will admin the system
-ssh_username: "{{ admin_user }}"
+ssh_username: "{{ admin_user }}" # this var has been deprecated and should be removed
 
 # ROLE: deploy-kvm-vm
 #--------------------
