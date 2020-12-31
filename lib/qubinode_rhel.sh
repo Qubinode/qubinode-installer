@@ -193,6 +193,11 @@ function delete_vm_vars_file () {
 function qubinode_deploy_rhel () {
     ## This is the primary function that iniatiates when qubinode-installer -p rhel is call.
     qubinode_rhel
+
+    os_release_num=$(awk -v var="rhel${rhel_release}_version" '$0 ~ var {print $2}' "${vars_file}")
+    os_release="rhel${os_release_num}"
+    sed -i "s/os_release:.*/os_release: "$os_release"/g" "${rhel_vars_file}"
+    sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
     sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
     sed -i "s/rhel_vcpu:.*/rhel_vcpu: "$vcpu"/g" "${rhel_vars_file}"
     sed -i "s/rhel_memory:.*/rhel_memory: "$memory"/g" "${rhel_vars_file}"

@@ -44,8 +44,12 @@ dns_server_vm:
     dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
     dns_expand_os_disk: no
+
 # should qcow template be expanded
 expand_os_disk: no
+
+# os_release to pass to virt-install
+os_release: "rhel{{ rhel8_version }}"
 
 #######################
 # IdM on RHEL 8 attributes
