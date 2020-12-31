@@ -91,8 +91,8 @@ function ask_user_for_idm_password () {
 function generate_idm_dm_pwd(){
     # Generate a ramdom password for IDM directory manager
     # This will not prompt the user
-    printf "%s\n" "  ${cyn}IDM directory manager password generation${end}"
-    printf "%s\n\n" "  ${cyn}*****************************************${end}"
+    #printf "%s\n" "  ${cyn}IDM directory manager password generation${end}"
+    #printf "%s\n\n" "  ${cyn}*****************************************${end}"
     idm_dm_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_dm_pwd:/ {print $2;exit}')
     if [ "A${idm_dm_pwd}" == 'A""' ];
     then
