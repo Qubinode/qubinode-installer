@@ -1,4 +1,16 @@
+logo="
+      ██████  ██    ██ ██████  ██ ███    ██  ██████  ██████  ███████ 
+     ██    ██ ██    ██ ██   ██ ██ ████   ██ ██    ██ ██   ██ ██      
+     ██    ██ ██    ██ ██████  ██ ██ ██  ██ ██    ██ ██   ██ █████   
+     ██ ▄▄ ██ ██    ██ ██   ██ ██ ██  ██ ██ ██    ██ ██   ██ ██      
+      ██████   ██████  ██████  ██ ██   ████  ██████  ██████  ███████ 
+         ▀▀                                                          
+"
+
+
+
 display_openshift_msg_okd4 () {
+    printf "%s\n" "                  ${blu}$logo${end}"
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}OKD: The Origin Community Distribution of Kubernetes (OKD)${txend}${end}"
     printf "%s\n" "    OKD is the Origin community distribution of Kubernetes optimized for "
@@ -26,6 +38,7 @@ display_hardware_profile_msg () {
 
 display_openshift_msg_ocp4 () {
     CHECK_PULL_SECRET=yes
+    printf "%s\n" "                  ${blu}$logo${end}"
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 4 (OCP4)${txend}${end}"
     printf "%s\n" "    The default product option is to install OCP4. The deployment consists of"
@@ -79,6 +92,7 @@ display_other_options () {
         display_openshift_msg_okd4
     elif [ "A${result}" == "ATower" ]
     then
+        printf "%s\n" "                  ${blu}$logo${end}"
         printf "%s\n" "        ${yel}********************************************${end}"
         printf "%s\n" "        ${cyn}${txb}Install Red Hat Ansible Tower${txend}${end}"
         printf "%s\n\n" "        ${yel}*******************************************${end}"
