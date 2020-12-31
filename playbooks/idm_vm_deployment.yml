@@ -1,8 +1,8 @@
 ---
 - name: Deploy IDM VM
   hosts: localhost
-  become: yes
   gather_facts: yes
+  become: yes
   vars_files:
     - vars/all.yml
     - vars/kvm_host.yml
@@ -44,6 +44,7 @@
         etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
     - name: Add/Remove DNS server from inventory into /etc/hosts
+      become: yes
       lineinfile:
         dest: /etc/hosts
         regexp: '.*{{ item }}$'
