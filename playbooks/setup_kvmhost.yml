@@ -1,6 +1,7 @@
 ---
 - name: setup KVM host
   hosts: localhost
+  become: yes
   vars_files:
     - vars/all.yml
     - vars/kvm_host.yml
@@ -22,29 +23,24 @@
     - name: create libvirt logical volume
       include_role:
          name: swygue-lvm
-         apply:
-           become: yes
       when: create_lvm|bool
 
     - fail: msg="Checking to see if network_interface_name is defined."
       when: network_interface_name is not defined
 
     - name: Check whether ifcfg-{{ network_interface_name }} contains "UUID"
-      become: yes
       command: grep -Fxq "UUID" /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }}
       register: interfacecheck
       check_mode: no
       ignore_errors: yes
 
     - name: check if ifcfg-{{ network_interface_name }} backup file exists
-      become: yes
       stat:
         path: "{{ project_dir }}/backups/ifcfg-{{ network_interface_name }}"
       register: interfacecheck
       delegate_to: 127.0.0.1
 
     - name: backup ifcfg-{{ network_interface_name }}
-      become: yes
       shell: "cat /etc/sysconfig/network-scripts/ifcfg-{{ network_interface_name }} > {{ project_dir }}/backups/ifcfg-{{ network_interface_name }}"
       ignore_errors: yes
       when: interfacecheck.stat.exists
@@ -57,5 +53,3 @@
     - name: validate KVM host setup
       include_role:
          name: edge_hosts_validate
-         apply:
-           become: yes
