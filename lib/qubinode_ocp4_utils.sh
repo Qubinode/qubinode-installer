@@ -1055,10 +1055,20 @@ openshift4_server_maintenance () {
             printf "%s\n\n" ""
             printf "%s\n" "    ${yel}Starting up ${product_opt} Cluster!${end}"
             ansible-playbook ${deploy_product_playbook} -t startup -e startup_cluster=yes || exit 1
-            /usr/local/bin/qubinode-ocp4-status
+            if [ -f /usr/local/bin/qubinode-ocp4-status ]
+            then
+                /usr/local/bin/qubinode-ocp4-status
+            else
+                echo "/usr/local/bin/qubinode-ocp4-status not found"
+            fi
             ;;
        status)
-            /usr/local/bin/qubinode-ocp4-status
+            if [ -f /usr/local/bin/qubinode-ocp4-status ]
+            then
+                /usr/local/bin/qubinode-ocp4-status
+            else
+                echo "/usr/local/bin/qubinode-ocp4-status not found"
+            fi
             ;;
        remove-compute)
            remove_ocp4_compute
