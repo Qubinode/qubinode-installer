@@ -46,3 +46,5 @@
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
   version: v2.4.3
+
+- src: linux-system-roles.cockpit
