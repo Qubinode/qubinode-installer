@@ -7,11 +7,11 @@ function openshift4_variables () {
     then
         product_samples_vars_file=${project_dir}/samples/okd4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/okd4.yml
-	deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
+	      deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
     else
         product_samples_vars_file=${project_dir}/samples/ocp4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/ocp4.yml
-	deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
+	      deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
     fi
 
     # ensure product vars file is in place
@@ -28,26 +28,34 @@ function openshift4_variables () {
     if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
     then
         cluster_vm_running=yes
-	cluster_vm_deployed=yes
+	      cluster_vm_deployed=yes
     elif [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" == "shut" ]]
     then
         cluster_vm_running=no
-	cluster_vm_deployed=yes
+	      cluster_vm_deployed=yes
     else
         cluster_vm_running=no
-	cluster_vm_deployed=no
+	      cluster_vm_deployed=no
     fi
 
-    playbooks_dir="${project_dir}/playbooks"
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
-    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
-    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
-    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
-    lb_name="${lb_name_prefix}-${cluster_name}"
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
-    idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  ## Create a random cluster name if one does not exist
+  cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
+  generated_num=$(echo $(((RANDOM%900+1))))
+  generated_cluster_name="qub${generated_num}"
+  if [ "A${cluster_name}" == "A" ]
+  then
+      sed -i "s/^cluster_name:.*/cluster_name: "$generated_cluster_name"/g" "${ocp_vars_file}"
+  fi
+
+  playbooks_dir="${project_dir}/playbooks"
+  ocp4_pull_secret="${project_dir}/pull-secret.txt"
+  ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
+  lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
+  podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
+  lb_name="${lb_name_prefix}-${cluster_name}"
+  ocp4_pull_secret="${project_dir}/pull-secret.txt"
+  prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
 
     # load kvmhost variables
     source ${project_dir}/lib/qubinode_kvmhost.sh
