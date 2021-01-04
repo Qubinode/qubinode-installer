@@ -744,6 +744,9 @@ EOF
 }
 
 function configure_ocs_storage () {
+    ## Jan 3, 2021 this function should be deleted
+    ## it's no longer in use.
+
     #------------------------------------------
     # configure OpenShift Container Storage
     #------------------------------------------
@@ -1077,6 +1080,9 @@ openshift4_server_maintenance () {
             else
                 echo "/usr/local/bin/qubinode-ocp4-status not found"
             fi
+            ;;
+       setup)
+            qubinode_ocp4_setup
             ;;
        remove-compute)
            remove_ocp4_compute

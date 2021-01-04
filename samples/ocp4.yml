@@ -114,15 +114,6 @@ min_compute_count: 1
 min_vcpu: 4
 min_mem: 10240
 
-# The start ranage for IP address make sure there is enough for the
-# ctrlplane and compute nodes you want to deploy
-ctrlplane_ip_octet: 10
-compute_ip_octet: 20
-storage_ip_octet: 30
-
-#############################################################
-# These may change and need updating
-
 # set to true to uninstall the cluster
 tear_down: false
 
@@ -153,18 +144,18 @@ libvirt_network_name: qubinat
 use_external_bridge: ''# set to qubinet for external network and set use_external_bridge: true 
 external_bridge_network: qubinet
 
-# Networking info
-ocp4_subnet: 192.168.50.0
-mask: 255.255.255.0
+## Networking info
+
+## kvm_host_ip var is defined by the kvm_host role
+## Uncheck it here to override it
+#kvm_host_ip: ""
+
 cluster_name: ""
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
 libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"
 listen_address: "{{ kvm_host_ip }}"
 lb_name: "{{ ocp4_lb_container }}"
-mac_start: "52:54:00:"
-ocp4_gateway_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.1"
-bootstrap_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.2"
 dns_domain: "{{ domain }}"
 dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
@@ -191,7 +182,7 @@ ignition_files_dir: "{{ openshift_install_dir }}"
 dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
 webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
 webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
-virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
+virtinstall_dir: "{{ installation_working_dir }}/rhcos-install"
 ocp4_subdomain: cloud
 ocp4_cluster_domain: "{{ ocp4_subdomain }}.{{ domain }}"
 dns_teardown: false
@@ -201,11 +192,13 @@ dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
 product: "{{ openshift_product }}"
 compute_count_update: none
-hostname_prefix: "{{ instance_prefix }}-ocp4"
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
 bootstrap_node_ip: "192.168.50.2"
 ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
 compute_node_name: "{{ hostname_prefix }}-compute"
+
+## Host name for the cluster nodes
+hostname_prefix: "{{ instance_prefix }}-ocp4"
 
 # OCP4 instance sizes
 ocp4_instances:

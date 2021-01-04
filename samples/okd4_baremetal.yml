@@ -162,7 +162,7 @@ ignition_files_dir: "{{ openshift_install_dir }}"
 dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
 webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
 webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
-virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
+virtinstall_dir: "{{ installation_working_dir }}/rhcos-install"
 ocp4_subdomain: cloud
 ocp4_cluster_domain: "{{ ocp4_subdomain }}.{{ domain }}"
 dns_teardown: false

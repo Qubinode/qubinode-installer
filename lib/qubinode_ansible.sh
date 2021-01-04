@@ -144,10 +144,10 @@ function qubinode_setup_ansible () {
 
 	    # create a matching branch requirements file if one does not exist
 	    if [ ! -f "$ANSIBLE_REQUIREMENTS_FILE" ]
-            then
-                cp $DEFAULT_ANSIBLE_REQUIREMENTS_FILE $ANSIBLE_REQUIREMENTS_BRANCH_FILE
-		#revert changes made to the default requirements file
-		git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
+      then
+          cp $DEFAULT_ANSIBLE_REQUIREMENTS_FILE $ANSIBLE_REQUIREMENTS_BRANCH_FILE
+		      #revert changes made to the default requirements file
+		      git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
 	    fi
 	else
 	    ANSIBLE_REQUIREMENTS_FILE="${DEFAULT_ANSIBLE_REQUIREMENTS_FILE}"
