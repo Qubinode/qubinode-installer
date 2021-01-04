@@ -42,7 +42,7 @@ function openshift4_variables () {
   cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
   generated_num=$(echo $(((RANDOM%900+1))))
   generated_cluster_name="qub${generated_num}"
-  if [ "A${cluster_name}" == "A" ]
+  if [ "A${cluster_name}" == 'A""' ]
   then
       sed -i "s/^cluster_name:.*/cluster_name: "$generated_cluster_name"/g" "${ocp_vars_file}"
   fi
