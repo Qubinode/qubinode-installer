@@ -217,7 +217,7 @@ function check_disk_size () {
     STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
     PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
     PREFIX=$(awk '/instance_prefix:/ {print $2}' "${vars_file}")
-    POOL_NAME=$(awk '/^libvirt_pool_name:/ {print $2}' "${project_dir}/vars/kvm_host.yml")
+    POOL_NAME=$(awk '/^libvirt_pool_name:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
