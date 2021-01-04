@@ -197,5 +197,8 @@ function qubinode_ocp4_setup () {
       idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
       update_resolv_conf ${idm_server_ip}
     fi 
+
+    ## Ensure OpenShift vars are present
+    openshift4_variables
 }
 
