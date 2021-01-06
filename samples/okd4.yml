@@ -38,7 +38,7 @@ provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /export
 nfs_server_ip:  "{{ kvm_host_ip }}"
 provision_nfs_provisoner: true      # deploys the nfs provision
-project_namespace: nfs-provisioner
+nfs_project_namespace: openshift-nfs-provisioner
 
 # deploy OCS persistent storage
 configure_ocs_storage: no

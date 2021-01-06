@@ -39,10 +39,14 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
 set_as_default: true        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
-nfs_server_directory_path: /home/nfs_mount/data/
+nfs_server_directory_path: /opt/nfs-server/mounts
 nfs_server_ip:  "{{ kvm_host_ip }}"
 provision_nfs_provisoner: true      # deploys the nfs provision
-project_namespace: nfs-provisioner
+nfs_project_namespace: openshift-nfs-provisioner
+openshift_object_configs_files: "{{ openshift_install_dir }}/object-configs"
+registry_pvc_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/registry-pvc.yaml"
+storage_class_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
+rbac_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
 
 # deploy OCS persistent storage
 configure_ocs_storage: no
@@ -173,6 +177,9 @@ ocp4_release_dir: "{{ ocp4_release }}"
 # Containers info
 ocp4_lb_container: qbn-lb
 podman_webserver: qbn-httpd
+
+## Directory to store k8s object config files
+openshift_object_configs_files: "{{ openshift_install_dir }}/object-configs"
 
 # Your openshift cluster url
 openshift_url: "https://ctrlplane-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
