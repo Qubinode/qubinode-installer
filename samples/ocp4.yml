@@ -43,7 +43,7 @@ nfs_server_directory_path: /opt/nfs-server/mounts
 nfs_server_ip:  "{{ kvm_host_ip }}"
 provision_nfs_provisoner: true      # deploys the nfs provision
 nfs_project_namespace: openshift-nfs-provisioner
-openshift_object_configs_files: "{{ openshift_install_dir }}/object-configs"
+openshift_object_configs_files_dir: "{{ openshift_install_dir }}/object-configs"
 registry_pvc_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/registry-pvc.yaml"
 storage_class_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
 rbac_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
