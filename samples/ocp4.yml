@@ -60,28 +60,6 @@ compute_local_storage: no
 localstorage_version: "{{ major_version }}"
 localstorage_filesystem: yes
 localstorage_block: no
-localstorage_block_disk: 
-  - /dev/vdc
-  - /dev/vdd
-  - /dev/vde
-  - /dev/vdf
-  - /dev/vdg
-  - /dev/vdh
-  - /dev/vdi
-  - /dev/vdj
-  - /dev/vdk
-  - /dev/vdl
-localstorage_fs_disk: 
-  - /dev/vdc
-  - /dev/vdd
-  - /dev/vde
-  - /dev/vdf
-  - /dev/vdg
-  - /dev/vdh
-  - /dev/vdi
-  - /dev/vdj
-  - /dev/vdk
-  - /dev/vdl
 
 # configure OCP register
 configure_registry: true
