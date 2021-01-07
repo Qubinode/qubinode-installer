@@ -44,9 +44,9 @@ nfs_server_ip:  "{{ kvm_host_ip }}"
 provision_nfs_provisoner: true      # deploys the nfs provision
 nfs_project_namespace: openshift-nfs-provisioner
 openshift_object_configs_files_dir: "{{ openshift_install_dir }}/object-configs"
-registry_pvc_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/registry-pvc.yaml"
-storage_class_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
-rbac_object_file: "{{ openshift_install_dir }}/{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
+nfs_registry_pvc_object_file: "{{ openshift_object_configs_files }}/registry-pvc.yaml"
+nfs_storage_class_object_file: "{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
+nfs_rbac_object_file: "{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
 
 # deploy OCS persistent storage
 configure_ocs_storage: no
