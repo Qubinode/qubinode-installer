@@ -36,22 +36,23 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 
 ########################
 # NFS Persistent Storage
+provision_nfs_provisoner: true      # deploys the nfs provision
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
 set_as_default: true        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
-nfs_server_directory_path: /opt/nfs-server/mounts
+nfs_server_directory_path: /ocp4-nfs
 nfs_server_ip:  "{{ kvm_host_ip }}"
-provision_nfs_provisoner: true      # deploys the nfs provision
-nfs_project_namespace: openshift-nfs-provisioner
 openshift_object_configs_files_dir: "{{ openshift_install_dir }}/object-configs"
 nfs_registry_pvc_object_file: "{{ openshift_object_configs_files }}/registry-pvc.yaml"
 nfs_storage_class_object_file: "{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
 nfs_rbac_object_file: "{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
 
-# deploy OCS persistent storage
+##############################
+# OCS Persistent storage
 configure_ocs_storage: no
 
-# deploy local persistent storage
+#################################
+# Local persistent storage
 configure_local_storage: no
 compute_local_storage: no
 localstorage_version: "{{ major_version }}"
