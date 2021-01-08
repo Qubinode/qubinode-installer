@@ -1,0 +1,13 @@
+- name: Setup OpenShift NFS registry
+  hosts: localhost
+  become: yes
+  vars_files:
+    - vars/all.yml
+    - vars/kvm_host.yml
+    - vars/ocp4.yml
+    - vars/vault.yml
+  gather_facts: true
+  tasks:
+  - name: Remove NFS Server
+    import_role:
+      name: nfs-provisioner-role
