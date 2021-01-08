@@ -28,7 +28,7 @@ check_if_cluster_deployed () {
             if [ "A${RESULT}" != 'A1' ]
             then 
 	        # Ensure bootstrap node has been removed
-                ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t bootstrap_shut > /dev/null 2>&1 || exit $?
+                ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: False }' -t bootstrap_shut > /dev/null 2>&1 || exit $?
                 printf "%s\n\n\n" " "
                 /usr/local/bin/qubinode-ocp4-status
                 printf "%s\n\n" " ${grn}    OpenShift Cluster is up!${end}"
@@ -106,7 +106,7 @@ function qubinode_deploy_ocp4 () {
     fi 
 
     # Deploy OCP4
-    ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }'
+    ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }'
     RESULT=$?
     if [ $RESULT -eq 0 ]
     then
@@ -125,7 +125,7 @@ function openshift4_qubinode_teardown () {
     confirm " ${yel}Are you sure you want to delete the${end} ${grn}$product_opt${end} ${yel}cluster${end}? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        ansible-playbook "${deploy_product_playbook}" -e '{ tear_down: True }' || exit $?
+        ansible-playbook "${deploy_product_playbook}" -e '{ tear_down: True }' -e '{ deploy_cluster: False }' || exit $?
         test -f "${ocp_vars_file}" && rm -f "${ocp_vars_file}"
         printf "%s\n\n\n\n" " }"
         printf "%s\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
