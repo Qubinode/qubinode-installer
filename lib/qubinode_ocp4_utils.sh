@@ -1054,8 +1054,7 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
-              ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t generate_inventory > /dev/null 2>&1 || exit $?
-              ansible-playbook ${deploy_product_playbook} -t shutdown -e shutdown_cluster=yes || exit 1
+              ansible-playbook ${deploy_product_playbook} -e shutdown_cluster=yes -e deploy_cluster=  no -t "generate_inventory, shutdown" --skip-tags "always" || exit 1
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
@@ -1065,7 +1064,7 @@ openshift4_server_maintenance () {
        startup)
             printf "%s\n\n" ""
             printf "%s\n" "    ${yel}Starting up ${product_opt} Cluster!${end}"
-            ansible-playbook ${deploy_product_playbook} -t startup -e startup_cluster=yes || exit 1
+            ansible-playbook ${deploy_product_playbook} -e startup_cluster=yes -e "deploy_cluster=no" -e "container_running=no" -t "startup" --skip-tags "always" || exit 1
             if [ -f /usr/local/bin/qubinode-ocp4-status ]
             then
                 /usr/local/bin/qubinode-ocp4-status
