@@ -14,6 +14,8 @@ ocp4_release: latest
 ocp4_image: 4.6.1
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}"
 
+
+
 # OpenShift/OKD version numbers
 major_version: 4.6.1
 ocp4_dependencies_version: "{{ major_version }}"
@@ -36,6 +38,7 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 
 ########################
 # NFS Persistent Storage
+nfs_client_subnet: "{{ ocp4_subnet }}/24"
 provision_nfs_provisoner: true      # deploys the nfs provision
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
 set_as_default: true        # set NFS as the default persistent storage
@@ -178,6 +181,7 @@ idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
 idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
 dns_wildcard: "*.apps.{{ cluster_name }}"
 nat_gateway: "192.168.50.1"
+ocp4_subnet: "192.168.50.0"
 product: "{{ openshift_product }}"
 compute_count_update: none
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
