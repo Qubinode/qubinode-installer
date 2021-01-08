@@ -165,8 +165,8 @@ EOF
 }
 
 function openshift4_prechecks () {
-    ocp_vars_file="${ocp_vars_file}"
-    ocp4_sample_vars="${product_samples_vars_file}"
+    ocp_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+    ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
     if [ ! -f "${ocp_vars_file}" ]
     then
