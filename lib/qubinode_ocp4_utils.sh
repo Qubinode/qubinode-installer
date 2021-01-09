@@ -864,7 +864,7 @@ function configure_nfs_storage () {
         # Disable OCS
         sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
 
-        #provision_nfs_provisoner: true      # deploys the nfs provision
+        #provision_nfs_client_provisoner: true      # deploys the nfs provision
         #configure_registry: true
         #registry_pvc_size: 100Gi
     fi

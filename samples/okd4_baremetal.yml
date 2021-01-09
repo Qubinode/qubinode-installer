@@ -28,11 +28,10 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 ########################
 # NFS Persistent Storage
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
-set_as_default: true        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /export
 nfs_server_ip:  "{{ kvm_host_ip }}"
-provision_nfs_provisoner: true      # deploys the nfs provision
+provision_nfs_client_provisoner: true      # deploys the nfs provision
 nfs_project_namespace: openshift-nfs-provisioner
 
 # deploy OCS persistent storage

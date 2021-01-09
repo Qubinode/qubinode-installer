@@ -58,7 +58,7 @@
     vars:
       provision_nfs_server: true
       nfs_server_directory_path: "{{ nfs_directory }}"
-      provision_nfs_provisoner: false
+      provision_nfs_client_provisoner: false
       configure_registry: false
       nfs_server_ip:  "{{ kvm_host_ip }}"
       registry_pvc_size: 100Gi
@@ -70,7 +70,7 @@
     vars:
       provision_nfs_server: false
       nfs_server_directory_path: "{{ nfs_directory }}"
-      provision_nfs_provisoner: false
+      provision_nfs_client_provisoner: false
       configure_registry: false
       nfs_server_ip:  "{{ kvm_host_ip }}"
       registry_pvc_size: 100Gi
