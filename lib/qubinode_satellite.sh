@@ -54,8 +54,8 @@ function satellite_install_msg () {
     printf " ${yel}*${end}  Red Hat Satellite Deployment Completed      ${yel}*${end}\n\n"
     printf "      Hostname: ${SATELLITE_SERVER_NAME}.${domain} \n"
     printf "      Username: $(whoami) \n"
-    printf "      Password: the vault variable *admin_user_password* \n\n"
-    printf "      Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n\n"
+    printf "      Password: Tun the below command to view the vault variable *admin_user_password* \n\n"
+    printf "      Run: ansible-vault view ${project_dir}/playbooks/vars/vault.yml \n\n"
     printf " ${yel}*******************************************************************************${end}\n\n"
 }
 
@@ -64,8 +64,8 @@ function satellite_configure_msg () {
     printf " ${yel}*${end}  The Satellite server has been deployed with login details below.      ${yel}*${end}\n\n"
     printf "      Web Url: https://${SATELLITE_SERVER_NAME}.${domain} \n"
     printf "      Username: $(whoami) \n"
-    printf "      Password: the vault variable *admin_user_password* \n\n"
-    printf "      Run: ansible-vault edit ${project_dir}/playbooks/vars/vault.yml \n\n"
+    printf "      Password: Tun the below command to view the vault variable *admin_user_password* \n\n"
+    printf "      Run: ansible-vault view ${project_dir}/playbooks/vars/vault.yml \n\n"
     printf " ${yel}*******************************************************************************${end}\n\n"
 }
 

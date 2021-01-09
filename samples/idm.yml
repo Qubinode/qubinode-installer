@@ -23,7 +23,8 @@ idm_reverse_zones:
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-cloud_init_vm_image: rhel-8.2-x86_64-kvm.qcow2
+cloud_init_vm_image: rhel-8.3-x86_64-kvm.qcow2
+vm_qcow_image: "{{ cloud_init_vm_image }}"
 idm_server_ip: ""
 idm_public_ip: ""
 idm_zone_overlap: false
@@ -43,8 +44,12 @@ dns_server_vm:
     dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
     dns_expand_os_disk: no
+
 # should qcow template be expanded
 expand_os_disk: no
+
+# os_release to pass to virt-install
+os_release: "rhel{{ rhel8_version }}"
 
 #######################
 # IdM on RHEL 8 attributes

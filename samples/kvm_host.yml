@@ -15,7 +15,7 @@ skip_libvirt_pool: no
 qubinode_bridge_name: qubibr0
 
 # RHEL 7.8 is the current tested RHEL 7 minor release.
-# RHEL 8.2  is the current tested RHEL 8 minor release.
+# RHEL 8.3  is the current tested RHEL 8 minor release.
 rhel_release: ""
 
 # This variable is being phased out
@@ -23,6 +23,17 @@ run_qubinode_setup: yes
 
 # Run storage check
 run_storage_check: ""
+
+# Enable cockpit service
+enable_cockpit: no
+
+# # Set to yes to add the admin_user to the libvirt group
+# # and change libvirt to be accessible user 
+enable_libvirt_admin_user: no
+
+# Configure the user bash shell login prompt
+# # This will overwrite your existing .bashrc, .vimrc and other terminal configuration files
+configure_shell: no
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images

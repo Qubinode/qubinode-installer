@@ -538,7 +538,6 @@ function qubinode_setup_kvm_host () {
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           ansible-playbook "${project_dir}/playbooks/configure-nfs.yml" || exit $?
            #qcow_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
@@ -550,7 +549,6 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-        ansible-playbook "${project_dir}/playbooks/configure-nfs.yml" || exit $?
         #qcow_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
@@ -579,6 +577,11 @@ function qubinode_setup_kvm_host () {
         done
         exit
     fi
+
+    sudo usermod -a -G libvirt $(whoami)
+    sudo sed -i '/^#unix_sock_group = "libvirt"/s/^#//' /etc/libvirt/libvirtd.conf
+    sudo sed -i '/^#unix_sock_rw_perms = "0770""/s/^#//' /etc/libvirt/libvirtd.conf
+    sudo systemctl restart libvirtd.service
 }
 
 
