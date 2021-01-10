@@ -43,6 +43,8 @@
         state: present
       when: not vm_teardown|bool
 
+    - meta: refresh_inventory
+    
     - set_fact:
         etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
