@@ -1054,7 +1054,7 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
-              ansible-playbook ${deploy_product_playbook} -e shutdown_cluster=yes -e deploy_cluster=  no -t "generate_inventory, shutdown" --skip-tags "always" || exit 1
+              ansible-playbook "${deploy_product_playbook}" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
