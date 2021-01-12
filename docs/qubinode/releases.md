@@ -5,6 +5,12 @@
 ### Release web page
 https://github.com/Qubinode/qubinode-installer/releases
 
+**Qubinode v2.4.4 Release notes**
+* Code improvements to speed up the deployment of OpenShift
+* Deploy the [Kubernetes NFS-Client Provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) by default
+* Configures the Qubinode as a NFS server
+* Set up the OpenShift registry to use NFC PVC
+
 **Qubinode v2.4.3 Release notes**
 * OpenShift 4.6.x support
 * fix IDM Bugs
