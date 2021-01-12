@@ -31,6 +31,8 @@
       include_role:
         name: deploy-kvm-vm
 
+    - meta: refresh_inventory
+
     - name: Get the IP address of the IdM VM
       set_fact:
         current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
@@ -42,8 +44,6 @@
         line: "idm_server_ip: {{ current_vm_ip }}"
         state: present
       when: not vm_teardown|bool
-
-    - meta: refresh_inventory
     
     - set_fact:
         etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"

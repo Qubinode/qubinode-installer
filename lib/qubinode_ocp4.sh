@@ -115,6 +115,10 @@ function qubinode_deploy_ocp4 () {
     else
         printf "%s\n\n" " "
         printf "%s\n\n" " ${red}Cluster deployment return a nonzero exit code.${end}"
+        printf "%s\n" " ${cyn}You can run the installation again to see if the${end}"
+        printf "%s\n" " ${cyn}issue corrects itself. If you have been returned to${end}"
+        printf "%s\n" " ${cyn}the installation menu, exit to return to the cli or${end}"
+        printf "%s\n" " ${cyn}the desktop login prompt.${end}"
         # Check the OpenSHift status
         check_if_cluster_deployed
     fi
