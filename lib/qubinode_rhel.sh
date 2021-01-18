@@ -75,13 +75,13 @@ function qubinode_rhel_global_vars () {
         if [ "A${release}" == "A7" ]
         then
             rhel_major=7
-            qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${vars_file}"|awk '{print $2}')
         elif [ "A${release}" == "A8" ]
         then
             rhel_major=8
-            qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${vars_file}"|awk '{print $2}')
         else
-            qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${vars_file}"|awk '{print $2}')
         fi
 
         ## Use static ip address if provided

@@ -41,7 +41,7 @@ function ask_for_vault_values () {
 
 function ask_user_input () {
     idm_server_ip=$(awk '/^idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-    user_input_complete=$(awk '/^user_input_complete:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml" |tr -d '"')
+    user_input_complete=$(awk '/^user_input_complete:/ {print $2;exit}' "${vars_file}" |tr -d '"')
     if [ "A${teardown}" != "Atrue" ]
     then 
 
@@ -59,7 +59,7 @@ function ask_user_input () {
             ask_user_for_idm_domain
             #ask_user_for_idm_password
             ask_user_for_custom_idm_server
-            sed -i "s/^user_input_complete:.*/user_input_complete: yes/g" "${project_dir}/playbooks/vars/all.yml"
+            sed -i "s/^user_input_complete:.*/user_input_complete: yes/g" "${vars_file}"
         fi
     fi
 }

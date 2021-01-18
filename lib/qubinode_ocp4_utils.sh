@@ -54,15 +54,15 @@ function openshift4_variables () {
   podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
   lb_name="${lb_name_prefix}-${cluster_name}"
   ocp4_pull_secret="${project_dir}/pull-secret.txt"
-  prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
-  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
+  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${vars_file}")
 
     # load kvmhost variables
     source ${project_dir}/lib/qubinode_kvmhost.sh
     kvm_host_variables
 
     # OCP nodes vairiables
-    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    all_vars_file="${vars_file}"
     min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
@@ -167,7 +167,7 @@ EOF
 function openshift4_prechecks () {
     ocp_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
-    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    all_vars_file="${vars_file}"
     if [ ! -f "${ocp_vars_file}" ]
     then
         cp "${ocp4_sample_vars}" "${ocp_vars_file}"
@@ -650,7 +650,7 @@ cat << EOF
 
 EOF
 
-    all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    all_vars_file="${vars_file}"
     get_cluster_resources
     printf "%s\n" "    ${blu}Make a selection to change the current value.${end}"
     printf "%s\n\n" "    ${blu}The memory and disk size are in Gigabyte.${end}"
@@ -880,7 +880,7 @@ function remove_ocp4_compute () {
     if [[ $count ]] && [ $count -eq $count 2>/dev/null ]
     then
         ocp4_computes_vars="${project_dir}/playbooks/vars/ocp4_computes.yml"
-        all_vars="${project_dir}/playbooks/vars/all.yml"
+        all_vars="${vars_file}"
         ocp4_vars="${ocp_vars_file}"
         cluster_name=$(awk '/^cluster_name:/ {print $2; exit}' "${ocp4_vars}")
         domain=$(awk '/^domain:/ {print $2; exit}' "${all_vars}")

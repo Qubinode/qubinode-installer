@@ -82,10 +82,6 @@ function ask_user_for_idm_password () {
     encrypt_ansible_vault "${vaultfile}" > /dev/null
 
     generate_idm_dm_pwd
-
-
-
-
 }
 
 function generate_idm_dm_pwd(){
@@ -190,7 +186,7 @@ function ask_user_for_custom_idm_server () {
             #sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
 
             # Setting default IdM server name
-            CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')
+            CHANGE_PTR=$(cat ${vars_file} | grep qubinode_ptr: | awk '{print $2}')
             sed -i 's#  - "{{ qubinode_ptr }}"#  - '$CHANGE_PTR'#g'  "${idm_vars_file}"
         fi
     fi
