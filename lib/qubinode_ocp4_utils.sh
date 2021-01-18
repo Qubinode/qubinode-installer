@@ -5,13 +5,13 @@ function openshift4_variables () {
     # Set product variables file
     if [ "A${product_opt}" == "Aokd4" ]
     then
-        product_samples_vars_file=${project_dir}/samples/okd4.yml
+        product_samples_vars_file=${project_dir}/inventory/group_vars/openshift/okd4/main.yml
         ocp_vars_file=${project_dir}/playbooks/vars/okd4.yml
-	      deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
+	    deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
     else
-        product_samples_vars_file=${project_dir}/samples/ocp4.yml
+        product_samples_vars_file=${project_dir}/inventory/group_vars/openshift/ocp4/main.yml
         ocp_vars_file=${project_dir}/playbooks/vars/ocp4.yml
-	      deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
+	    deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
     fi
 
     # ensure product vars file is in place
@@ -28,14 +28,14 @@ function openshift4_variables () {
     if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
     then
         cluster_vm_running=yes
-	      cluster_vm_deployed=yes
+	    cluster_vm_deployed=yes
     elif [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" == "shut" ]]
     then
         cluster_vm_running=no
-	      cluster_vm_deployed=yes
+	    cluster_vm_deployed=yes
     else
         cluster_vm_running=no
-	      cluster_vm_deployed=no
+	    cluster_vm_deployed=no
     fi
 
   ## Create a random cluster name if one does not exist
@@ -55,14 +55,13 @@ function openshift4_variables () {
   lb_name="${lb_name_prefix}-${cluster_name}"
   ocp4_pull_secret="${project_dir}/pull-secret.txt"
   prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
-  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${vars_file}")
+  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}")
 
     # load kvmhost variables
     source ${project_dir}/lib/qubinode_kvmhost.sh
     kvm_host_variables
 
     # OCP nodes vairiables
-    all_vars_file="${vars_file}"
     min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
@@ -73,6 +72,7 @@ function openshift4_variables () {
     ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${product_samples_vars_file}")
     ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
     mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)
+    warn_storage_profile=$(awk '/^warn_storage_profile:/ {print $2; exit}' "${ocp_vars_file}")
 }
 
 function check_for_pull_secret () {
@@ -167,7 +167,6 @@ EOF
 function openshift4_prechecks () {
     ocp_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
     ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
-    all_vars_file="${vars_file}"
     if [ ! -f "${ocp_vars_file}" ]
     then
         cp "${ocp4_sample_vars}" "${ocp_vars_file}"
@@ -317,9 +316,9 @@ function confirm_minimal_deployment () {
         sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$min_vcpu"/g" "${ocp_vars_file}"
         sed -i "s/compute_vcpu:.*/compute_vcpu: "$min_vcpu"/g" "${ocp_vars_file}"
         sed -i "s/compute_count:.*/compute_count: "$min_compute_count"/g" "${ocp_vars_file}"
-        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
-        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
+        sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${ocp_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${ocp_vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${ocp_vars_file}"
     else
         ocp4_menu
     fi
@@ -413,9 +412,9 @@ function ping_openshift4_nodes () {
 
 function check_openshift4_size_yml () {
     check_hardware_resources
-    storage_profile=$(awk '/^storage_profile:/ {print $2}' "${vars_file}")
-    memory_profile=$(awk '/^memory_profile:/ {print $2}' "${vars_file}")
-    ocp_cluster_size=$(awk '/^ocp_cluster_size:/ {print $2}' "${vars_file}")
+    storage_profile=$(awk '/^storage_profile:/ {print $2}' "${ocp_vars_file}")
+    memory_profile=$(awk '/^memory_profile:/ {print $2}' "${ocp_vars_file}")
+    ocp_cluster_size=$(awk '/^ocp_cluster_size:/ {print $2}' "${ocp_vars_file}")
 
     #if [[ "A${memory_profile}" == "Anotmet" ]] || [[ "A${storage_profile}" == "Anotmet" ]]
     if [ "A${ASK_SIZE}" == "Atrue" ]
@@ -650,7 +649,6 @@ cat << EOF
 
 EOF
 
-    all_vars_file="${vars_file}"
     get_cluster_resources
     printf "%s\n" "    ${blu}Make a selection to change the current value.${end}"
     printf "%s\n\n" "    ${blu}The memory and disk size are in Gigabyte.${end}"
@@ -738,9 +736,9 @@ EOF
     done
 
     ##  set cluster details to custom
-    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${all_vars_file}"
-    sed -i "s/memory_profile:.*/memory_profile: custom/g" "${all_vars_file}"
-    sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
+    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: custom/g" "${ocp_vars_file}"
+    sed -i "s/memory_profile:.*/memory_profile: custom/g" "${ocp_vars_file}"
+    sed -i "s/storage_profile:.*/storage_profile: custom/g" "${ocp_vars_file}"
 }
 
 function configure_ocs_storage () {

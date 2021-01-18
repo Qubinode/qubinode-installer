@@ -213,9 +213,9 @@ EOF
 
 function check_disk_size () {
     # STORAGE
-    MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${vars_file}")
-    STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
-    PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
+    MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${ocp_vars_file}")
+    STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${ocp_vars_file}")
+    PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${ocp_vars_file}")
     PREFIX=$(awk '/instance_prefix:/ {print $2}' "${vars_file}")
     POOL_NAME=$(awk '/^libvirt_pool_name:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     MIN_STORAGE=${MIN_STORAGE:-370}
@@ -263,9 +263,9 @@ function check_disk_size () {
 
 function check_memory_size () {
 
-    MINIMAL_MEMORY=$(awk '/qubinode_minimal_memory:/ {print $2}' "${vars_file}")
-    STANDARD_MEMORY=$(awk '/qubinode_standard_memory:/ {print $2}' "${vars_file}")
-    PERFORMANCE_MEMORY=$(awk '/qubinode_performance_memory:/ {print $2}' "${vars_file}")
+    MINIMAL_MEMORY=$(awk '/qubinode_minimal_memory:/ {print $2}' "${ocp_vars_file}")
+    STANDARD_MEMORY=$(awk '/qubinode_standard_memory:/ {print $2}' "${ocp_vars_file}")
+    PERFORMANCE_MEMORY=$(awk '/qubinode_performance_memory:/ {print $2}' "${ocp_vars_file}")
 
     MINIMAL_MEMORY=${MINIMAL_MEMORY:-30}
     STANDARD_MEMORY=${STANDARD_MEMORY:-80}
@@ -286,8 +286,8 @@ function check_memory_size () {
        MEMORY_PROFILE=notmet
     fi
 
-    sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
-    sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+    sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${ocp_vars_file}"
+    sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${ocp_vars_file}"
 }
 
 function check_hardware_resources () {
@@ -320,7 +320,7 @@ function check_hardware_resources () {
             then
                 exit 0
             else
-                sed -i "s/warn_storage_profile:.*/warn_storage_profile: no/g" "${vars_file}"
+                sed -i "s/warn_storage_profile:.*/warn_storage_profile: no/g" "${ocp_vars_file}"
             fi
         fi
     elif [[ "$STORAGE_PROFILE" != notmet ]] && [[ "$MEMORY_PROFILE" != notmet ]]
@@ -330,7 +330,7 @@ function check_hardware_resources () {
         local PROFILE=notmet
     fi
 
-    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: "$PROFILE"/g" "${vars_file}"
+    sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: "$PROFILE"/g" "${ocp_vars_file}"
 }
 
 function clean_up_stale_vms(){

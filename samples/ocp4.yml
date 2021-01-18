@@ -265,3 +265,22 @@ ocp4_instances:
     vm_type: bootstrap
     ip_octet: 30
 
+###########################################
+#   OpenShift Virtual Machines Variables  #
+###########################################
+
+# Hardware profiles
+qubinode_minimal_memory: 30
+qubinode_standard_memory: 80
+qubinode_performance_memory: 88
+
+# We are not enforcing acutal sizes at this time
+qubinode_minimal_storage: 370      # actual is 640
+qubinode_standard_storage: 900     # actual is 1160
+qubinode_performance_storage: 1340 # actual is 1340
+
+# your system profile
+storage_profile: ""
+memory_profile: ""
+ocp_cluster_size: ""
+warn_storage_profile: yes

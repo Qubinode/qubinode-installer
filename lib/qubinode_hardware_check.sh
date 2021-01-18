@@ -2,9 +2,9 @@
 
 function check_disk_size () {
     # STORAGE
-    MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${vars_file}")
-    STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
-    PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
+    MIN_STORAGE=$(awk '/qubinode_minimal_storage:/ {print $2}' "${ocp_vars_file}")
+    STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${ocp_vars_file}")
+    PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${ocp_vars_file}")
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
@@ -48,9 +48,9 @@ function check_disk_size () {
 
 function check_memory_size () {
     
-    MINIMAL_MEMORY=$(awk '/qubinode_minimal_memory:/ {print $2}' "${vars_file}")
-    STANDARD_MEMORY=$(awk '/qubinode_standard_memory:/ {print $2}' "${vars_file}")
-    PERFORMANCE_MEMORY=$(awk '/qubinode_performance_memory:/ {print $2}' "${vars_file}")
+    MINIMAL_MEMORY=$(awk '/qubinode_minimal_memory:/ {print $2}' "${ocp_vars_file}")
+    STANDARD_MEMORY=$(awk '/qubinode_standard_memory:/ {print $2}' "${ocp_vars_file}")
+    PERFORMANCE_MEMORY=$(awk '/qubinode_performance_memory:/ {print $2}' "${ocp_vars_file}")
     
     MINIMAL_MEMORY=${MINIMAL_MEMORY:-30}
     STANDARD_MEMORY=${STANDARD_MEMORY:-80}
@@ -83,16 +83,16 @@ function check_hardware_resources () {
     if [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" != minimal ]] && [[ "$MEMORY_PROFILE" != minimal ]]
     then
         local PROFILE=standard
-        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${ocp_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${ocp_vars_file}"
     elif [[ "$STORAGE_PROFILE" != "$MEMORY_PROFILE" ]] && [[ "$STORAGE_PROFILE" == minimal ]] || [[ "$MEMORY_PROFILE" == minimal ]]
     then
         local PROFILE=minimal
-        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: "$PROFILE"/g" "${ocp_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: "$PROFILE"/g" "${ocp_vars_file}"
     else
-        sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${vars_file}"
-        sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${vars_file}"
+        sed -i "s/storage_profile:.*/storage_profile: "$STORAGE_PROFILE"/g" "${ocp_vars_file}"
+        sed -i "s/memory_profile:.*/memory_profile: "$MEMORY_PROFILE"/g" "${ocp_vars_file}"
     fi
 }
 

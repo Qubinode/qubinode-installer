@@ -153,8 +153,9 @@ function qubinode_rhsm_register () {
     
         encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
     
-        IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")
-        if [ "A${IS_REGISTERED}" == "AThis system is not yet registered" ]
+        #IS_REGISTERED=$(grep -o 'This system is not yet registered' "${IS_REGISTERED_tmp}")
+        #if [ "A${IS_REGISTERED}" == "AThis system is not yet registered" ]
+        if grep -q 'This system is not yet registered' "${IS_REGISTERED_tmp}"
         then
             check_for_dns subscription.rhsm.redhat.com
             printf "%s\n" ""
