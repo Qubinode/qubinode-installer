@@ -452,7 +452,6 @@ function qubinode_networking () {
 
 kvm_host_health_check () {
     KVM_IN_GOOD_HEALTH=""
-    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
     check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
     requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
@@ -466,10 +465,6 @@ kvm_host_health_check () {
       KVM_STATUS="notready"
       kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
     fi
-
-    #if ! sudo virsh net-list | grep -q $requested_nat; then
-    #  KVM_IN_GOOD_HEALTH="notready"
-    #fi
 
     # If dedicated disk for libvirt images, check for the volume group
     if [ "A${create_lvm}" == "Ayes" ]
