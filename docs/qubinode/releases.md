@@ -5,6 +5,10 @@
 ### Release web page
 https://github.com/Qubinode/qubinode-installer/releases
 
+**Qubinode v2.4.4 Release notes**
+* RHEL rhel-8.3-update-2-x86_64-kvm.qcow2 support 
+
+**Qubinode v2.4.3 Release notes**
 
 **Qubinode v2.4.2 Release notes**
 * RHEL 8.2 Support
