@@ -121,9 +121,9 @@ tear_down: false
 openshift_mirror: "http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ minor_version }}/{{ micro_version }}"
 
 # OpenShift Dependencies
-coreos_installer_kernel: "rhcos-{{ micro_version }}-x86_64-installer-kernel-x86_64"
-coreos_installer_initramfs: "rhcos-{{ micro_version }}-x86_64-installer-initramfs.x86_64.img"
-coreos_metal_bios: "rhcos-{{ micro_version }}-x86_64-metal.x86_64.raw.gz"
+coreos_installer_kernel: "rhcos-live-kernel-x86_64"
+coreos_installer_initramfs: "rhcos-live-initramfs.x86_64.img"
+coreos_metal_bios: "rhcos-metal.x86_64.raw.gz"
 
 #################################################################
 # These can be left alone unless you have a reason to change them
