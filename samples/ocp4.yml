@@ -11,7 +11,7 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 # OpenShift Version
 ocp4_okd4: ocp4
 ocp4_release: 4.7.0
-ocp4_image: 4.6.8
+ocp4_image: 4.7.0
 
 # User info
 local_user_account: "{{ admin_user }}"
