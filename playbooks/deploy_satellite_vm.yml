@@ -19,6 +19,7 @@
     inventory_group: "{{ sat_server_vm.sat_group }}"
     extra_storage: "{{ sat_server_vm.sat_extra_storage }}"
     enable: "{{ sat_server_vm.sat_enable }}"
+    satellite_is_installed: ""
   environment:
     IPA_HOST: "{{ ipa_host }}"
     IPA_USER: "{{ idm_admin_user }}"
@@ -34,15 +35,16 @@
         validate_certs: no
       register: satellite_is_installed
       ignore_errors: yes
-      tags: [ always ]
+      tags: [ check-satellite ]
   
     - set_fact:
         satellite_is_installed: "{{ False if satellite_is_installed.failed | default(False) or satellite_is_installed.status != 200 else True }}"
-        tags: [ always ]
+      tags: [ check-satellite ]
   
     - name: end play if satellite is running
       meta: end_play
       when: satellite_is_installed|bool
+      tags: [ check-satellite ]
 
     - name: Create KVM VM for Satellite Server Server
       include_role:
@@ -51,7 +53,7 @@
 
     - name: include create_dns_entries.yml
       include_tasks: create_dns_entries.yml
-      tags: create_dns_entries
+      tags: create_dns_records
 
     - name: REMOVE|ensure {{ vm_name }} is removed from inventory
       lineinfile:

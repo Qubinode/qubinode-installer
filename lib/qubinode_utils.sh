@@ -217,10 +217,14 @@ function check_disk_size () {
     STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${vars_file}")
     PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${vars_file}")
     PREFIX=$(awk '/instance_prefix:/ {print $2}' "${vars_file}")
+    POOL_NAME=$(awk '/^libvirt_pool_name:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
-    POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v $PREFIX)
+
+    ## The var POOL should be replaced with just POOL_NAME
+    POOL="${POOL_NAME}"
+    #POOL=$(sudo virsh pool-list --autostart | awk '/active/ {print $1}'| grep -v $PREFIX)
     POOL_CAPACITY=$(sudo virsh pool-dumpxml "${POOL}"| grep capacity | grep -Eo "[[:digit:]]{1,100}")
     DISK=$(cat "${kvm_host_vars_file}" | grep kvm_host_libvirt_extra_disk: | awk '{print $2}')
 
@@ -459,6 +463,7 @@ function qubinode_setup () {
     ask_user_input
     setup_variables
     setup_user_ssh_key
+    ask_user_for_idm_password
     #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
@@ -488,6 +493,7 @@ function qubinode_setup () {
 }
 
 function qubinode_base_requirements () {
+    ## 9/9/2020 this function should be replaced with qubinode_setup
     # This function ensures all the minimal base requirements are met.
     if [ "A${running_qubinode_setup}" != "Ayes" ]
     then
