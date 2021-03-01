@@ -18,8 +18,7 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.2 installed (Recommended)
-* or Red Hat Enteprise Linux 7.8 installed
+* Red Hat Enteprise Linux 8.3 installed 
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
@@ -27,16 +26,13 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4.3     | 2.9               |  |
+|     Release 2.4.5     | 2.9               | 2.4.5 |
 
-### Features in v2.4.3
+### Features in v2.4.5 Versionss
 
 New Features |
 -- |
-IDM Server Fixes|
-OpenShift 4.6 Deployment by default |
-Bridge network Deployment Option |
-Local Storage Deployment Recommended Option |
+
 
 See [Release Document](docs/qubinode/releases.md) for features history.
 

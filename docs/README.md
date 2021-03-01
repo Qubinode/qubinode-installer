@@ -93,7 +93,7 @@ If you are using tokens it should be:
 If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions:
 ```
 * $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
-* $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
+* $HOME/qubinode-installer/rhel-8.3-update-2-x86_64-kvm.qcow2
 ```
 
 ## Install DNS server 
