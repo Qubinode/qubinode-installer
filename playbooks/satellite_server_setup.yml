@@ -1,6 +1,6 @@
 ---
 - name: Setup Satellite Post Installation
-  hosts: qbn-sat01
+  hosts: satellite
   remote_user: root
   become: true
   gather_facts: true
@@ -9,7 +9,6 @@
     - vars/kvm_host.yml
     - vars/vault.yml
     - vars/satellite_server.yml
-
   collections:
     - theforeman.foreman
 

@@ -1,8 +1,8 @@
 ---
 - name: Deploy IDM VM
   hosts: localhost
-  become: yes
   gather_facts: yes
+  become: yes
   vars_files:
     - vars/all.yml
     - vars/kvm_host.yml
@@ -24,13 +24,18 @@
     extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
     expand_os_disk: "{{ dns_server_vm.dns_expand_os_disk }}"
     enable: "{{ dns_server_vm.dns_enable }}"
-    current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
 
   tasks:
 
     - name: Create KVM VM for DNS Server
       include_role:
         name: deploy-kvm-vm
+
+    - meta: refresh_inventory
+
+    - name: Get the IP address of the IdM VM
+      set_fact:
+        current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
 
     - name: update idm_public_ip with current IDM server IP
       lineinfile:
@@ -39,11 +44,12 @@
         line: "idm_server_ip: {{ current_vm_ip }}"
         state: present
       when: not vm_teardown|bool
-
+    
     - set_fact:
         etc_host_status: "{{ 'absent' if vm_teardown|bool else 'present' }}"
 
     - name: Add/Remove DNS server from inventory into /etc/hosts
+      become: yes
       lineinfile:
         dest: /etc/hosts
         regexp: '.*{{ item }}$'

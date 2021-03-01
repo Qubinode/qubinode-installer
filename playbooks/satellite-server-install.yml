@@ -18,11 +18,17 @@
       validate_certs: no
     register: satellite_is_installed
     ignore_errors: yes
-    tags: [ always ]
+    tags: [ check-satellite ]
+
+  - name: show results of check satellite status
+    debug:
+      var: satellite_is_installed
+      verbosity: 2
+    tags: [ check-satellite ]
 
   - set_fact:
       satellite_is_installed: "{{ False if satellite_is_installed.failed | default(False) or satellite_is_installed.status != 200 else True }}"
-      tags: [ always ]
+    tags: [ check-satellite ]
 
   - name: end play if satellite is running
     meta: end_play

@@ -17,10 +17,18 @@ rhel_server_vm:
     rhel_enable: true
 
 cloud_init_vm_image: "rhel-server-7.8-x86_64-kvm.qcow2"
+vm_qcow_image: "{{ cloud_init_vm_image }}"
 qcow_rhel_release: 7
 rhel_release: 7
+os_release: ""
 rhel_8_hash:
 rhel_7_hash:
 update_etc_resolv: no
 expand_os_disk: no
 vm_root_disk_size: "{{ rhel_server_vm.rhel_root_disk_size }}"
+
+## Static network configuration
+vm_gateway: ""
+vm_ipaddress: ""
+vm_mask_prefix: ""
+vm_mac: ""

@@ -7,11 +7,11 @@ function openshift4_variables () {
     then
         product_samples_vars_file=${project_dir}/samples/okd4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/okd4.yml
-	deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
+	      deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
     else
         product_samples_vars_file=${project_dir}/samples/ocp4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/ocp4.yml
-	deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
+	      deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
     fi
 
     # ensure product vars file is in place
@@ -28,26 +28,34 @@ function openshift4_variables () {
     if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
     then
         cluster_vm_running=yes
-	cluster_vm_deployed=yes
+	      cluster_vm_deployed=yes
     elif [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" == "shut" ]]
     then
         cluster_vm_running=no
-	cluster_vm_deployed=yes
+	      cluster_vm_deployed=yes
     else
         cluster_vm_running=no
-	cluster_vm_deployed=no
+	      cluster_vm_deployed=no
     fi
 
-    playbooks_dir="${project_dir}/playbooks"
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
-    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
-    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
-    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
-    lb_name="${lb_name_prefix}-${cluster_name}"
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
-    idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  ## Create a random cluster name if one does not exist
+  cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
+  generated_num=$(echo $(((RANDOM%900+1))))
+  generated_cluster_name="qub${generated_num}"
+  if [ "A${cluster_name}" == 'A""' ]
+  then
+      sed -i "s/^cluster_name:.*/cluster_name: "$generated_cluster_name"/g" "${ocp_vars_file}"
+  fi
+
+  playbooks_dir="${project_dir}/playbooks"
+  ocp4_pull_secret="${project_dir}/pull-secret.txt"
+  ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
+  lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
+  podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
+  lb_name="${lb_name_prefix}-${cluster_name}"
+  ocp4_pull_secret="${project_dir}/pull-secret.txt"
+  prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
 
     # load kvmhost variables
     source ${project_dir}/lib/qubinode_kvmhost.sh
@@ -157,8 +165,8 @@ EOF
 }
 
 function openshift4_prechecks () {
-    ocp_vars_file="${ocp_vars_file}"
-    ocp4_sample_vars="${product_samples_vars_file}"
+    ocp_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+    ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
     if [ ! -f "${ocp_vars_file}" ]
     then
@@ -212,13 +220,14 @@ function configure_local_storage () {
     reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
-    read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
-    vdb_size="${vdb:-100}"
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
+    vdb_size="${vdb:-10}"
     compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
         printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
@@ -264,6 +273,23 @@ function set_local_volume_type () {
     sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${ocp_vars_file}"
     sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${ocp_vars_file}"
   fi 
+}
+
+function ask_to_use_external_bridge () {
+    ocp_libvirt_network_option=$(awk '/^use_external_bridge:/ {print $2; exit}' "${ocp_vars_file}")
+    if [ "A${ocp_libvirt_network_option}" == "A" ]
+    then
+        echo "Would you like to deploy your OpenShift Nodes on to an external Bridge Network?"
+        echo "The Default deployment Option is No this will deploy your OpenShift Nodes on the NAT Network?"
+        echo "Default choice is to choose: No"
+        confirm " Yes/No"
+        if [ "A${response}" == "Ayes" ]
+        then
+            sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
+        else
+            sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
+        fi
+    fi
 }
 
 function confirm_minimal_deployment () {
@@ -718,6 +744,9 @@ EOF
 }
 
 function configure_ocs_storage () {
+    ## Jan 3, 2021 this function should be deleted
+    ## it's no longer in use.
+
     #------------------------------------------
     # configure OpenShift Container Storage
     #------------------------------------------
@@ -835,7 +864,7 @@ function configure_nfs_storage () {
         # Disable OCS
         sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
 
-        #provision_nfs_provisoner: true      # deploys the nfs provision
+        #provision_nfs_client_provisoner: true      # deploys the nfs provision
         #configure_registry: true
         #registry_pvc_size: 100Gi
     fi
@@ -1025,22 +1054,38 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
-              ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t generate_inventory > /dev/null 2>&1 || exit $?
-              ansible-playbook ${deploy_product_playbook} -t shutdown -e shutdown_cluster=yes || exit 1
+              ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
                exit
            fi
             ;;
+       poweroff)
+           printf "%s\n\n" ""
+           ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
+            ;;
        startup)
             printf "%s\n\n" ""
             printf "%s\n" "    ${yel}Starting up ${product_opt} Cluster!${end}"
-            ansible-playbook ${deploy_product_playbook} -t startup -e startup_cluster=yes || exit 1
-            /usr/local/bin/qubinode-ocp4-status
+            ansible-playbook ${deploy_product_playbook} -e "bootstrap_complete=yes" -e "startup_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "startup,generate_inventory" --skip-tags "always" || exit 1    
+            if [ -f /usr/local/bin/qubinode-ocp4-status ]
+            then
+                /usr/local/bin/qubinode-ocp4-status
+            else
+                echo "/usr/local/bin/qubinode-ocp4-status not found"
+            fi
             ;;
        status)
-            /usr/local/bin/qubinode-ocp4-status
+            if [ -f /usr/local/bin/qubinode-ocp4-status ]
+            then
+                /usr/local/bin/qubinode-ocp4-status
+            else
+                echo "/usr/local/bin/qubinode-ocp4-status not found"
+            fi
+            ;;
+       setup)
+            qubinode_ocp4_setup
             ;;
        remove-compute)
            remove_ocp4_compute

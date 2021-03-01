@@ -20,7 +20,7 @@ These values are either set during the install or can be set by the user:
 The IdM server can be deployed by executing.
 
 ```
-./qubinode-installer -m idm
+./qubinode-installer -p idm
 ```
 
 This in turn executes the function **qubinode_vm_manager** which then excutes the following:
@@ -35,7 +35,12 @@ This in turn executes the function **qubinode_vm_manager** which then excutes th
    - Set the KVM host /etc/resolv.conf to point to the IDM server
 
 You can remove the IdM server with.
+Qubinode Command 
+```
+./qubinode-installer -p idm -d
+```
 
+Ansible command
 ```
 ansible-playbook playbooks/deploy-dns-server.yml --extra-vars "vm_teardown=true"
 ```
@@ -62,5 +67,5 @@ The web console
 You can view this password by runing this command.
 
 ```
-ansible-vault edit playbooks/vars/vault.yml
+ansible-vault view $HOME/qubinode-installer/playbooks/vars/vault.yml 
 ```

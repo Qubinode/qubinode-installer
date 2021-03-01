@@ -33,12 +33,11 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 ########################
 # NFS Persistent Storage
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
-set_as_default: true        # set NFS as the default persistent storage
 provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /export
 nfs_server_ip:  "{{ kvm_host_ip }}"
-provision_nfs_provisoner: true      # deploys the nfs provision
-project_namespace: nfs-provisioner
+provision_nfs_client_provisoner: true      # deploys the nfs provision
+nfs_project_namespace: openshift-nfs-provisioner
 
 # deploy OCS persistent storage
 configure_ocs_storage: no
@@ -118,18 +117,24 @@ openshift_install_folder: okd4
 # Set to false to not create the install-config
 deploy_ocp4_configs: yes
 
+#######################
+# Configure Network 
+libvirt_network_name: qubinat 
+use_external_bridge: '' # set to qubinet for external network and set use_external_bridge: true 
+external_bridge_network: qubinet
+
 # Networking info
-ocp4_nat_subnet: 192.168.50.0
+ocp4_subnet: 192.168.50.0
 mask: 255.255.255.0
-cluster_name: qub01
+cluster_name: ""
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
 libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"
 listen_address: "{{ kvm_host_ip }}"
 lb_name: "{{ ocp4_lb_container }}"
 mac_start: "52:54:00:"
-ocp4_nat_gateway: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.1"
-bootstrap_ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.2"
+ocp4_gateway_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.1"
+bootstrap_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.2"
 dns_domain: "{{ domain }}"
 dns_server_ip: "{{ idm_server_ip }}"
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
@@ -156,7 +161,7 @@ ignition_files_dir: "{{ openshift_install_dir }}"
 dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
 webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
 webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
-virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
+virtinstall_dir: "{{ installation_working_dir }}/rhcos-install"
 ocp4_subdomain: cloud
 ocp4_cluster_domain: "{{ ocp4_subdomain }}.{{ domain }}"
 dns_teardown: false
