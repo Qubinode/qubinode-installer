@@ -1,6 +1,6 @@
 # Jig - Workshop Service Worker
 
-This is a PHP application built to provide advanced functionality to Red Hat workshops.  [Click here To Contribe](https://github.com/kenmoini/jig)  
+This is a PHP application built to provide advanced functionality to Red Hat workshops.  [Click here to contribute](https://github.com/kenmoini/jig)  
 
 ![Jig - Workshop Service Worker](../../img/jig.png)
 
