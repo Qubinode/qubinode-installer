@@ -10,12 +10,12 @@ pull_secret: "{{ installation_working_dir }}/okd4-pull-secret.txt"
 
 # OpenShift/OKD Version
 ocp4_okd4: okd4
-ocp4_release: 4.5.0-0.okd-2020-07-14-153706-ga
-ocp4_image: 4.4.15
+ocp4_release: 4.7.0-0.okd-2021-02-25-144700
+ocp4_image: 4.7.0
 ocp4_release_url: "https://github.com/openshift/okd/releases/download/{{ ocp4_release }}"
 
 # OpenShift/OKD version numbers
-major_version: "32.20200715.3.0"  #e.g. 32.20200601.3.0
+major_version: "33.20210201.3.0"  #e.g. 32.20200601.3.0
 ocp4_dependencies_version: "{{ major_version }}"
 ocp4_image_version: "{{ major_version }}"
 
@@ -107,6 +107,7 @@ openshift_mirror: "https://builds.coreos.fedoraproject.org/prod/streams/stable/b
 coreos_installer_kernel: "fedora-coreos-{{ major_version }}-live-kernel-x86_64"
 coreos_installer_initramfs: "fedora-coreos-{{ major_version }}-live-initramfs.x86_64.img"
 coreos_metal_bios: "fedora-coreos-{{ major_version }}-metal.x86_64.raw.xz"
+coreos_rootfs: "fedora-coreos-{{ major_version }}-live-rootfs.x86_64.img"
 
 #################################################################
 # These can be left alone unless you have a reason to change them
@@ -126,7 +127,7 @@ external_bridge_network: qubinet
 # Networking info
 ocp4_subnet: 192.168.50.0
 mask: 255.255.255.0
-cluster_name: ""
+cluster_name: qbn
 old_libvirt_net: qbn # this was ocp4 need to see what to do with this
 libvirt_network_mode: nat
 libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"

@@ -9,6 +9,8 @@ https://github.com/Qubinode/qubinode-installer/releases
 * RHEL rhel-8.3-update-2-x86_64-kvm.qcow2 support 
 * RHEL 8.3 Default support
 * OpenShift 4.7.x
+* OKD 4.7.0-0.okd-2021-02-25-144700
+* Added Support for [jig](https://github.com/kenmoini/jig)
 
 **Qubinode v2.4.3 Release notes**
 * OpenShift 4.6.x
