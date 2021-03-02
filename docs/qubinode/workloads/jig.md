@@ -1,8 +1,8 @@
 # Jig - Workshop Service Worker
 
-This is a PHP application built to provide advanced functionality to Red Hat workshops.  
-[To Contribe](https://github.com/kenmoini/jig)  
-![Jig - Workshop Service Worker](../img/jig.png)
+This is a PHP application built to provide advanced functionality to Red Hat workshops.  [Click here To Contribe](https://github.com/kenmoini/jig)  
+
+![Jig - Workshop Service Worker](../../img/jig.png)
 
 
 ## Qubinode Requirements
