@@ -49,9 +49,9 @@ cd $HOME/qubinode-installer
 cp samples/okd4.yml playbooks/vars/
 ```
 
-Edit playbooks/vars/okd4.yml and upate the variable **ocp4_release**.
+Optional: Edit playbooks/vars/okd4.yml and upate the variable **ocp4_release**.
 ```
-ocp4_release: 4.4.0-0.okd-2020-05-23-055148-beta5
+ocp4_release: 4.7.0-0.okd-2021-02-25-144700
 ```
 
 **Set newest Fedora CoreOS Qcow image tag**
@@ -62,7 +62,7 @@ https://getfedora.org/en/coreos/download?tab=metal_virtualized&stream=stable
 Edit playbooks/vars/okd4.yml with the latest tag.
 
 ```
-major_version: "32.20200601.3.0"  #e.g. 32.20200601.3.0
+major_version: "33.20210201.3.0"  #e.g. 32.20200601.3.0
 ```
 
 ### Post deployment
