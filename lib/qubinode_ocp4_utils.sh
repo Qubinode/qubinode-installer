@@ -198,6 +198,27 @@ function openshift4_prechecks () {
     #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
     #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
 
+    local ocp4_majorversion=$(awk '/^ocp4_majorversion:/ {print $2}' "${ocp_vars_file}")
+
+    ## Update rhcos dependancies release
+    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/${ocp4_majorversion}/latest/sha256sum.txt"
+    get_image_release=$(awk '/qemu.x86_64.qcow2.gz/ {print $2}' sha256sum.txt |perl -pe 'if(($v)=/([0-9]+([.][0-9]+)+)/){print"$v\n";exit}$_=""')
+    if [ -z $get_image_release ];
+    then 
+       echo "Failed to get OpenShift Image release for $ocp4_majorversion"
+       exit 1
+    fi
+
+    sed -i "s/^ocp4_image:.*/ocp4_image: ${get_image_release}/" "${ocp_vars_file}"
+    #sed -i "s/^major_version:.*/major_version: ${image_release}/" "${ocp_vars_file}"
+    rm sha256sum.txt
+
+    # Get the lastest OCP4 version
+    # temporarly removing aut release
+    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_majorversion}/release.txt"
+    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+    sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
+    rm release.txt
 }
 
 

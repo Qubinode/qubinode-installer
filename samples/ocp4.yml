@@ -10,6 +10,7 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift/OKD Version
 ocp4_okd4: ocp4
+ocp4_majorversion: 4.7
 ocp4_release: 4.7.0
 ocp4_image: 4.7.0
 
@@ -44,7 +45,7 @@ configure_ocs_storage: no
 # Local persistent storage
 configure_local_storage: no
 compute_local_storage: no
-localstorage_version: "{{ major_version }}"
+localstorage_version: "{{ ocp4_majorversion }}"
 localstorage_filesystem: yes
 localstorage_block: no
 
@@ -90,7 +91,7 @@ min_mem: 10240
 tear_down: false
 
 # OpenShift Download URL
-openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_release }}/{{ major_version }}"
+openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_majorversion }}/{{ ocp4_image }}"
 
 # OpenShift Dependencies
 coreos_installer_kernel: "rhcos-live-kernel-x86_64"
