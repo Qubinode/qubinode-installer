@@ -192,33 +192,28 @@ function openshift4_prechecks () {
 
     fi
 
-    # Get the lastest OCP4 version
-    # temporarly removing auto release
-    #curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
-    #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
-
-    local ocp4_majorversion=$(awk '/^ocp4_majorversion:/ {print $2}' "${ocp_vars_file}")
+    local ocp_release_dir=$(mktemp -d)
+    local ocp4_ystream=$(awk '/^ocp4_ystream_release:/ {print $2}' "${ocp_vars_file}")
+    local ocp4_ystream=$(echo $ocp4_ystream | sed -e 's/^"//' -e 's/"$//')
+    cd "$ocp_release_dir"
 
     ## Update rhcos dependancies release
-    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/${ocp4_majorversion}/latest/sha256sum.txt"
+    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/${ocp4_ystream}/latest/sha256sum.txt"
     get_image_release=$(awk '/qemu.x86_64.qcow2.gz/ {print $2}' sha256sum.txt |perl -pe 'if(($v)=/([0-9]+([.][0-9]+)+)/){print"$v\n";exit}$_=""')
-    if [ -z $get_image_release ];
-    then 
-       echo "Failed to get OpenShift Image release for $ocp4_majorversion"
-       exit 1
+    image_release="${get_image_release}"
+    if [ "${image_release:-none}" != 'none' ]
+    then
+        sed -i "s/^ocp4_image:.*/ocp4_image: ${image_release}/" "${ocp_vars_file}"
+        sed -i "s/^ocp4_release:.*/ocp4_release: ${image_release}/" "${ocp_vars_file}"
     fi
-
-    sed -i "s/^ocp4_image:.*/ocp4_image: ${get_image_release}/" "${ocp_vars_file}"
-    #sed -i "s/^major_version:.*/major_version: ${image_release}/" "${ocp_vars_file}"
-    rm sha256sum.txt
 
     # Get the lastest OCP4 version
     # temporarly removing aut release
-    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_majorversion}/release.txt"
+    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_ystream}/release.txt"
     current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
-    rm release.txt
+    sed -i "s/^ocp4_client_version:.*/ocp4_client_version: ${current_version}/"   "${ocp_vars_file}"
+
+    test -d "${project_dir}" && cd "${project_dir}"
 }
 
 

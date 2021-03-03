@@ -44,7 +44,7 @@ Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift
 Optional: Change OpenShift major version
 ```
 vim samples/ocp4.yml
-ocp4_majorversion: 4.7  # Example 4.6, 4.5, 4.4
+ocp4_ystream_release: 4.7  # Example 4.6, 4.5, 4.4
 ```
 
 Start the installation with the below command. The installation will run then present you menu to choose from.
