@@ -2,9 +2,6 @@
 
 This is a PHP application built to provide advanced functionality to Red Hat workshops.  [Click here to contribute](https://github.com/kenmoini/jig)  
 
-![Jig - Workshop Service Worker](../../img/jig.png)
-
-
 ## Qubinode Requirements
 * Local storage with at 10Gigs os storage `this can be changed if you would like`
 
