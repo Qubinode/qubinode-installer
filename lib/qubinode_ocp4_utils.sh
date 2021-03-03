@@ -328,7 +328,7 @@ is_node_up () {
     IP=$1
     VMNAME=$2
     WAIT_TIME=0
-    DNSIP=$(cat playbooks/vars/idm.yml  |grep idm_server_ip: | awk '{print $2}')
+    DNSIP=$(cat "${idm_vars_file}"  |grep idm_server_ip: | awk '{print $2}')
     until ping -c4 "${NODE_IP}" >& /dev/null || [ $WAIT_TIME -eq 60 ]
     do
         sleep $(( WAIT_TIME++ ))

@@ -122,7 +122,7 @@ function setup_variables () {
     ansible_completed=$(awk '/qubinode_installer_ansible_completed:/ {print $2;exit}' "${vars_file}")
     #host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' "${vars_file}")
     base_setup_completed=$(awk '/qubinode_base_reqs_completed:/ {print $2;exit}' "${vars_file}")
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${kvm_host_vars_file}")
 }
 
 function get_rhel_version() {
@@ -140,7 +140,7 @@ function get_rhel_version() {
 function qcow_check () {
     # TODO: this should be removed
     download_files
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${kvm_host_vars_file}")
     qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${vars_file}"|awk '{print $2}')
 
     # update IdM server with qcow image file
@@ -218,7 +218,7 @@ setup_download_options () {
     TOKEN_STATUS="notexist"
     QCOW_STATUS="notexist"
     DWL_QCOW=no
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${kvm_host_vars_file}")
     artifact_qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${vars_file}"|awk '{print $2}')
     if sudo test -f "${libvirt_dir}/${artifact_qcow_image}"
     then

@@ -53,3 +53,23 @@
     - name: validate KVM host setup
       include_role:
          name: edge_hosts_validate
+
+    - name: get system hostname
+      local_action: command hostname
+      register: qubinode_hostname
+
+    - name: declare system hostname
+      set_fact:
+        short_name: "{{ qubinode_hostname.stdout.split('.')[0] }}"
+        host_fqdn: "{{ qubinode_hostname.stdout }}"
+        host_ipaddr: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+        inventory_group: 'qubinode'
+
+    - name: add kvmhost to inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ short_name }}"
+        line: "{{ short_name }}   ansible_host={{ host_ipaddr }} ansible_user={{ admin_user }}"
+        insertafter: '^\[{{ inventory_group }}\]'
+        state: present
+

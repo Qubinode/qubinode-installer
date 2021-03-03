@@ -1,0 +1,90 @@
+---
+satellite_repos:
+  - rhel-7-server-rpms
+  - rhel-server-rhscl-7-rpms
+  - "rhel-7-server-satellite-{{ satellite_version }}-rpms"
+  - rhel-7-server-satellite-maintenance-6-rpms
+  - rhel-7-server-ansible-2.9-rpms
+
+rhsm_repos: "{{ satellite_repos }}"
+
+## SSL connection
+satellite_verify_ssl: no
+rhsm_verify_ssl: yes
+satellite_url: "https://{{ satellite_hostname }}.{{ domain }}"
+
+## Satellite manifest
+manifest_download_dir: /root
+local_manifest_path: "{{ project_dir }}/satellite-server-manifest.zip"
+
+## RHSM INFO
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
+
+# Products releases
+sat_tools: "{{ satellite_version }}"
+
+## RHSM pool for for the Red Hat Satellite Infrastructure pool
+rhsm_pool_ids: "{{ satellite_pool_id }}"
+
+# Volumes and Filesystems
+pgsql_lv_size: "10g"
+mongodb_lv_size: "50g"
+pulp_lv_size: "100g"
+device: vdb
+host_device: "{{ device }}"
+vg_name: "{{ sat_vg_name }}"
+
+
+logical_volumes:
+  - name: pgsql
+    size: "{{ pgsql_lv_size }}"
+    mount_dir: /var/lib/pgsql
+    fstype: xfs
+  - name: mongodb
+    size: "{{ mongodb_lv_size }}"
+    mount_dir: /var/lib/mongodb
+    fstype: xfs
+  - name: pulp
+    size: "{{ pulp_lv_size }}"
+    mount_dir: /var/lib/pulp
+    fstype: xfs
+  - name: cache
+    size: 20g
+    mount_dir: /var/cache/pulp
+    fstype: xfs
+  - name: log
+    size: 10g
+    mount_dir: /var/log
+    fstype: xfs
+  - name: squid
+    size: 10g
+    mount_dir: /var/spool/squid
+    fstype: xfs
+
+# setup satellite org, location with with products
+satellite_orgs:
+  - name: "{{ satellite_default_organization }}"
+    admin_username: "{{ satellite_user }}"
+    admin_password: "{{ satellite_password }}"
+    state: present
+    sync_right_away: "{{ sync_now }}"
+    redhat_manifest:
+      name: "{{ manifest_name | default(omit) }}"
+      uuid: "{{ manifest_uuid | default(omit) }}"
+      use_local_manifest: "{{ use_downloaded_manifest }}"
+      download_manifest: "{{ download_satellite_manifest }}"
+      manifest_upload: "{{ force_manifest_upload }}"
+      state: present
+      pool: "{{ pool_ids | default([]) }}"
+    locations:
+      - name: "{{ satellite_default_location }}"
+        state: present
+    products: "{{ products_to_enable }}"
+    lifecycle_environments: "{{ default_lcen }}"
+    sync_plans:
+      - name: "{{ sync_plan_name }}"
+        date: "{{ sync_plan_date }}"
+        interval: "{{  sync_interval }}"
+        enabled: true
+        description: "Default Sync Plan for Red Hat products"

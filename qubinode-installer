@@ -44,7 +44,7 @@ function report_error () {
 }
 
 # Uncheck to enable debugging
-#trap 'report_error $? $LINENO ${FUNCNAME[0]}' ERR
+trap 'report_error $? $LINENO ${FUNCNAME[0]}' ERR
 
 # this function just make sure the script
 # knows the full path to the project directory

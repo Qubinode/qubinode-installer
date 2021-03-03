@@ -1,5 +1,5 @@
 ---
-- name: Deploy Satellite server VM
+- name: Deploy the Satellite server virtual machine
   hosts: localhost
   become: yes
   gather_facts: yes
@@ -26,7 +26,7 @@
     IPA_PASS: "{{ idm_admin_pwd }}"
 
   tasks:
-    - name: check if satellite is running
+    - name: Check if the Satellite server is already deployed
       uri:
         url: "https://{{ satellite_hostname }}.{{ satellite_domain }}/api/organizations"
         user: "{{ satellite_user }}"
@@ -37,24 +37,23 @@
       ignore_errors: yes
       tags: [ check-satellite ]
   
-    - set_fact:
+    - name: Set the var satellite_is_installed to true or false
+      set_fact:
         satellite_is_installed: "{{ False if satellite_is_installed.failed | default(False) or satellite_is_installed.status != 200 else True }}"
       tags: [ check-satellite ]
-  
-    - name: end play if satellite is running
-      meta: end_play
-      when: satellite_is_installed|bool
-      tags: [ check-satellite ]
 
-    - name: Create KVM VM for Satellite Server Server
+    - name: Report satellite_is_installed value
+      debug:
+        var: satellite_is_installed
+        verbosity: 3
+      tags: [ check-satellite ]
+      
+    - name: Deploy Satellite server virtual machine
+      when: not satellite_is_installed|bool or vm_teardown|bool
       include_role:
         name: deploy-kvm-vm
       tags: satellite_vm
-
-    - name: include create_dns_entries.yml
-      include_tasks: create_dns_entries.yml
-      tags: create_dns_records
-
+        
     - name: REMOVE|ensure {{ vm_name }} is removed from inventory
       lineinfile:
         path: "{{ inventory_file }}"

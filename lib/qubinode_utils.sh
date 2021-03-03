@@ -140,7 +140,7 @@ function dnf_or_yum(){
 }
 
 function collect_system_information() {
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${kvm_host_vars_file}")
     which virsh > /dev/null 2>&1 || sudo yum group install virtualization-host-environment -y -q > /dev/null 2>&1
     which virsh > /dev/null 2>&1 || sudo yum install libvirt-client libvirt deltarpm -y -q > /dev/null 2>&1
     which dmidecode > /dev/null 2>&1 || sudo yum install dmidecode -y -q > /dev/null 2>&1
@@ -151,7 +151,7 @@ function collect_system_information() {
     AVAILABLE_HUMAN_MEMORY=$(free -h | awk '/Mem/ {print $2}')
 
 
-    libvirt_pool_name=$(cat $project_dir/playbooks/vars/kvm_host.yml | grep libvirt_pool_name: | awk '{print $2}')
+    libvirt_pool_name=$(cat ${kvm_host_vars_file} | grep libvirt_pool_name: | awk '{print $2}')
     if [[ "A${libvirt_pool_name}" == "Adefault" ]] && [[ "A${skip_libvirt_pool}" == "Ayes" ]]
     then
         printf "%s\n\n" "   Getting information about the libvirt storage."
@@ -179,7 +179,7 @@ EOF
     AVAILABLE_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5*1024}')
     AVAILABLE_HUMAN_STORAGE=$(sudo virsh pool-list --details | grep "${libvirt_pool_name}" |awk '{print $5,$6}')
 
-    sed -i "s/skip_libvirt_pool:.*/skip_libvirt_pool: yes/g" "$project_dir/playbooks/vars/kvm_host.yml"
+    sed -i "s/skip_libvirt_pool:.*/skip_libvirt_pool: yes/g" "${kvm_host_vars_file}"
 }
 
 function create_qubinode_profile_log () {
@@ -217,7 +217,7 @@ function check_disk_size () {
     STANDARD_STORAGE=$(awk '/qubinode_standard_storage:/ {print $2}' "${ocp_vars_file}")
     PERFORMANCE_STORAGE=$(awk '/qubinode_performance_storage:/ {print $2}' "${ocp_vars_file}")
     PREFIX=$(awk '/instance_prefix:/ {print $2}' "${vars_file}")
-    POOL_NAME=$(awk '/^libvirt_pool_name:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    POOL_NAME=$(awk '/^libvirt_pool_name:/ {print $2}' "${kvm_host_vars_file}")
     MIN_STORAGE=${MIN_STORAGE:-370}
     STANDARD_STORAGE=${STANDARD_STORAGE:-900}
     PERFORMANCE_STORAGE=${PERFORMANCE_STORAGE:-1000}
@@ -408,7 +408,7 @@ function forceVMteardown () {
 }
 
 function removeStorage () {
-    #libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    #libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${kvm_host_vars_file}")
     while sudo systemctl list-units --type=service | grep -q libvirtd
     do
         sudo systemctl stop libvirtd

@@ -307,7 +307,7 @@ function qubinode_networking () {
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
         test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
         test -f "${vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${vars_file}"
-        test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
+        #test -f "${idm_vars_file}" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${idm_vars_file}"
     fi
 
     DEFINED_BRIDGE=""
@@ -388,7 +388,7 @@ function qubinode_networking () {
     else
             printf "%s\n\n\n" " "
             printf "%s\n" "    ${red}Could not properly determine your current active network interface${end}"
-            printf "%s\n" "    ${blu}You can set the interface value ${end}${yel}kvm_host_interface${end} ${blu}in ${end}${yel}${project_dir}/playbooks/vars/kvm_host.yml${end}"
+            printf "%s\n" "    ${blu}You can set the interface value ${end}${yel}kvm_host_interface${end} ${blu}in ${end}${yel}${kvm_host_vars_file}${end}"
             exit 1
     fi
 }
@@ -453,9 +453,9 @@ function qubinode_networking () {
 kvm_host_health_check () {
     KVM_IN_GOOD_HEALTH=""
     check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
-    requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${kvm_host_vars_file}")
+    libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${kvm_host_vars_file}")
+    create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${kvm_host_vars_file}")
 
     bash -c "sudo virsh net-list | grep -q $requested_brigde"
     RESULT=$?

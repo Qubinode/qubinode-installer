@@ -322,7 +322,7 @@ function isIdMrunning () {
 
 function qubinode_teardown_idm () {
      IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
-     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
+     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${kvm_host_vars_file}")
      local vmdisk="${libvirt_dir}/${idm_srv_hostname}_vda.qcow2"
      if sudo virsh list --all |grep -q "${idm_srv_hostname}"
      then

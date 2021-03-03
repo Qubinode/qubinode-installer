@@ -5,8 +5,8 @@ playbooks/roles/*
 !playbooks/roles/.gitkeep
 playbooks/vars/*
 !playbooks/vars/.gitkeep
-inventory/*
-!inventory/.gitkeep
+inventory/hosts
+inventory/ocp4-nodes
 *.swp
 all.yml
 rhel-server-*-x86_64-kvm.qcow2

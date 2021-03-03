@@ -38,3 +38,8 @@ qubinode_base_reqs_completed: no
 ## Point release of RHEL
 rhel8_version: 8.3
 rhel7_version: 7.8
+
+qcow_rhel7_name: rhel-server-7.8-x86_64-kvm.qcow2
+qcow_rhel8_name: rhel-8.3-x86_64-kvm.qcow2
+
+instance_prefix: qbn

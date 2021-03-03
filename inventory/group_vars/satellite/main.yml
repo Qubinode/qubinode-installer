@@ -1,0 +1,161 @@
+---
+############################################
+## CONNECTION DETAILS
+ansible_user: root
+ansible_password: ""
+
+########################################################
+## Two options are available for registering your system
+## to either RHSM or another Satellite. Uncomment out the
+## option you want. Leave both commented out if your
+## system is already registered.
+
+## Option 1
+## Use a activation key that has the Red Hat Satellite Infrastructure Subscription attached
+#rhsm_org_id: ""
+#rhsm_activationkey: ""
+
+## Option 2
+## You can obtain the pool id for the Red Hat Satellite Infrastructure Subscription
+## via https://access.redhat.com/management/subscriptions/product/MCT3718/subscriptions
+## from the above url, click on the subscription number to see the Pool IDs.
+## This option can also be used to create a satellite manifest
+## see the section below.
+## rhsm_pool_ids can be a list or string.
+
+#satellite_pool_id : ""
+#rhsm_user: ""
+#rhsm_pass: ""
+
+## A separate disk for Satellite data is recommended
+## This can be commented out if you are not doing this
+sat_vg_disk: ""
+
+## name for the volume group to create on sat_vg_disk
+## required if sat_vg_disk specified
+sat_vg_name: ""
+
+## Edit inventory/group_vars/sat/satellite.yml to modify the logical
+## volumes are default sizes
+
+## The username and password you would like to assign to the satellite server
+## These are required
+satellite_user: ""
+satellite_password: ""
+
+## The primary org and location to create
+## If you wish to create multiple orgs you edit the satellite_orgs dict
+## in inventory/group_vars/sat/satellite.yml
+## These are required
+satellite_default_organization: ""
+satellite_default_location: ""
+
+## The networking info for your satellite server
+## These are required
+satellite_domain: ""       #e.g. lab.example.com
+satellite_hostname: ""     #e.g. sat.lab.example.com
+satellite_ip_address: ""
+
+## Which release of Satellite do you want to deploy
+satellite_version: 6.8
+
+########################################################################
+## This section will create subscription allocations (Satellite manifest)
+## or download an existing one from access.redhat.com. This requires your
+## login credentials and pool ids for the subscription if you are creating
+## a manifest. If you have already declared you rhsm_user and rhsm_pass
+## above, you don't have to declare it here.
+##
+##    *****************************************************************
+##    Option 1: Default use your downloaded manifest
+download_satellite_manifest: no
+downloaded_manifest_file: ""      #full path to where you manifest is location
+use_downloaded_manifest: yes
+manifest_name: "satellite_server" #the copied manifest will be named ORG_$manifest_name.zip
+
+##    *****************************************************************
+##    Option 2: create a new manifest and use it
+#use_downloaded_manifest: no
+#download_satellite_manifest: no
+#rhsm_user: ""
+#rhsm_pass: ""
+#manifest_name: "DEMO2" # the created manifest will have this name
+#pool_ids:    # replace id with your subscription pool id, update quantity if needed
+#  - id: 8a85f99c70d0557f0171092c717d1c1e
+#    state: present
+#    quantity: 4
+#  - id: 8a85f99b70d0559c0171092d7cfd46e4
+#    state: present
+#    quantity: 6
+
+##    *****************************************************************
+##    Option 3: Uncomment these vars to download and use your existing
+##    manifest
+#manifest_uuid:
+#use_downloaded_manifest: no
+#download_satellite_manifest: yes
+#manifest_name: "my_downloaded_manifest" #the copied manifest will be named ORG_$manifest_name.zip
+#rhsm_user: ""
+#rhsm_pass: ""
+
+## Set this var to yes if you add or remove subscriptions via the customer portal and want
+## your existing org to have the latest manifest. It's better to pass this var as an extra
+## var.
+force_manifest_upload: no
+
+###############################################################
+## These are the products that are supported
+## Uncomment the product you want to enable
+## This will enable the product repos, create content views
+## activation keys, create a sync plan and promote the content
+## to your life cycle environments
+
+products_to_enable:
+  - rhel8
+#  - eus_rhel8
+#  - ha_rhel8
+#  - fdpath_rhel8
+#  - advirt_rhel8
+  - rhel7
+  - ansible
+#  - osp16
+#  - osp14
+#  - ceph3_osd
+#  - ceph3_mon
+#  - ceph3_tools
+#  - ceph4_osd
+#  - ceph4_mon
+#  - ceph4_tools
+#  - ceph3_product
+#  - ceph4_product
+#  - osp_lastest   # includes eus_rhel8, ha_rhel8, fdpath_rhel8, advirt_rhel8, osp16, ansible,
+
+# Describe your life cyle environments
+default_lcen:
+  - name: Dev
+    prior: Library
+    state: present
+  - name: QA
+    prior: Dev
+    state: present
+  - name: Production
+    prior: QA
+    state: present
+
+# Set this to yes if you want to sync all content right away
+sync_now: no
+
+# What time and when to schedule your sync plan for?
+sync_plan_date: "2017-01-01 00:00:00 UTC"
+
+# How often to sync, hourly, daily, weekly, custom cron
+sync_interval: daily
+
+# What to call your sync plan?
+sync_plan_name: "Red Hat Sync Plan"
+
+# Which RHEL release to enable
+rhel8_release: "8.3"
+rhel8_eus: "8.2"
+rhel7_release: "7.9"
+
