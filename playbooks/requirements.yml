@@ -9,7 +9,7 @@
   version: v1.0.0
 
 - src: https://github.com/Qubinode/swygue-redhat-subscription.git
-  version: master
+  version: dev
 
 - src: https://github.com/flyemsafe/swygue-lvm.git
   version: v1.0.1
@@ -39,10 +39,10 @@
   version: master
 
 - src: https://github.com/Qubinode/nfs-provisioner-role.git
-  version: master
+  version: dev
 
 - src: https://github.com/Qubinode/ocp4_kvm_deployer.git
-  version: v2.4.5
+  version: dev
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
   version: v2.4.3
