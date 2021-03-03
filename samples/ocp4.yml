@@ -13,6 +13,8 @@ ocp4_okd4: ocp4
 ocp4_ystream_release: 4.7
 ocp4_release: 4.7.0
 ocp4_image: 4.7.0
+ocp4_image_version: "{{ ocp4_image }}"
+ocp4_dependencies_version: "{{ ocp4_ystream_release }}"
 ocp4_client_version: 4.7.0
 
 # User info
