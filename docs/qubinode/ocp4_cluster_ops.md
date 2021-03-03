@@ -19,7 +19,7 @@ Should return some similar to this:
     Username: admin
     Password: the vault variable admin_user_password
 
-    Run: ansible-vault edit
+    Run: ansible-vault view $HOME/qubinode-installer/playbooks/vars/vault.yml
 ```
 
 ### Option 1: Update /etc/resolv.conf

@@ -87,6 +87,18 @@
         - name: Install IDM server on rhel 8
           include_role:
             name: ipaserver
+          vars:
+            - ipaserver_domain: "{{ domain }}"
+            - idm_realm: "{{ domain | upper }}"
+            - ipaserver_realm: "{{ idm_realm }}"
+            - ipaserver_setup_dns: "yes"
+            - ipaserver_no_host_dns: yes
+            - ipaserver_setup_kra: yes
+            - ipaserver_forwarders:
+              - "{{ dns_forwarder }}"
+            - ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
+            - ipaadmin_password: "{{ idm_admin_password }}"
+            - ipadm_password: "{{ idm_dm_pwd }}"
           tags: [install,preinstall,installer,firewall,always,result]
 
     ###############################################################

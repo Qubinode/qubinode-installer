@@ -1,5 +1,5 @@
 ---
-- name: Deploy RHEL VM
+- name: Deploy or teardown libvirt VM
   hosts: localhost
   become: yes
   gather_facts: yes
@@ -29,18 +29,18 @@
     IPA_TIMEOUT: 40
 
   tasks:
-    - name: Create KVM VM for RHEL Server
+    - name: Include deploy-kvm-vm role
       include_role:
         name: deploy-kvm-vm
 
-    - name: set dns record state
+    - name: determine if we are creating or deleting the DNS record
       set_fact:
         dns_a_result: "none"
         dns_ptr_result: "none"
         record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
       tags: create_dns_records
 
-    - name: Create/Delete {{ vm_name }} A Records
+    - name: Create or Delete {{ vm_name }} A Records
       ipa_dnsrecord:
         zone_name: "{{ domain }}"
         record_name: "{{ hostvars[vm_name].inventory_hostname }}"
@@ -51,7 +51,7 @@
         validate_certs: no
       tags: create_dns_records
 
-    - name: Create/Delete {{ vm_name }} PTR Records
+    - name: Create or Delete {{ vm_name }} PTR Records
       ipa_dnsrecord:
         zone_name: "{{ qubinode_ptr }}"
         record_name: "{{ hostvars[vm_name].ansible_host.split('.')[3:4] | join('.') }}"

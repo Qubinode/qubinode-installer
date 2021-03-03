@@ -1,4 +1,16 @@
+logo="
+      ██████  ██    ██ ██████  ██ ███    ██  ██████  ██████  ███████ 
+     ██    ██ ██    ██ ██   ██ ██ ████   ██ ██    ██ ██   ██ ██      
+     ██    ██ ██    ██ ██████  ██ ██ ██  ██ ██    ██ ██   ██ █████   
+     ██ ▄▄ ██ ██    ██ ██   ██ ██ ██  ██ ██ ██    ██ ██   ██ ██      
+      ██████   ██████  ██████  ██ ██   ████  ██████  ██████  ███████ 
+         ▀▀                                                          
+"
+
+
+
 display_openshift_msg_okd4 () {
+    printf "%s\n" "                  ${blu}$logo${end}"
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}OKD: The Origin Community Distribution of Kubernetes (OKD)${txend}${end}"
     printf "%s\n" "    OKD is the Origin community distribution of Kubernetes optimized for "
@@ -26,6 +38,7 @@ display_hardware_profile_msg () {
 
 display_openshift_msg_ocp4 () {
     CHECK_PULL_SECRET=yes
+    printf "%s\n" "                  ${blu}$logo${end}"
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 4 (OCP4)${txend}${end}"
     printf "%s\n" "    The default product option is to install OCP4. The deployment consists of"
@@ -52,6 +65,11 @@ display_openshift_msg_ocp4 () {
         qubinode_deploy_ocp4
     elif [ "A${result}" == "AExit" ]
     then
+        PID=$(ps -A -o pid,cmd|grep qubinode-firstboot.sh | grep -v grep |head -n 1 | awk '{print $1}')
+        if [ "A${PID}" != "A" ]
+        then
+             (kill -13 $PID 2>/dev/null)
+        fi
         exit 0
     else
         print "%s\n" " ${red}Unknown issue, please run the installer again${end}"
@@ -79,6 +97,7 @@ display_other_options () {
         display_openshift_msg_okd4
     elif [ "A${result}" == "ATower" ]
     then
+        printf "%s\n" "                  ${blu}$logo${end}"
         printf "%s\n" "        ${yel}********************************************${end}"
         printf "%s\n" "        ${cyn}${txb}Install Red Hat Ansible Tower${txend}${end}"
         printf "%s\n\n" "        ${yel}*******************************************${end}"

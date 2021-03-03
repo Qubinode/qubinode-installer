@@ -8,7 +8,7 @@
 # The qubinode-installer depends on IdM as the DNS server.
 # If there is an existing Idm, then set this to no.
 deploy_idm_server: yes
-ask_use_existing_idm: yes
+ask_use_existing_idm: no
 idm_server_name: dns01
 idm_check_static_ip: ""
 idm_admin_user: admin
@@ -23,7 +23,8 @@ idm_reverse_zones:
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-cloud_init_vm_image: rhel-8.2-x86_64-kvm.qcow2
+cloud_init_vm_image: rhel-8.3-x86_64-kvm.qcow2
+vm_qcow_image: "{{ cloud_init_vm_image }}"
 idm_server_ip: ""
 idm_public_ip: ""
 idm_zone_overlap: false
@@ -43,25 +44,18 @@ dns_server_vm:
     dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
     dns_expand_os_disk: no
+
 # should qcow template be expanded
 expand_os_disk: no
 
+# os_release to pass to virt-install
+os_release: "rhel{{ rhel8_version }}"
+
 #######################
 # IdM on RHEL 8 attributes
-ipaserver_domain: "{{ domain }}"
-ipaserver_realm: "{{ idm_realm }}"
-ipaserver_setup_dns: "yes"
-ipaserver_no_host_dns: yes
-ipaserver_setup_kra: yes
-ipaadmin_password: "{{ idm_admin_password }}"
-ipadm_password: "{{ idm_dm_pwd }}"
-ipaserver_forwarders:
-  - "{{ dns_forwarder }}"
 idm_repos_8:
   - rhel-8-for-x86_64-baseos-rpms
   - rhel-8-for-x86_64-appstream-rpms
-ipaserver_allow_zone_overlap: "{{ idm_zone_overlap }}"
-ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
 
 #########################
 # IdM on RHEL 7 attributes
