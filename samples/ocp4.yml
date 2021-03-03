@@ -92,7 +92,7 @@ min_mem: 10240
 tear_down: false
 
 # OpenShift Download URL
-openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_majorversion }}/{{ ocp4_image }}"
+openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_ystream_release }}/{{ ocp4_image }}"
 
 # OpenShift Cli Download URL 
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_client_version }}"
