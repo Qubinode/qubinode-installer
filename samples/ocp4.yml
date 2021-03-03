@@ -10,9 +10,12 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift/OKD Version
 ocp4_okd4: ocp4
-ocp4_majorversion: 4.7
+ocp4_ystream_release: 4.7
 ocp4_release: 4.7.0
 ocp4_image: 4.7.0
+ocp4_image_version: "{{ ocp4_image }}"
+ocp4_dependencies_version: "{{ ocp4_ystream_release }}"
+ocp4_client_version: 4.7.0
 
 # User info
 local_user_account: "{{ admin_user }}"
@@ -91,7 +94,10 @@ min_mem: 10240
 tear_down: false
 
 # OpenShift Download URL
-openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_majorversion }}/{{ ocp4_image }}"
+openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_ystream_release }}/{{ ocp4_image }}"
+
+# OpenShift Cli Download URL 
+ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_client_version }}"
 
 # OpenShift Dependencies
 coreos_installer_kernel: "rhcos-live-kernel-x86_64"
