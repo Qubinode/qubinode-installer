@@ -71,9 +71,9 @@ ctrlplane_count: 3
 compute_count: 3
 ctrlplane_hd_size: 120
 ctrlplane_mem_size: 16192
-ctrlplane_vcpu: 4
+ctrlplane_vcpu: 6
 compute_hd_size: 120
-compute_mem_size: 2048
+compute_mem_size: 24576
 compute_vcpu: 16
 compute_vdb_size: 10
 compute_vdx_size: 10
