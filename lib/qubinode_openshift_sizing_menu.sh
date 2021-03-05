@@ -184,13 +184,17 @@ function read_options_ocp4 () {
 	   standard_opt=6node
            configure_local_storage
            ;;
-        5) ocp_size=custom
+        5) ocp_size=openshift-container-storage
+	   standard_opt=6node
+           configure_ocs_storage
+           ;;
+        6) ocp_size=custom
            openshift4_custom_desc
            ;;
-	6) reset_cluster_resources_default
-	   ocp4_menu
-	   ;;
-        7) exit 0
+        7) reset_cluster_resources_default
+            ocp4_menu
+            ;;
+        8) exit 0
                 ;;
 	*) printf "%s\n\n" " ${red}Error...${end}" && sleep 2
 	esac
