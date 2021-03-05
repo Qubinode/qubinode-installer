@@ -990,7 +990,7 @@ function remove_ocp4_compute () {
                 sed -i "s/^compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars}"
 	    else
                 get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
-                sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
+                $sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
             fi
 	else
             exit
@@ -1049,6 +1049,13 @@ function add_ocp4_compute () {
 }
 
 openshift4_server_maintenance () {
+    # -a flags for storage and other openshift modfications
+    # Check for user provided variables
+    for var in "${product_options[@]}"
+    do
+       export storage_option="${var}"
+    done
+
     case ${product_maintenance} in
        diag)
            echo "Perparing to run full Diagnostics: : not implemented yet"
@@ -1070,16 +1077,13 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
-              ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
+              #ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
+              ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" || exit 1 
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
                exit
            fi
-            ;;
-       poweroff)
-           printf "%s\n\n" ""
-           ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
             ;;
        startup)
             printf "%s\n\n" ""
@@ -1110,45 +1114,77 @@ openshift4_server_maintenance () {
 	   add_ocp4_compute
 	    ;;
        storage)
-	   configure_storage
+	   configure_storage "${storage_option}"
 	    ;;
        *)
-           echo "No arguement was passed"
+           echo "${product_maintenance} Not a valid -m option. Options are:"
+	   echo "setup, storage, add-compute, remove-compute, status, startup, shutdown, smoketest, diag"
            ;;
     esac
 }
 
 function configure_storage () {
-    # -a flags for storage and other openshift modfications
-    # Check for user provided variables
-    for var in "${product_options[@]}"
-    do
-       export $var
-    done
-
+    local storage_option="$1"
 
     #local storage options
-    if [ "A${storage}" != "A" ]
+    if [ "${storage_option:-none}" != "none" ]
     then
-        if [ "$storage" == "nfs" ]
-        then
-          echo "You are going to reconfigure ${storage}"
-          ansible-playbook  "${deploy_product_playbook}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed"
-        elif [ "$storage" == "nfs-remove" ]
-        then
-          echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${deploy_product_playbook}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
-        fi
-
-        # localstorage option
-        if [ "$storage" == "localstorage" ]
-        then
-          echo "You are going to reconfigure ${storage}"
-          ansible-playbook  "${deploy_product_playbook}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed"
-        elif [ "$storage" == "localstorage-remove" ]
-        then
-          echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${deploy_product_playbook}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
-        fi
+	local playbook_file="${project_dir:?}/playbooks/setup-ocp-nfs-registry.yml"
+        case ${storage_option} in
+            ocp-registry)
+	        local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=yes' -e 'provision_nfs_client_provisoner=yes' -e 'configure_registry=yes'"
+                printf "%s\n" "    ${blu}Adding NFS PVC to OpenShift Registry${end}"
+                echo ansible-playbook "${playbook_file}" "${extra_vars}" |sh || exit "$?"
+	    ;;
+            ocp-registry-remove)
+               printf "%s\n" "    ${yel}This will remove the NFS PVC from the OpenShift Registry${end}"
+               confirm "    ${blu}Do you want to continue?${end} yes/no"
+               if [ "A${response}" == "Ayes" ]
+	       then
+	           local tags="-t remove_registry_pvc"
+	           local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=no' -e 'provision_nfs_client_provisoner=no' -e 'configure_registry=no' -e 'remove_registry_storage=yes' -e 'delete_deployment=yes'"
+                   printf "%s\n" "    ${blu}Removing OCP registry NFS PVC${end}"
+                   echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	       fi
+	    ;;
+            nfs)
+	        local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=yes' -e 'provision_nfs_client_provisoner=yes' -e 'configure_registry=no'"
+	        local tags="-t nfs_server,nfs_provisioner_configs"
+                printf "%s\n" "    ${blu}Configuring the NFS provisioner-client${end}"
+                echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	    ;;
+            nfs-remove)
+               printf "%s\n" "    ${yel}This will remove the NFS server and the PVC for the OpenShift Registry${end}"
+               confirm "    ${blu}Do you want to continue?${end} yes/no"
+               if [ "A${response}" == "Ayes" ]
+	       then
+	           local extra_vars="-e 'remove_nfs_server=yes'"
+	           local tags="-t remove_nfs_server"
+                   printf "%s\n" "    ${blu}Removing the NFS provisioner-client${end}"
+                   echo "ansible-playbook ${playbook_file} -t remove_registry_pvc -e remove_registry_storage=yes"|sh || exit "$?"
+                    echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	      fi
+	    ;;
+            localstorage)
+                printf "%s\n" "    ${blu}Adding local storage from the openshift cluster"
+                local extra_vars="-t localstorage -e 'configure_local_storag=true'"
+                echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	    ;;
+            localstorage-remove)
+               local extra_vars='-t localstorage -e "configure_local_storag=true"'
+               printf "%s\n" "    ${yel}This will remove local storage from the cluster.${end}"
+               confirm "    ${blu}Do you want to continue?${end} yes/no"
+               if [ "A${response}" == "Ayes" ]
+	       then
+                   printf "%s\n" "    ${blu}Removing local storage from the openshift cluster"
+                   echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	       fi
+	    ;;
+	    *)
+		echo "$storage_option is not a valid option for -m storage -a"
+	        echo "Valid -a storage options are:"
+	        echo "nfs, nfs-remve, localstorage, localstorage-remove, ocp-registry, ocp-registry-remove"
+	    ;;
+	esac
     fi
 }
