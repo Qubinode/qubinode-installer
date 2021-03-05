@@ -46,8 +46,8 @@ configure_ocs_storage: no
 
 #################################
 # Local persistent storage
-configure_local_storage: no
-compute_local_storage: no
+configure_local_storage: yes
+compute_local_storage: yes
 localstorage_version: "{{ ocp4_majorversion }}"
 localstorage_filesystem: yes
 localstorage_block: no
@@ -73,9 +73,9 @@ ctrlplane_hd_size: 120
 ctrlplane_mem_size: 16192
 ctrlplane_vcpu: 4
 compute_hd_size: 120
-compute_mem_size: 16192
-compute_vcpu: 4
-compute_vdb_size: 50
+compute_mem_size: 2048
+compute_vcpu: 16
+compute_vdb_size: 10
 compute_vdx_size: 10
 bootstrap_hd_size: 120
 bootstrap_mem_size: 16192
