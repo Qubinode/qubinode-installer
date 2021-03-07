@@ -1048,7 +1048,7 @@ function remove_ocp4_compute () {
                 sed -i "s/^compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars}"
 	    else
                 get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
-                sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
+                $sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
             fi
 	else
             exit
@@ -1107,6 +1107,13 @@ function add_ocp4_compute () {
 }
 
 openshift4_server_maintenance () {
+    # -a flags for storage and other openshift modfications
+    # Check for user provided variables
+    for var in "${product_options[@]}"
+    do
+       export storage_option="${var}"
+    done
+
     case ${product_maintenance} in
        diag)
            echo "Perparing to run full Diagnostics: : not implemented yet"
@@ -1128,16 +1135,13 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
-              ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
+              #ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
+              ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" || exit 1 
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
                exit
            fi
-            ;;
-       poweroff)
-           printf "%s\n\n" ""
-           ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
             ;;
        startup)
             printf "%s\n\n" ""
@@ -1168,25 +1172,20 @@ openshift4_server_maintenance () {
 	   add_ocp4_compute
 	    ;;
        storage)
-	   configure_storage
+	   configure_storage "${storage_option}"
 	    ;;
        *)
-           echo "No arguement was passed"
+           echo "${product_maintenance} Not a valid -m option. Options are:"
+	   echo "setup, storage, add-compute, remove-compute, status, startup, shutdown, smoketest, diag"
            ;;
     esac
 }
 
 function configure_storage () {
-    # -a flags for storage and other openshift modfications
-    # Check for user provided variables
-    for var in "${product_options[@]}"
-    do
-       export $var
-    done
-
+    local storage_option="$1"
 
     #local storage options
-    if [ "A${storage}" != "A" ]
+    if [ "${storage_option:-none}" != "none" ]
     then
         if [ "$storage" == "nfs" ]
         then
