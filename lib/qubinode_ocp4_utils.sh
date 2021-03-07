@@ -127,9 +127,42 @@ cat << EOF
    ${yel}======================================================${end}
    ${mag} Standard deployment of $total_ocp_nodes node cluster ${end}
    ${yel}======================================================${end}
-
    Each with ${mem_h}G memory and ${ctrlplane_vcpu}vCPU. 
+    ${cyn}========${end}
+    Features
+    ${cyn}========${end}
+     $feature_one
+     $feature_two
+EOF
 
+    printf "%s\n\n" ""
+    confirm "    Do you want to continue with this $ocp_size size cluster? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${ocp_vars_file}"
+    else
+        ocp4_menu
+    fi
+}
+
+function openshift4_ocs_desc () {
+      openshift4_variables
+    if [ "A${standard_opt}" == "A6node" ]
+    then
+        reset_cluster_resources_default
+        compute_count=3
+        total_ocp_nodes=$(echo "$compute_count+$ctrlplane_count"|bc)
+    else
+        reset_cluster_resources_default
+	total_ocp_nodes=$(echo "$compute_count+$ctrlplane_count"|bc)
+    fi
+    feature_one="- nfs-provisioner for image registry"
+    feature_two="- OpenShift container Storage"
+cat << EOF
+   ${yel}======================================================${end}
+   ${mag} OCS deployment of $total_ocp_nodes node cluster ${end}
+   ${yel}======================================================${end}
+   Each with ${mem_h}G memory and ${ctrlplane_vcpu}vCPU. 
     ${cyn}========${end}
     Features
     ${cyn}========${end}
@@ -232,6 +265,31 @@ EOF
 
 function configure_local_storage () {
 
+    # ensure cluster is back to the defaults
+    reset_cluster_resources_default
+    #TODO: you be presented with the choice between localstorage or ocs. Not both.
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
+    vdb_size="${vdb:-10}"
+    compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        printf "%s\n" ""
+        printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
+    fi
+
+
+    storage_type=block
+    set_local_volume_type
+	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
+	openshift4_standard_desc
+}
+
+
+function configure_ocs_storage () {
     # ensure cluster is back to the defaults
     reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
