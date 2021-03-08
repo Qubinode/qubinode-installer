@@ -289,9 +289,9 @@ function configure_local_storage () {
 }
 
 
-function configure_ocs_storage () {
+function configure_ocs_storage_size () {
     # ensure cluster is back to the defaults
-    reset_cluster_resources_default
+    #reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
     read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
@@ -306,34 +306,11 @@ function configure_ocs_storage () {
         printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
 
-cat << EOF
-    ${yel}=========================${end}
-    ${mag}Select volume Mode: ${end}
-    ${yel}=========================${end}
-    1) Filesystem - Presented to the OS as a file system export to be mounted.
-    2) Block - Presented to the operating system (OS) as a block device.
-EOF
-    local choice
-	read -p " ${cyn}    Enter choice [ 1 - 2] ${end}" choice
-	case $choice in
-	    1) storage_type=filesystem
-            ;;
-            2) storage_type=block
-            ;;
-	    3) exit 0;;
-	    *) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
-	esac
-        confirm "     Continue with $storage_type local storage volume? yes/no"
-        if [ "A${response}" == "Ayes" ]
-        then
-            set_local_volume_type
-        else
-            configure_local_storage
-        fi
+    storage_type=block
+    set_local_volume_type
 
-        printf "%s\n\n" ""
+    printf "%s\n\n" ""
 	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
-	openshift4_standard_desc
 }
 
 function set_local_volume_type () {
@@ -827,28 +804,29 @@ function configure_ocs_storage () {
 
     OCS_STORAGE=no
     NFS_STORAGE=yes
-    LOCAL_STORAGE=no
-    LOCAL_STORAGE_FS=yes
-    LOCAL_STORAGE_BLOCK=no
+    LOCAL_STORAGE=yes
+    LOCAL_STORAGE_FS=no
+    LOCAL_STORAGE_BLOCK=yes
     FS_DISK="/dev/vdc"
 
     configure_ocs_storage=$(awk '/^configure_ocs_storage:/ {print $2; exit}' "${ocp_vars_file}")
     vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
     vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
     printf "%s\n\n" ""
-    printf "%s\n" "    ${yel}The deployment of OCS isn't fully automated.${end}"
-    printf "%s\n" "    ${yel}Once the cluster is up follow the install guide on the website.${end}"
+    printf "%s\n" "    ${yel}This will deploy OpenShift Storge.${end}"
     printf "%s\n" "    ${yel}This will ensure Local storage is deployed and the vms are deployed with the extra disk required.${end}"
     printf "%s\n\n" ""
     confirm "     Do you want to deploy OpenShift Container Storage? ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
         OCS_STORAGE=yes
-        NFS_STORAGE=no
+        NFS_STORAGE=yes
         LOCAL_STORAGE=yes
-        LOCAL_STORAGE_FS=yes
+        LOCAL_STORAGE_FS=no
         LOCAL_STORAGE_BLOCK=yes
         FS_DISK="/dev/vdb"
+
+        configure_ocs_storage_size
 
         confirm "     Current MON disk size is ${yel}$vdb_size${end}, do you want to change it? ${yel}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
@@ -894,6 +872,7 @@ function configure_ocs_storage () {
 
     # Enable local storage block device
     sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${ocp_vars_file}"
+    exit $?
 }
 
 function configure_nfs_storage () {
