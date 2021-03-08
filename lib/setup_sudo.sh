@@ -84,7 +84,7 @@ function accept_sensitive_input () {
 # If this is unsuccessful it will cause the qubinode-installer to exit.
 function setup_sudoers () {
 
-    if ! sudo -v >/dev/null 2>&1
+    if ! sudo -vn >/dev/null 2>&1
     then
     QUBINODE_ADMIN_USER=$(cat "${project_dir}/playbooks/vars/all.yml" | awk '/^admin_user:/ {print $2}')
     VAULT_FILE="${project_dir}/playbooks/vars/vault.yml"
