@@ -40,7 +40,7 @@ provision_nfs_client_provisoner: true      # deploys the nfs provision
 nfs_project_namespace: openshift-nfs-provisioner
 
 # deploy OCS persistent storage
-configure_ocs_storage: no
+configure_openshift_storage: no
 
 # deploy local persistent storage
 configure_local_storage: no
