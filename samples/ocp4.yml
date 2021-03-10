@@ -77,6 +77,7 @@ compute_mem_size: 32384
 compute_vcpu: 6
 compute_vdb_size: 10
 compute_vdx_size: 10
+compute_ocs_size: 300
 bootstrap_hd_size: 120
 bootstrap_mem_size: 16192
 bootstrap_vcpu: 4
@@ -233,6 +234,9 @@ ocp4_instances:
         enable: "{{ compute_local_storage }}"
       - size: "{{ compute_vdx_size }}G"
         name: vdl
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_ocs_size }}G"
+        name: vdm
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker
