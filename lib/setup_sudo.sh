@@ -173,14 +173,14 @@ function setup_sudoers () {
    fi
 
    # Confirm sudo setup
-   sudo -k
-   echo "$__admin_pass" | sudo -S ls 2> "$TMP_RESULT" 1> /dev/null && HAS_SUDO=yes
-   if [ "$HAS_SUDO" == "no" ]
-   then
-       printf "%s\n" "   ${red:?}Error: Sudo setup was unsuccesful${end:?}"
-       exit
-   fi
-   fi
+   #sudo -k
+   #echo "$__admin_pass" | sudo -S ls 2> "$TMP_RESULT" 1> /dev/null && HAS_SUDO=yes
+   #if [ "$HAS_SUDO" == "no" ]
+   #then
+   #    printf "%s\n" "   ${red:?}Error: Sudo setup was unsuccesful${end:?}"
+   #    exit
+   #fi
+   #fi
 }
 
 
