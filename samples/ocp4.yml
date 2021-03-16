@@ -42,7 +42,7 @@ nfs_registry_pv_object_file: "{{ openshift_object_configs_files }}/registry-pv.y
 
 ##############################
 # OCS Persistent storage
-configure_ocs_storage: no
+configure_openshift_storage: no
 
 #################################
 # Local persistent storage
@@ -70,11 +70,11 @@ user_idm_password: "{{ idm_admin_pwd }}"
 ctrlplane_count: 3
 compute_count: 3
 ctrlplane_hd_size: 120
-ctrlplane_mem_size: 16192
+ctrlplane_mem_size: 32384
 ctrlplane_vcpu: 6
 compute_hd_size: 120
-compute_mem_size: 24576
-compute_vcpu: 16
+compute_mem_size: 32384
+compute_vcpu: 6
 compute_vdb_size: 10
 compute_vdx_size: 10
 compute_ocs_size: 300

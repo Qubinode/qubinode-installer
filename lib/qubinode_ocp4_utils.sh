@@ -809,7 +809,7 @@ function configure_ocs_storage () {
     LOCAL_STORAGE_BLOCK=yes
     FS_DISK="/dev/vdc"
 
-    configure_ocs_storage=$(awk '/^configure_ocs_storage:/ {print $2; exit}' "${ocp_vars_file}")
+    configure_ocs_storage=$(awk '/^configure_openshift_storage:/ {print $2; exit}' "${ocp_vars_file}")
     vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
     vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
     printf "%s\n\n" ""
@@ -860,7 +860,7 @@ function configure_ocs_storage () {
     fi
 
     # Set OCS storage to deploy
-    sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
+    sed -i "s/configure_openshift_storage:.*/configure_openshift_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
     # Disable deployment of nfs
     sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp_vars_file}"
     # enable local storage 
@@ -915,7 +915,7 @@ function configure_nfs_storage () {
         sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${ocp_vars_file}"
 
         # Disable OCS
-        sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
+        sed -i "s/configure_openshift_storage:.*/configure_openshift_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
 
         #provision_nfs_client_provisoner: true      # deploys the nfs provision
         #configure_registry: true
