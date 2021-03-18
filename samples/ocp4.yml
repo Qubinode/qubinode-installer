@@ -181,6 +181,11 @@ compute_node_name: "{{ hostname_prefix }}-compute"
 ## Host name for the cluster nodes
 hostname_prefix: "{{ instance_prefix }}-ocp4"
 
+# OCP4 controlplane VDX sizes
+ctrlplane_vdb_size: 10G
+ctrlplane_vdc_size: 50G
+
+
 # OCP4 instance sizes
 ocp4_instances:
   - name: "{{ hostname_prefix }}-ctrlplane"
@@ -188,10 +193,10 @@ ocp4_instances:
     memory_size: "{{ ctrlplane_mem_size }}"
     cpu_size: "{{ ctrlplane_vcpu }}"
     extra_storage:
-      - size: 10G
+      - size: "{{ ctrlplane_vdb_size }}"
         enable: false
         name: vdb
-      - size: 50G
+      - size: "{{ ctrlplane_vdc_size }}"
         enable: false
         name: vdc
     qty: "{{ ctrlplane_count }}"

@@ -810,8 +810,8 @@ function configure_ocs_storage () {
     FS_DISK="/dev/vdc"
 
     configure_ocs_storage=$(awk '/^configure_openshift_storage:/ {print $2; exit}' "${ocp_vars_file}")
-    vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
-    vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
+    vdb_size=$(awk '/^ctrlplane_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
+    vdc_size=$(awk '/^ctrlplane_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
     printf "%s\n\n" ""
     printf "%s\n" "    ${yel}This will deploy OpenShift Storge.${end}"
     printf "%s\n" "    ${yel}This will ensure Local storage is deployed and the vms are deployed with the extra disk required.${end}"
@@ -834,12 +834,12 @@ function configure_ocs_storage () {
             printf "%s\n" ""
             read -p "     ${blu}Enter the size you want in GB: ${end} " mon_vdb_size
             vdb_size="${mon_vdb_size:-10}"
-            compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
-            printf "%s\n" "    ${def}You entered${end} ${yel}$compute_vdb_size${end}"
+            ctrlplane_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdb_size${end}"
             confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+                sed -i "s/ctrlplane_vdb_size:.*/ctrlplane_vdb_size: "$ctrlplane_vdb_size"/g" "${ocp_vars_file}"
             fi
         fi
     
@@ -849,12 +849,12 @@ function configure_ocs_storage () {
             printf "%s\n" ""
             read -p "     ${blu}Enter the size you want in GB: ${end} " osd_vdc_size
             vdc_size="${osd_vdc_size:-100}"
-            compute_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
-            printf "%s\n" "    ${def}You entered${end} ${yel}$compute_vdc_size${end}"
+            ctrlplane_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
+            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdc_size${end}"
             confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/compute_vdc_size:.*/compute_vdc_size: "$compute_vdc_size"/g" "${ocp_vars_file}"
+                sed -i "s/ctrlplane_vdc_size:.*/ctrlplane_vdc_size: "$ctrlplane_vdc_size"/g" "${ocp_vars_file}"
             fi
         fi
     fi
