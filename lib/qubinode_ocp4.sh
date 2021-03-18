@@ -106,7 +106,7 @@ function qubinode_deploy_ocp4 () {
     fi 
 
     # Deploy OCP4
-    ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }'  -b -K
+    ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' 
     RESULT=$?
     if [ $RESULT -eq 0 ]
     then

@@ -51,6 +51,12 @@ The qubinode-installer needs to run as a regular user.
 
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
+Validate sudo user for admin
+```
+$ sudo cat /etc/sudoers | grep admin
+admin ALL=(ALL) NOPASSWD: ALL
+```
+
 ```shell
 cd ~/qubinode-installer
 ./qubinode-installer -m setup

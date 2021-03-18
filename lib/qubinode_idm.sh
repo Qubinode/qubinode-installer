@@ -391,7 +391,7 @@ function qubinode_idm_status () {
         printf "    IP Address: ${cyn}${idm_server_ip}${end} \n"
         printf "    Username: ${cyn}${idm_admin_user}${end}\n"
         printf "    Password: Run the below command to view the vault variable ${cyn}admin_user_password${end} \n\n"
-        printf "    ${blu}Run:${end} ${grn}ansible-vault view $HOME/qubinode-installer/playbooks/vars/vault.yml ${vaultfile}${end} \n\n"
+        printf "    ${blu}Run:${end} ${grn}ansible-vault view ${vaultfile}${end} \n\n"
      else
         printf "%s\n" " ${red}IDM Server was not properly deployed please verify deployment.${end}"
         exit 1
