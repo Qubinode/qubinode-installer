@@ -1,4 +1,9 @@
 # OpenShift Workloads
+[Jig - Workshop Service Worker](jig.md)
+> Jig is the back-end service that allows workshop proctors to easily set up and provide seamless workshop student experiences.  A Workshop Proctor will log into Jig and create an Event.  That Event has all the needed student workshop details such as what Domain, Workshop ID, and Student User ID Numbers are auto-assigned and monitored as they progress through the workshops.Those 3 details (Domain, Workshop ID, pointing and numbering workshop participants with a User ID usually would take a substantial amount of time and cause a lot of confusion.  Monitoring student activity is based on the front-end workshop curriculum, like that found at https://redhatgov.io - no special work is required on the curriculum authors or the workshop architects.
+
+[Red Hat Workshops, but make it spicy](rh-workshops.md)
+> Red Hat Workshops are a great open source collection of educational materials that cover various topics relating to Red Hat's product portfolio, from Automation with Ansible to Containers and Kubernetes with OpenShift. There is a set of resources to deploy the workshop environments, currently supported by IBM Cloud.
 
 [Home Assistant.io on OpenShift](home-assistant.md)  
 > Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts.

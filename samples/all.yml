@@ -40,6 +40,158 @@ rhel8_version: 8.3
 rhel7_version: 7.8
 
 qcow_rhel7_name: rhel-server-7.8-x86_64-kvm.qcow2
-qcow_rhel8_name: rhel-8.3-x86_64-kvm.qcow2
+qcow_rhel8_name: rhel-8.3-update-2-x86_64-kvm.qcow2
+os_qcow_image_name: "{{ qcow_rhel8_name }}"
+qcow_rhel7u8_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
+qcow_rhel8u2_checksum: 588167f828001e57688ec4b9b31c11a59d532489f527488ebc89ac5e9522f333
+qcow_rhel8u3_checksum: 055d6fa91f0ad42556325b8ea1ff1950876bef18e164dc964f7cd4431fa294d8
 
+cloud_init_vm_image: "{{ os_qcow_image_name }}"
+
+# setting this to true will result is no VMs being created and any existing vms to be deleted
+vm_teardown: False
+
+ipa_client_principal: "{{ idm_admin_user }}"
+ipa_client_pass: "{{ idm_dm_pwd }}"
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
+
+ # LVM
+logical_volumes:
+  - name: qubi_images
+    size: "+100%FREE"
+    mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
+    fstype: xfs
+
+# Instance prefix name
 instance_prefix: qbn
+
+#################################
+#   Virtual Machines Variables  #
+#################################
+
+# Hardware profiles
+qubinode_minimal_memory: 30
+qubinode_standard_memory: 80
+qubinode_performance_memory: 88
+
+# We are not enforcing acutal sizes at this time
+qubinode_minimal_storage: 370      # actual is 640
+qubinode_standard_storage: 900     # actual is 1160
+qubinode_performance_storage: 1340 # actual is 1340
+
+# your system profile
+storage_profile: ""
+memory_profile: ""
+ocp_cluster_size: ""
+warn_storage_profile: yes
+
+
+###########################################
+# variables for swygue.edge_host_setup role
+
+
+nat_network_name: "{{ cluster_name }}"
+
+#This is for KVM host initial setup of /etc/resolv.conf
+kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
+kvm_bridge_type: Bridge
+kvm_host_bootproto: none
+kvm_host_domain: "{{ domain }}"
+
+libvirt_pkgs_8:
+   - virt-install
+   - libvirt-daemon-config-network
+   - libvirt-daemon-kvm
+   - libguestfs-tools
+   - libvirt-client
+   - qemu-kvm
+   - nfs-utils
+   - libvirt-daemon
+   - libvirt-client
+   - virt-top
+   - tuned
+   - openssh-server
+   - wget
+   - git
+   - net-tools
+   - bind-utils
+   - yum-utils
+   - iptables-services
+   - bash-completion
+   - kexec-tools
+   - sos
+   - psacct
+   - vim
+   - device-mapper-event-libs
+   - device-mapper-libs
+   - httpd-tools
+   - java-1.8.0-openjdk-devel.x86_64
+   - tmux
+   - python3-dns
+   - python3-lxml
+   - cockpit-machines
+
+libvirt_pkgs_7:
+   - virt-install
+   - libvirt-daemon-config-network
+   - libvirt-daemon-kvm
+   - libguestfs-tools
+   - libvirt-client
+   - qemu-kvm
+   - nfs-utils
+   - libvirt-daemon
+   - libvirt-client
+   - virt-top
+   - tuned
+   - openssh-server
+   - wget
+   - git
+   - net-tools
+   - bind-utils
+   - yum-utils
+   - iptables-services
+   - bridge-utils
+   - bash-completion
+   - kexec-tools
+   - sos
+   - psacct
+   - vim
+   - pyOpenSSL
+   - device-mapper-event-libs
+   - device-mapper-libs
+   - httpd-tools
+   - java-1.8.0-openjdk-devel.x86_64
+   - tmux
+   - python-dns
+
+###########################
+# General Networking Info #
+###########################
+
+####################
+## VM Network Info
+##-------------------
+## Currently we assume the VMs will use the name network as the host
+## This is why a bridge network is created by default. These values
+## can be changed to reflect a different network.
+vm_net_gateway: "{{ kvm_host_gw }}"
+vm_net_netmask: "{{ kvm_host_netmask }}"
+vm_gateway: "{{ vm_net_gateway }}"
+
+
+###########################
+# these should be deleted #
+# #########################
+
+# KVM host packages
+qubi_required_pkgs: |
+   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm,
+   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon,
+   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard,
+   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
+   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
+   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
+   bash-completion, kexec-tools, sos, psacct, vim, ansible, lm_sensors, cargo,
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch,  python-netaddr"
+

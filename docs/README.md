@@ -51,6 +51,12 @@ The qubinode-installer needs to run as a regular user.
 
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
+Validate sudo user for admin
+```
+$ sudo cat /etc/sudoers | grep admin
+admin ALL=(ALL) NOPASSWD: ALL
+```
+
 ```shell
 cd ~/qubinode-installer
 ./qubinode-installer -m setup
@@ -93,7 +99,7 @@ If you are using tokens it should be:
 If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions:
 ```
 * $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
-* $HOME/qubinode-installer/rhel-8.2-x86_64-kvm.qcow2
+* $HOME/qubinode-installer/rhel-8.3-update-2-x86_64-kvm.qcow2
 ```
 
 ## Install DNS server 

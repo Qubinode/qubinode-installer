@@ -1,4 +1,4 @@
-- name: Setup OpenShift NFS registry
+- name: OpenShift nfs-provisioner-role
   hosts: localhost
   become: yes
   vars_files:
@@ -8,6 +8,6 @@
     - vars/vault.yml
   gather_facts: true
   tasks:
-  - name: Remove NFS Server
+  - name: Run nfs-provisioner-role
     import_role:
       name: nfs-provisioner-role

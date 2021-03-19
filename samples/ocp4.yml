@@ -10,25 +10,12 @@ pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
 
 # OpenShift/OKD Version
 ocp4_okd4: ocp4
-ocp4_release: latest
-ocp4_image: 4.6.1
-ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release }}"
-
-
-
-# OpenShift/OKD version numbers
-major_version: 4.6.1
-ocp4_dependencies_version: "{{ major_version }}"
-ocp4_image_version: 4.6.1
-
-#ocp4_client: "openshift-client-linux-{{ major_version }}.tar.gz"
-#ocp4_installer: "openshift-install-linux-{{ major_version }}.tar.gz"
-ocp4_client: "openshift-client-linux.tar.gz"
-ocp4_installer: "openshift-install-linux.tar.gz"
-tools_missing: false
-
-family_tree: "Red Hat CoreOS"
-
+ocp4_ystream_release: 4.7
+ocp4_release: 4.7.0
+ocp4_image: 4.7.0
+ocp4_image_version: "{{ ocp4_image }}"
+ocp4_dependencies_version: "{{ ocp4_ystream_release }}"
+ocp4_client_version: 4.7.0
 
 # User info
 local_user_account: "{{ admin_user }}"
@@ -55,13 +42,13 @@ nfs_registry_pv_object_file: "{{ openshift_object_configs_files }}/registry-pv.y
 
 ##############################
 # OCS Persistent storage
-configure_ocs_storage: no
+configure_openshift_storage: no
 
 #################################
 # Local persistent storage
-configure_local_storage: no
-compute_local_storage: no
-localstorage_version: "{{ major_version }}"
+configure_local_storage: yes
+compute_local_storage: yes
+localstorage_version: "{{ ocp4_majorversion }}"
 localstorage_filesystem: yes
 localstorage_block: no
 
@@ -83,13 +70,14 @@ user_idm_password: "{{ idm_admin_pwd }}"
 ctrlplane_count: 3
 compute_count: 3
 ctrlplane_hd_size: 120
-ctrlplane_mem_size: 16192
-ctrlplane_vcpu: 4
+ctrlplane_mem_size: 32384
+ctrlplane_vcpu: 6
 compute_hd_size: 120
-compute_mem_size: 16192
-compute_vcpu: 4
-compute_vdb_size: 50
+compute_mem_size: 32384
+compute_vcpu: 6
+compute_vdb_size: 10
 compute_vdx_size: 10
+compute_ocs_size: 300
 bootstrap_hd_size: 120
 bootstrap_mem_size: 16192
 bootstrap_vcpu: 4
@@ -107,12 +95,12 @@ min_mem: 10240
 tear_down: false
 
 # OpenShift Download URL
-openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_release }}/{{ major_version }}"
+openshift_mirror: "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/{{ ocp4_ystream_release }}/{{ ocp4_image }}"
+
+# OpenShift Cli Download URL 
+ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_client_version }}"
 
 # OpenShift Dependencies
-#coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
-#coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
-#coreos_metal_bios: "rhcos-{{ major_version }}-x86_64-metal.x86_64.raw.gz"
 coreos_installer_kernel: "rhcos-live-kernel-x86_64"
 coreos_installer_initramfs: "rhcos-live-initramfs.x86_64.img"
 coreos_metal_bios: "rhcos-metal.x86_64.raw.gz"
@@ -193,6 +181,11 @@ compute_node_name: "{{ hostname_prefix }}-compute"
 ## Host name for the cluster nodes
 hostname_prefix: "{{ instance_prefix }}-ocp4"
 
+# OCP4 controlplane VDX sizes
+ctrlplane_vdb_size: 10G
+ctrlplane_vdc_size: 50G
+
+
 # OCP4 instance sizes
 ocp4_instances:
   - name: "{{ hostname_prefix }}-ctrlplane"
@@ -200,10 +193,10 @@ ocp4_instances:
     memory_size: "{{ ctrlplane_mem_size }}"
     cpu_size: "{{ ctrlplane_vcpu }}"
     extra_storage:
-      - size: 10G
+      - size: "{{ ctrlplane_vdb_size }}"
         enable: false
         name: vdb
-      - size: 50G
+      - size: "{{ ctrlplane_vdc_size }}"
         enable: false
         name: vdc
     qty: "{{ ctrlplane_count }}"
@@ -246,6 +239,9 @@ ocp4_instances:
         enable: "{{ compute_local_storage }}"
       - size: "{{ compute_vdx_size }}G"
         name: vdl
+        enable: "{{ compute_local_storage }}"
+      - size: "{{ compute_ocs_size }}G"
+        name: vdm
         enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker

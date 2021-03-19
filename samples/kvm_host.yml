@@ -9,6 +9,11 @@ kvm_host_mtu: 1500
 libvirt_pool_name_check: yes
 skip_libvirt_pool: no
 
+# We leverage a bridge network for OCP3 installs
+# and other VMS. This sets the name of the bridge to be created and use when
+# deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
+qubinode_bridge_name: qubibr0
+
 # RHEL 7.8 is the current tested RHEL 7 minor release.
 # RHEL 8.3  is the current tested RHEL 8 minor release.
 rhel_release: ""
@@ -16,9 +21,63 @@ rhel_release: ""
 # Run storage check
 run_storage_check: ""
 
+# Enable cockpit service
+enable_cockpit: no
+
+# # Set to yes to add the admin_user to the libvirt group
+# # and change libvirt to be accessible user 
+enable_libvirt_admin_user: no
+
+# Configure the user bash shell login prompt
+# # This will overwrite your existing .bashrc, .vimrc and other terminal configuration files
+configure_shell: no
+
+# set path to libvirt images
+kvm_host_libvirt_dir: /var/lib/libvirt/images
+
+## deploy-kvm-vm role uses this var
+kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
+
+host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
+vg_name: vg_qubi
+vm_libvirt_net_check: yes
+
+# should a bridge interface be created
+configure_bridge: true
+
+# Set to no prevent the installer from attempting
+# setup a LVM group for qubinode. Also set this to no
+# if you already have you storage for lvm setup
+create_lvm: yes
+
+# used in playbook setup_kvmhost.yml
+network_interface_name: "{{ kvm_host_interface }}"
+
 # set storage device to dedicate to /var/lib/libvirt/images
 kvm_host_libvirt_extra_disk: ""
 
+# use by funciton check_hardware_resources
+libvirt_pool_name: default
+
 qubinode_installer_host_completed: no
 
-kvm_host_libvirt_dir: /var/lib/libvirt/images
+# Qubinode libvirt bridge network name
+vm_libvirt_net: "qubinet"
+
+## Dict details for libivrt bridge network setup
+libvirt_host_networks:
+  - name: "{{ vm_libvirt_net }}"
+    create: true
+    mode: bridge
+    bridge_device: "{{ kvm_host_bridge_name | default(qubinode_bridge_name) }}"
+    ifcfg_type: "{{ kvm_bridge_type }}"
+    ifcfg_bootproto: "{{ kvm_host_bootproto }}"
+    bridge_slave_dev: "{{ kvm_host_interface }}"
+    gateway: "{{ kvm_host_gw }}"
+    mask_prefix: "{{ kvm_host_mask_prefix }}"
+    ipaddress: "{{ kvm_host_ip }}"
+    mask: "{{ kvm_host_netmask }}"
+    subnet: "not currently in use"
+    mac: "{{ kvm_host_macaddr }}"
+    mtu: 1500
+

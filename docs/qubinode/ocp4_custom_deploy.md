@@ -41,6 +41,22 @@ cd ~/qubinode-installer
 
 Please refer to [Installing an OpenShift 4.x Cluster on a Single Node](openshift4_installation_steps.md) before continuing with this install.
 
+Optional: Change OpenShift major version
+```
+vim samples/ocp4.yml
+ocp4_ystream_release: 4.7  # Example 4.6, 4.5, 4.4
+```
+
+For Deployments older than 4.6 update the addtional variables below. still testing
+```
+
+# OpenShift Dependencies
+coreos_installer_kernel: "rhcos-installer-kernel-x86_64"
+coreos_installer_initramfs: "rhcos-installer-initramfs.x86_64.img"
+coreos_metal_bios: "rhcos-metal.x86_64.raw.gz"
+coreos_rootfs: "{{ coreos_installer_initramfs }}"
+```
+
 Start the installation with the below command. The installation will run then present you menu to choose from.
 
 ```=shell

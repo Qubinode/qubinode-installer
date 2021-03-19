@@ -1,9 +1,9 @@
 ---
 - src: https://github.com/Qubinode/deploy-kvm-vm.git
-  version: dev
+  version: v2.4.2
 
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
-  version: dev
+  version: v2.4.2
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: v1.0.0
