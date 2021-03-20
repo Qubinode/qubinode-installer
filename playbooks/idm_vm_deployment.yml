@@ -13,6 +13,7 @@
     vm_cpu: "{{ dns_server_vm.dns_vcpu }}"
     vm_memory: "{{ dns_server_vm.dns_memory }}"
     vm_root_disk_size: "{{ dns_server_vm.dns_root_disk_size }}"
+    vm_qcow_image:  "{{ cloud_init_vm_image }}"
     vm_teardown: "{{ dns_server_vm.dns_teardown }}"
     vm_recreate: "{{ dns_server_vm.dns_recreate }}"
     vm_ipaddress: "{{ dns_server_vm.dns_ip }}"
