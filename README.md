@@ -32,6 +32,14 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 New Features |
 -- |
+RHEL rhel-8.3-update-2-x86_64-kvm.qcow2 support |
+RHEL 8.3 Default support |
+OpenShift 4.7.x |
+OKD 4.7.0-0.okd-2021-02-25-144700 Support |
+Added Support for [jig](https://github.com/kenmoini/jig) |
+Force Static IP on IDM server |
+OCS Support on OpenShift 4.7.x |
+Ability to change OpenShift Versions on install |
 
 
 See [Release Document](docs/qubinode/releases.md) for features history.
@@ -78,12 +86,15 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 ## Qubinode Dev Branch for next release
 Feature  |  Status
 --|---
-Red Hat Satellite Server  | In progress|
-OCS Support |  In progress  |   
+Red Hat Satellite Server  | In progress
+CNV Support | Dev
+Disconnected Instaltion | Dev  
 Cockpit Integration | In progress
 
 ## Roadmap
-* OCP 4.x Container Native Storage
+* CNV Installation 
+* Disconnected Installaton
+* Multinode Depolyment
 * Libvirt with KVM  OCP - (Experimental)
 * OpenWrt Router Support - (Experimental)
 
