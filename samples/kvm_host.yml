@@ -37,6 +37,10 @@ configure_shell: no
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images
+
+## deploy-kvm-vm role uses this var
+kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
+
 host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
 vg_name: vg_qubi
 vm_libvirt_net_check: yes

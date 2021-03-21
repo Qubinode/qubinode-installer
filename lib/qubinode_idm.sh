@@ -371,7 +371,7 @@ function qubinode_deploy_idm_vm () {
                   set_idm_static_ip
                 fi
                 idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-                ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
+                ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"  --extra-vars "static_ip=True" || exit $?
              else
                  echo "Deploy without custom IP"
                  ansible-playbook "${IDM_VM_PLAY}" || exit $?
@@ -391,7 +391,7 @@ function qubinode_idm_status () {
         printf "    IP Address: ${cyn}${idm_server_ip}${end} \n"
         printf "    Username: ${cyn}${idm_admin_user}${end}\n"
         printf "    Password: Run the below command to view the vault variable ${cyn}admin_user_password${end} \n\n"
-        printf "    ${blu}Run:${end} ${grn}ansible-vault view $HOME/qubinode-installer/playbooks/vars/vault.yml ${vaultfile}${end} \n\n"
+        printf "    ${blu}Run:${end} ${grn}ansible-vault view ${vaultfile}${end} \n\n"
      else
         printf "%s\n" " ${red}IDM Server was not properly deployed please verify deployment.${end}"
         exit 1

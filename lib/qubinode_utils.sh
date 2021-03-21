@@ -112,7 +112,9 @@ function exit_status () {
 convertB_human() {
     # Thanks to https://bit.ly/39xomtN
     NUMBER=$1
-    for DESIG in Bytes KB MB GB TB PB
+    ## only converting to megabytes
+    for DESIG in Bytes KB MB
+    #for DESIG in Bytes KB MB GB TB PB
     do
         [ $NUMBER -lt 1024 ] && break
         let NUMBER=$NUMBER/1024

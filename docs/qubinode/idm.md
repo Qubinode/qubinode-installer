@@ -17,6 +17,17 @@ These values are either set during the install or can be set by the user:
  - idm_public_ip: The IP address of the IdM server. This is auto-populated once the IdM VM has been deployed.
  - idm_admin_password: This is setup when qubinode-installer is executed and it's saved to playbook/vars/vault.yml as **idm_admin_pwd**.
 
+You can force a static ip address on the idm server by setting the following.
+```
+cd qubinode-installer/
+vim 
+
+# update the following values
+idm_check_static_ip: yes
+idm_server_ip: 192.168.1.10
+idm_public_ip: 192.168.1.10
+```
+
 The IdM server can be deployed by executing.
 
 ```
