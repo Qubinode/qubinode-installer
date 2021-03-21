@@ -40,7 +40,7 @@ Added Support for [jig](https://github.com/kenmoini/jig) |
 Force Static IP on IDM server |
 OCS Support on OpenShift 4.7.x |
 Ability to change OpenShift Versions on install |
- |  
+
 
 See [Release Document](docs/qubinode/releases.md) for features history.
 
