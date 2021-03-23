@@ -19,6 +19,7 @@
     vm_ipaddress: "{{ dns_server_vm.dns_ip }}"
     vm_gateway: "{{ dns_server_vm.dns_gateway }}"
     vm_mask: "{{ dns_server_vm.dns_mask }}"
+    vm_cidr: "{{ dns_server_vm.dns_mask }}"
     vm_mask_prefix: "{{ dns_server_vm.dns_mask_prefix }}"
     vm_domain: "{{ domain }}"
     inventory_group: "{{ dns_server_vm.dns_group }}"
