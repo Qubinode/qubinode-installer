@@ -275,26 +275,25 @@ function installer_artifacts_msg () {
         if [[ "A${PULL_MISSING}" == "Ayes" ]] && [[ "A${QCOW_MISSING}" == "Ayes" ]]
         then
             printf "%s\n" "    ${yel}The installer requires the RHEL qcow image and your OCP pull-secret.${end}"
-            printf "%s\n" "    ${yel}The installer expects to find either the artifact or the token to${end}"
-            printf "%s\n\n" "    ${yel}download the required artifact under ${project_dir}.${end}"
+            printf "%s\n" "    ${yel}The installer expects to find the artifacts under${end}"
+            printf "%s\n\n" "    ${yel}${project_dir}.${end}"
         else
             printf "%s\n" "    ${yel}The installer requires $artifact_string.${end}"
-            printf "%s\n" "    ${yel}The installer expects to find either the required artifact or the token to${end}"
-            printf "%s\n\n" "    ${yel}download the required artifact under ${project_dir}.${end}"
+            printf "%s\n\n" "    ${yel}The installer expects to find this under ${project_dir}.${end}"
         fi
 
-
-        printf "%s\n" "    ${yel}Tokens:${end}"
-
-        if [ "A${QCOW_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n" "        ${blu}* rhsm_token${end}"
-        fi
-
-        if [ "A${PULL_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n\n" "        ${blu}* ocp_token${end}"
-        fi
+        ## Remove rhsm_token and ocp_token from this release
+        #printf "%s\n" "    ${yel}Tokens:${end}"
+#
+        #if [ "A${QCOW_MISSING}" == "Ayes" ]
+        #then
+        #    printf "%s\n" "        ${blu}* rhsm_token${end}"
+        #fi
+#
+        #if [ "A${PULL_MISSING}" == "Ayes" ]
+        #then
+        #    printf "%s\n\n" "        ${blu}* ocp_token${end}"
+        #fi
 
         printf "%s\n" "    ${yel}Artifacts:${end}"
 
