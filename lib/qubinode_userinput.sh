@@ -25,7 +25,7 @@ function ask_for_vault_values () {
         unset admin_user_password
         printf "%s\n" ""
         printf "%s\n" "  ${yel}****************************************************************************${end}"
-        printf "%s\n\n" "    ${cyn}        Passowrd Info${end}"
+        printf "%s\n\n" "    ${cyn}        Password Info${end}"
         printf "%s\n\n" "   Your username ${yel}${CURRENT_USER}${end} will be used to ssh into all the VMs created."
         printf "%s" "   Enter a password for ${yel}${CURRENT_USER}${end} ${grn}[ENTER]${end}: "
         read_sensitive_data
