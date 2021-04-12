@@ -54,7 +54,9 @@ The qubinode-installer needs to run as a regular user.
 Validate sudo user for admin
 ```
 $ sudo cat /etc/sudoers | grep admin
-admin ALL=(ALL) NOPASSWD: ALL
+admin ALL=(ALL) NOPASSWD: ALL 
+
+echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
 ```
 
 ```shell
