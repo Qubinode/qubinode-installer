@@ -139,6 +139,20 @@ function openshift4_qubinode_teardown () {
     fi
 }
 
+function openshift4_qubinode_rebuild () {
+    confirm " ${yel}Are you sure you want to delete the${end} ${grn}$product_opt${end} cluster and ${yel}deploy a new one${end}? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        ansible-playbook "${deploy_product_playbook}" -e '{ tear_down: True }' -e '{ deploy_cluster: False }' -t rebuild_cluster || exit $?
+        printf "%s\n\n\n\n" " }"
+        printf "%s\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
+
+    else
+        exit 1
+    fi
+}
+
+
 
 function qubinode_ocp4_setup () {
     product_in_use="ocp4" # Tell the installer which release of OCP

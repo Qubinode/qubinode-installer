@@ -1,5 +1,7 @@
+<<<<<<< HEAD
 # Qubinode Installer
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
+=======
 
 ## Motivation
 The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.

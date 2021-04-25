@@ -17,6 +17,8 @@ idm_forward_ip: "{{ dns_forwarder }}"
 idm_admin_password: "{{ idm_admin_pwd }}"
 idm_reverse_zones:
   - "{{ qubinode_ptr }}"
+vm_mac: 52:54:00:32:f8:6d
+#idm_server_ip: 192.168.8.10
 
 ########################
 # RHEL IdM VM attributes

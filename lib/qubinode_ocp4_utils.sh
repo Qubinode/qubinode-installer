@@ -1141,6 +1141,16 @@ openshift4_server_maintenance () {
                 echo "/usr/local/bin/qubinode-ocp4-status not found"
             fi
             ;;
+       rebuild)
+            ASK_SIZE=false
+            openshift4_qubinode_rebuild
+            confirm "Do you want to deploy a different size cluster? ${green}yes/no${end}"
+            if [ "${response}" == "yes" ]
+            then
+                ASK_SIZE=true
+            fi
+            qubinode_deploy_ocp4
+            ;;
        setup)
             qubinode_ocp4_setup
             ;;
