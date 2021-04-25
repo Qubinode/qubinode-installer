@@ -14,6 +14,7 @@ function qubinode_rhel_global_vars () {
     prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
     suffix=rhel
 
+    qubinode_rhel_pre_checks
     if [ "A${product_options[@]}" != "A" ]
     then
         ####################################
@@ -123,6 +124,7 @@ function qubinode_rhel_global_vars () {
 function qubinode_rhel () {
 
     qubinode_rhel_global_vars
+    qubinode_rhel_pre_checks
 
     ## Default resources for VMs
     vcpu=1
@@ -139,13 +141,6 @@ function qubinode_rhel () {
         fi
     done
 
-    ## Ensure rhel vars file is active
-    if [ ! -f "${rhel_vars_file}" ]
-    then
-        cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
-    fi
-
-
     ## End user input via -a agruments
     ##################################
 
@@ -155,7 +150,18 @@ function qubinode_rhel () {
     download_files
 }
 
+function qubinode_rhel_pre_checks () {
+
+    ## Ensure rhel vars file is active
+    if [ ! -f "${rhel_vars_file}" ]
+    then
+        cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
+    fi
+}
+
 function run_rhel_deployment () {
+
+    qubinode_rhel_pre_checks
     ## This performs the actual deployment of RHEL and it's called by the funciton qubinode_deploy_rhel
     local rhel_server_hostname=$1
     sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
@@ -171,6 +177,7 @@ function run_rhel_deployment () {
         test -d ${project_dir}/.rhel || mkdir ${project_dir}/.rhel
         cp ${rhel_vars_file} "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
         echo "Deploying $rhel_server_hostname"
+	exit 1
         ansible-playbook "${RHEL_VM_PLAY}"
         PLAYBOOK_STATUS=$?
     fi
@@ -193,6 +200,7 @@ function delete_vm_vars_file () {
 function qubinode_deploy_rhel () {
     ## This is the primary function that iniatiates when qubinode-installer -p rhel is call.
     qubinode_rhel
+    qubinode_rhel_pre_checks
 
     os_release_num=$(awk -v var="rhel${rhel_release}_version" '$0 ~ var {print $2}' "${vars_file}")
     os_release="rhel${os_release_num}"
