@@ -43,6 +43,7 @@ function qubinode_rhel_global_vars () {
                 fi
             fi
         else
+	    qubinode_generate_instance_id
             rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${instance_id}"
         fi
 
@@ -125,12 +126,23 @@ function qubinode_rhel () {
 
     qubinode_rhel_global_vars
     qubinode_rhel_pre_checks
+    qubinode_generate_instance_id
 
     ## Default resources for VMs
     vcpu=1
     memory=800
     disk=20G
 
+    ## End user input via -a agruments
+    ##################################
+
+    ## Ensure RHEL qcow image is available
+    setup_download_options
+    install_rhsm_cli
+    download_files
+}
+
+function qubinode_generate_instance_id () {
     ## Generate a random id that's not already is use for the cattle vms
     while true
     do
@@ -140,14 +152,6 @@ function qubinode_rhel () {
             break
         fi
     done
-
-    ## End user input via -a agruments
-    ##################################
-
-    ## Ensure RHEL qcow image is available
-    setup_download_options
-    install_rhsm_cli
-    download_files
 }
 
 function qubinode_rhel_pre_checks () {
@@ -177,7 +181,6 @@ function run_rhel_deployment () {
         test -d ${project_dir}/.rhel || mkdir ${project_dir}/.rhel
         cp ${rhel_vars_file} "${project_dir}/.rhel/${rhel_server_hostname}-vars.yml"
         echo "Deploying $rhel_server_hostname"
-	exit 1
         ansible-playbook "${RHEL_VM_PLAY}"
         PLAYBOOK_STATUS=$?
     fi
