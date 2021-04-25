@@ -337,6 +337,8 @@ function ask_to_use_external_bridge () {
         if [ "A${response}" == "Ayes" ]
         then
             sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
+            sed -i "s/ocp4_subnet:.*/ ocp4_subnet: \"10.0.1.0\"/g" ${ocp_vars_file}
+            exit 0
         else
             sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
         fi
@@ -358,6 +360,7 @@ function confirm_minimal_deployment () {
         MSG2="The nodes functions as both control and computes."
     fi
 
+    ask_to_use_external_bridge
     openshift4_minimal_desc4
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"
@@ -374,6 +377,8 @@ function confirm_minimal_deployment () {
     else
         ocp4_menu
     fi
+    less "${ocp_vars_file}"
+    exit 0
 }
 
 is_node_up () {

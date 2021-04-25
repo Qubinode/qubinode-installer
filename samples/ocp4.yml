@@ -118,7 +118,8 @@ deploy_ocp4_configs: yes
 #######################
 # Configure Network 
 libvirt_network_name: qubinat 
-use_external_bridge: ''# set to qubinet for external network and set use_external_bridge: true 
+# set to qubinet for external network and set use_external_bridge: true 
+use_external_bridge:
 external_bridge_network: qubinet
 
 ## Networking info
