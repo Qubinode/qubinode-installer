@@ -15,7 +15,9 @@ function qubinode_rhel_global_vars () {
     suffix=rhel
 
     qubinode_rhel_pre_checks
-    if [ "A${product_options[@]}" != "A" ]
+
+    if (( "${#product_options[@]}" ))
+    #if [ "A${product_options[@]}" != "A" ]
     then
         ####################################
         ## Check for user provided variables
@@ -33,21 +35,28 @@ function qubinode_rhel_global_vars () {
 
         if [ "A${name}" != "A" ]
         then
-            rhel_server_hostname="${name}"
-            if [ "A${teardown}" != "Atrue" ]
-            then
-                if sudo virsh list --all | grep "${name}" > /dev/null 2>&1
-                then
-                    echo "The name "${name}" is already in use. Please try again with a different name."
-                    exit 0
-                fi
-            fi
+            local generated_name="${prefix}-${name}${instance_id}"
+	    qubinode_generate_instance_id "$generated_name"
+            #rhel_server_hostname="${name}"
+            rhel_server_hostname="${prefix}-${name}${instance_id}"
         else
-	    qubinode_generate_instance_id
+            local generated_name=="${prefix}-${suffix}${rhel_release}-"
+	    qubinode_generate_instance_id "$generated_name"
             rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${instance_id}"
         fi
 
-        ## Get User Requested Instance size
+	# Check if hostname is already in use
+        if [ "A${teardown}" != "Atrue" ]
+        then
+            if sudo virsh list --all | grep "${rhel_server_hostname}" > /dev/null 2>&1
+            then
+                echo "The name "${name}" is already in use. Please try again with a different name."
+                exit 0
+            fi
+        fi
+
+        ## Get User Requested Instance siz e
+
         if [ "A${size}" != "A" ]
         then
             if [ "A${size}" == "Asmall" ]
@@ -126,7 +135,6 @@ function qubinode_rhel () {
 
     qubinode_rhel_global_vars
     qubinode_rhel_pre_checks
-    qubinode_generate_instance_id
 
     ## Default resources for VMs
     vcpu=1
@@ -143,15 +151,29 @@ function qubinode_rhel () {
 }
 
 function qubinode_generate_instance_id () {
-    ## Generate a random id that's not already is use for the cattle vms
+    local name=$1
     while true
     do
-        instance_id=$((1 + RANDOM % 4096))
-        if ! sudo virsh list --all | grep $instance_id
+      for i in $(seq -s " " -f %02g 100)
+      do
+        if ! sudo virsh list --all | grep "${name}${i}" >/dev/null 2>&1
         then
+            instance_id="${i}"
             break
         fi
+      done
+      break
     done
+
+    ## Generate a random id that's not already is use for the cattle vms
+    #while true
+    #do
+    #    instance_id=$((1 + RANDOM % 4096))
+    #    if ! sudo virsh list --all | grep $instance_id
+    #    then
+    #        break
+    #    fi
+    #done
 }
 
 function qubinode_rhel_pre_checks () {

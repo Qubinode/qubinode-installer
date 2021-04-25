@@ -105,6 +105,9 @@ function qubinode_deploy_ocp4 () {
       update_resolv_conf ${idm_server_ip}
     fi 
 
+    # Get the latest ocp4 minor release
+    get_latest_ocp_minor_release
+
     # Deploy OCP4
     ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' 
     RESULT=$?
