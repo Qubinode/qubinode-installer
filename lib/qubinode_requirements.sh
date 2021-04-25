@@ -220,7 +220,7 @@ setup_download_options () {
     QCOW_STATUS="notexist"
     DWL_QCOW=no
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    artifact_qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    artifact_qcow_image=$(grep "^qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     if sudo test -f "${libvirt_dir}/${artifact_qcow_image}"
     then
         QCOW_STATUS=exist

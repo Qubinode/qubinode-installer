@@ -31,3 +31,7 @@ rhsm_token
 *.iso
 .gitignore.dev
 .gitignore.master
+FIRSTBOOT
+lib/qubinode-ks-postinstall.sh
+new-vars/
+
