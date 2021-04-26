@@ -306,62 +306,102 @@ function qubinode_rhel_teardown () {
     fi
 }
 
+function qubinode_rhel_vm_status () {
+    VM_STATE=unknown
+
+    if [ "A${name}" == "A" ]
+    then
+        local vm_names=$(sed -n '/\[rhel\]/,$p' inventory/hosts | grep -v '^\['|awk '{print $1}')
+    else
+        local vm_names="$name"
+    fi
+
+    if [ "A${qubinode_maintenance_opt}" == "Astatus" ]
+    then
+        for name in $(echo "$vm_names")
+        do
+            if sudo virsh dominfo --domain $name >/dev/null 2>&1
+            then
+                VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2}')
+                printf "%s\n" "VM $name current state is $VM_STATE"
+            else
+                printf "%s\n" "unknown ${qubinode_maintenance_opt}"
+            fi
+        done
+    fi
+
+    if [ "A${qubinode_maintenance_opt}" == "Alist" ]
+    then
+        for name in $(echo "$vm_names")
+        do
+            printf "%s\n" " Id    Name                           State"
+            printf "%s\n" " --    ----                           -----"
+            sudo virsh list --all| awk -v var="${name}" '$0 ~ var {printf "%s\n", $0}'
+        done
+    fi
+
+}
+
+
 function qubinode_rhel_maintenance () {
     ## Run the qubinode_rhel function to gather required variables
     qubinode_rhel_global_vars 
 
     VM_STATE=unknown
 
-
-    if sudo virsh dominfo --domain $name >/dev/null 2>&1
+    qubinode_rhel_vm_status
+    if [ "A${name}" != "A" ]
     then
-        VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2}')
-        WAIT_TIME=0
-
-        # start up a vm
-        if [[ "A${qubinode_maintenance_opt}" == "Astart" ]] && [[ "A${VM_STATE}" == "Ashutoff" ]]
+        if sudo virsh dominfo --domain $name >/dev/null 2>&1
         then
-            sudo virsh start $name >/dev/null 2>&1 && printf "%s\n" "$name started"
-        fi
+            VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2}')
+            WAIT_TIME=0
 
-        # shutdown a vm
-        if [[ "A${qubinode_maintenance_opt}" == "Astop" ]] && [[ "A${VM_STATE}" == "Arunning" ]]
-        then
-            ansible $name -m command -a"shutdown +1 'Shutting down the VM'" -b >/dev/null 2>&1
-            printf "\n Shutting down $name. \n"
-            until [[ $VM_STATE != "running" ]] || [[ $WAIT_TIME -eq 10 ]]
-            do
-                ansible $name -m command -a"shutdown +1 'Shutting down'" -b >/dev/null 2>&1
-                VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
-                sleep $(( WAIT_TIME++ ))
-            done
-
-            if [ $VM_STATE != "running" ]
+            # start up a vm
+            if [[ "A${qubinode_maintenance_opt}" == "Astart" ]] && [[ "A${VM_STATE}" == "Ashut" ]]
             then
-                printf "%s\n" "$name stopped"
+                printf "\n Starting up $name. \n"
+                sudo virsh start $name >/dev/null 2>&1 && printf "%s\n" "$name started"
+
+		## TODO: change this to a ansible ping to ensure VM is up and available
+                until [[ $VM_STATE == "running" ]] || [[ $WAIT_TIME -eq 10 ]]
+                do
+                    VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
+                    sleep $(( WAIT_TIME++ ))
+                done
+
+                if [ $VM_STATE == "running" ]
+                then
+                    printf "%s\n" "$name started"
+                fi
             fi
 
-            if [ $VM_STATE == "running" ]
+            # shutdown a vm
+            if [[ "A${qubinode_maintenance_opt}" == "Astop" ]] && [[ "A${VM_STATE}" == "Arunning" ]]
             then
-                sudo virsh destroy $name >/dev/null 2>&1 && printf "%s\n" "$name stopped"
+                ansible $name -m command -a"shutdown +1 'Shutting down the VM'" -b >/dev/null 2>&1
+                printf "\n Shutting down $name. \n"
+                until [[ $VM_STATE != "running" ]] || [[ $WAIT_TIME -eq 10 ]]
+                do
+                    ansible $name -m command -a"shutdown +1 'Shutting down'" -b >/dev/null 2>&1
+                    VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
+                    sleep $(( WAIT_TIME++ ))
+                done
+
+                if [ $VM_STATE != "running" ]
+                then
+                    printf "%s\n" "$name stopped"
+                fi
+
+                if [ $VM_STATE == "running" ]
+                then
+                    sudo virsh destroy $name >/dev/null 2>&1 && printf "%s\n" "$name stopped"
+                fi
             fi
         fi
-
-        # vm status
-        if [ "A${qubinode_maintenance_opt}" == "Astatus" ]
-        then
-            printf "%s\n" "VM current state is $VM_STATE"
-        fi
-    fi
-
-    # show VM status
-    if [ "A${qubinode_maintenance_opt}" == "Alist" ]
-    then
-        printf "%s\n" " Id    Name                           State"
-        printf "%s\n" " --    ----                           -----"
-        sudo virsh list| awk '/rhel/ {printf "%s\n", $0}'
     else
-        printf "%s\n" "unknown ${qubinode_maintenance_opt}"
+                printf "\n VM name is required. Example: \n"
+                printf "\n ./qubinode-installer -p rhel -m ${qubinode_maintenance_opt} -a name=<vm_name>\n"
     fi
 
     printf "%s\n\n" ""
