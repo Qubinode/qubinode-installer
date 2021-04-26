@@ -118,7 +118,8 @@ deploy_ocp4_configs: yes
 #######################
 # Configure Network 
 libvirt_network_name: qubinat 
-use_external_bridge: ''# set to qubinet for external network and set use_external_bridge: true 
+# set to qubinet for external network and set use_external_bridge: true 
+use_external_bridge:
 external_bridge_network: qubinet
 
 ## Networking info
@@ -174,6 +175,12 @@ ocp4_subnet: "192.168.50.0"
 product: "{{ openshift_product }}"
 compute_count_update: none
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
+bootstrap_octet: '2'
+api_int_octet: '1'
+api_octet: '1'
+ctrlplane_ip_octet: 10
+compute_ip_octet: 20
+storage_ip_octet: 30
 bootstrap_node_ip: "192.168.50.2"
 ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
 compute_node_name: "{{ hostname_prefix }}-compute"

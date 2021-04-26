@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Qubinode Installer
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 =======
