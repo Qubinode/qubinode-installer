@@ -286,6 +286,7 @@ function configure_local_storage () {
     storage_type=block
     set_local_volume_type
 	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
+    ask_to_use_external_bridge
 	openshift4_standard_desc
 }
 
@@ -295,23 +296,21 @@ function configure_ocs_storage_size () {
     #reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
-    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
-    vdb_size="${vdb:-10}"
-    compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
-    confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 300: ${end} " ocs_size
+    ocs_storage_size="${ocs_size:-300}"
+    final_ocs_storage_size=$(echo ${ocs_storage_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$final_ocs_storage_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
-        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/compute_ocs_size:.*/compute_ocs_size: "$final_ocs_storage_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
-        printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
+        printf "%s\n\n" "    ${def}The size OSC Storage is now set to${end} ${yel}${final_ocs_storage_size}G Per Node${end}"
     fi
 
     storage_type=block
     set_local_volume_type
 
     printf "%s\n\n" ""
-	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
 }
 
 function set_local_volume_type () {
@@ -369,8 +368,6 @@ function ask_to_use_external_bridge () {
             ###
             ## Add test to detect if ips are in use
             ###
-            less ${ocp_vars_file}
-            sleep 180s
         else
             sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
         fi
@@ -406,8 +403,6 @@ function confirm_minimal_deployment () {
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
         sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
         sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
-        less "${ocp_vars_file}"
-        exit 1
     else
         ocp4_menu
     fi
