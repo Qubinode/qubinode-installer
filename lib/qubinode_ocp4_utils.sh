@@ -63,6 +63,7 @@ function openshift4_variables () {
 
     # OCP nodes vairiables
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
@@ -72,7 +73,7 @@ function openshift4_variables () {
     ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
     ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${product_samples_vars_file}")
     ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
-    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)
+    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)  
 }
 
 function check_for_pull_secret () {
@@ -337,8 +338,39 @@ function ask_to_use_external_bridge () {
         if [ "A${response}" == "Ayes" ]
         then
             sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
-            sed -i "s/ocp4_subnet:.*/ ocp4_subnet: \"10.0.1.0\"/g" ${ocp_vars_file}
-            exit 0
+            set -xe 
+            ocp_kvm_ip_option=$(awk '/^kvm_host_ip:/ {print $2; exit}' "${kvm_host_vars_file}")
+            echo "KVM IP ADDRESS: ${ocp_kvm_ip_option}"
+            network_subnet=$(awk -F"." '{print $1"."$2"."$3".0"}'<<<$ocp_kvm_ip_option)
+            echo $network_subnet
+            sed -i "s/ocp4_subnet:.*/ocp4_subnet: \"${network_subnet}\"/g" ${ocp_vars_file}
+            # Get API octect infomation
+            node_octect=`echo ${ocp_kvm_ip_option} | cut -d . -f 4`
+            sed -i "s/api_int_octet:.*/api_int_octet: \"${node_octect}\"/g" ${ocp_vars_file}
+            sed -i "s/api_octet:.*/api_octet: \"${node_octect}\"/g" ${ocp_vars_file}
+            # get bootstrap ip and octect
+            read -p "     ${def}Enter the ip octet for bootstrap vm: ${end} " bootstrap_octect
+            boot_octect="${bootstrap_octect:-10}"
+            sed -i "s/bootstrap_octet:.*/bootstrap_octet: \"${boot_octect}\"/g" ${ocp_vars_file}
+            bootstrap_ip_address=$(awk -F"." '{print $1"."$2"."$3".'${boot_octect}'"}'<<<$ocp_kvm_ip_option)
+            sed -i "s/bootstrap_node_ip:.*/bootstrap_node_ip: \"${bootstrap_ip_address}\"/g" ${ocp_vars_file}
+            # Get control plane octect
+            read -p "     ${def}Enter the starting ip octet for control plane vms: ${end} " control_plane_octect
+            ctl_octect="${control_plane_octect:-20}"
+            sed -i "s/ctrlplane_ip_octet:.*/ctrlplane_ip_octet: \"${ctl_octect}\"/g" ${ocp_vars_file}
+            # Get Comupte node octect info
+            read -p "     ${def}Enter the starting ip octet for compute vms: ${end} " compute_node_octect
+            compute_octect="${compute_node_octect:-30}"
+            sed -i "s/compute_ip_octet:.*/compute_ip_octet: \"${compute_octect}\"/g" ${ocp_vars_file}
+            # Get storage octect ino
+            # read -p "     ${def}Enter the starting ip octet for storage vms: ${end} " storage_node_octect
+            # storage_octect="${storage_node_octect:-40}"
+            # sed -i "s/storage_ip_octet:.*/storage_ip_octet: \"${storage_octect}\"/g" ${ocp_vars_file}
+            ###
+            ## Add test to detect if ips are in use
+            ###
+            less ${ocp_vars_file}
+            sleep 180s
         else
             sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
         fi
@@ -374,11 +406,11 @@ function confirm_minimal_deployment () {
         sed -i "s/ocp_cluster_size:.*/ocp_cluster_size: minimal/g" "${all_vars_file}"
         sed -i "s/memory_profile:.*/memory_profile: minimal/g" "${all_vars_file}"
         sed -i "s/storage_profile:.*/storage_profile: minimal/g" "${all_vars_file}"
+        less "${ocp_vars_file}"
+        exit 1
     else
         ocp4_menu
     fi
-    less "${ocp_vars_file}"
-    exit 0
 }
 
 is_node_up () {

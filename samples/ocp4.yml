@@ -175,6 +175,12 @@ ocp4_subnet: "192.168.50.0"
 product: "{{ openshift_product }}"
 compute_count_update: none
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
+api_int_octet: '2'
+api_octet: '2'
+ctrlplane_ip_octet: 20
+bootstrap_octet: '20'
+compute_ip_octet: 30
+storage_ip_octet: 40
 bootstrap_node_ip: "192.168.50.2"
 ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
 compute_node_name: "{{ hostname_prefix }}-compute"
