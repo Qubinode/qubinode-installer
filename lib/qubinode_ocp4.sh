@@ -143,7 +143,7 @@ function openshift4_qubinode_teardown () {
 }
 
 function openshift4_qubinode_rebuild () {
-    confirm " ${yel}Are you sure you want to delete the${end} ${grn}$product_opt${end} cluster and ${yel}deploy a new one${end}? yes/no"
+    confirm " ${yel}Are you sure you want to delete the${end} ${grn}$product_opt${end} cluster? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
         ansible-playbook "${deploy_product_playbook}" -e '{ tear_down: True }' -e '{ deploy_cluster: False }' -t rebuild_cluster || exit $?
@@ -223,3 +223,31 @@ function qubinode_ocp4_setup () {
     openshift4_variables
 }
 
+function qubinode_ocp4_preflight () {
+    product_in_use="ocp4" # Tell the installer which release of OCP
+    openshift_product="${product_in_use}"
+    qubinode_product_opt="${product_in_use}"
+
+    # Ensure project paths are setup correctly
+    setup_required_paths
+    [[ -f ${project_dir}/lib/qubinode_kvmhost.sh ]] && . ${project_dir}/lib/qubinode_kvmhost.sh || exit 1
+    [[ -f ${project_dir}/lib/qubinode_ocp4_utils.sh ]] && . ${project_dir}/lib/qubinode_ocp4_utils.sh || exit 1
+
+    # load required files from samples to playbooks/vars/
+    qubinode_required_prereqs
+
+    # Add current user to sudoers, setup global variables, run additional
+    # prereqs, setup current user ssh key, ask user if they want to
+    # deploy a qubinode system.
+    qubinode_setup
+
+    # Ensure the KVM host is setup
+    # System is attached to the OpenShift subscription
+    # Get the version number for the lastest openshift
+    openshift4_prechecks
+
+
+    ## Ensure OpenShift vars are present
+    openshift4_variables
+
+}

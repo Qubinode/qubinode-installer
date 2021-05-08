@@ -76,6 +76,13 @@ function openshift4_variables () {
     mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)  
 }
 
+function get_latest_ocp_minor_release () {
+    local ocp_mirror="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable"
+    ocp_release=$(awk '/^ocp4_ystream_release:/ {print $2}' "${product_samples_vars_file}")
+    ocp_minor_release=$(curl -k --silent ${ocp_mirror}-${ocp_release}/release.txt | awk '/Version:/ {print $2}')
+    sed -i "s/^ocp4_auto_updated_release:.*/ocp4_auto_updated_release: $ocp_minor_release/g" "${ocp_vars_file}"
+}
+
 function check_for_pull_secret () {
     ocp4_pull_secret="${project_dir}/pull-secret.txt"
     if [ -f ${project_dir}/ocp_token ]
@@ -1174,6 +1181,7 @@ openshift4_server_maintenance () {
             fi
             ;;
        rebuild)
+            printf "%s\n" "    ${blu}This will delete and redeploy the current cluster.${end}"
             ASK_SIZE=false
             openshift4_qubinode_rebuild
             confirm "Do you want to deploy a different size cluster? ${green}yes/no${end}"
@@ -1195,6 +1203,67 @@ openshift4_server_maintenance () {
        storage)
 	   configure_storage "${storage_option}"
 	    ;;
+       rm-rhcos)
+            printf "%s\n" "    ${blu}This will delete the current cluster${end}"
+            openshift4_qubinode_rebuild
+            ;;
+       tools)
+           printf "%s\n" "    ${blu}Downloading OpenShift Client Tools${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools
+	   ;;
+       ignitions)
+           printf "%s\n" "    ${blu}Generating OpenShift node ignitions${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
+	   ;;
+       rhcos)
+	   local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,ignitions,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ;;
+       rhcos-mirror)
+	   if [ ! -f /usr/local/bin/filetranspile ]
+           then
+	       local current_dir=$(pwd)
+	       mkdir /tmp/filetranspile
+	       cd /tmp/filetranspile
+	       git clone https://github.com/ashcrow/filetranspiler.git
+	       sudo cp filetranspile/filetranspile /usr/local/bin
+	       sudo chmod +x /usr/local/bin/filetranspile
+	       cd $current_dir
+	   fi
+	   local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
+	   local install_dir="${project_dir}/ocp4"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
+cat << EOF > /tmp/etc-hosts-sinkhole
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+10.10.10.11 quay.io cloud.openshift.com registry.connect.redhat.com registry.redhat.io
+EOF
+
+           ignitions="bootstrap worker master"
+	   sudo chown -R admin.admin "${install_dir}"
+           for name in $(echo "$ignitions")
+           do
+               mkdir "${install_dir}/${name}/etc" -p
+               cp /tmp/etc-hosts-sinkhole "${install_dir}/${name}/etc/hosts"
+               mv "${install_dir}/${name}.ign" "${install_dir}/${name}.ign.back"
+               filetranspile  -i "${install_dir}/${name}.ign.back" -f "${install_dir}/${name}" -o "${install_dir}/${name}.ign"
+               rm -rvf "${install_dir}/${name}"
+               rm -rvf "${install_dir}/${name}.ign.back"
+           done
+
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ;;
+       bootstrap)
+           printf "%s\n" "    ${blu}Bootstrap the OpenShift cluster${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t generate_inventory,ocp4_nodes,bootstrap
+	   ;;
        *)
            echo "${product_maintenance} Not a valid -m option. Options are:"
 	   echo "setup, storage, add-compute, remove-compute, status, startup, shutdown, smoketest, diag"
