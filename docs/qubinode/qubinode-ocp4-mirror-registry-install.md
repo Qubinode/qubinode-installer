@@ -2,6 +2,37 @@
 
 This example will deploy the core nodes with the ignitions files modified to deploy a custom /etc/hosts
 
+## Setup required files in qubinode-installer directory
+
+* content-sources.txt
+
+Update to include to match your mirror
+```
+- mirrors: 
+  - registry.lab.qubinode.io:5000/openshift-release-dev/ocp-release
+  source: quay.io/openshift-release-dev/ocp-release 
+- mirrors: 
+  - registry.lab.qubinode.io:5000/openshift-release-dev/ocp-v4.0-art-dev
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+```
+
+* trust-bundle.txt
+
+Make sure the lines indented by two spaces
+```
+  -----BEGIN CERTIFICATE-----
+  MIIFuDCCA6CgAwIBAgIUNIlWe3ELRFlhsuNh8SKfTaQg+CIwDQYJKoZIhvcNAQEL
+  BQAwbzELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkZMMQ8wDQYDVQQHDAZPcmFuZ2Ux
+  -----END CERTIFICATE-----
+```
+
+Finally, up these two variables to point to the location of the above files e.g.
+
+```
+additional_trust_bundle: "{{ project_dir }}/trust-bundle.txt"
+image_content_sources: "{{ project_dir }}/content-sources.txt"
+```
+
 Install the OCP client tools
 
 ```
