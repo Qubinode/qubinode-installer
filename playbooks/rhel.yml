@@ -21,6 +21,7 @@
     extra_storage: "{{ rhel_server_vm.rhel_extra_storage }}"
     enable: "{{ rhel_server_vm.rhel_enable }}"
     current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
+    idm_ca_crt_url: "{{ 'https://' + ipa_host + '/ipa/config/ca.crt' }}"
 
   environment:
     IPA_HOST: "{{ ipa_host }}"
@@ -29,9 +30,17 @@
     IPA_TIMEOUT: 40
 
   tasks:
+    - name: check if idm server is deployed
+      uri:
+        url: "{{ idm_ca_crt_url }}"
+        validate_certs: no
+      register: idm_status
+
     - name: Include deploy-kvm-vm role
       include_role:
         name: deploy-kvm-vm
+
+    - meta: refresh_inventory
 
     - name: determine if we are creating or deleting the DNS record
       set_fact:
@@ -41,6 +50,7 @@
       tags: create_dns_records
 
     - name: Create or Delete {{ vm_name }} A Records
+      when: idm_status.status == 200
       ipa_dnsrecord:
         zone_name: "{{ domain }}"
         record_name: "{{ hostvars[vm_name].inventory_hostname }}"
@@ -52,6 +62,7 @@
       tags: create_dns_records
 
     - name: Create or Delete {{ vm_name }} PTR Records
+      when: idm_status.status == 200
       ipa_dnsrecord:
         zone_name: "{{ qubinode_ptr }}"
         record_name: "{{ hostvars[vm_name].ansible_host.split('.')[3:4] | join('.') }}"
