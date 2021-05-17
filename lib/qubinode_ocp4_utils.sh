@@ -344,7 +344,6 @@ function ask_to_use_external_bridge () {
         if [ "A${response}" == "Ayes" ]
         then
             sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
-            set -xe 
             ocp_kvm_ip_option=$(awk '/^kvm_host_ip:/ {print $2; exit}' "${kvm_host_vars_file}")
             echo "KVM IP ADDRESS: ${ocp_kvm_ip_option}"
             network_subnet=$(awk -F"." '{print $1"."$2"."$3".0"}'<<<$ocp_kvm_ip_option)

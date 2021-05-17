@@ -4,7 +4,32 @@ This example will deploy the core nodes with the ignitions files modified to dep
 
 ## Setup required files in qubinode-installer directory
 
+
+podman login ${HOSTNAME}:5000
+
+* Get pull secert 
+```
+vim disconnected_pullsecret.json 
+jq -c --argjson var "$(jq .auths /run/user/1000/containers/auth.json)" '.auths += $var' $HOME/qubinode-installer/disconnected_pullsecret.json > merged_pullsecret.json
+jq -c --argjson var "$(jq .auths /run/user/1000/containers/auth.json)" '.auths += $var' $HOME/qubinode-installer/disconnected_pullsecret.json > pull-secret.txt
+
+cat /home/admin/qubinode-installer/pull-secret.txt
+```
+
+
+
 * content-sources.txt
+```
+cat >content-sources.txt<< EOF
+imageContentSources:
+- mirrors:
+  - qubinode.tosins-lab.com:5000/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - qubinode.tosins-lab.com:5000/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
+```
 
 Update to include to match your mirror
 ```
@@ -17,6 +42,11 @@ Update to include to match your mirror
 ```
 
 * trust-bundle.txt
+```
+cat >trust-bundle.txt<<EOF
+  $( cat  /opt/registry/certs/qubinode.tosins-lab.com.crt)
+EOF
+```
 
 Make sure the lines indented by two spaces
 ```
@@ -36,7 +66,7 @@ image_content_sources: "{{ project_dir }}/content-sources.txt"
 Install the OCP client tools
 
 ```
-qubinode-installer -p ocp4 -m tools
+./qubinode-installer -p ocp4 -m tools
 ```
 
 Deploy the node ignitions files
@@ -85,8 +115,8 @@ qubinode-installer -p ocp4 -m rhcos
 
 *You can do this is two steps*
 ```
-qubinode-installer -p ocp4 -m tools
-qubinode-installer -p ocp4 -m mirror-rhcos
+./qubinode-installer -p ocp4 -m tools
+./qubinode-installer -p ocp4 -m mirror-rhcos
 ```
 
 ### Others commands available
