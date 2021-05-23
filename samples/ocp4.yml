@@ -7,6 +7,7 @@ installation_working_dir: "{{ project_dir }}"
 
 # Required Files
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+generated_pull_secret: "{{ installation_working_dir }}/generated_pullsecret.json"
 
 # OpenShift/OKD Version
 
