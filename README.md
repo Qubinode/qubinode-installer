@@ -31,11 +31,13 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 
 ### Features in v2.4.6 Version
+New Features |
 --|
 RHEL 8.4 default support |
 RHEL rhel-8.4-x86_64-kvm.qcow2 support |
 external baremetal deployment |
 OCS Storage fixes |
+Fixes for external network deployments
 
 
 
