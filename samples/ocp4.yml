@@ -183,6 +183,8 @@ nat_gateway: "192.168.50.1"
 ocp4_subnet: "192.168.50.0"
 product: "{{ openshift_product }}"
 compute_count_update: none
+## Host name for the cluster nodes
+hostname_prefix: "{{ instance_prefix }}-ocp4"
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
 bootstrap_octet: '2'
 api_int_octet: '1'
@@ -194,8 +196,7 @@ bootstrap_node_ip: "192.168.50.2"
 ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
 compute_node_name: "{{ hostname_prefix }}-compute"
 
-## Host name for the cluster nodes
-hostname_prefix: "{{ instance_prefix }}-ocp4"
+
 
 # OCP4 controlplane VDX sizes
 ctrlplane_vdb_size: 10G

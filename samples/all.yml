@@ -33,7 +33,7 @@ rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
 rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
 ansible_version: 2.9.10
 ansible_release: 2.9
-rhel8_version: 8.3
+rhel8_version: 8.4
 rhel7_version: 7.8
 
 # All VMs created name will begin with this prefix.
@@ -91,7 +91,7 @@ ssh_username: "{{ admin_user }}" # this var has been deprecated and should be re
 # Use to create VM
 # Red Hat Enterprise Linux 7.8 KVM Guest Image
 qcow_rhel7_name: rhel-server-7.8-x86_64-kvm.qcow2
-qcow_rhel8_name: rhel-8.3-update-2-x86_64-kvm.qcow2
+qcow_rhel8_name: rhel-8.4-x86_64-kvm.qcow2
 os_qcow_image_name: "{{ qcow_rhel8_name }}"
 qcow_rhel7u8_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
 qcow_rhel8u2_checksum: 055d6fa91f0ad42556325b8ea1ff1950876bef18e164dc964f7cd4431fa294d8

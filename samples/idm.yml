@@ -24,7 +24,7 @@ vm_mac: 52:54:00:32:f8:6d
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-cloud_init_vm_image: rhel-8.3-update-2-x86_64-kvm.qcow2
+cloud_init_vm_image: rhel-8.4-x86_64-kvm.qcow2
 idm_server_ip: ""
 idm_public_ip: ""
 idm_zone_overlap: false
