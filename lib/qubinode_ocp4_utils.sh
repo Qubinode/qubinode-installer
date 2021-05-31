@@ -1257,6 +1257,10 @@ EOF
            done
 
 	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ansible-playbook "${deploy_product_playbook}" -t bootstrap_cluster -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes"
+	   ansible-playbook "${deploy_product_playbook}" -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
+
+
 	   ;;
        bootstrap)
            printf "%s\n" "    ${blu}Bootstrap the OpenShift cluster${end}"
