@@ -351,22 +351,22 @@ function ask_to_use_external_bridge () {
             sed -i "s/ocp4_subnet:.*/ocp4_subnet: \"${network_subnet}\"/g" ${ocp_vars_file}
             # Get API octect infomation
             node_octect=`echo ${ocp_kvm_ip_option} | cut -d . -f 4`
-            sed -i "s/api_int_octet:.*/api_int_octet: \"${node_octect}\"/g" ${ocp_vars_file}
-            sed -i "s/api_octet:.*/api_octet: \"${node_octect}\"/g" ${ocp_vars_file}
+            sed -i "s/api_int_octet:.*/api_int_octet: ${node_octect}/g" ${ocp_vars_file}
+            sed -i "s/api_octet:.*/api_octet: ${node_octect}/g" ${ocp_vars_file}
             # get bootstrap ip and octect
             read -p "     ${def}Enter the ip octet for bootstrap vm: ${end} " bootstrap_octect
             boot_octect="${bootstrap_octect:-10}"
-            sed -i "s/bootstrap_octet:.*/bootstrap_octet: \"${boot_octect}\"/g" ${ocp_vars_file}
+            sed -i "s/bootstrap_octet:.*/bootstrap_octet: ${boot_octect}/g" ${ocp_vars_file}
             bootstrap_ip_address=$(awk -F"." '{print $1"."$2"."$3".'${boot_octect}'"}'<<<$ocp_kvm_ip_option)
             sed -i "s/bootstrap_node_ip:.*/bootstrap_node_ip: \"${bootstrap_ip_address}\"/g" ${ocp_vars_file}
             # Get control plane octect
             read -p "     ${def}Enter the starting ip octet for control plane vms: ${end} " control_plane_octect
             ctl_octect="${control_plane_octect:-20}"
-            sed -i "s/ctrlplane_ip_octet:.*/ctrlplane_ip_octet: \"${ctl_octect}\"/g" ${ocp_vars_file}
+            sed -i "s/ctrlplane_ip_octet:.*/ctrlplane_ip_octet: ${ctl_octect}/g" ${ocp_vars_file}
             # Get Comupte node octect info
             read -p "     ${def}Enter the starting ip octet for compute vms: ${end} " compute_node_octect
             compute_octect="${compute_node_octect:-30}"
-            sed -i "s/compute_ip_octet:.*/compute_ip_octet: \"${compute_octect}\"/g" ${ocp_vars_file}
+            sed -i "s/compute_ip_octet:.*/compute_ip_octet: ${compute_octect}/g" ${ocp_vars_file}
             # Get storage octect ino
             # read -p "     ${def}Enter the starting ip octet for storage vms: ${end} " storage_node_octect
             # storage_octect="${storage_node_octect:-40}"
