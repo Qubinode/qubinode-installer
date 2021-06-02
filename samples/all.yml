@@ -134,15 +134,14 @@ memory_profile: ""
 ocp_cluster_size: ""
 warn_storage_profile: yes
 
+# swygue.coreos-virt-install-iso
+nat_network_name: "{{ cluster_name }}"
 
 ###########################################
 # variables for swygue.edge_host_setup role
 
 
-nat_network_name: "{{ cluster_name }}"
-
 #This is for KVM host initial setup of /etc/resolv.conf
-
 libvirt_pkgs_8:
    - virt-install
    - libvirt-daemon-config-network
