@@ -142,10 +142,6 @@ warn_storage_profile: yes
 nat_network_name: "{{ cluster_name }}"
 
 #This is for KVM host initial setup of /etc/resolv.conf
-kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
-kvm_bridge_type: Bridge
-kvm_host_bootproto: none
-kvm_host_domain: "{{ domain }}"
 
 libvirt_pkgs_8:
    - virt-install
