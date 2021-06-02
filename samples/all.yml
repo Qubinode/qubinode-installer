@@ -236,4 +236,4 @@ qubi_required_pkgs: |
    cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
    wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
    bash-completion, kexec-tools, sos, psacct, vim, ansible, lm_sensors, cargo,
-   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch,  python-netaddr"
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch, python-netaddr"
