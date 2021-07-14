@@ -14,7 +14,10 @@ function qubinode_rhel_global_vars () {
     prefix=$(awk '/instance_prefix/ {print $2;exit}' "${vars_file}")
     suffix=rhel
 
-    if [ "A${product_options[@]}" != "A" ]
+    qubinode_rhel_pre_checks
+
+    if (( "${#product_options[@]}" ))
+    #if [ "A${product_options[@]}" != "A" ]
     then
         ####################################
         ## Check for user provided variables
@@ -32,20 +35,28 @@ function qubinode_rhel_global_vars () {
 
         if [ "A${name}" != "A" ]
         then
-            rhel_server_hostname="${name}"
-            if [ "A${teardown}" != "Atrue" ]
-            then
-                if sudo virsh list --all | grep "${name}" > /dev/null 2>&1
-                then
-                    echo "The name "${name}" is already in use. Please try again with a different name."
-                    exit 0
-                fi
-            fi
+            local generated_name="${prefix}-${name}${instance_id}"
+	    qubinode_generate_instance_id "$generated_name"
+            #rhel_server_hostname="${name}"
+            rhel_server_hostname="${prefix}-${name}${instance_id}"
         else
+            local generated_name=="${prefix}-${suffix}${rhel_release}-"
+	    qubinode_generate_instance_id "$generated_name"
             rhel_server_hostname="${prefix}-${suffix}${rhel_release}-${instance_id}"
         fi
 
-        ## Get User Requested Instance size
+	# Check if hostname is already in use
+        if [ "A${teardown}" != "Atrue" ]
+        then
+            if sudo virsh list --all | grep "${rhel_server_hostname}" > /dev/null 2>&1
+            then
+                echo "The name "${name}" is already in use. Please try again with a different name."
+                exit 0
+            fi
+        fi
+
+        ## Get User Requested Instance siz e
+
         if [ "A${size}" != "A" ]
         then
             if [ "A${size}" == "Asmall" ]
@@ -123,28 +134,12 @@ function qubinode_rhel_global_vars () {
 function qubinode_rhel () {
 
     qubinode_rhel_global_vars
+    qubinode_rhel_pre_checks
 
     ## Default resources for VMs
     vcpu=1
     memory=800
     disk=20G
-
-    ## Generate a random id that's not already is use for the cattle vms
-    while true
-    do
-        instance_id=$((1 + RANDOM % 4096))
-        if ! sudo virsh list --all | grep $instance_id
-        then
-            break
-        fi
-    done
-
-    ## Ensure rhel vars file is active
-    if [ ! -f "${rhel_vars_file}" ]
-    then
-        cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
-    fi
-
 
     ## End user input via -a agruments
     ##################################
@@ -155,7 +150,44 @@ function qubinode_rhel () {
     download_files
 }
 
+function qubinode_generate_instance_id () {
+    local name=$1
+    while true
+    do
+      for i in $(seq -s " " -f %02g 100)
+      do
+        if ! sudo virsh list --all | grep "${name}${i}" >/dev/null 2>&1
+        then
+            instance_id="${i}"
+            break
+        fi
+      done
+      break
+    done
+
+    ## Generate a random id that's not already is use for the cattle vms
+    #while true
+    #do
+    #    instance_id=$((1 + RANDOM % 4096))
+    #    if ! sudo virsh list --all | grep $instance_id
+    #    then
+    #        break
+    #    fi
+    #done
+}
+
+function qubinode_rhel_pre_checks () {
+
+    ## Ensure rhel vars file is active
+    if [ ! -f "${rhel_vars_file}" ]
+    then
+        cp "${project_dir}/samples/rhel.yml" "${rhel_vars_file}"
+    fi
+}
+
 function run_rhel_deployment () {
+
+    qubinode_rhel_pre_checks
     ## This performs the actual deployment of RHEL and it's called by the funciton qubinode_deploy_rhel
     local rhel_server_hostname=$1
     sed -i "s/rhel_name:.*/rhel_name: "$rhel_server_hostname"/g" "${rhel_vars_file}"
@@ -193,6 +225,7 @@ function delete_vm_vars_file () {
 function qubinode_deploy_rhel () {
     ## This is the primary function that iniatiates when qubinode-installer -p rhel is call.
     qubinode_rhel
+    qubinode_rhel_pre_checks
 
     os_release_num=$(awk -v var="rhel${rhel_release}_version" '$0 ~ var {print $2}' "${vars_file}")
     os_release="rhel${os_release_num}"
@@ -273,62 +306,102 @@ function qubinode_rhel_teardown () {
     fi
 }
 
+function qubinode_rhel_vm_status () {
+    VM_STATE=unknown
+
+    if [ "A${name}" == "A" ]
+    then
+        local vm_names=$(sed -n '/\[rhel\]/,$p' inventory/hosts | grep -v '^\['|awk '{print $1}')
+    else
+        local vm_names="$name"
+    fi
+
+    if [ "A${qubinode_maintenance_opt}" == "Astatus" ]
+    then
+        for name in $(echo "$vm_names")
+        do
+            if sudo virsh dominfo --domain $name >/dev/null 2>&1
+            then
+                VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2}')
+                printf "%s\n" "VM $name current state is $VM_STATE"
+            else
+                printf "%s\n" "unknown ${qubinode_maintenance_opt}"
+            fi
+        done
+    fi
+
+    if [ "A${qubinode_maintenance_opt}" == "Alist" ]
+    then
+        for name in $(echo "$vm_names")
+        do
+            printf "%s\n" " Id    Name                           State"
+            printf "%s\n" " --    ----                           -----"
+            sudo virsh list --all| awk -v var="${name}" '$0 ~ var {printf "%s\n", $0}'
+        done
+    fi
+
+}
+
+
 function qubinode_rhel_maintenance () {
     ## Run the qubinode_rhel function to gather required variables
     qubinode_rhel_global_vars 
 
     VM_STATE=unknown
 
-
-    if sudo virsh dominfo --domain $name >/dev/null 2>&1
+    qubinode_rhel_vm_status
+    if [ "A${name}" != "A" ]
     then
-        VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2}')
-        WAIT_TIME=0
-
-        # start up a vm
-        if [[ "A${qubinode_maintenance_opt}" == "Astart" ]] && [[ "A${VM_STATE}" == "Ashutoff" ]]
+        if sudo virsh dominfo --domain $name >/dev/null 2>&1
         then
-            sudo virsh start $name >/dev/null 2>&1 && printf "%s\n" "$name started"
-        fi
+            VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State:/ {print $2}')
+            WAIT_TIME=0
 
-        # shutdown a vm
-        if [[ "A${qubinode_maintenance_opt}" == "Astop" ]] && [[ "A${VM_STATE}" == "Arunning" ]]
-        then
-            ansible $name -m command -a"shutdown +1 'Shutting down the VM'" -b >/dev/null 2>&1
-            printf "\n Shutting down $name. \n"
-            until [[ $VM_STATE != "running" ]] || [[ $WAIT_TIME -eq 10 ]]
-            do
-                ansible $name -m command -a"shutdown +1 'Shutting down'" -b >/dev/null 2>&1
-                VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
-                sleep $(( WAIT_TIME++ ))
-            done
-
-            if [ $VM_STATE != "running" ]
+            # start up a vm
+            if [[ "A${qubinode_maintenance_opt}" == "Astart" ]] && [[ "A${VM_STATE}" == "Ashut" ]]
             then
-                printf "%s\n" "$name stopped"
+                printf "\n Starting up $name. \n"
+                sudo virsh start $name >/dev/null 2>&1 && printf "%s\n" "$name started"
+
+		## TODO: change this to a ansible ping to ensure VM is up and available
+                until [[ $VM_STATE == "running" ]] || [[ $WAIT_TIME -eq 10 ]]
+                do
+                    VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
+                    sleep $(( WAIT_TIME++ ))
+                done
+
+                if [ $VM_STATE == "running" ]
+                then
+                    printf "%s\n" "$name started"
+                fi
             fi
 
-            if [ $VM_STATE == "running" ]
+            # shutdown a vm
+            if [[ "A${qubinode_maintenance_opt}" == "Astop" ]] && [[ "A${VM_STATE}" == "Arunning" ]]
             then
-                sudo virsh destroy $name >/dev/null 2>&1 && printf "%s\n" "$name stopped"
+                ansible $name -m command -a"shutdown +1 'Shutting down the VM'" -b >/dev/null 2>&1
+                printf "\n Shutting down $name. \n"
+                until [[ $VM_STATE != "running" ]] || [[ $WAIT_TIME -eq 10 ]]
+                do
+                    ansible $name -m command -a"shutdown +1 'Shutting down'" -b >/dev/null 2>&1
+                    VM_STATE=$(sudo virsh dominfo --domain $name | awk '/State/ {print $2}')
+                    sleep $(( WAIT_TIME++ ))
+                done
+
+                if [ $VM_STATE != "running" ]
+                then
+                    printf "%s\n" "$name stopped"
+                fi
+
+                if [ $VM_STATE == "running" ]
+                then
+                    sudo virsh destroy $name >/dev/null 2>&1 && printf "%s\n" "$name stopped"
+                fi
             fi
         fi
-
-        # vm status
-        if [ "A${qubinode_maintenance_opt}" == "Astatus" ]
-        then
-            printf "%s\n" "VM current state is $VM_STATE"
-        fi
-    fi
-
-    # show VM status
-    if [ "A${qubinode_maintenance_opt}" == "Alist" ]
-    then
-        printf "%s\n" " Id    Name                           State"
-        printf "%s\n" " --    ----                           -----"
-        sudo virsh list| awk '/rhel/ {printf "%s\n", $0}'
     else
-        printf "%s\n" "unknown ${qubinode_maintenance_opt}"
+                printf "\n VM name is required. Example: \n"
+                printf "\n ./qubinode-installer -p rhel -m ${qubinode_maintenance_opt} -a name=<vm_name>\n"
     fi
 
     printf "%s\n\n" ""

@@ -5,6 +5,15 @@
 ### Release web page
 https://github.com/Qubinode/qubinode-installer/releases
 
+
+**Qubinode v2.4.6 Release notes**
+* RHEL 8.4 default support 
+* RHEL rhel-8.4-x86_64-kvm.qcow2 support
+* external baremetal deployment
+* OCS Storage fixes
+* Fixes for external network deployments
+
+
 **Qubinode v2.4.5 Release notes**
 * OCS Support on OpenShift 4.7.x
 * Ability to change OpenShift Versions on install

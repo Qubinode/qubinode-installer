@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 ## What is Qubinode Installer?
 Qubinode-installer is an utility tool that facilates the quick deployment of an array of Red Hat products like [Red Hat Openshift Container Platform](https://www.openshift.com/), [Red Hat Identity Manager](https://access.redhat.com/products/identity-management#getstarted), [Red Hat Satellite](https://www.redhat.com/en/technologies/management/satellite), etc.. on a single piece of hardware by leveraging the [KVM](https://www.linux-kvm.org/page/Main_Page) hypervisor.
 
 ## The benefits of using qubinode
 Qubinode provides a very cost effective way to quickly stand up a lab environment on a single piece of hardware. Your only cost would only be the procurement of the hardare itself. This is a cheaper approach than having to pay a license fee to use a type 1 hypervisor like VMWare/VSphere or having to pay a fee to use AWS EC2 instances.
+=======
+# Qubinode Installer
+Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
+=======
+>>>>>>> 46b71422cf72d23e37fa8ebecbc64f6214e82657
 
 ## Motivation
 The primary focus of this project is make it easy for you to deploy an OpenShift cluster on a single bare metal node with production like characteristics.
@@ -21,7 +27,7 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.3 installed 
+* Red Hat Enteprise Linux 8.4 installed 
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
@@ -31,18 +37,16 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4.5     | 2.9               | 2.4.5 |
 
-### Features in v2.4.5 Versionss
 
+### Features in v2.4.6 Version
 New Features |
--- |
-RHEL rhel-8.3-update-2-x86_64-kvm.qcow2 support |
-RHEL 8.3 Default support |
-OpenShift 4.7.x |
-OKD 4.7.0-0.okd-2021-02-25-144700 Support |
-Added Support for [jig](https://github.com/kenmoini/jig) |
-Force Static IP on IDM server |
-OCS Support on OpenShift 4.7.x |
-Ability to change OpenShift Versions on install |
+--|
+RHEL 8.4 default support |
+RHEL rhel-8.4-x86_64-kvm.qcow2 support |
+external baremetal deployment |
+OCS Storage fixes |
+Fixes for external network deployments
+
 
 
 See [Release Document](docs/qubinode/releases.md) for features history.

@@ -6,8 +6,16 @@ kvm_host_macaddr: ""
 kvm_host_mask_prefix: ""
 kvm_host_netmask: ""
 kvm_host_mtu: 1500
+kvm_bridge_type: Bridge
+kvm_host_bootproto: none
+kvm_host_domain: "{{ domain }}"
+
 libvirt_pool_name_check: yes
 skip_libvirt_pool: no
+
+
+# The the primary dns server to the IdM server
+primary_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
 
 # We leverage a bridge network for OCP3 installs
 # and other VMS. This sets the name of the bridge to be created and use when
@@ -89,3 +97,6 @@ libvirt_host_networks:
     mac: "{{ kvm_host_macaddr }}"
     mtu: 1500
 
+kvm_host_dns_servers: 
+  - "{{ primary_dns_server | default('1.1.1.1') }}"
+  - "{{ secondary_dns_server | default('8.8.8.8') }}"

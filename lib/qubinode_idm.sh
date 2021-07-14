@@ -56,36 +56,36 @@ function ask_user_for_idm_domain () {
 function ask_user_for_idm_password () {
     # This is the password used to log into the IDM server webconsole and also the admin user
     #if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
-    idm_admin_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_admin_pwd:/ {print $2;exit}')
-    if [ "A${idm_admin_pwd}" == 'A""' ];
+    if $(which ansible-vault >/dev/null 2>&1)
     then
-        unset idm_admin_pwd
-        while [[ ${#idm_admin_pwd} -lt 8 ]]
-        do
-            printf "%s\n" ""
-            printf "%s\n\n" "   Your username ${yel}${CURRENT_USER}${end} will be use as the admin user."
-            printf "%s" "   ${blu}Enter a password to be set for the IdM admin user and press${end} ${grn}[ENTER]${end}: "
-            read_sensitive_data
-            idm_admin_pwd="${sensitive_data}"
-            if [ ${#idm_admin_pwd} -lt 8 ]
-            then
+        idm_admin_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_admin_pwd:/ {print $2;exit}')
+        if [ "A${idm_admin_pwd}" == 'A""' ];
+        then
+            unset idm_admin_pwd
+            while [[ ${#idm_admin_pwd} -lt 8 ]]
+            do
                 printf "%s\n" ""
-                printf "%s\n\n" "    ${red}**IMPORTANT**${end}"
-                printf "%s\n" "  The password must be at least ${yel}8${end} characters long."
-            fi
-        done
-        decrypt_ansible_vault "${vaultfile}" > /dev/null
-        sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
-        echo ""
-    fi
-    # encrypt ansible vault
-    encrypt_ansible_vault "${vaultfile}" > /dev/null
+                printf "%s\n\n" "   Your username ${yel}${CURRENT_USER}${end} will be use as the admin user."
+                printf "%s" "   ${blu}Enter a password to be set for the IdM admin user and press${end} ${grn}[ENTER]${end}: "
+                read_sensitive_data
+                idm_admin_pwd="${sensitive_data}"
+                if [ ${#idm_admin_pwd} -lt 8 ]
+                then
+                    printf "%s\n" ""
+                    printf "%s\n\n" "    ${red}**IMPORTANT**${end}"
+                    printf "%s\n" "  The password must be at least ${yel}8${end} characters long."
+                fi
+            done
+            decrypt_ansible_vault "${vaultfile}" > /dev/null
+            sed -i "s/idm_admin_pwd: \"\"/idm_admin_pwd: "$idm_admin_pwd"/g" "${vaultfile}"
+            echo ""
+        fi
+        # encrypt ansible vault
+        encrypt_ansible_vault "${vaultfile}" > /dev/null
 
-    generate_idm_dm_pwd
+        generate_idm_dm_pwd
 
-
-
-
+   fi
 }
 
 function generate_idm_dm_pwd(){
@@ -93,13 +93,16 @@ function generate_idm_dm_pwd(){
     # This will not prompt the user
     #printf "%s\n" "  ${cyn}IDM directory manager password generation${end}"
     #printf "%s\n\n" "  ${cyn}*****************************************${end}"
-    idm_dm_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_dm_pwd:/ {print $2;exit}')
-    if [ "A${idm_dm_pwd}" == 'A""' ];
+    if $(which ansible-vault >/dev/null 2>&1)
     then
-        idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 12)
-        decrypt_ansible_vault "${vaultfile}" > /dev/null
-        sed -i "s/idm_dm_pwd: \"\"/idm_dm_pwd: "$idm_dm_pwd"/g" "${vaultfile}"
-        encrypt_ansible_vault "${vaultfile}" > /dev/null
+        idm_dm_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_dm_pwd:/ {print $2;exit}')
+        if [ "A${idm_dm_pwd}" == 'A""' ];
+        then
+            idm_dm_pwd=$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 12)
+            decrypt_ansible_vault "${vaultfile}" > /dev/null
+            sed -i "s/idm_dm_pwd: \"\"/idm_dm_pwd: "$idm_dm_pwd"/g" "${vaultfile}"
+            encrypt_ansible_vault "${vaultfile}" > /dev/null
+        fi
     fi
 }
 

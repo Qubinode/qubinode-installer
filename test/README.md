@@ -31,4 +31,3 @@ OKD3 - Origin Community Distribution  | NA  | NA
 Tower - Ansible Tower  | NA  | NA  
 Satellite - Red Hat Satellite Server  | NA  | NA  
 IdM - Red Hat Identity Management  | NA  | NA  
-S
