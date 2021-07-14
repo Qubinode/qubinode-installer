@@ -74,12 +74,16 @@ _Ansible_
 - [(RH294) Linux Automation with Ansible](https://www.redhat.com/en/services/training/rh294-red-hat-system-administration-iii-linux-automation)
 
 ## Contribute
+We value community and collaboration, therefore any contribution back to the project/community is always welcome. 
 * [Communications](docs/qubinode/communication.md)
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
 * [Qubinode WorkFlow Process](docs/CONTRIBUTING.md)  
 * [Testing and Validation](test/README.md)  
+
+## Ways to contribute
+We kindly ask you to open an issue if you find anything wrong and or something that can be improved during your usage of qubinode. If it's something that you're able to fix, please fork the project, apply your fix and submit a merge request, then we'll review and approve your merge request. Thank you for using qubinode we're looking forward to your contribution back to the project.
 
 ## Support
 If you have any direct questions, reach out to us [using the guide](docs/communication.md).
@@ -100,12 +104,6 @@ Cockpit Integration | In progress
 * Multinode Depolyment
 * Libvirt with KVM  OCP - (Experimental)
 * OpenWrt Router Support - (Experimental
-
-## Contributions
-We value community and collaboration, therefore any contribution back to the project/community is always welcome. 
-
-## Ways to contribute
-We kindly ask you to open an issue if you find anything wrong and or something that can be improved during your usage of qubinode. If it's something that you're able to fix, please fork the project, apply your fix and submit a merge request, then we'll review and approve your merge request. Thank you for using qubinode we're looking forward to your contribution back to the project.
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
