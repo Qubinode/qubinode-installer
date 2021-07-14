@@ -1,8 +1,16 @@
-# Qubinode Installer
-Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
+# What is Qubinode Installer?
+Qubinode-installer is an utility tool that facilates the quick deployment of an array of Red Hat products on a single piece of hardware by leveraging the [KVM](https://www.linux-kvm.org/page/Main_Page) hypervisor.
+
+The Qubinode utility deploys the following Red Hat products:
+* [Red Hat Openshift Container Platform](https://www.openshift.com/)
+* [Red Hat Identity Manager](https://developers.redhat.com/blog/2016/04/29/red-hat-identity-manager-part-1-overview-and-getting-started#:~:text=Red%20Hat%20Identity%20Manager%20(IdM,%22Active%20Directory%20for%20Linux%22.)
+* [Red Hat Satellite](https://www.redhat.com/en/technologies/management/satellite)
+
+# The benefits of using qubinode
+Qubinode provides a very cost effective way to quickly stand up a lab environment on a single piece of hardware. Your only cost would only be the procurement of the hardare itself. This is a cheaper approach than having to pay a license fee to use a type 1 hypervisor like VMWare/VSphere or having to pay a fee to use AWS EC2 instances.
 
 ## Motivation
-The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
+The primary focus of this project is make it easy for you to deploy an OpenShift cluster on a single bare metal node with production like characteristics.
 
 ## What is OpenShift?
 Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
@@ -96,7 +104,13 @@ Cockpit Integration | In progress
 * Disconnected Installaton
 * Multinode Depolyment
 * Libvirt with KVM  OCP - (Experimental)
-* OpenWrt Router Support - (Experimental)
+* OpenWrt Router Support - (Experimental
+
+## Contributions
+We value community and collaboration, therefore any contribution back to the project/community is always welcome. 
+
+## Ways to contribute
+We kindly ask you to open an issue if you find anything wrong and or something that can be improved during your usage of qubinode. If it's something that you're able to fix, please fork the project, apply your fix and submit a merge request, then we'll review and approve your merge request. Thank you for using qubinode we're looking forward to your contribution back to the project.
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
