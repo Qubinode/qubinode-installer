@@ -1,7 +1,7 @@
-# What is Qubinode Installer?
+## What is Qubinode Installer?
 Qubinode-installer is an utility tool that facilates the quick deployment of an array of Red Hat products like [Red Hat Openshift Container Platform](https://www.openshift.com/), [Red Hat Identity Manager](https://access.redhat.com/products/identity-management#getstarted), [Red Hat Satellite](https://www.redhat.com/en/technologies/management/satellite), etc.. on a single piece of hardware by leveraging the [KVM](https://www.linux-kvm.org/page/Main_Page) hypervisor.
 
-# The benefits of using qubinode
+## The benefits of using qubinode
 Qubinode provides a very cost effective way to quickly stand up a lab environment on a single piece of hardware. Your only cost would only be the procurement of the hardare itself. This is a cheaper approach than having to pay a license fee to use a type 1 hypervisor like VMWare/VSphere or having to pay a fee to use AWS EC2 instances.
 
 ## Motivation
