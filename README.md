@@ -1,64 +1,62 @@
 # Qubinode Installer
-Qubinode is a single baremetal node OpenShift cluster powered by Red Hat’s suite of hybrid cloud technologies.
-
-
-## Features in v2.3.1 Version
-
-New Feature |
--- |
-OpenShift 4.3 |
-Optimized Qubinode Menu  |
-OpenShift 4 menu option  |
-OpenShift 4 NFS storage  |
+Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
 
 ## Motivation
-Qubinode is for users wanting to stand up an OpenShift cluster in a secure and controlled environment with the flexibility to carry the cluster wherever you want. It is intended for those who need to simulate as close as possible a production type OpenShift cluster on a single bare metal node.
+The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
 
 ## What is OpenShift?
-* Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
-* OKD - The Origin Community Distribution of Kubernetes that powers Red Hat OpenShift.
+Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
 
-**The installer supports installing (OCP) or (OKD)**
- - Current state is the installer primarly supports deploying OKD 3.11.x, OCP 3.11.x, and OCP4 4.3 builds. Installing OCP3 or OCP4 will require a Red Hat subscription.
-
-## Requirements
+## Resource requirements for OpenShift cluster
 
 **Baremetal Hardware**
-* At least 32 GB of memory, 128 GB is recommended.
-* At least 300 GB SSD or NVME dedicated storage, 1TB is recomneded.
+* At least 32 GiB of memory, 128 GiB is recommended.
+* At least 300 GiB SSD or NVME dedicated storage, 1TB is recomneded.
 
-_[Recommend Hardware](docs/supported_hardware_coniguration.md)_
+The qubinode-installer can deploy a 3 node cluster on a system with 32GiB memory.
+For the best possible experince 128 GiB of memory is recommended. This will allow
+for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 7.7 installed
-
-**Subscriptions**
-
-_Required_
-* Red Hat Enteprise Linux [no-cost Red Hat Enterprise Linux Developer Subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/).
-
-_Optional_
-* For deploying Red Hat OpenShift Container Platform (OCP) you can obtain a [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
-
-## Installation
-
-We are working as best we can to have better documentation. Contributions are welcome.
-
-- [Installing OpenShift 4](docs/openshift4_installation_steps.md)
-- [Installing OpenShift 3](docs/openshift3_installation_steps.adoc)
-
-**Day Two Operations**
-- [OpenShift 3 - Environmental Health Checks](https://medium.com/@tcij1013/openshift-3-11-day-two-operations-environment-health-checks-62d9237c7483)
+* Red Hat Enteprise Linux 8.3 installed 
+Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
+The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
 ## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.3     | 2.6               | 2.3.1 |
+|     Release 2.4.5     | 2.9               | 2.4.5 |
 
+### Features in v2.4.5 Versionss
+
+New Features |
+-- |
+RHEL rhel-8.3-update-2-x86_64-kvm.qcow2 support |
+RHEL 8.3 Default support |
+OpenShift 4.7.x |
+OKD 4.7.0-0.okd-2021-02-25-144700 Support |
+Added Support for [jig](https://github.com/kenmoini/jig) |
+Force Static IP on IDM server |
+OCS Support on OpenShift 4.7.x |
+Ability to change OpenShift Versions on install |
+
+
+See [Release Document](docs/qubinode/releases.md) for features history.
+
+## Deploying a OpenShift cluster
+
+- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
+- [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
+
+**Workloads**
+- [Application Workloads to try](docs/qubinode/workloads/README.md)
+
+**Qubinode Documentation**
+- [Qubinode Overview](docs/README.md)
 
 ## Training
-* [Qubinode for Beginners](docs/beginners.adoc)
+* [Qubinode for Beginners](docs/beginners.md)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
@@ -73,24 +71,32 @@ _Ansible_
 - [(RH294) Linux Automation with Ansible](https://www.redhat.com/en/services/training/rh294-red-hat-system-administration-iii-linux-automation)
 
 ## Contribute
-* [Communications](docs/communication.adoc)
+* [Communications](docs/qubinode/communication.md)
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
-* [Qubinode WorkFlow Process](docs/qubinode_git_branching_model.adoc)  
+* [Qubinode WorkFlow Process](docs/CONTRIBUTING.md)  
 * [Testing and Validation](test/README.md)  
 
 ## Support
-If you need support, start with [the troubleshooting guide](docs/troubleshooting-monitoring.adoc)
-
-If you have any direct questions, reach out to us [using the guide](docs/communication.adoc).
+If you have any direct questions, reach out to us [using the guide](docs/communication.md).
 
 ## Known issues
 
+## Qubinode Dev Branch for next release
+Feature  |  Status
+--|---
+Red Hat Satellite Server  | In progress
+CNV Support | Dev
+Disconnected Instaltion | Dev  
+Cockpit Integration | In progress
+
 ## Roadmap
-* OCP 4.x Container Native Storage
-* OCP 4.x on RHEV
-* Ansible 2.9 Compatibility
+* CNV Installation 
+* Disconnected Installaton
+* Multinode Depolyment
+* Libvirt with KVM  OCP - (Experimental)
+* OpenWrt Router Support - (Experimental)
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)

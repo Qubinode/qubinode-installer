@@ -1,5 +1,6 @@
 #!/bin/bash
 
+{% if configure_ldap %}
 tower-cli setting modify AUTH_LDAP_SERVER_URI ldap://{{ idm_server_ip }}
 tower-cli setting modify AUTH_LDAP_BIND_DN uid=admin,cn=users,cn=accounts,dc=lunchnet,dc=example
 tower-cli setting modify AUTH_LDAP_BIND_PASSWORD {{ idm_admin_password }}
@@ -10,6 +11,7 @@ tower-cli setting modify AUTH_LDAP_GROUP_SEARCH "[u'cn=tower_users,cn=groups,cn=
 tower-cli setting modify AUTH_LDAP_GROUP_TYPE NestedMemberDNGroupType
 tower-cli setting modify AUTH_LDAP_REQUIRE_GROUP cn=tower_users,cn=groups,cn=accounts,dc=lunchnet,dc=example
 tower-cli setting modify AUTH_LDAP_USER_ATTR_MAP "{u'first_name': u'givenName', u'last_name': u'sn', u'email': u'mail'}"
+{% endif %}
 
 # Create a project
 tower-cli project create --name "{{ tower_project_name }}" --description "{{ tower_project_desc }}" --organization "{{ tower_org }}" --scm-type "{{ tower_scm_type }}" --scm-url "{{ tower_scm_url }}"

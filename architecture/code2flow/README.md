@@ -139,7 +139,7 @@ function are_openshift_nodes_available {
       Abort;
     }
   } else {
-    if(not correct number of masters) {
+    if(not correct number of ctrlplanes) {
       Abort;
     } else {
       build list of all nodes;

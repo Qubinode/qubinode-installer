@@ -18,6 +18,7 @@ function tower_variables () {
     IP=$(awk -v var="${tower_hostname}" '$0 ~ var {print $0}' "${project_dir}/inventory/hosts"|grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
     tower_license="${project_dir}/tower-license.txt"
 
+
     if [ -f "${tower_vars_file}" ]
     then
         subscription_name=$(awk -F'"' '/redhat_subscription_name:/ {print $2}' "${tower_vars_file}")
@@ -28,21 +29,11 @@ function tower_variables () {
     then
         TOWER_SERVER_DNS=$(dig +short -x "${TOWER_SERVER_IP}")
     fi
+
+    # Get python interpreter
+    #ansible_python_interpreter=$(awk '/ansible_python_interpreter:/ {print $2;exit}' "${vars_file}")
 }
 
-#function update_tower_ip () {
-#    tower_variables
-#    if [ "A${IP}" != "A" ]
-#    then
-#        if ! grep 'tower_server_ip:' "${tower_vars_file}" |grep -q $IP
-#        then
-#            sed -i "s/tower_server_ip:.*/tower_server_ip: "$IP"/g" "${tower_vars_file}"
-#        fi
-#    else
-#        echo "Could not find ip address for Tower server."
-#        exit 1
-#    fi
-#}
 
 function update_tower_password () {
     # Load variables
@@ -66,6 +57,15 @@ function update_tower_password () {
     # encrypt vault password
     encrypt_ansible_vault "${vault_vars_file}" >/dev/null
 }
+function state_check(){
+cat << EOF
+    ${yel}**************************************** ${end}
+    ${mag}Checking Machine for stale tower vm ${end}
+    ${yel}**************************************** ${end}
+EOF
+    clean_up_stale_vms tower
+}
+
 
 function deploy_tower_vm () {
     # Run some prechecks before deploying the VM
@@ -74,6 +74,9 @@ function deploy_tower_vm () {
 
     # Load variables
     tower_variables
+
+    # Check for stale vms 
+    state_check
 
     # Run playbook to build Tower VM
     ansible-playbook "${TOWER_VM_PLAYBOOK}" || exit $?
@@ -85,12 +88,15 @@ function deploy_tower () {
     # Load variables
     tower_variables
     update_tower_password
-    if [ ! -f "${tower_license}" ]
+
+    #if [ ! -f "${tower_license}" ]
+    #then
+    #    printf "%s\n" " ${red}Could not find tower-license.txt under${end} ${yel}${project_dir}${end}"
+    #    printf "%s\n" " ${blu}Please place file there and try again${end}"
+    #    exit 1
+    #else
+    if [ -f "${tower_license}" ]
     then
-        printf "%s\n" " ${red}Could not find tower-license.txt under${end} $yel}${project_dir}${end}"
-        printf "%s\n" " ${blu}Please place file there and try again${end}"
-        exit 1
-    else
         if ! grep -q eula_accepted "${tower_license}"
         then
             printf "%s\n" " Adding ${cyn}eula_accepted${end} to ${tower_license}"
@@ -148,6 +154,6 @@ function tower_install_msg () {
     printf "    Username: ${blu}$(whoami)${end} \n"
     printf "    Password: ${blu}the vault variable${end} ${yel}admin_user_password${end} \n\n"
     printf " To view your password run the below command.\n"
-    printf "       ${grn}ansible-vault edit ${project_dir}/playbooks/vars/vault.yml${end} \n"
+    printf "       ${grn}ansible-vault view ${project_dir}/playbooks/vars/vault.yml${end} \n"
     printf " ${cyn}*******************************************************************************${end}\n\n"
 }

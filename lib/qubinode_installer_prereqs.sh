@@ -10,7 +10,7 @@ function is_root () {
 function display_help() {
     setup_required_paths
     SCRIPT="$0"
-    cat < "${project_dir}/lib/docs/qubinode-menu-options.adoc"
+    cat < "${project_dir}/docs/qubinode/qubinode-menu-options.adoc"
 }
 
 # generic user choice menu
@@ -23,10 +23,10 @@ function createmenu () {
             if [ 1 -le "$REPLY" ] && [ "$REPLY" -le $(($#)) ]; then
                 break;
             else
-                echo "Please make a vaild selection (1-$#)."
+                echo "    ${blu}Please make a vaild selection (1-$#).${end}"
             fi
          else
-            echo "Please make a vaild selection (1-$#)."
+            echo "    ${blu}Please make a vaild selection (1-$#).${end}"
          fi
     done
 }
@@ -67,10 +67,10 @@ function check_for_dns () {
     record=$1
     if [ -f /usr/bin/dig ]
     then
-        resolvedIP=$(nslookup "$record" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
+      resolvedIP=$(dig +short "$record")
     elif [ -f /usr/bin/nslookup ]
     then
-        resolvedIP=$(dig +short "$record")
+        resolvedIP=$(nslookup "$record" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
     else
         printf "%s\n" " Can't find the dig or nslookup command, please resolved and run script again"
         exit 1
@@ -191,4 +191,3 @@ function rhelinsightscheck() {
   fi
 
 }
-

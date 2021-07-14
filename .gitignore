@@ -1,4 +1,6 @@
 ansible.log
+playbooks/collections/*
+!playbooks/collections/.gitkeep
 playbooks/roles/*
 !playbooks/roles/.gitkeep
 playbooks/vars/*
@@ -16,3 +18,16 @@ rhcos-install
 satellite-server-manifest.zip
 qubinode_profile.log
 issue.md
+python-env/
+release.txt
+requirements.txt
+Working/
+.rhel/
+json-processor
+ocp_token
+rhsm_token
+.python/
+*.qcow2
+*.iso
+.gitignore.dev
+.gitignore.master

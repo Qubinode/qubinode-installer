@@ -1,0 +1,163 @@
+- name: configure openshift IdM auth
+  hosts: localhost
+  become: no
+  gather_facts: no
+  vars_files:
+    - vars/all.yml
+    - vars/kvm_host.yml
+    - vars/vault.yml
+    - vars/idm.yml
+    - vars/ocp4.yml
+  vars:
+    all_groups: "{{ lookup('flattened', idm_users | json_query('[*].groups')) }}"
+    idm_group_users: []
+  environment:
+    IPA_HOST: "{{ ipa_host }}"
+    IPA_USER: "{{ idm_admin_user }}"
+    IPA_PASS: "{{ idm_admin_pwd }}"
+    IPA_TIMEOUT: 40
+
+  tasks:
+    - name: Generate IPA Session Cookie
+      vars:
+      uri:
+        url: "https://{{ idm_server_fqdn }}/ipa/session/login_password"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Accept: "text/plain"
+          Referer: "https://{{ idm_server_fqdn }}/ipa"
+        body: "user={{ user_idm_admin }}&password={{ user_idm_password }}"
+      register: ipa_session
+      run_once: true
+      when: not dns_teardown|bool
+      tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+
+    - name: create user accounts
+      vars:
+        idm_user_name: "{{ user_name_format | format(item|int) }}"
+      ipa_user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        givenname: "{{ item.givenname }}"
+        sn: "{{ item.sn }}"
+        state: "{{ item.state }}"
+        loginshell: "{{ item.loginshell }}"
+        krbpasswordexpiration: "{{ item.krbpasswordexpiration }}"
+        mail: "{{ item.mail }}"
+        telephonenumber: "{{ item.telephonenumber }}"
+        sshpubkey: "{{ item.sshpubkey }}"
+        update_password: "{{ item.update_password }}"
+        validate_certs: no
+      #no_log: True
+      loop: "{{ idm_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: ensure groups exist
+      ipa_group:
+        name: "{{ item.name }}"
+        state: "{{ idm_group_state }}"
+        nonposix: "{{ idm_group_type_posix }}"
+        description: "{{ item.desc }}"
+        validate_certs: no
+      loop: "{{ idm_groups }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: add users to IdM groups
+      uri:
+        url: "https://{{ idm_server_fqdn }}/ipa/session/json"
+        validate_certs: no
+        method: POST
+        status_code: 200
+        headers:
+          Cookie: "{{ ipa_session.set_cookie }}"
+          Accept: "application/json"
+          Referer: "https://{{ idm_server_fqdn }}/ipa"
+        body:
+          method: group_add_member
+          params:
+          - - "{{ item.1 }}"
+          - user: "{{ item.0.name }}"
+            no_members: false
+        body_format: json
+      loop: "{{ idm_users|subelements('groups') }}"
+      loop_control:
+        label: "{{ item.1 }}"
+
+
+    - name: create student accounts
+      when: create_student_accounts|bool
+      block:
+        - name: create {{ total_users }} auto generated users
+          vars:
+            idm_user_name: "{{ user_name_format | format(item|int) }}"
+          ipa_user:
+            name: "{{ idm_user_name }}"
+            password: "{{ idm_user_name }}"
+            givenname: "{{ idm_user_name }}"
+            sn: "{{ idm_user_sn }}"
+            state: "{{ idm_user_state }}"
+            loginshell: "{{ idm_user_shell }}"
+            krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+            mail: "{{ idm_user_email | default(omit) }}"
+            telephonenumber: "{{ idm_user_phone | default(omit) }}"
+            sshpubkey: "{{ idm_user_sshpubkey | default(omit) }}"
+            update_password: "{{ update_idm_user_pass }}"
+            validate_certs: no
+          #no_log: True
+          loop: "{{ range(0, total_users + 1)|list }}"
+
+        - name: build list of idm users
+          vars:
+            idm_user_name: "{{ user_name_format | format(item|int) }}"
+          set_fact:
+            idm_group_users: "{{ idm_group_users + [ idm_user_name ] }}"
+          loop: "{{ range(0, total_users + 1)|list }}"
+
+        - name: create IdM group {{ idm_group }}
+          ipa_group:
+            name: "{{ idm_group }}"
+            state: "{{ idm_group_state }}"
+            nonposix: "{{ idm_group_type_posix }}"
+            description: "{{ idm_group_desc }}"
+            validate_certs: no
+
+        - name: add users to IdM group {{ idm_group }}
+          uri:
+            url: "https://{{ idm_server_fqdn }}/ipa/session/json"
+            validate_certs: no
+            method: POST
+            status_code: 200
+            headers:
+              Cookie: "{{ ipa_session.set_cookie }}"
+              Accept: "application/json"
+              Referer: "https://{{ idm_server_fqdn }}/ipa"
+            body:
+              method: group_add_member
+              params:
+              - - "{{ idm_group }}"
+              - user: "{{ idm_group_users }}"
+                no_members: false
+            body_format: json
+
+        - name: add {{ idm_group }} to openshift-users
+          uri:
+            url: "https://{{ idm_server_fqdn }}/ipa/session/json"
+            validate_certs: no
+            method: POST
+            status_code: 200
+            headers:
+              Cookie: "{{ ipa_session.set_cookie }}"
+              Accept: "application/json"
+              Referer: "https://{{ idm_server_fqdn }}/ipa"
+            body:
+              method: group_add_member
+              params:
+              - - "openshift-users"
+              - group: "{{ idm_group }}"
+                no_members: false
+            body_format: json

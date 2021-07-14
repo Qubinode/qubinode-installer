@@ -1,17 +1,29 @@
-display_openshift_msg_ocp3 () {
+logo="
+      ██████  ██    ██ ██████  ██ ███    ██  ██████  ██████  ███████ 
+     ██    ██ ██    ██ ██   ██ ██ ████   ██ ██    ██ ██   ██ ██      
+     ██    ██ ██    ██ ██████  ██ ██ ██  ██ ██    ██ ██   ██ █████   
+     ██ ▄▄ ██ ██    ██ ██   ██ ██ ██  ██ ██ ██    ██ ██   ██ ██      
+      ██████   ██████  ██████  ██ ██   ████  ██████  ██████  ███████ 
+         ▀▀                                                          
+"
+
+
+
+display_openshift_msg_okd4 () {
+    printf "%s\n" "                  ${blu}$logo${end}"
     printf "%s\n" "  ${yel}****************************************************************************${end}"
-    printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 3 (OCP3)${txend}${end}"
-    printf "%s\n" "    Installing OCP3 requires a valid Red Hat subscription. If you do not have,"
-    printf "%s\n" "    one exit the install and choose OKD3 from the menu option. The size of the"
-    printf "%s\n" "    OCP3 cluster that gets deployed is based on your hardware profile."
-    printf "%s\n\n" "    Hardware profiles are defined as:"
-    display_hardware_profile_msg
+    printf "%s\n\n" "        ${cyn}${txb}OKD: The Origin Community Distribution of Kubernetes (OKD)${txend}${end}"
+    printf "%s\n" "    OKD is the Origin community distribution of Kubernetes optimized for "
+    printf "%s\n" "    continuous application development and multi-tenant deployment."
     printf "%s\n\n" "  ${yel}****************************************************************************${end}"
 
     confirm "  Do you want to proceed? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
-        qubinode_autoinstall_openshift
+        product_opt=okd4
+        ASK_SIZE=false
+        setup_download_options
+        qubinode_deploy_ocp4
     else
         display_other_options
     fi
@@ -25,19 +37,22 @@ display_hardware_profile_msg () {
 }
 
 display_openshift_msg_ocp4 () {
+    CHECK_PULL_SECRET=yes
+    printf "%s\n" "                  ${blu}$logo${end}"
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "        ${cyn}${txb}Red Hat Openshift Container Platform 4 (OCP4)${txend}${end}"
     printf "%s\n" "    The default product option is to install OCP4. The deployment consists of"
-    printf "%s\n" "    3 masters and 2 computes. The ${txb}standard hardware profile is the minimum${txend}"
-    printf "%s\n" "    hardware profile required for the installation. In addition to meeting the"
-    printf "%s\n" "    minimum hardware profile requirement, the installation requires a valid"
-    printf "%s\n" "    pull-secret. If you are unable to obtain a pull-secret, exit the install"
-    printf "%s\n\n" "    and choose OKD3 from the menu option."
-    printf "%s\n" "    Hardware profiles are defined as:"
-    display_hardware_profile_msg
+    printf "%s\n" "    ${cyn}3 ctrlplane${end} and ${cyn}3 computes${end}. It requires a minimum of ${cyn}96 Gib${end} memory and${cyn} 8 cores${end}."
+    printf "%s\n" "    Each node is deployed with ${cyn}16 Gib${end} memory and ${cyn}4 vCPUs${end} with NFS for persistent"
+    printf "%s\n" "    storage. If you don't meet these requirements exit the install and run"
+    printf "%s\n\n" "    ${cyn}./qubinode-installer -p ocp4${end} for options to deploy a smaller cluster."
+
+    printf "%s\n" "    The installer also requires your OpenShift pull-secret. Please refer to"
+    printf "%s\n\n" "    the documentation for info on obtaining your pull secret."
+    #display_hardware_profile_msg
     printf "%s\n\n" "  ${yel}****************************************************************************${end}"
 
-    default_message=("Continue with the default installation" "Display other options")
+    default_message=("Continue with the default installation" "Display other options" "Exit")
     createmenu "${default_message[@]}"
     result=($(echo "${selected_option}"))
     if [ "A${result}" == "ADisplay" ]
@@ -45,15 +60,17 @@ display_openshift_msg_ocp4 () {
         display_other_options
     elif [ "A${result}" == "AContinue" ]
     then
-        qubinode_autoinstall_openshift4
-        #confirm "  Proceed with ocp4 install? yes/no"
-        #if [ "A${response}" == "Ayes" ]
-        #then
-        #    echo qubinode_autoinstall_openshift4
-        #    #openshift4_enterprise_deployment
-        #else
-        #    display_other_options
-        #fi
+        ASK_SIZE=false
+        setup_download_options
+        qubinode_deploy_ocp4
+    elif [ "A${result}" == "AExit" ]
+    then
+        PID=$(ps -A -o pid,cmd|grep qubinode-firstboot.sh | grep -v grep |head -n 1 | awk '{print $1}')
+        if [ "A${PID}" != "A" ]
+        then
+             (kill -13 $PID 2>/dev/null)
+        fi
+        exit 0
     else
         print "%s\n" " ${red}Unknown issue, please run the installer again${end}"
     fi
@@ -62,9 +79,9 @@ display_openshift_msg_ocp4 () {
 
 display_other_options () {
     printf "%s\n\n" ""
+    other_options=("OKD4 - ${cyn}Origin Community Distribution${end}" "Tower - ${cyn}Ansible Tower${end}" "IdM - ${cyn}Red Hat Identity Management${end}" "Display the help menu" "Exit the menu")
     #other_options=("${cyn}OCP4${end} - OpenShift 4" "${cyn}OKD3${end} - Origin Community Distribution" "${cyn}Tower${end} - Ansible Tower" "${cyn}Satellite${end} - Red Hat Satellite Server" "${cyn}IdM${end} - Red Hat Identity Management" "${cyn}Display the help menu${end}")
 
-    other_options=("OCP3 - OpenShift 3" "OKD3 - Origin Community Distribution" "Tower - Ansible Tower" "Satellite - Red Hat Satellite Server" "IdM - Red Hat Identity Management" "Display the help menu")
 
     createmenu "${other_options[@]}"
     result=($(echo "${selected_option}"))
@@ -72,21 +89,32 @@ display_other_options () {
     if [ "A${result}" == "ADisplay" ]
     then
         display_help
-    elif [ "A${result}" == "AOCP3" ]
+    elif [ "A${result}" == "AExit" ]
     then
-        display_openshift_msg_ocp3
-        qubinode_autoinstall_openshift
-    elif [ "A${result}" == "AOKD3" ]
+        exit 0
+    elif [ "A${result}" == "AOKD4" ]
     then
-        echo "Not implemented yet!"
+        display_openshift_msg_okd4
     elif [ "A${result}" == "ATower" ]
     then
-        qubinode_deploy_tower
-    elif [ "A${result}" == "ASatellite" ]
-    then
-        qubinode_deploy_satellite
+        printf "%s\n" "                  ${blu}$logo${end}"
+        printf "%s\n" "        ${yel}********************************************${end}"
+        printf "%s\n" "        ${cyn}${txb}Install Red Hat Ansible Tower${txend}${end}"
+        printf "%s\n\n" "        ${yel}*******************************************${end}"
+        confirm "  Do you want to proceed? yes/no"
+        if [ "A${response}" == "Ayes" ]
+        then
+            CHECK_PULL_SECRET=no
+            setup_download_options
+            download_files
+            qubinode_deploy_tower
+        else
+            display_other_options
+        fi
     elif [ "A${result}" == "AIdM" ]
     then
+        CHECK_PULL_SECRET=no
+        setup_download_options
         qubinode_deploy_idm
     else
         echo "Unknown issue, please run the installer again"

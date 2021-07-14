@@ -2,11 +2,11 @@ apiVersion: v1
 baseDomain: lab.example
 compute:
 - hyperthreading: Enabled
-  name: worker
+  name: compute
   replicas: 2
 controlPlane:
   hyperthreading: Enabled
-  name: master
+  name: ctrlplane
   replicas: 3
 metadata:
   name: ocp4

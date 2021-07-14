@@ -1,7 +1,7 @@
 ---
 ######################################
 #         USER VARIABLES             #
-# The are autojatically updated or   #
+# The are automatically updated or   #
 # you can update them manually       #
 ######################################
 inventory_dir: ""
@@ -9,12 +9,11 @@ project_dir: ""
 admin_user: ""
 domain: ""
 
+# RHEL Version
+rhel_version: ""
+
 # PTR - The PTR record that should be use
 qubinode_ptr: changeme.in-addr.arpa
-
-# Set this to false if the host is already setup to function as a KVM host
-# Set to true if this box needs to be setup as a KVM host.
-run_qubinode_setup: ""
 
 # Public DNS server
 dns_forwarder: ""
@@ -23,41 +22,27 @@ dns_forwarder: ""
 # whether to use username/pass or RHSM
 rhsm_reg_method: ""
 
-
-
 ######################################
 #         SYSTEM VARIABLES           #
 # You shouldn't need to change these #
 ######################################
 
-# RHEL 7.7 is the current tested RHEL 7 minor release.
-# RHEL 7.6 was also tested and may work if you need to stay at 7.6
-rhel_release: 7.7
-
-# Ansible 2.6 is current working version
-# Ansible 2.7 is the current tested version.
-# Ansible 2.8 is currently being tested.
-ansible_repo: rhel-7-server-ansible-2.6-rpms
-ansible_version: 2.6.20
-ansible_release: 2.6
-ansible_rpm: ansible-2.6.20-1.el7ae.noarch
-
-# We leverage a bridge network for OCP3 installs
-# and other VMS. This sets the name of the bridge to be created and use when
-# deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
-qubinode_bridge_name: qubibr0
+# Ansible 2.6 is rhel-7-server-ansible-2.6-rpms
+# Ansible 2.9 on rhel 7  rhel-7-server-ansible-2.9-rpms
+rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
+rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
+ansible_version: 2.9.10
+ansible_release: 2.9
+rhel8_version: 8.3
+rhel7_version: 7.8
 
 # All VMs created name will begin with this prefix.
 instance_prefix: qbn
 preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
 
-# should a bridge interface be created
-configure_bridge: true
-
-# Set to no prevent the installer from attempting
-# setup a LVM group for qubinode. Also set this to no
-# if you already have you storage for lvm setup
-create_lvm: yes
+# Cluster name
+# This should be moved since this is now defined in the ocp* vars file
+#cluster_name: qbn
 
 vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
 update_inventory: true
@@ -75,17 +60,18 @@ dns_servers:
 
 public_domain: "{{ domain }}"
 
+## When this var is set to true and the host gets it's ip address from
+## dhcp. It was take that IP address and configure the host to use static
+## ip address assignment. It's recommended that you create a DHCP reservation
+## for this host to ensure the DHCP lease does not expire and get consume by
+## another host on the network.
+convert_dhcp_to_static: true
+
 qubinode_installer_setup_completed: no
 qubinode_installer_rhsm_completed: no
+user_input_complete: no
 qubinode_installer_ansible_completed: no
-qubinode_installer_host_completed: no
 qubinode_base_reqs_completed: no
-
-# use by funciton check_hardware_resources
-libvirt_pool_name: default
-
-# Ensure VMs are always using static IP even when DHCP issued
-static_ip: true
 
 # ROLE: swygue-redhat-subscription
 rhsm_org: "{{ rhsm_org }}"
@@ -98,15 +84,18 @@ org_id: "{{ rhsm_org }}"
 
 # ROLE: swygue.edge_host_setup role
 # the user that will admin the system
-ssh_username: "{{ admin_user }}"
+ssh_username: "{{ admin_user }}" # this var has been deprecated and should be removed
 
 # ROLE: deploy-kvm-vm
 #--------------------
-# name of the libvirt network to use
-vm_libvirt_net: "qubinet"
 # Use to create VM
-# Red Hat Enterprise Linux 7.7 Update KVM Guest Image (20191016)
-os_qcow_image_name: rhel-server-7.7-update-2-x86_64-kvm.qcow2
+# Red Hat Enterprise Linux 7.8 KVM Guest Image
+qcow_rhel7_name: rhel-server-7.8-x86_64-kvm.qcow2
+qcow_rhel8_name: rhel-8.3-update-2-x86_64-kvm.qcow2
+os_qcow_image_name: "{{ qcow_rhel8_name }}"
+qcow_rhel7u8_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
+qcow_rhel8u2_checksum: 055d6fa91f0ad42556325b8ea1ff1950876bef18e164dc964f7cd4431fa294d8
+
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 
 # setting this to true will result is no VMs being created and any existing vms to be deleted
@@ -126,15 +115,8 @@ logical_volumes:
 
 
 #################################
-# KVM host / Qubinode variables #
+#   Virtual Machines Variables  #
 #################################
-
-# set path to libvirt images
-kvm_host_libvirt_dir: /var/lib/libvirt/images
-host_device: "{{ kvm_host_libvirt_extra_disk | default('nvme0n1') }}"
-vg_name: vg_qubi
-vm_libvirt_net_check: yes
-libvirt_pool_name_check: yes
 
 # Hardware profiles
 qubinode_minimal_memory: 30
@@ -149,55 +131,56 @@ qubinode_performance_storage: 1340 # actual is 1340
 # your system profile
 storage_profile: ""
 memory_profile: ""
+ocp_cluster_size: ""
+warn_storage_profile: yes
+
 
 ###########################################
 # variables for swygue.edge_host_setup role
 
 
-# This is required for OpenShift 4
-# TODO: the codebase needs to up to look for this
-# variable under playbooks/var/ocp4.yml
-cluster_name: ocp42
-
 nat_network_name: "{{ cluster_name }}"
-libvirt_host_networks:
-  - name: "{{ nat_network_name }}"
-    create: true
-    mode: nat
-    int_domain: compute.local
-    external_domain: "{{ public_domain }}"
-    mac_start: "52:54:00:"
-    master_count: 3
-    compute_count: 2
-    subnet: "192.168.50.0"
-    gateway: "192.168.50.1"
-    mask: "255.255.255.0"
-  - name: "{{ vm_libvirt_net }}"
-    create: true
-    mode: bridge
-    bridge_device: "{{ kvm_host_bridge_name | default(qubinode_bridge_name) }}"
-    ifcfg_type: "{{ kvm_bridge_type }}"
-    ifcfg_bootproto: "{{ kvm_host_bootproto }}"
-    bridge_slave_dev: "{{ kvm_host_interface }}"
-    gateway: "{{ kvm_host_gw }}"
-    mask_prefix: "{{ kvm_host_mask_prefix }}"
-    ipaddress: "{{ kvm_host_ip }}"
-    mask: "{{ kvm_host_netmask }}"
-    mac: "{{ kvm_host_macaddr }}"
 
 #This is for KVM host initial setup of /etc/resolv.conf
 kvm_host_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
-kvm_host_ip: ""
-kvm_host_interface: ""
-kvm_host_gw: ""
-kvm_host_netmask: ""
-kvm_host_macaddr: ""
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
-kvm_host_mask_prefix: ""
 kvm_host_domain: "{{ domain }}"
 
-libvirt_pkgs:
+libvirt_pkgs_8:
+   - virt-install
+   - libvirt-daemon-config-network
+   - libvirt-daemon-kvm
+   - libguestfs-tools
+   - libvirt-client
+   - qemu-kvm
+   - nfs-utils
+   - libvirt-daemon
+   - libvirt-client
+   - virt-top
+   - tuned
+   - openssh-server
+   - wget
+   - git
+   - net-tools
+   - bind-utils
+   - yum-utils
+   - iptables-services
+   - bash-completion
+   - kexec-tools
+   - sos
+   - psacct
+   - vim
+   - device-mapper-event-libs
+   - device-mapper-libs
+   - httpd-tools
+   - java-1.8.0-openjdk-devel.x86_64
+   - tmux
+   - python3-dns
+   - python3-lxml
+   - cockpit-machines
+
+libvirt_pkgs_7:
    - virt-install
    - libvirt-daemon-config-network
    - libvirt-daemon-kvm
@@ -230,9 +213,6 @@ libvirt_pkgs:
    - tmux
    - python-dns
 
-# used in playbook setup_kvmhost.yml
-network_interface_name: "{{ kvm_host_interface }}"
-
 ###########################
 # General Networking Info #
 ###########################
@@ -260,5 +240,5 @@ qubi_required_pkgs: |
    cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
    cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
    wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
-   bash-completion, kexec-tools, sos, psacct, vim, ansible,
+   bash-completion, kexec-tools, sos, psacct, vim, ansible, lm_sensors, cargo,
    pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch,  python-netaddr"

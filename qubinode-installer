@@ -9,6 +9,7 @@ yel=$'\e[1;33m'
 blu=$'\e[1;34m'
 mag=$'\e[1;35m'
 cyn=$'\e[1;36m'
+def=$'\e[1;49m'
 end=$'\e[0m'
 
 # define formatting
@@ -38,6 +39,13 @@ function config_err_msg () {
 EOH
 }
 
+function report_error () {
+   printf "%s\n" "  Error in $3 return code $1 detected on line $(caller)"
+}
+
+# Uncheck to enable debugging
+#trap 'report_error $? $LINENO ${FUNCNAME[0]}' ERR
+
 # this function just make sure the script
 # knows the full path to the project directory
 # and runs the config_err_msg if it can't determine
@@ -60,30 +68,27 @@ function setup_required_paths () {
 # load pre functions
 teardown="false"
 CURRENT_USER=$(whoami)
+CHECK_PULL_SECRET=no
 setup_required_paths
+rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 
 # Include all required functions
-source "${project_dir}/lib/qubinode_menu_welcome.sh"
-source "${project_dir}/lib/qubinode_installer_prereqs.sh"
-source "${project_dir}/lib/qubinode_utils.sh"
-source "${project_dir}/lib/qubinode_menu_options.sh"
-source "${project_dir}/lib/qubinode_requirements.sh"
-#source "${project_dir}/lib/01_product_functions.sh"
-source "${project_dir}/lib/setup_sudo.sh"
-source "${project_dir}/lib/qubinode_setup.sh"
-source "${project_dir}/lib/qubinode_userinput.sh"
-source "${project_dir}/lib/qubinode_kvmhost.sh"
-source "${project_dir}/lib/qubinode_idm.sh"
-source "${project_dir}/lib/qubinode_ansible.sh"
-source "${project_dir}/lib/qubinode_rhsm.sh"
-source "${project_dir}/lib/qubinode_openshift3_utils.sh"
-source "${project_dir}/lib/qubinode_openshift3.sh"
-source "${project_dir}/lib/qubinode_ocp4.sh"
-source "${project_dir}/lib/qubinode_ocp4_utils.sh"
-source "${project_dir}/lib/qubinode_hardware_check.sh"
-source "${project_dir}/lib/qubinode_openshift3_powermgt.sh"
-source "${project_dir}/lib/qubinode_satellite.sh"
-source "${project_dir}/lib/qubinode_tower.sh"
+. "${project_dir}/lib/qubinode_menu_options.sh"
+. "${project_dir}/lib/qubinode_menu_welcome.sh"
+. "${project_dir}/lib/qubinode_installer_prereqs.sh"
+. "${project_dir}/lib/qubinode_utils.sh"
+. "${project_dir}/lib/setup_sudo.sh"
+. "${project_dir}/lib/qubinode_userinput.sh"
+. "${project_dir}/lib/qubinode_kvmhost.sh"
+. "${project_dir}/lib/qubinode_requirements.sh"
+. "${project_dir}/lib/qubinode_idm.sh"
+. "${project_dir}/lib/qubinode_ansible.sh"
+. "${project_dir}/lib/qubinode_rhsm.sh"
+. "${project_dir}/lib/qubinode_ocp4_utils.sh"
+. "${project_dir}/lib/qubinode_ocp4.sh"
+. "${project_dir}/lib/qubinode_satellite.sh"
+. "${project_dir}/lib/qubinode_tower.sh"
+. "${project_dir}/lib/qubinode_rhel.sh"
 
 
 # Exit if this is executed as the root user
@@ -103,6 +108,7 @@ do
     case $opt in
         a) check_args;
            full_deploy=true
+           product_options+=("$OPTARG")
            ;;
         c) check_args
            check=true
@@ -150,10 +156,27 @@ then
     qubinode_product_deployment $qubinode_product_opt
 elif [ "A${qubinode_maintenance}" == "Atrue" ]
 then
+    ## run a product maintenace option
     qubinode_maintenance_options
 elif [ "A${qubinode_product}" == "Atrue" ]
 then
-    check_for_rhel_qcow_image
+    ## Deploys a product ##
+
+    # Check if qubinode setup was executed
+    kvmhost_vars="${project_dir}/playbooks/vars/kvm_host.yml"
+    if [ -f ${kvmhost_vars} ]
+    then
+        IS_QUBINODE_SETUP=$(awk '/^qubinode_installer_host_completed:/ {print $2}' "${kvmhost_vars}")
+    else
+        IS_QUBINODE_SETUP=no
+    fi
+
+    # Exit if qubinode setup was not completed
+    if [ "A${IS_QUBINODE_SETUP}" == "Ano" ]
+    then
+        printf "%s\n" " You must run './qubinode_installer -m setup' before you can deploy a product. "
+        exit 1
+    fi
     qubinode_product_deployment $qubinode_product_opt
 else
     display_help

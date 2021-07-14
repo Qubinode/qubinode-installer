@@ -11,13 +11,23 @@ function ensure_supported_ansible_version () {
     CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
-    AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+
+    if [[ $RHEL_VERSION == "RHEL8" ]]; then
+        AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+        AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+    fi
 
     if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
     then
         if [ "A${AVAILABLE_VERSION}" != "A" ]
         then
-            sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+            if [[ $RHEL_VERSION == "RHEL8" ]]; then
+                sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
+            elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+                sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+            fi
         else
             printf "%s\n" " Could not find any available version of ansible greater than the"
             printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
@@ -33,11 +43,12 @@ function ensure_supported_ansible_version () {
     fi
 }
 
-
 function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
     HAS_SUDO=$(has_sudo)
+    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+
     if [ "A${HAS_SUDO}" == "Ano_sudo" ]
     then
         printf "%s\n" " ${red}You do not have sudo access${end}"
@@ -51,21 +62,42 @@ function qubinode_setup_ansible () {
     fi
 
     # install python
-    if [ ! -f /usr/bin/python ];
+    if [[ $RHEL_VERSION == "RHEL8" ]]
     then
-       printf "%s\n" " Installing python.."
-       sudo yum clean all > /dev/null 2>&1
-       sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns
+        if [ ! -f /usr/bin/python3 ]
+        then
+            sudo subscription-manager repos --enable="rhel-8-for-x86_64-baseos-rpms" > /dev/null 2>&1
+            sudo subscription-manager repos --enable="rhel-8-for-x86_64-appstream-rpms" > /dev/null 2>&1
+            printf "%s\n" "   ${yel}Installing required python rpms..${end}"
+            sudo dnf clean all > /dev/null 2>&1
+            sudo rm -r /var/cache/dnf
+            sudo yum install -y -q -e 0 python3 python3-pip python3-dns bc bind-utils> /dev/null 2>&1
+	    sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
+	fi
+    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+        if [ ! -f /usr/bin/python ]
+        then
+            printf "%s\n" "   ${yel}Installing required python rpms..${end}"
+            sudo yum clean all > /dev/null 2>&1
+            sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns  bc bind-utils
+	    #sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python/g" "${vars_file}"
+        fi
     else
        PYTHON=yes
-       #printf "%s\n" " python is installed"
     fi
+
+    # Update system
+    printf "%s\n" "   ${yel}Updating system...${end}"
+    sudo yum update -y --allowerasing > /dev/null 2>&1
 
     # install ansible
     if [ ! -f /usr/bin/ansible ];
     then
-
-       ANSIBLE_REPO=$(awk '/ansible_repo:/ {print $2}' "${vars_file}")
+      if [[ $RHEL_VERSION == "RHEL8" ]]; then
+        ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
+      elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+        ANSIBLE_REPO=$(awk '/rhel7_ansible_repo:/ {print $2}' "${vars_file}")
+      fi
        CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
        # check to make sure the support ansible repo is enabled
        if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
@@ -73,8 +105,13 @@ function qubinode_setup_ansible () {
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
            sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
        fi
-       sudo yum clean all > /dev/null 2>&1
-       sudo yum install -y -q -e 0 ansible git
+       if [[ $RHEL_VERSION == "RHEL8" ]]; then
+            sudo dnf clean all > /dev/null 2>&1
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils
+        elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+            sudo yum clean all > /dev/null 2>&1
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils
+        fi
        ensure_supported_ansible_version
     else
        ensure_supported_ansible_version
@@ -91,20 +128,39 @@ function qubinode_setup_ansible () {
         fi
 
         #if cat "${vaultfile}" | grep -q VAULT
-        if ! ansible-vault view "${vaultfile}" > /dev/null
+        if ! ansible-vault view "${vaultfile}" >/dev/null 2>&1
         then
             #printf "%s\n" " Encrypting ${vaultfile}"
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi
 
+	# use the ansible requirements file that matches the current branch
+	branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
+	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
+	if [ "A${branch}" != "A" ]
+	then
+	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
+	    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
+
+	    # create a matching branch requirements file if one does not exist
+	    if [ ! -f "$ANSIBLE_REQUIREMENTS_FILE" ]
+      then
+          cp $DEFAULT_ANSIBLE_REQUIREMENTS_FILE $ANSIBLE_REQUIREMENTS_BRANCH_FILE
+		      #revert changes made to the default requirements file
+		      git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
+	    fi
+	else
+	    ANSIBLE_REQUIREMENTS_FILE="${DEFAULT_ANSIBLE_REQUIREMENTS_FILE}"
+	fi
+
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
             printf "%s\n" " Downloading required roles overwriting existing"
-            ansible-galaxy install --force -r "${project_dir}/playbooks/requirements.yml" || exit $?
+            ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " Downloading required roles"
-            ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
+            ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 
         # Ensure required modules are downloaded
@@ -113,7 +169,7 @@ function qubinode_setup_ansible () {
             test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
             CURRENT_DIR=$(pwd)
             cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
+            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
             cd "${CURRENT_DIR}"
         fi
     else
@@ -129,21 +185,22 @@ function qubinode_setup_ansible () {
 }
 
 function decrypt_ansible_vault () {
-    vaulted_file="$1"
-    grep -q VAULT "${vaulted_file}"
+    vaultfile="${project_dir}/playbooks/vars/vault.yml"
+    grep -q VAULT "${vault_vars_file}"
     if [ "A$?" == "A0" ]
     then
         cd "${project_dir}/"
-        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaulted_file}"
+        test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaultfile}"
         ansible_encrypt=yes
     fi
 }
 
 function encrypt_ansible_vault () {
-    vaulted_file="$1"
-    if [ "A${ansible_encrypt}" == "Ayes" ]
+    vaultfile="${project_dir}/playbooks/vars/vault.yml"
+    grep -q VAULT "${vaultfile}"
+    if [ "A$?" != "A0" ]
     then
         cd "${project_dir}/"
-        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaulted_file}"
+        test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
     fi
 }
