@@ -63,6 +63,7 @@ function openshift4_variables () {
 
     # OCP nodes vairiables
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
     min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
@@ -72,7 +73,14 @@ function openshift4_variables () {
     ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
     ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${product_samples_vars_file}")
     ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
-    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)
+    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)  
+}
+
+function get_latest_ocp_minor_release () {
+    local ocp_mirror="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable"
+    ocp_release=$(awk '/^ocp4_ystream_release:/ {print $2}' "${product_samples_vars_file}")
+    ocp_minor_release=$(curl -k --silent ${ocp_mirror}-${ocp_release}/release.txt | awk '/Version:/ {print $2}')
+    sed -i "s/^ocp4_auto_updated_release:.*/ocp4_auto_updated_release: $ocp_minor_release/g" "${ocp_vars_file}"
 }
 
 function check_for_pull_secret () {
@@ -285,6 +293,7 @@ function configure_local_storage () {
     storage_type=block
     set_local_volume_type
 	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
+    ask_to_use_external_bridge
 	openshift4_standard_desc
 }
 
@@ -294,23 +303,21 @@ function configure_ocs_storage_size () {
     #reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
-    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
-    vdb_size="${vdb:-10}"
-    compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
-    confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 300: ${end} " ocs_size
+    ocs_storage_size="${ocs_size:-300}"
+    final_ocs_storage_size=$(echo ${ocs_storage_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$final_ocs_storage_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
-        sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
-        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/compute_ocs_size:.*/compute_ocs_size: "$final_ocs_storage_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
-        printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
+        printf "%s\n\n" "    ${def}The size OSC Storage is now set to${end} ${yel}${final_ocs_storage_size}G Per Node${end}"
     fi
 
     storage_type=block
     set_local_volume_type
 
     printf "%s\n\n" ""
-	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
 }
 
 function set_local_volume_type () {
@@ -337,6 +344,36 @@ function ask_to_use_external_bridge () {
         if [ "A${response}" == "Ayes" ]
         then
             sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
+            ocp_kvm_ip_option=$(awk '/^kvm_host_ip:/ {print $2; exit}' "${kvm_host_vars_file}")
+            echo "KVM IP ADDRESS: ${ocp_kvm_ip_option}"
+            network_subnet=$(awk -F"." '{print $1"."$2"."$3".0"}'<<<$ocp_kvm_ip_option)
+            echo $network_subnet
+            sed -i "s/ocp4_subnet:.*/ocp4_subnet: \"${network_subnet}\"/g" ${ocp_vars_file}
+            # Get API octect infomation
+            node_octect=`echo ${ocp_kvm_ip_option} | cut -d . -f 4`
+            sed -i "s/api_int_octet:.*/api_int_octet: ${node_octect}/g" ${ocp_vars_file}
+            sed -i "s/api_octet:.*/api_octet: ${node_octect}/g" ${ocp_vars_file}
+            # get bootstrap ip and octect
+            read -p "     ${def}Enter the ip octet for bootstrap vm: ${end} " bootstrap_octect
+            boot_octect="${bootstrap_octect:-10}"
+            sed -i "s/bootstrap_octet:.*/bootstrap_octet: ${boot_octect}/g" ${ocp_vars_file}
+            bootstrap_ip_address=$(awk -F"." '{print $1"."$2"."$3".'${boot_octect}'"}'<<<$ocp_kvm_ip_option)
+            sed -i "s/bootstrap_node_ip:.*/bootstrap_node_ip: \"${bootstrap_ip_address}\"/g" ${ocp_vars_file}
+            # Get control plane octect
+            read -p "     ${def}Enter the starting ip octet for control plane vms: ${end} " control_plane_octect
+            ctl_octect="${control_plane_octect:-20}"
+            sed -i "s/ctrlplane_ip_octet:.*/ctrlplane_ip_octet: ${ctl_octect}/g" ${ocp_vars_file}
+            # Get Comupte node octect info
+            read -p "     ${def}Enter the starting ip octet for compute vms: ${end} " compute_node_octect
+            compute_octect="${compute_node_octect:-30}"
+            sed -i "s/compute_ip_octet:.*/compute_ip_octet: ${compute_octect}/g" ${ocp_vars_file}
+            # Get storage octect ino
+            # read -p "     ${def}Enter the starting ip octet for storage vms: ${end} " storage_node_octect
+            # storage_octect="${storage_node_octect:-40}"
+            # sed -i "s/storage_ip_octet:.*/storage_ip_octet: \"${storage_octect}\"/g" ${ocp_vars_file}
+            ###
+            ## Add test to detect if ips are in use
+            ###
         else
             sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
         fi
@@ -358,6 +395,7 @@ function confirm_minimal_deployment () {
         MSG2="The nodes functions as both control and computes."
     fi
 
+    ask_to_use_external_bridge
     openshift4_minimal_desc4
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"
@@ -1141,6 +1179,17 @@ openshift4_server_maintenance () {
                 echo "/usr/local/bin/qubinode-ocp4-status not found"
             fi
             ;;
+       rebuild)
+            printf "%s\n" "    ${blu}This will delete and redeploy the current cluster.${end}"
+            ASK_SIZE=false
+            openshift4_qubinode_rebuild
+            confirm "Do you want to deploy a different size cluster? ${green}yes/no${end}"
+            if [ "${response}" == "yes" ]
+            then
+                ASK_SIZE=true
+            fi
+            qubinode_deploy_ocp4
+            ;;
        setup)
             qubinode_ocp4_setup
             ;;
@@ -1153,6 +1202,71 @@ openshift4_server_maintenance () {
        storage)
 	   configure_storage "${storage_option}"
 	    ;;
+       rm-rhcos)
+            printf "%s\n" "    ${blu}This will delete the current cluster${end}"
+            openshift4_qubinode_rebuild
+            ;;
+       tools)
+           printf "%s\n" "    ${blu}Downloading OpenShift Client Tools${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools
+	   ;;
+       ignitions)
+           printf "%s\n" "    ${blu}Generating OpenShift node ignitions${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
+	   ;;
+       rhcos)
+	   local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,ignitions,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ;;
+       rhcos-mirror)
+	   if [ ! -f /usr/local/bin/filetranspile ]
+           then
+	       local current_dir=$(pwd)
+	       mkdir /tmp/filetranspile
+	       cd /tmp/filetranspile
+	       git clone https://github.com/ashcrow/filetranspiler.git
+	       sudo cp filetranspile/filetranspile /usr/local/bin
+	       sudo chmod +x /usr/local/bin/filetranspile
+	       cd $current_dir
+	   fi
+	   local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
+	   local install_dir="${project_dir}/ocp4"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
+cat << EOF > /tmp/etc-hosts-sinkhole
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+10.10.10.11 quay.io cloud.openshift.com registry.connect.redhat.com registry.redhat.io
+EOF
+
+           ignitions="bootstrap worker master"
+	   sudo chown -R admin.admin "${install_dir}"
+           for name in $(echo "$ignitions")
+           do
+               mkdir "${install_dir}/${name}/etc" -p
+               cp /tmp/etc-hosts-sinkhole "${install_dir}/${name}/etc/hosts"
+               mv "${install_dir}/${name}.ign" "${install_dir}/${name}.ign.back"
+               filetranspile  -i "${install_dir}/${name}.ign.back" -f "${install_dir}/${name}" -o "${install_dir}/${name}.ign"
+               rm -rvf "${install_dir}/${name}"
+               rm -rvf "${install_dir}/${name}.ign.back"
+           done
+
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ansible-playbook "${deploy_product_playbook}" -t bootstrap_cluster -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes"
+	   ansible-playbook "${deploy_product_playbook}" -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
+
+
+	   ;;
+       bootstrap)
+           printf "%s\n" "    ${blu}Bootstrap the OpenShift cluster${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t generate_inventory,ocp4_nodes,bootstrap
+	   ;;
        *)
            echo "${product_maintenance} Not a valid -m option. Options are:"
 	   echo "setup, storage, add-compute, remove-compute, status, startup, shutdown, smoketest, diag"

@@ -7,20 +7,29 @@ installation_working_dir: "{{ project_dir }}"
 
 # Required Files
 pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+generated_pull_secret: "{{ installation_working_dir }}/generated_pullsecret.json"
 
 # OpenShift/OKD Version
+
+## Uncomment this and specify the release you want
+#ocp4_user_wanted_release: ""
+ocp4_auto_updated_release: ""
 ocp4_okd4: ocp4
 ocp4_ystream_release: 4.7
-ocp4_release: 4.7.0
-ocp4_image: 4.7.0
+ocp4_release: "{{ ocp4_user_wanted_release | default(ocp4_auto_updated_release) }}"
+ocp4_image: "{{ ocp4_release }}"
 ocp4_image_version: "{{ ocp4_image }}"
 ocp4_dependencies_version: "{{ ocp4_ystream_release }}"
-ocp4_client_version: 4.7.0
+ocp4_client_version: "{{ ocp4_release }}"
 
 # User info
 local_user_account: "{{ admin_user }}"
 local_user_ssh_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
 ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
+
+# Disconnected or pull through mirror install
+additional_trust_bundle: ""
+image_content_sources: ""
 
 
 ########################
@@ -118,7 +127,8 @@ deploy_ocp4_configs: yes
 #######################
 # Configure Network 
 libvirt_network_name: qubinat 
-use_external_bridge: ''# set to qubinet for external network and set use_external_bridge: true 
+# set to qubinet for external network and set use_external_bridge: true 
+use_external_bridge:
 external_bridge_network: qubinet
 
 ## Networking info
@@ -173,13 +183,20 @@ nat_gateway: "192.168.50.1"
 ocp4_subnet: "192.168.50.0"
 product: "{{ openshift_product }}"
 compute_count_update: none
+## Host name for the cluster nodes
+hostname_prefix: "{{ instance_prefix }}-ocp4"
 bootstrap_node_name: "{{ hostname_prefix }}-bootstrap"
+bootstrap_octet: '2'
+api_int_octet: '1'
+api_octet: '1'
+ctrlplane_ip_octet: 10
+compute_ip_octet: 20
+storage_ip_octet: 30
 bootstrap_node_ip: "192.168.50.2"
 ctrlplane_node_name: "{{ hostname_prefix }}-ctrlplane"
 compute_node_name: "{{ hostname_prefix }}-compute"
 
-## Host name for the cluster nodes
-hostname_prefix: "{{ instance_prefix }}-ocp4"
+
 
 # OCP4 controlplane VDX sizes
 ctrlplane_vdb_size: 10G

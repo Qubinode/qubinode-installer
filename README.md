@@ -1,5 +1,6 @@
 # Qubinode Installer
 Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
+=======
 
 ## Motivation
 The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
@@ -18,7 +19,7 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.3 installed 
+* Red Hat Enteprise Linux 8.4 installed 
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
@@ -28,18 +29,16 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 | ------------- | ----------------- |-----------------|
 |     Release 2.4.5     | 2.9               | 2.4.5 |
 
-### Features in v2.4.5 Versionss
 
+### Features in v2.4.6 Version
 New Features |
--- |
-RHEL rhel-8.3-update-2-x86_64-kvm.qcow2 support |
-RHEL 8.3 Default support |
-OpenShift 4.7.x |
-OKD 4.7.0-0.okd-2021-02-25-144700 Support |
-Added Support for [jig](https://github.com/kenmoini/jig) |
-Force Static IP on IDM server |
-OCS Support on OpenShift 4.7.x |
-Ability to change OpenShift Versions on install |
+--|
+RHEL 8.4 default support |
+RHEL rhel-8.4-x86_64-kvm.qcow2 support |
+external baremetal deployment |
+OCS Storage fixes |
+Fixes for external network deployments
+
 
 
 See [Release Document](docs/qubinode/releases.md) for features history.
