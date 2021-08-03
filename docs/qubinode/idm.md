@@ -20,7 +20,7 @@ These values are either set during the install or can be set by the user:
 You can force a static ip address on the idm server by setting the following.
 ```
 cd qubinode-installer/
-vim 
+vim playbooks/vars/idm.yml
 
 # update the following values
 idm_check_static_ip: yes
