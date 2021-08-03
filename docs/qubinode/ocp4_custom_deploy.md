@@ -33,8 +33,8 @@ cd ~/qubinode-installer
 ./qubinode-installer -m rhsm
 ./qubinode-installer -m ansible
 ./qubinode-installer -m host
-./qubinode-installer -m idm
-./qubinode-installer -m ocp4
+./qubinode-installer -p idm
+./qubinode-installer -p ocp4
 ```
 
 ## Deploy the cluster
