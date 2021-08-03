@@ -15,7 +15,7 @@ generated_pull_secret: "{{ installation_working_dir }}/generated_pullsecret.json
 #ocp4_user_wanted_release: ""
 ocp4_auto_updated_release: ""
 ocp4_okd4: ocp4
-ocp4_ystream_release: 4.7
+ocp4_ystream_release: 4.8
 ocp4_release: "{{ ocp4_user_wanted_release | default(ocp4_auto_updated_release) }}"
 ocp4_image: "{{ ocp4_release }}"
 ocp4_image_version: "{{ ocp4_image }}"
