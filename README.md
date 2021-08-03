@@ -27,18 +27,16 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4.5     | 2.9               | 2.4.5 |
+|     Release 2.4.6     | 2.9               | 2.4.6 |
 
 
 ### Features in v2.4.6 Version
 New Features |
 --|
-RHEL 8.4 default support |
-RHEL rhel-8.4-x86_64-kvm.qcow2 support |
-external baremetal deployment |
-OCS Storage fixes |
-Fixes for external network deployments
-
+OpenShift 4.8 |
+Disconnected Instaltion | 
+External Baremetal Support |
+kcli support |
 
 
 See [Release Document](docs/qubinode/releases.md) for features history.
@@ -50,6 +48,7 @@ See [Release Document](docs/qubinode/releases.md) for features history.
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
+- [Deploy Bare-Metal Clusters via Hive and Assisted Installer](https://github.com/tosin2013/bare-metal-assisted-installer)
 
 **Qubinode Documentation**
 - [Qubinode Overview](docs/README.md)
@@ -87,12 +86,10 @@ Feature  |  Status
 --|---
 Red Hat Satellite Server  | In progress
 CNV Support | Dev
-Disconnected Instaltion | Dev  
 Cockpit Integration | In progress
 
 ## Roadmap
 * CNV Installation 
-* Disconnected Installaton
 * Multinode Depolyment
 * Libvirt with KVM  OCP - (Experimental)
 * OpenWrt Router Support - (Experimental)
@@ -101,6 +98,7 @@ Cockpit Integration | In progress
 * [bertvv](https://github.com/bertvv)
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
+* [Karim Boumedhel](https://github.com/karmab)
 
 ## Authors
 * Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
