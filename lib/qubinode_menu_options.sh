@@ -6,7 +6,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -95,6 +95,10 @@ function qubinode_product_deployment () {
           kvmhost)
               echo "Setting up KVM host"
               qubinode_setup_kvm_host
+              ;;
+          kcli)
+              echo "Configuring kcli"
+              qubinode_setup_kcli
               ;;
           *)
               echo "Product ${PRODUCT_OPTION} is not supported."
