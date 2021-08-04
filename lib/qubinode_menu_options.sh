@@ -97,8 +97,13 @@ function qubinode_product_deployment () {
               qubinode_setup_kvm_host
               ;;
           kcli)
-              echo "Configuring kcli"
-              qubinode_setup_kcli
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_kcli_maintenance
+              else
+                    echo "Configuring kcli"
+                    qubinode_setup_kcli
+              fi
               ;;
           *)
               echo "Product ${PRODUCT_OPTION} is not supported."
