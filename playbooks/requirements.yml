@@ -42,7 +42,7 @@
   version: v2.4.5
 
 - src: https://github.com/Qubinode/ocp4_kvm_deployer.git
-  version: v2.4.6
+  version: dev
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
   version: v2.4.3
