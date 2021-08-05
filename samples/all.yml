@@ -128,6 +128,10 @@ qubinode_minimal_storage: 370      # actual is 640
 qubinode_standard_storage: 900     # actual is 1160
 qubinode_performance_storage: 1340 # actual is 1340
 
+# Suffix based on the last 4 of the primary interface mac adddress
+# This is appended to all VMs hostname
+vm_suffix: 0000
+
 # your system profile
 storage_profile: ""
 memory_profile: ""

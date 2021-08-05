@@ -384,6 +384,10 @@ function qubinode_networking () {
             foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
             #echo "Updating the kvm_host_macaddr to ${foundmac}"
             sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
+
+	    ## Get the last four of the mac address for use as the suffix for VM names
+	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
+            sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
         fi
     else
             printf "%s\n\n\n" " "

@@ -86,9 +86,9 @@ function qubinode_setup_ansible () {
        PYTHON=yes
     fi
 
-    # Update system
-    printf "%s\n" "   ${yel}Updating system...${end}"
-    sudo yum update -y --allowerasing > /dev/null 2>&1
+    # Update ansible
+    printf "%s\n" "   ${yel} Updating ansible ${end}"
+    sudo yum update -y --allowerasing ansible > /dev/null 2>&1
 
     # install ansible
     if [ ! -f /usr/bin/ansible ];
@@ -156,7 +156,7 @@ function qubinode_setup_ansible () {
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
-            printf "%s\n" " Downloading required roles overwriting existing"
+	    printf "%s\n" "   ${yel} Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " Downloading required roles"
@@ -178,9 +178,7 @@ function qubinode_setup_ansible () {
     fi
 
     sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
-    printf "\n\n${yel}    *******************************${end}\n"
-    printf "${yel}    *   Ansible Setup Complete   *${end}\n"
-    printf "${yel}    *******************************${end}\n\n"
+    printf "${yel}    Ansible Setup Complete ${end}\n"
 
 }
 
