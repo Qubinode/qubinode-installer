@@ -18,9 +18,8 @@ idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr 
 sed -i "s/^rhel_major:.*/rhel_major: $rhel_major/g" $idm_vars_file
 
 function display_idmsrv_unavailable () {
-    printf "%s\n" "${yel}Either the IdM server variable idm_public_ip is not set.${end}"
-    printf "%s\n" "${yel}Or the IdM server is not reachable.${end}"
-    printf "%s\n" "${yel}Ensure the IdM server is running, update the variable and try again.${end}"
+    printf "%s\n" "${yel}The IdM server is not reachable.${end}"
+    printf "%s\n" "${yel}Ensure the IdM server is running and try again.${end}"
     exit 1
 }
 
