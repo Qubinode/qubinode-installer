@@ -1,6 +1,12 @@
 ---
 # defaults file for ocp4-mirror-registry
 
+## Generated files directory
+generated_files_dir: "{{ playbook_dir }}/generated_files"
+
+## Certs Directory 
+containers_certs_d: /opt/registry/certs/
+
 ## Where to find your cert and cert key
 ssl_certs_source: "{{ playbook_dir }}/files"
 
