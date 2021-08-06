@@ -28,9 +28,9 @@ rhel8_static:
  nets:
   - name: qubinet
     nic: eth0
-    ip: 10.0.1.151
+    ip: 192.168.1.10
     mask: 255.255.255.0
-    gateway: 10.0.1.1
+    gateway: 192.168.1.1
  cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
