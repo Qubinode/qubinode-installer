@@ -2,12 +2,10 @@
   hosts: localhost
   gather_facts: yes
   become: no
-
   vars_files:
     - vars/all.yml
     - vars/kvm_host.yml
     - vars/registries.yml
-
   vars:
     pull_secret: "{{ playbook_dir }}/files/redhat/pull-secret.json"
     container_user: "{{ admin_user }}"
@@ -17,9 +15,7 @@
     registry_domain: "{{ domain }}"
     registry_hostname: ocp-registry
     registry_ip: "{{ kvm_host_ip }}"
-
-
   tasks:
   - name: create required self-signed certs
     import_role:
-      name: ocp4-mirror-registry
+      name: ocp4-pullthrough-proxy

@@ -46,7 +46,10 @@
 
 - src: https://github.com/Qubinode/ocp4-pullthrough-proxy.git
   version: main
-  
+
+- src: https://github.com/ikke-t/podman-container-systemd.git
+  version: master
+
 - src: linux-system-roles.cockpit
 
 - src: linux-system-roles.firewall
