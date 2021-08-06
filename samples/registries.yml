@@ -1,0 +1,136 @@
+---
+# defaults file for ocp4-mirror-registry
+
+## Where to find your cert and cert key
+ssl_certs_source: "{{ playbook_dir }}/files"
+
+## Set to false to not create a RootCA
+create_root_ca: true
+
+## Create registry ssl cert
+create_registry_cert: true
+
+## location for the container persistent storage
+## this location should have at least 8G of
+## available storage or you can specify a
+## different path for the data dir with
+## container_data_dir
+container_dir: "/opt/containers/registry"
+
+## data directory for mirrored content storage location
+## TODO: remove this var
+container_data_dir: "{{ container_dir }}/data"
+
+## SSL config
+ssl_config_file: "{{ ssl_certs_source }}/openssl.cnf"
+
+## Default names for self generated key and cert
+ssl_key_filename: "registry.{{ registry_domain }}.key"
+ssl_cert_filename: "registry.{{ registry_domain }}.crt"
+ssl_csr_filename: "registry.{{ registry_domain }}.csr"
+
+ssl_cert_file: "{{ ssl_certs_source }}/{{ ssl_cert_filename }}"
+ssl_key_file: "{{ ssl_certs_source }}/{{ ssl_key_filename }}"
+ssl_csr_file: "{{ ssl_certs_source }}/{{ ssl_csr_filename }}"
+
+## CA vars
+ssl_ca_key_name: "QubinoderootCA.key"
+ssl_ca_csr_name: "QubinoderootCA.csr"
+ssl_ca_crt_name: "QubinoderootCA.crt"
+ssl_ca_common_name: "{{ registry_domain }}"
+
+ssl_ca_key_file: "{{ ssl_certs_source }}/{{ ssl_ca_key_name }}"
+ssl_ca_csr_file: "{{ ssl_certs_source }}/{{ ssl_ca_csr_name }}"
+ssl_ca_crt_file: "{{ ssl_certs_source }}/{{ ssl_ca_crt_name }}"
+
+
+## Should we generate a self signed cert?
+## no - if you are providing your own otherwise - yes
+## make sure to provide the ssl_cert_filename and ssl_cert_file
+generate_self_signed_certs: yes
+
+## Registry FQDN
+registry_domain: lab.qubinode.io
+
+## Registry hostname
+registry_hostname: registry
+
+## Registry IP address - Usually the ip address for the podman host
+registry_ip: 192.168.8.9
+
+## Registry FQDN
+registry_fqdn: "{{ registry_hostname }}.{{ registry_domain }}"
+
+
+
+
+## Registry dict
+registry_pods:
+  - name: reg-cloud-ocp
+    remoteurl: 'https://cloud.openshift.com'
+    username: ''
+    password: ''
+    port: '5000'
+  - name: reg-quay
+    remoteurl: 'https://quay.io'
+    username: ''
+    password: ''
+    port: '5001'
+  - name: reg-connect-rh
+    remoteurl: 'https://registry.connect.redhat.com'
+    username: ''
+    password: ''
+    port: '5002'
+  - name: reg-redhat
+    remoteurl: 'https://registry.redhat.io'
+    username: ''
+    password: ''
+    port: '5003'
+  - name: reg-quay-cdn
+    remoteurl: 'https://cdn02.quay.io'
+    username: ''
+    password: ''
+    port: '5004'
+  - name: reg-svc
+    remoteurl: 'https://registry.svc.ci.openshift.org'
+    username: ''
+    password: ''
+    port: '5005'
+
+
+## OpenShift pull-secret - path to your pull secret
+pull_secret: "/home/admin/qubinode-installer/pull-secret.json"
+
+## Where to output the generated pull-secret.json
+generated_pull_secret: "/home/admin/qubinode-installer/generated_pullsecret.json"
+
+## Where to output your generated trust-bundle and content-sources
+additional_trust_bundle: /home/admin/qubinode-installer/trust-bundle.txt
+image_content_sources: /home/admin/qubinode-installer//content-sources.txt
+
+## user and group to own the container_dir
+container_user: admin
+container_group: admin
+
+## Options to for CSR
+self_signed_certs_options:
+    cert_country: "US"
+    cert_state: "FL"
+    cert_locality: "Orange"
+    cert_org_name: "Qubinode"
+    cert_org_unit: "Lab"
+    cert_common_name: "{{ registry_fqdn }}"
+    cert_subject_alt_name: "DNS:{{ registry_fqdn }},IP:{{ registry_ip }}"
+
+## we use htpasswd to setup user to access the registry container
+registry_username: regadmin
+registry_password: regadmin
+
+## Set this option to absent to delete the registry container
+container_state: present
+
+## no need to change the below
+update_trust_file_name: "/etc/pki/ca-trust/source/anchors/{{ registry_fqdn }}.crt"
+
+## Registry HTTP Secret
+secret_file: "{{ playbook_dir }}/files/secret_file"

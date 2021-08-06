@@ -108,9 +108,11 @@ function qubinode_setup_ansible () {
        if [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 ansible git bc bind-utils
+            install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 ansible git  bc bind-utils
+            install_podman_dependainces
         fi
        ensure_supported_ansible_version
     else
@@ -201,4 +203,10 @@ function encrypt_ansible_vault () {
         cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
     fi
+}
+
+
+function install_podman_dependainces(){
+    ansible-galaxy collection install ansible.posix
+    ansible-galaxy collection install containers.podman
 }

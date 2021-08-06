@@ -17,6 +17,9 @@ function qubinode_kcli_maintenance () {
        updatedefaults)
 	        update_default_settings
             ;;
+       createstaticprofile)
+	        create_static_profile_ip
+            ;;
        *)
            echo "No arguement was passed"
            ;;
@@ -61,7 +64,40 @@ function update_default_settings(){
     sudo mv "${project_dir}/kcli-profiles.yml" /root/.kcli/profiles.yml
 }
 
-function qubinode_setup_kcli () {
+function create_static_profile_ip() {
+    kvm_host_gw=$(awk '/kvm_host_gw:/ {print $2}' "${kvm_host_vars_file}")
+    kvm_host_netmask=$(awk '/kvm_host_netmask:/ {print $2}' "${kvm_host_vars_file}")
+    vm_libvirt_net=$(awk '/vm_libvirt_net:/ {print $2}' "${kvm_host_vars_file}")
+    decrypt_ansible_vault "${vault_vars_file}" > /dev/null
+    admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
+    admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
+    encrypt_ansible_vault "${vaultfile}" >/dev/null
+
+
+rhel8_static:
+ image: rhel-8.4-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 2
+ memory: 4096
+ disks:
+  - size: 20
+ reservedns: true
+ nets:
+  - name: ${vm_libvirt_net}
+    nic: eth0
+    ip: 192.168.1.10
+    mask: ${kvm_host_netmask}
+    gateway: ${kvm_host_gw}
+ cmds:
+  - echo ${admin_password} | passwd --stdin root
+  - useradd ${admin_username}
+  - usermod -aG wheel ${admin_username}
+  - echo "${admin_username} ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/${admin_username}
+  - echo ${admin_password} | passwd --stdin ${admin_username}
+
+}
+
+function qubinode_setup_kcli() {
     if [[ ! -f /usr/bin/kcli ]];
     then 
         sudo usermod -aG qemu,libvirt $USER
