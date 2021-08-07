@@ -537,7 +537,9 @@ function qubinode_base_requirements () {
         BASE_REQS=$(awk '/qubinode_base_reqs_completed:/ {print $2}' "${vars_file}")
         SETUP_COMPLETED=$(awk '/qubinode_installer_setup_completed:/ {print $2}' "${vars_file}")
 
-        #if [ "A${BASE_REQS}" == "Ayes" ] && [ "A${SETUP_COMPLETED}" == "Ayes" ]
+	# Ensure RHEL qcow image exist
+	setup_download_options
+
         if [ "A${BASE_REQS}" == "Ayes" ]
 	then
             printf "%s\n" " ${yel}Setup completed${end}"

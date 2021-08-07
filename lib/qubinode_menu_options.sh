@@ -63,14 +63,14 @@ function qubinode_product_deployment () {
           idm)
               if [ "A${teardown}" == "Atrue" ]
               then
-                  echo "Running IdM VM teardown function"
+		  printf "%s\n" "   ${blu}Running IdM VM teardown function${end}"
                   qubinode_teardown_idm
               elif [ "A${qubinode_maintenance}" == "Atrue" ]
               then
                   qubinode_idm_maintenance
               else
                   CHECK_PULL_SECRET=no
-                  echo "Running IdM VM deploy function"
+		  printf "%s\n" "   ${blu}Running IdM VM deploy function${end}"
                   setup_download_options
                   download_files
                   qubinode_deploy_idm
@@ -93,7 +93,7 @@ function qubinode_product_deployment () {
               fi
               ;;
           kvmhost)
-              echo "Setting up KVM host"
+	      printf "%s\n" "   ${blu}Setting up KVM host${end}"
               qubinode_setup_kvm_host
               ;;
           kcli)
@@ -101,13 +101,13 @@ function qubinode_product_deployment () {
               then
                   qubinode_kcli_maintenance
               else
-                    echo "Configuring kcli"
+		    printf "%s\n" "   ${blu}Configuring kcli${end}"
                     qubinode_setup_kcli
               fi
               ;;
           *)
-              echo "Product ${PRODUCT_OPTION} is not supported."
-              echo "Supported products are: ${AVAIL_PRODUCTS}"
+	      printf "%s\n" "   Product ${mag}${PRODUCT_OPTION}${end} is not supported"
+	      printf "%s\n" "   Supported products are: ${mag}${AVAIL_PRODUCTS}${end}"
               exit 1
               ;;
     esac
