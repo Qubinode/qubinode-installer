@@ -87,7 +87,7 @@ function qubinode_setup_ansible () {
     fi
 
     # Update ansible
-    printf "%s\n" "   ${yel} Updating ansible ${end}"
+    printf "%s\n" "   ${mag}Updating ansible ${end}"
     sudo yum update -y --allowerasing ansible > /dev/null 2>&1
 
     # install ansible
@@ -158,10 +158,10 @@ function qubinode_setup_ansible () {
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
-	    printf "%s\n" "   ${yel} Downloading required roles overwriting existing${end}"
+	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         else
-            printf "%s\n" " Downloading required roles"
+            printf "%s\n" " ${mag}Downloading required roles${end}"
             ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 

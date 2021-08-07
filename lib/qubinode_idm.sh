@@ -34,8 +34,8 @@ function ask_user_for_idm_domain () {
         printf "%s\n" "   The installer deploys Red Hat IdM as a DNS server."
         printf "%s\n\n" "   This requires a DNS domain, accept the default below or enter your own."
 
-        read -p "   ${blu}Enter your dns domain or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blu}[lab.example]: ${end}" domain
-        domain=${domain:-lab.example}
+        read -p "   Enter your dns domain or press ${mag}[ENTER]${end} for the default domain ${blu}[lab.qubinode.io]: ${end}" domain
+        domain=${domain:-lab.qubinode.io}
         sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
         printf "%s\n" ""
     fi
@@ -45,8 +45,8 @@ function ask_user_for_idm_domain () {
     then
         printf "%s\n\n" ""
         printf "%s\n" "   By default the forwarder for external DNS queries are sent to 1.1.1.1."
-        printf "%s\n\n" "   If you would like to use a different upstream DNS server enter it below."
-        read -p "   ${blu}Enter an upstream DNS server or press${end} ${yel}[ENTER]${end} ${mag}for the default${end} ${blue}[1.1.1.1]: ${end}" dns_forwarder
+        printf "%s\n\n" "   You can change this to any dns server reachable via your network."
+        read -p "   Enter an upstream DNS server or press ${mag}[ENTER]${end} for the default ${blue}[1.1.1.1]:${end}" dns_forwarder
         dns_forwarder=${dns_forwarder:-1.1.1.1}
         sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
     fi
@@ -65,7 +65,7 @@ function ask_user_for_idm_password () {
             do
                 printf "%s\n" ""
                 printf "%s\n\n" "   Your username ${yel}${CURRENT_USER}${end} will be use as the admin user."
-                printf "%s" "   ${blu}Enter a password to be set for the IdM admin user and press${end} ${grn}[ENTER]${end}: "
+                printf "%s" "   ${blu}Enter a password to be set for the IdM admin user and press${end} ${mag}[ENTER]${end}: "
                 read_sensitive_data
                 idm_admin_pwd="${sensitive_data}"
                 if [ ${#idm_admin_pwd} -lt 8 ]
@@ -200,8 +200,8 @@ function ask_user_for_custom_idm_server () {
     # ask user for DNS domain or use default
     if grep '""' "${vars_file}"|grep -q domain
     then
-        read -p " ${blu}Enter your dns domain or press${end} ${yel}[ENTER]${end}: " domain
-        domain=${domain:-lab.example}
+        read -p " Enter your dns domain or press ${mag}[ENTER]${end}: " domain
+        domain=${domain:-lab.qubinode.io}
         confirm "  You entered ${yel}$domain${end}, is this correct?${yel}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
         then
