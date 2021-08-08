@@ -98,8 +98,11 @@ function check_additional_storage () {
               mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
+	      VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+	      LIBVIRT_PATH=$(awk '/kvm_host_libvirt_dir:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
 
-              printf "%s\n" "   ${yel}The installer will wipe the device${end} ${blu}$disk${end} ${yel}and then create a vg,lv and mount it as /var/lib/libvirt/images.${end}"
+              printf "%s\n" "   ${yel}Please note, the installer will wipe the device${end} ${blu}$disk${end} if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
+              printf "%s\n" "   A logical volume is then created and mounted at ${blu}${LIBVIRT_PATH}${end}"
               confirm "    Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then

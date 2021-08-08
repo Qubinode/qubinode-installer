@@ -93,8 +93,7 @@ ssh_username: "{{ admin_user }}" # this var has been deprecated and should be re
 qcow_rhel7_name: rhel-server-7.8-x86_64-kvm.qcow2
 qcow_rhel8_name: rhel-8.4-x86_64-kvm.qcow2
 os_qcow_image_name: "{{ qcow_rhel8_name }}"
-qcow_rhel7u8_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
-qcow_rhel8u2_checksum: 055d6fa91f0ad42556325b8ea1ff1950876bef18e164dc964f7cd4431fa294d8
+qcow_rhel8_checksum: df9660e770711f797b311a04946ce45db19843ddb1c60ccadca8b77fa0444e4f
 
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 
