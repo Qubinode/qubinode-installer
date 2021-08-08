@@ -1,21 +1,25 @@
 #!/bin/bash
 
 setup_variables
-IDM_VM_PLAY="${project_dir}/playbooks/idm_vm_deployment.yml"
+
 product_in_use=idm
+IDM_VM_PLAY="${project_dir}/playbooks/idm_vm_deployment.yml"
 idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
-# Check if we should setup qubinode
-DNS_SERVER_NAME=$(awk -F'-' '/idm_hostname:/ {print $2; exit}' "${idm_vars_file}" | tr -d '"')
-prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
-idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${vars_file}")
-suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-idm_srv_hostname="$prefix-$suffix"
-idm_srv_fqdn="$prefix-$suffix.$domain"
-idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 
 # Set the VM OS release to match the host system
 sed -i "s/^rhel_major:.*/rhel_major: $rhel_major/g" $idm_vars_file
+
+function idms_vars () {
+    # Check if we should setup qubinode
+    vm_prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}"|tr -d '"')
+    idm_prefix=$(awk '/idm_server_name_prefix:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
+    vm_suffix=$(awk '/vm_suffix:/ {print $2;exit}' "${vars_file}" |tr -d \'\")
+    idm_srv_hostname="${vm_prefix}-${idm_prefix}-${vm_suffix}"
+    idm_srv_fqdn="${idm_srv_hostname}.${domain}"
+    idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
+    idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
+}
+
 
 function display_idmsrv_unavailable () {
     printf "%s\n" "${yel}The IdM server is not reachable.${end}"
@@ -189,9 +193,6 @@ function ask_user_for_custom_idm_server () {
             sed -i "s/deploy_idm_server:.*/deploy_idm_server: yes/g" "${idm_vars_file}"
 
             # Setting default IdM server name
-            #sed -i 's/idm_hostname:.*/idm_hostname: "{{ instance_prefix }}-${idm_server_name}"/g' "${idm_vars_file}"
-
-            # Setting default IdM server name
             CHANGE_PTR=$(cat ${project_dir}/playbooks/vars/all.yml | grep qubinode_ptr: | awk '{print $2}')
             sed -i 's#  - "{{ qubinode_ptr }}"#  - '$CHANGE_PTR'#g'  "${idm_vars_file}"
         fi
@@ -261,6 +262,7 @@ function set_idm_static_ip () {
 }
 
 function qubinode_idm_ask_ip_address () {
+    idms_vars
     IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
     CURRENT_IDM_IP=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
     echo "${IDM_STATIC}" | grep -qE 'yes|no'
@@ -309,11 +311,7 @@ function qubinode_idm_ask_ip_address () {
 
 
 function isIdMrunning () {
-     # Test idm server 
-    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
-    suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-    idm_srv_fqdn="$prefix-$suffix.$domain"
-
+    idms_vars
 
     if ! curl -k -s "https://${idm_srv_fqdn}/ipa/config/ca.crt" > /dev/null
     then
@@ -327,6 +325,7 @@ function isIdMrunning () {
 }
 
 function qubinode_teardown_idm () {
+     idms_vars
      IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
      libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
      local vmdisk="${libvirt_dir}/${idm_srv_hostname}_vda.qcow2"
@@ -339,9 +338,9 @@ function qubinode_teardown_idm () {
      ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
      sudo test -f "${vmdisk}" && sudo rm -f "${vmdisk}"
 
-     printf "\n\n*************************\n"
-     printf "* IdM server VM deleted *\n"
-     printf "*************************\n\n"
+     printf "\n\n    ${yel}*************************${end}\n"
+     printf "    ${blu}* IdM server VM deleted *${end}\n"
+     printf "    ${yel}*************************${end}\n\n"
 }
 
 function qubinode_deploy_idm_vm () {
@@ -352,7 +351,6 @@ function qubinode_deploy_idm_vm () {
         then
             qubinode_setup
             ask_user_for_custom_idm_server
-            
         fi
 
         IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
@@ -410,7 +408,7 @@ function qubinode_install_idm () {
         echo "Install and configure the IdM server"
         idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
         echo "Current IP of IDM Server ${idm_server_ip}" || exit $?
-        ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+        ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"
 	qubinode_idm_status
      else
 	qubinode_idm_status
@@ -432,6 +430,7 @@ function qubinode_deploy_idm () {
 }
 
 function qubinode_idm_maintenance () {
+    idms_vars
     case ${product_maintenance} in
        stop)
             name=$idm_srv_hostname
