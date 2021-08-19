@@ -201,11 +201,17 @@ function qubinode_rhsm_register () {
             rhsm_username=$(awk '/rhsm_username:/ {print $2;exit}' ${vault_vars_file})
         fi
 
-        if [[ "A${rhsm_password}" != 'A""' ]] && [[ "A${rhsm_username}" != 'A""' ]]
-        then
-            sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"
-        fi
     fi
+
+    # RHSM setup completed
+    RHSM_COMPLETED=$(awk '/qubinode_installer_rhsm_completed:/ {print $2}' "${vars_file}")
+    #if [ "A${RHSM_COMPLETED}" == "Ayes" ]
+    if [ "A${IS_REGISTERED}" != "AThis system is not yet registered" ]
+    then
+        sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"
+        printf "%s\n" " ${yel}RHSM setup completed${end}"
+    fi 
+
 }
     
 function get_rhsm_user_and_pass () {

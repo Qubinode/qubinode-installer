@@ -4,6 +4,12 @@ This example will deploy the core nodes with the ignitions files modified to dep
 
 ## Setup required files in qubinode-installer directory
 
+```
+sudo mkdir -p /opt/registry/certs/
+cd qubinode-installer
+mkdir playbooks/generated_files
+ansible-playbook playbooks/ocp4_pullthrough_proxy.yml
+```
 
 podman login ${HOSTNAME}:5000
 

@@ -9,7 +9,8 @@
 # If there is an existing Idm, then set this to no.
 deploy_idm_server: yes
 ask_use_existing_idm: no
-idm_server_name: dns01
+idm_server_name_prefix: "dns01"
+idm_server_name: "{{ idm_server_name_prefix }}-{{ vm_suffix }}"
 idm_check_static_ip: ""
 idm_admin_user: admin
 idm_realm: "{{ domain | upper }}"
@@ -18,6 +19,7 @@ idm_admin_password: "{{ idm_admin_pwd }}"
 idm_reverse_zones:
   - "{{ qubinode_ptr }}"
 vm_mac: 52:54:00:32:f8:6d
+kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
 
 ########################
 # RHEL IdM VM attributes
@@ -26,9 +28,9 @@ qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
 cloud_init_vm_image: rhel-8.4-x86_64-kvm.qcow2
 idm_server_ip: ""
-idm_public_ip: ""
 idm_zone_overlap: false
 idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"
+os_variant: "rhel8.3"
 dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
@@ -44,9 +46,6 @@ dns_server_vm:
     dns_gateway: "{{ vm_net_gateway | default('', true) }}"
     dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
     dns_expand_os_disk: no
-
-# should qcow template be expanded
-expand_os_disk: no
 
 # os_release to pass to virt-install
 os_release: "rhel{{ rhel8_version }}"

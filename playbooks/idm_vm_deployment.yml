@@ -24,7 +24,6 @@
     vm_domain: "{{ domain }}"
     inventory_group: "{{ dns_server_vm.dns_group }}"
     extra_storage: "{{ dns_server_vm.dns_extra_storage }}"
-    expand_os_disk: "{{ dns_server_vm.dns_expand_os_disk }}"
     enable: "{{ dns_server_vm.dns_enable }}"
 
   tasks:
@@ -33,11 +32,33 @@
       include_role:
         name: deploy-kvm-vm
 
+    - name: ensure ansible-freeipa is installed
+      ansible.builtin.git:
+        repo: 'https://github.com/freeipa/ansible-freeipa.git'
+        dest: "{{ playbook_dir }}/roles/ansible-freeipa"
+        version: master
+      delegate_to: 127.0.0.1
+      become: yes
+      tags: ansiblefreeipa
+      when: not vm_teardown|bool
+
+    - name: Ensure the KVM host is not pointing to the IdM server for DNS
+      copy:
+        content: |
+          search {{ search_domains  | first }}
+          nameserver 8.8.8.8
+          nameserver 1.1.1.1
+        dest: /etc/resolv.conf
+      when: vm_teardown|bool
+      tags: [ipaserver, resolv]
+
+
     - meta: refresh_inventory
 
     - name: Get the IP address of the IdM VM
       set_fact:
         current_vm_ip: "{{ hostvars[vm_name]['ansible_host'] }}"
+      when: not vm_teardown|bool
 
     - name: update idm_public_ip with current IDM server IP
       lineinfile:

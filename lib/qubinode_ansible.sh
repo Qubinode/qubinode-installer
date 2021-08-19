@@ -86,9 +86,9 @@ function qubinode_setup_ansible () {
        PYTHON=yes
     fi
 
-    # Update system
-    printf "%s\n" "   ${yel}Updating system...${end}"
-    sudo yum update -y --allowerasing > /dev/null 2>&1
+    # Update ansible
+    printf "%s\n" "   ${mag}Updating ansible ${end}"
+    sudo yum update -y --allowerasing ansible > /dev/null 2>&1
 
     # install ansible
     if [ ! -f /usr/bin/ansible ];
@@ -108,9 +108,11 @@ function qubinode_setup_ansible () {
        if [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 ansible git bc bind-utils
+            install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 ansible git  bc bind-utils
+            install_podman_dependainces
         fi
        ensure_supported_ansible_version
     else
@@ -156,10 +158,10 @@ function qubinode_setup_ansible () {
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
         then
-            printf "%s\n" " Downloading required roles overwriting existing"
+	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         else
-            printf "%s\n" " Downloading required roles"
+            printf "%s\n" " ${mag}Downloading required roles${end}"
             ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 
@@ -178,9 +180,7 @@ function qubinode_setup_ansible () {
     fi
 
     sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
-    printf "\n\n${yel}    *******************************${end}\n"
-    printf "${yel}    *   Ansible Setup Complete   *${end}\n"
-    printf "${yel}    *******************************${end}\n\n"
+    printf "${yel}    Ansible Setup Complete ${end}\n"
 
 }
 
@@ -203,4 +203,10 @@ function encrypt_ansible_vault () {
         cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
     fi
+}
+
+
+function install_podman_dependainces(){
+    ansible-galaxy collection install ansible.posix
+    ansible-galaxy collection install containers.podman
 }

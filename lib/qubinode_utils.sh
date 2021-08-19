@@ -446,6 +446,12 @@ function qubinode_setup () {
     # This functions gets your system ready for the first ansible playbook to be executed
     # which is the playbooks/setup_kvmhost.yml.
 
+    # check for additional arguments
+    for var in "${product_options[@]}"
+    do
+       export $var
+    done
+
     # This variable is use to ensure this function isn't called inside of qubinode_base_requirements
     running_qubinode_setup=yes
 
@@ -481,9 +487,16 @@ function qubinode_setup () {
     fi
 
     # Ensure ./qubinode-installer -m host is completed
+    if [ "A${force}" == "Ayes" ]
+    then
+        host_completed=no
+    fi
+    
     if [ "A${host_completed}" == "Ano" ]
     then
        qubinode_setup_kvm_host
+    else
+       printf "${yel}    KVM Host Setup Complete  ${end}\n"
     fi
 
     # Ensure RHSM cli is installed
@@ -491,6 +504,7 @@ function qubinode_setup () {
 
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
+
 
 }
 
@@ -518,6 +532,18 @@ function qubinode_base_requirements () {
 
         # Tell installer base requires have been met
         sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
+
+	# Setup completed
+        BASE_REQS=$(awk '/qubinode_base_reqs_completed:/ {print $2}' "${vars_file}")
+        SETUP_COMPLETED=$(awk '/qubinode_installer_setup_completed:/ {print $2}' "${vars_file}")
+
+	# Ensure RHEL qcow image exist
+	setup_download_options
+
+        if [ "A${BASE_REQS}" == "Ayes" ]
+	then
+            printf "%s\n" " ${yel}Setup completed${end}"
+        fi
 fi
 }
 

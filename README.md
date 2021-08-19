@@ -1,9 +1,11 @@
-# Qubinode Installer
-Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
-=======
+## What is Qubinode Installer?
+Qubinode-installer is an utility tool that facilates the quick deployment of an array of Red Hat products like [Red Hat Openshift Container Platform](https://www.openshift.com/), [Red Hat Identity Manager](https://access.redhat.com/products/identity-management#getstarted), [Red Hat Satellite](https://www.redhat.com/en/technologies/management/satellite), etc.. on a single piece of [hardware](https://mitxpc.com/products/gn-e300-9d-8tp) by leveraging the [KVM](https://www.linux-kvm.org/page/Main_Page) hypervisor.
+
+## The benefits of using qubinode
+[The Qubinode Project](https://qubinode.io/) provides a very cost effective way to quickly stand up a lab environment on a single piece of [hardware](https://mitxpc.com/products/gn-e300-9d-8tp). Your most expensive investment would be the procurement of the [hardware](https://mitxpc.com/products/gn-e300-9d-8tp) itself. This is a cheaper approach than having to pay a license fee to use a type 1 [hypervisor](https://www.vmware.com/topics/glossary/content/hypervisor) like VMWare/VSphere or having to pay a fee to use AWS EC2 instances.
 
 ## Motivation
-The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
+The primary focus of this project is make it easy for you to deploy an OpenShift cluster on a single bare metal node with production like characteristics. Please visit [The Qubinode Project](https://qubinode.io/) landing page for step by step easy to follow guide on how to get started.
 
 ## What is OpenShift?
 Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
@@ -69,12 +71,16 @@ _Ansible_
 - [(RH294) Linux Automation with Ansible](https://www.redhat.com/en/services/training/rh294-red-hat-system-administration-iii-linux-automation)
 
 ## Contribute
+We value community and collaboration, therefore any contribution back to the project/community is always welcome. 
 * [Communications](docs/qubinode/communication.md)
 
 
 If you would like to Contribute to the qubinode project please see the documentation below.  
 * [Qubinode WorkFlow Process](docs/CONTRIBUTING.md)  
 * [Testing and Validation](test/README.md)  
+
+## Ways to contribute
+We kindly ask you to open an issue if you find anything wrong and or something that can be improved during your usage of qubinode. If it's something that you're able to fix, please fork the project, apply your fix and submit a merge request, then we'll review and approve your merge request. Thank you for using qubinode we're looking forward to your contribution back to the project.
 
 ## Support
 If you have any direct questions, reach out to us [using the guide](docs/communication.md).
@@ -92,7 +98,7 @@ Cockpit Integration | In progress
 * CNV Installation 
 * Multinode Depolyment
 * Libvirt with KVM  OCP - (Experimental)
-* OpenWrt Router Support - (Experimental)
+* OpenWrt Router Support - (Experimental
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)

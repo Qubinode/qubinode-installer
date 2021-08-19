@@ -271,43 +271,36 @@ setup_download_options () {
 }
 
 function installer_artifacts_msg () {
+	rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
+	rhel_qcow_checksum=$(awk '/qcow_rhel8_checksum:/ {print $2}' "${vars_file}")
         printf "%s\n\n" ""
         if [[ "A${PULL_MISSING}" == "Ayes" ]] && [[ "A${QCOW_MISSING}" == "Ayes" ]]
         then
             printf "%s\n" "    ${yel}The installer requires the RHEL qcow image and your OCP pull-secret.${end}"
-            printf "%s\n" "    ${yel}The installer expects to find the artifacts under${end}"
-            printf "%s\n\n" "    ${yel}${project_dir}.${end}"
+            printf "%s\n" "    The installer expects to find the artifacts under"
+            printf "%s\n\n" "    ${blu}${project_dir}.${end}"
         else
-            printf "%s\n" "    ${yel}The installer requires $artifact_string.${end}"
-            printf "%s\n\n" "    ${yel}The installer expects to find this under ${project_dir}.${end}"
+            printf "%s\n\n" "    ${yel}The installer requires $artifact_string.${end}"
+            printf "%s\n" "    The installer expects to find either of the following:"
         fi
-
-        ## Remove rhsm_token and ocp_token from this release
-        #printf "%s\n" "    ${yel}Tokens:${end}"
-#
-        #if [ "A${QCOW_MISSING}" == "Ayes" ]
-        #then
-        #    printf "%s\n" "        ${blu}* rhsm_token${end}"
-        #fi
-#
-        #if [ "A${PULL_MISSING}" == "Ayes" ]
-        #then
-        #    printf "%s\n\n" "        ${blu}* ocp_token${end}"
-        #fi
-
-        printf "%s\n" "    ${yel}Artifacts:${end}"
 
         if [ "A${PULL_MISSING}" == "Ayes" ]
         then
-            printf "%s\n" "        ${blu}* ${project_dir}/pull-secret.txt${end}"
+            printf "%s\n" "        ${mag}* ${project_dir}/pull-secret.txt${end}"
         fi
 
         if [ "A${QCOW_MISSING}" == "Ayes" ]
         then
-            printf "%s\n\n" "        ${blu}* ${project_dir}/$artifact_qcow_image${end}"
+            printf "%s\n" "        ${mag}* ${project_dir}/$artifact_qcow_image${end}"
+            printf "%s\n\n" "        ${mag}* ${libvirt_dir}/$artifact_qcow_image${end}"
         fi
 
-        printf "%s\n\n" "    ${yel}Please refer to the documentation for details${end}"
+        printf "%s\n" "    You can download the this qcow image from:" 
+	printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---8/${rhel_release}/x86_64/product-software${end}."
+        printf "%s\n" "    The current tested checksum is:"
+        printf "%s\n" "    ${mag}${rhel_qcow_checksum}${end}"
+        printf "%s\n" "    Copy the url from the download page and download with:"
+        printf "%s\n\n" "    ${mag}wget -c -t 100 -O \"${artifact_qcow_image}\" \"rhel-qcow-image-url\"${end}"
 }
 
 download_files () {

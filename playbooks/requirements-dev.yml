@@ -3,10 +3,7 @@
   version: dev
 
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
-  version: v2.4.2
-
-- src: https://github.com/flyemsafe/ansible-idm.git
-  version: v1.0.0
+  version: dev
 
 - src: https://github.com/Qubinode/swygue-redhat-subscription.git
   version: dev
@@ -27,7 +24,7 @@
   version: master
 
 - src: https://github.com/Qubinode/openshift-4-loadbalancer.git
-  version: v2.4.0
+  version: master
 
 - src: https://github.com/Qubinode/swygue.coreos-virt-install-iso.git
   version: master
@@ -46,6 +43,12 @@
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
   version: v2.4.3
+
+- src: https://github.com/Qubinode/ocp4-pullthrough-proxy.git
+  version: main
+
+- src: https://github.com/ikke-t/podman-container-systemd.git
+  version: master
 
 - src: linux-system-roles.cockpit
 

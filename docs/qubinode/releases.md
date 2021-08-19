@@ -10,8 +10,10 @@ https://github.com/Qubinode/qubinode-installer/releases
 * RHEL 8.4 default support 
 * RHEL rhel-8.4-x86_64-kvm.qcow2 support
 * external baremetal deployment
-* OCS Storage fixes
+* OCS Storage fixes 
+  * Using OCS pvc for registry pvc
 * Fixes for external network deployments
+* adding support for kcli
 
 
 **Qubinode v2.4.5 Release notes**
