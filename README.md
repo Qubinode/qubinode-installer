@@ -1,8 +1,8 @@
 # Qubinode Installer
-Qubinode is for users wanting to stand up an RHEL based lab environment running on KVM.
+Qubinode helps stand up an RHEL based lab environment running on KVM. You can run it on a single, large KVM server or on multiple hosts.
 
 ## Motivation
-The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics.
+The primary focus of this project is make it easy for you to deploy a OpenShift cluster on a single bare metal node with production like characteristics. It also works on multiple hosts.
 
 ## What is OpenShift?
 Red Hat OpenShift Container Platform (OCP) - is Red Hat's private platform as a service product, built around a core of application containers powered by Kubernetes and on the foundations of Red Hat Enterprise Linux.
@@ -18,7 +18,7 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.3 installed 
+* Red Hat Enteprise Linux 8.3 or higher.  
 Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
 The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
 
