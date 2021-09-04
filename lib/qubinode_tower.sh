@@ -7,8 +7,12 @@ function tower_variables () {
     then
         tower_hostname="tower01"
         sed -i "s/tower_server_hostname:.*/tower_server_hostname: $tower_hostname/g" "${tower_vars_file}"
+        mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
+        sed -i "s/vm_mac:.*/vm_mac: $mac_address/g" "${mac_address}"
     else
         tower_hostname="${prefix}-${tower_name}"
+        mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
+        sed -i "s/vm_mac:.*/vm_mac: $mac_address/g" "${mac_address}"
     fi
     tower_webconsole="https://${tower_hostname}.${domain}"
     SAMPLE_VARS_FILE="${project_dir}/samples/tower_server.yml"

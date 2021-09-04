@@ -15,6 +15,7 @@
     vm_memory: "{{ rhel_server_vm.rhel_memory }}"
     vm_root_disk_size: "{{ rhel_server_vm.rhel_root_disk_size }}"
     vm_teardown: "{{ rhel_server_vm.rhel_teardown }}"
+    vm_qcow_image:  "{{ cloud_init_vm_image }}"
     vm_recreate: "{{ rhel_server_vm.rhel_recreate }}"
     vm_domain: "{{ domain }}"
     inventory_group: "{{ rhel_server_vm.rhel_group }}"
