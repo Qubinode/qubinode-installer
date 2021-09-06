@@ -1,12 +1,14 @@
 ---
-kvm_host_gw: 192.168.8.1
-kvm_host_interface: eno1
-kvm_host_ip: 192.168.8.9
-kvm_host_macaddr: '00:25:90:ba:60:00'
-kvm_host_mask_prefix: 24
-kvm_host_netmask: 255.255.255.0
-skip_libvirt_pool: yes
-rhel_release: 8.4
-run_storage_check: skip
-kvm_host_libvirt_extra_disk: nvme0n1
-qubinode_installer_host_completed: yes
+kvm_host_gw: ""
+kvm_host_interface: ""
+kvm_host_ip: ""
+kvm_host_macaddr: ""
+kvm_host_mask_prefix: ""
+kvm_host_netmask: ""
+skip_libvirt_pool: no
+rhel_release: ""
+run_storage_check: ""
+kvm_host_libvirt_extra_disk: ""
+
+# Set this if you want to skip the qubinode setup of the RHEL host
+qubinode_installer_host_completed: no
