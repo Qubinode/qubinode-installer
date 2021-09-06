@@ -28,6 +28,12 @@ function kvm_host_variables () {
 
 function getPrimaryDisk () {
     #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
+    # Try to install required rpms
+    if [ ! -f /usr/sbin/lvs ]
+    then
+        sudo yum install -y -q -e 0 bc lvm2 bind-utils >/dev/null 2>&1
+    fi
+
     root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
     primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
     if [ "A${primary_disk}" == "A" ];
