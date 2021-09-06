@@ -52,6 +52,8 @@ function ask_for_admin_user_pass () {
         accept_sensitive_input
         admin_user_password="$sensitive_data"
         export ADMIN_USER_PASSWORD="${admin_user_password:-none}"
+        vaultfile="${project_dir}/playbooks/vars/vault.yml"
+        sed -i "s/admin_user_password: \"\"/admin_user_password: "$admin_user_password"/g" "${vaultfile}"
     fi
 }
 
