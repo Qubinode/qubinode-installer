@@ -85,6 +85,10 @@ function qubinode_rhel_global_vars () {
                 expand_os_disk=yes
             else
                 echo "using default size"
+                ## Default resources for VMs
+                vcpu=1
+                memory=800
+                disk=20G
            fi
         fi
 
@@ -135,6 +139,7 @@ function qubinode_rhel_global_vars () {
             sed -i "s/vm_mac:.*/vm_mac: "$mac"/g" "${rhel_vars_file}"
         fi
     fi
+
 }
 
 function qubinode_rhel () {
@@ -142,10 +147,6 @@ function qubinode_rhel () {
     qubinode_rhel_global_vars
     qubinode_rhel_pre_checks
 
-    ## Default resources for VMs
-    vcpu=1
-    memory=800
-    disk=20G
 
     ## End user input via -a agruments
     ##################################
