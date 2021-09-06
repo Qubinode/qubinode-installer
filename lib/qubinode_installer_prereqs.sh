@@ -65,9 +65,17 @@ function read_sensitive_data () {
 
 function check_for_dns () {
     record=$1
+
+    # Try to install required rpms
+    if [ ! -f /usr/bin/dig ]
+    then
+        sudo yum install -y -q -e 0 bc lvm2 bind-utils >/dev/null 2>&1
+    fi
+
+    # Check if required tools are available
     if [ -f /usr/bin/dig ]
     then
-      resolvedIP=$(dig +short "$record")
+        resolvedIP=$(dig +short "$record")
     elif [ -f /usr/bin/nslookup ]
     then
         resolvedIP=$(nslookup "$record" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)

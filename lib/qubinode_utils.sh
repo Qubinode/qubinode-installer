@@ -519,8 +519,8 @@ function qubinode_base_requirements () {
         # Ensure user is setup for sudoers
         setup_sudoers
 
+        # check if there is a nvme or additional storage device
         check_additional_storage
-        #ask_user_if_qubinode_setup
 
         # load kvmhost variables
         kvm_host_variables
