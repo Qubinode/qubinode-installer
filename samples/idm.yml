@@ -1,4 +1,7 @@
-ask_use_existing_idm: skip
+---
+ask_use_existing_idm: no
+idm_server_ip: ""
+
+# These are the default values, only change if you know what you are doing
 rhel_major: 8
 os_variant: "rhel8.3"
-idm_server_ip: 192.168.8.10

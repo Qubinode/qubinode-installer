@@ -1,3 +1,4 @@
+---
 kvm_host_gw: 192.168.8.1
 kvm_host_interface: eno1
 kvm_host_ip: 192.168.8.9
