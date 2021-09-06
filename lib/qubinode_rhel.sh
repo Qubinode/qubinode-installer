@@ -77,6 +77,12 @@ function qubinode_rhel_global_vars () {
                 memory=8192
                 disk=120G
                 expand_os_disk=yes
+            elif [ "A${size}" == "Aqubinode" ]
+            then
+                vcpu=6
+                memory=65536
+                disk=500G
+                expand_os_disk=yes
             else
                 echo "using default size"
            fi
