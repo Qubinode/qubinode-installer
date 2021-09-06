@@ -32,7 +32,7 @@ tower_repos:
   - ansible-2.9-for-rhel-8-x86_64-rpms
 
 tower_installer_repo: 'https://releases.ansible.com/ansible-tower/setup'
-tower_version: '3.7.0-4'
+tower_version: '3.8.3-2'
 tower_admin_password: "{{ admin_user_password }}"
 tower_ssl_cert: ''
 tower_ssl_key: ''
