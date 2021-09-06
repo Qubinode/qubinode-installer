@@ -13,6 +13,7 @@
     vm_cpu: "{{ tower_server_vm.tower_vcpu }}"
     vm_memory: "{{ tower_server_vm.tower_memory }}"
     vm_root_disk_size: "{{ tower_server_vm.tower_root_disk_size }}"
+    vm_qcow_image:  "{{ cloud_init_vm_image }}"
     vm_teardown: "{{ tower_server_vm.tower_teardown }}"
     vm_recreate: "{{ tower_server_vm.tower_recreate }}"
     inventory_group: "{{ tower_server_vm.tower_group }}"

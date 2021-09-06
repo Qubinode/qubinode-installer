@@ -1,9 +1,12 @@
-# Satellite server
+# Tower Server
 tower_name_append: tower01
 redhat_subscription_name: "Red Hat Enterprise Linux Server"
 tower_latest_download_url: https://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
 tower_server_hostname: "{{ instance_prefix }}-{{ tower_name_append }}"
 tower_fqdn: "{{ tower_server_hostname }}.{{ domain }}"
+kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
+cloud_init_vm_image: rhel-8.4-x86_64-kvm.qcow2
+vm_mac: changeme
 tower_server_vm:
     tower_name: "{{ tower_server_hostname }}"
     tower_vcpu: 4
@@ -29,7 +32,7 @@ tower_repos:
   - ansible-2.9-for-rhel-8-x86_64-rpms
 
 tower_installer_repo: 'https://releases.ansible.com/ansible-tower/setup'
-tower_version: '3.7.0-4'
+tower_version: '3.8.3-2'
 tower_admin_password: "{{ admin_user_password }}"
 tower_ssl_cert: ''
 tower_ssl_key: ''
