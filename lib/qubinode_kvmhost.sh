@@ -39,10 +39,9 @@ function getPrimaryDisk () {
     if [ "A${primary_disk}" == "A" ];
     then
        primary_disk=$(/usr/bin/findmnt -nr -o source / | sed -e "s/\/dev\///g")
-       echo "lvs not found setting $primary_disk as primary disk"
+       printf "%s\n" "   Setting $primary_disk as primary disk."
     else
         primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
-        #echo "lvs was found setting ${primary_disk} as primary disk"
     fi
 }
 
