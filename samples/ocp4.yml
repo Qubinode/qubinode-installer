@@ -5,4 +5,4 @@ ocp4_image: 4.8.2
 ocp4_client_version: 4.8.9
 # set to qubinet for external network and set use_external_bridge: false
 use_external_bridge: false
-cluster_name: qub871
+cluster_name: ""

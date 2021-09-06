@@ -21,18 +21,8 @@ function kvm_host_variables () {
     if [ "A${host_rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-    elif [ "A${host_rhel_major}" == "A7" ]
-    then
-       rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
     else
         rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
-    fi
-
-
-    if [[ $RHEL_VERSION == "RHEL8" ]]; then
-      sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
-    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-      sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"
     fi
 }
 
@@ -459,8 +449,8 @@ function qubinode_networking () {
 
 kvm_host_health_check () {
     KVM_IN_GOOD_HEALTH=""
-    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
-    check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
+    #requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+    check_image_path=$(cat "${project_dir}/playbooks/vars/kvm_host.yml" | grep kvm_host_libvirt_dir: | awk '{print $2}')
     requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")

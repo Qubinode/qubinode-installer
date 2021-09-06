@@ -9,6 +9,24 @@ skip_libvirt_pool: no
 rhel_release: ""
 run_storage_check: ""
 kvm_host_libvirt_extra_disk: ""
+run_storage_check: ""
 
 # Set this if you want to skip the qubinode setup of the RHEL host
 qubinode_installer_host_completed: no
+
+#*******************************#
+# These defaults can be updated #
+#*******************************#
+kvm_host_libvirt_dir: /var/lib/libvirt/images
+vm_libvirt_net_check: yes
+libvirt_pool_name_check: yes
+vm_libvirt_net_check: yes
+vg_name: vg_qubi
+
+# This variable is being phased out
+run_qubinode_setup: yes
+
+# Name of the libvirt bridge where all vms will live
+qubinode_bridge_name: qubibr0
+
+
