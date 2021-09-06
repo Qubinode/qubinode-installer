@@ -1,0 +1,165 @@
+---
+###################
+# IDM DNS Server  #
+###################
+
+###################
+# common variables
+# The qubinode-installer depends on IdM as the DNS server.
+# If there is an existing Idm, then set this to no.
+deploy_idm_server: yes
+ask_use_existing_idm: no
+idm_server_name_prefix: "dns01"
+idm_server_name: "{{ idm_server_name_prefix }}-{{ vm_suffix }}"
+idm_check_static_ip: ""
+idm_admin_user: admin
+idm_realm: "{{ domain | upper }}"
+idm_forward_ip: "{{ dns_forwarder }}"
+idm_admin_password: "{{ idm_admin_pwd }}"
+idm_reverse_zones:
+  - "{{ qubinode_ptr }}"
+vm_mac: 52:54:00:32:f8:6d
+kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
+
+########################
+# RHEL IdM VM attributes
+rhel_major: "8"
+qcow_rhel_release: "{{ rhel_major }}"
+rhel_release: "{{ rhel_major }}"
+cloud_init_vm_image: rhel-8.4-x86_64-kvm.qcow2
+idm_server_ip: ""
+idm_zone_overlap: false
+idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"
+os_variant: "rhel8.3"
+dns_server_vm:
+    dns_name: "{{ idm_hostname }}"
+    dns_vcpu: 2
+    dns_memory: 2048
+    dns_root_disk_size: 10G
+    dns_teardown: false
+    dns_recreate: false
+    dns_group: ipaserver
+    dns_extra_storage: []
+    dns_enable: true
+    dns_ip: "{{ idm_server_ip | default('', true) }}"
+    dns_mask: "{{ vm_net_netmask | default('', true) }}"
+    dns_gateway: "{{ vm_net_gateway | default('', true) }}"
+    dns_mask_prefix: "{{ kvm_host_mask_prefix | default(kvm_host_mask_prefix) }}"
+    dns_expand_os_disk: no
+
+# os_release to pass to virt-install
+os_release: "rhel{{ rhel8_version }}"
+
+#######################
+# IdM on RHEL 8 attributes
+idm_repos_8:
+  - rhel-8-for-x86_64-baseos-rpms
+  - rhel-8-for-x86_64-appstream-rpms
+
+#########################
+# IdM on RHEL 7 attributes
+idm_repos_7:
+  - rhel-7-server-rpms
+  - rhel-7-server-extras-rpms
+  - rhel-7-server-optional-rpms
+idm_packages:
+  - ipa-server
+  - ipa-server-dns
+idm_ssh_pwd: "{{ admin_user_password }}"
+idm_ssh_user: "{{ admin_user }}"
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+
+# Set this if you want the playbook to run eventhough IdM is already deployed
+force_idm_redeployment: false
+
+###############
+# Populate IdM
+
+# Bulk Sample Accounts
+create_students: false
+create_student_accounts: yes
+total_users: 4
+idm_group_desc: "A group of students"
+idm_group: "students"
+idm_group_state: present
+idm_user_generated_prefix: "student"
+idm_user_sn: "learner"
+user_name_format: "{{ idm_user_generated_prefix }}%02d"
+
+# Default user attributes
+idm_user_pass_expiration: 20290119235959
+idm_user_state: present
+idm_user_shell: "/usr/bin/bash"
+update_idm_user_pass: on_create
+idm_group_type_posix: no
+
+# openshift bind user
+openshift_binddn_password: "{{ ocp_bind_pass | default('') }}"
+openshift_bind_user: openshiftbind
+openshift_binddn_password_expiration: 20380119031407Z
+
+# List of IdM groups to create
+idm_groups:
+  - name: openshift-users
+    desc: "Users allowed to log into OpenShift Container Platform"
+  - name: openshift-admins
+    desc: "OpenShift Administrators"
+  - name: openshift-viewers
+    desc: "OpenShift Viewers"
+  - name: satellite-users
+    desc: "Users allowed to log into Red Hat Satellite"
+  - name: satellite-admins
+    desc: "Red Hat Satellite administrators"
+  - name: tower-users
+    desc: "Users allowed to log into Red Hat Ansible Tower"
+  - name: tower-admins
+    desc: "Red Hat Ansible Tower administrators"
+
+
+# List of IdM users to create
+idm_users:
+ - name: clusteradmin
+   groups:
+     - openshift-admins
+     - openshift-users
+   password: clusteradmin
+   givenname: OpenShift
+   sn: Clusteradmin
+   state: present
+   loginshell: /usr/sbin/nologin
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey: []
+   update_password: "{{ update_idm_user_pass }}"
+ - name: clusterviewer
+   groups:
+     - openshift-viewers
+     - openshift-users
+   password: clusterviewer
+   givenname: OpenShift
+   sn: Clusterviewer
+   state: present
+   loginshell: /usr/sbin/nologin
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey: []
+   update_password: "{{ update_idm_user_pass }}"
+ - name: "qubinode_{{ admin_user }}"
+   groups:
+     - satellite-admins
+     - tower-admins
+     - openshift-admins
+     - openshift-users
+   password: "{{ admin_user }}"
+   givenname: OpenShift
+   sn: User
+   state: present
+   loginshell: /usr/bin/bash
+   krbpasswordexpiration: "{{ idm_user_pass_expiration | int}}"
+   mail: []
+   telephonenumber: []
+   sshpubkey:
+     - "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+   update_password: "{{ update_idm_user_pass }}"
