@@ -36,13 +36,13 @@
   version: master
 
 - src: https://github.com/flyemsafe/swygue.ansible-tower.git
-  version: master
+  version: v2.4.6
 
 - src: https://github.com/Qubinode/nfs-provisioner-role.git
-  version: dev
+  version: v2.4.6
 
 - src: https://github.com/Qubinode/ocp4_kvm_deployer.git
-  version: 2.4.6
+  version: v2.4.6
 
 - src: https://github.com/Qubinode/ocp4-bootstrap-webserver.git
   version: v2.4.3
