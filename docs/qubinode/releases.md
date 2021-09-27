@@ -14,6 +14,7 @@ https://github.com/Qubinode/qubinode-installer/releases
   * Using OCS pvc for registry pvc
 * Fixes for external network deployments
 * adding support for kcli
+* Adding Fixes for Anisble Tower Deployment
 
 
 **Qubinode v2.4.5 Release notes**
