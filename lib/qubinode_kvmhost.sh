@@ -545,7 +545,7 @@ function qubinode_setup_kvm_host () {
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           #qcow_check
+           qcow_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
        fi
@@ -556,12 +556,12 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-        #qcow_check
+        qcow_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
           printf "%s\n" "   Installing required packages"
           sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
-          #qcow_check
+          qcow_check
       fi
     fi
 
