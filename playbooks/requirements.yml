@@ -35,7 +35,7 @@
 - src: https://github.com/flyemsafe/redhat-satellite-quickstart.git
   version: master
 
-- src: https://github.com/flyemsafe/swygue.ansible-tower.git
+- src: https://github.com/Qubinode/swygue.ansible-tower.git
   version: v2.4.6
 
 - src: https://github.com/Qubinode/nfs-provisioner-role.git

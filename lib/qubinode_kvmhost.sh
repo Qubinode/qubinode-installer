@@ -546,6 +546,7 @@ function qubinode_setup_kvm_host () {
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            qcow_check
+           network_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
        fi
@@ -557,11 +558,13 @@ function qubinode_setup_kvm_host () {
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
         qcow_check
+        network_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
           printf "%s\n" "   Installing required packages"
           sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
           qcow_check
+          network_check
       fi
     fi
 
@@ -591,6 +594,15 @@ function qubinode_setup_kvm_host () {
     sudo systemctl restart libvirtd.service
 }
 
+function network_check(){
+    SECONDARY_INTERFACE_NAME=$(awk '/^kvm_host_interface:/ { print $2}' "${kvm_host_vars_file}")
+    echo "Collecting IP for  $SECONDARY_INTERFACE_NAME"
+    export CURRENT_IP=$(echo `ifconfig $SECONDARY_INTERFACE_NAME |awk '/inet/ {print $2}'| grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b"`)
+    if [ ! -z ${CURRENT_IP} ];
+    then 
+        sudo  nmcli connection down ${SECONDARY_INTERFACE_NAME} && sudo nmcli connection up ${SECONDARY_INTERFACE_NAME}
+    fi 
+}
 
 function qubinode_check_kvmhost () {
     qubinode_networking
