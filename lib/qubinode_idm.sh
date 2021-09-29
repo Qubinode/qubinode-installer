@@ -18,6 +18,8 @@ function idms_vars () {
     idm_srv_fqdn="${idm_srv_hostname}.${domain}"
     idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
     idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
+    mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
+    sed -i "s/vm_mac:.*/vm_mac: $mac_address/g" "${idm_vars_file}"
 }
 
 
