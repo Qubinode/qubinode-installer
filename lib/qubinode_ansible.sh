@@ -24,9 +24,9 @@ function ensure_supported_ansible_version () {
         if [ "A${AVAILABLE_VERSION}" != "A" ]
         then
             if [[ $RHEL_VERSION == "RHEL8" ]]; then
-                sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
+                sudo dnf install "ansible-${AVAILABLE_VERSION}" git -y
             elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-                sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+                sudo yum install "ansible-${AVAILABLE_VERSION}" git -y
             fi
         else
             printf "%s\n" " Could not find any available version of ansible greater than the"
