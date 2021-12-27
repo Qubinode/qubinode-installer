@@ -184,17 +184,6 @@ function openshift4_prechecks () {
 
     fi
 
-    # Get the lastest OCP4 version
-    # temporarly removing auto release
-    #curl -sOL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
-    #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    #sed -i "s/^ocp4_release:.*/ocp4_release: ${current_version}/"   "${ocp_vars_file}"
-
-    # Ensure Openshift Subscription Pool is attached
-    if [ "A${product_opt}" != "Aokd4" ]
-    then
-        check_for_openshift_subscription $ocp_vars_file
-    fi
 }
 
 
