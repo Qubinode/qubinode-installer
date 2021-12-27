@@ -79,11 +79,17 @@ function setup_variables () {
         sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
 
-    # Set KVM project dir
+    # Set the qubinode-installer directory as the project path
     if grep '""' "${vars_file}"|grep -q project_dir
     then
         #echo "Adding project_dir variable"
         sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
+    else
+        current_project_dir_value=$(awk '/^project_dir:/ {print $2}' "${vars_file}")
+        if [ "${current_project_dir_value:-none}" != "${project_dir}" ]
+        then
+            sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
+        fi
     fi
 
     # Setup admin user variable
