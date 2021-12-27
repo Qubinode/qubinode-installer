@@ -88,7 +88,7 @@ function setup_variables () {
         current_project_dir_value=$(awk '/^project_dir:/ {print $2}' "${vars_file}")
         if [ "${current_project_dir_value:-none}" != "${project_dir}" ]
         then
-            sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
+            sed -i "s#project_dir:.*#project_dir: "$project_dir"#g" "${vars_file}"
         fi
     fi
 
