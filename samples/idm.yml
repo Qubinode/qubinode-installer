@@ -8,8 +8,22 @@
 # The qubinode-installer depends on IdM as the DNS server.
 # If there is an existing Idm, then set this to no.
 deploy_idm_server: yes
-ask_use_existing_idm: yes
-idm_server_name: dns01
+
+# This ensures the installer prompts to collect IdM information
+ask_for_idm_info: yes
+
+## When using existing IdM server this should be the FQDN of that idm server
+idm_server_fqdn_name: dns01
+
+## This is used by OpenShift and should be set to the FQDN of the idm_server
+ipa_host: "{{ idm_server_fqdn_name }}"
+
+# Set this if you want the playbook to run eventhough IdM is already deployed
+force_idm_redeployment: false
+
+## default prefix for idm server name
+idm_server_name_suffix: "dns01"
+
 idm_check_static_ip: ""
 idm_admin_user: admin
 idm_realm: "{{ domain | upper }}"
@@ -23,11 +37,11 @@ idm_reverse_zones:
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-cloud_init_vm_image: rhel-8.2-x86_64-kvm.qcow2
+cloud_init_vm_image: rhel-8.5-x86_64-kvm.qcow2
 idm_server_ip: ""
 idm_public_ip: ""
 idm_zone_overlap: false
-idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"
+idm_hostname: "{{ instance_prefix }}-{{ idm_server_name_suffix }}"
 dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
@@ -47,7 +61,7 @@ dns_server_vm:
 expand_os_disk: no
 
 #######################
-# IdM on RHEL 8 attributes
+# IdM ansible role vars
 ipaserver_domain: "{{ domain }}"
 ipaserver_realm: "{{ idm_realm }}"
 ipaserver_setup_dns: "yes"
@@ -62,22 +76,10 @@ idm_repos_8:
   - rhel-8-for-x86_64-appstream-rpms
 ipaserver_allow_zone_overlap: "{{ idm_zone_overlap }}"
 ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
-
-#########################
-# IdM on RHEL 7 attributes
-idm_repos_7:
-  - rhel-7-server-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-server-optional-rpms
-idm_packages:
-  - ipa-server
-  - ipa-server-dns
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
-ipa_host: "{{ idm_hostname }}.{{ domain }}"
 
-# Set this if you want the playbook to run eventhough IdM is already deployed
-force_idm_redeployment: false
+
 
 ###############
 # Populate IdM
