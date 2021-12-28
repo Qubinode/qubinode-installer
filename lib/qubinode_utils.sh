@@ -348,6 +348,8 @@ function clean_up_stale_vms(){
         fi 
     fi
 
+    sudo test -f "${libvirt_dir}/qbn-ocp4-bootstrap-vda.qcow2" && sudo rm -f "${libvirt_dir}/qbn-ocp4-bootstrap-vda.qcow2"
+
 }
 
 function teardown_idm () {
@@ -478,9 +480,6 @@ function qubinode_setup () {
     then
        qubinode_setup_kvm_host
     fi
-
-    # Ensure RHSM cli is installed
-    install_rhsm_cli
 
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"

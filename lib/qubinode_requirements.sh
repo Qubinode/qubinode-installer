@@ -146,7 +146,6 @@ function get_rhel_version() {
 
 function qcow_check () {
     # TODO: this should be removed
-    download_files
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
 
@@ -170,50 +169,52 @@ function qcow_check () {
     fi
 }
 
+function installer_artifacts_msg () {
+        printf "%s\n\n" ""
 
-function install_rhsm_cli () {
-    if [ ! -f ${project_dir}/.python/rhsm_cli/bin/rhsm-cli ]
-    then
-        echo "Install install_rhsm_cli"
-        rpm -qa | grep python3-pip || sudo yum install -y python3-pip
-        test -d "${project_dir}/.python" || mkdir "${project_dir}/.python"
-        cd "${project_dir}/.python"
-        python3 -m venv rhsm_cli
-        source "${project_dir}/.python/rhsm_cli/bin/activate"
-        git clone https://github.com/antonioromito/rhsm-api-client > /dev/null 2>&1
-        cd rhsm-api-client
-        pip install -r requirements.txt > /dev/null 2>&1
-        python setup.py install --record files.txt > /dev/null 2>&1
-        deactivate
-        cd "${project_dir}"
-    fi
+        if [[ "${PULL_MISSING:-none}" == "yes" ]] && [[ "${QCOW_MISSING:-none}" == "yes" ]]
+        then
+            printf "%s\n" "    ${red}The installer requires the RHEL qcow image use for deploying the IdM VM.${end}"
+            printf "%s\n" "    ${red}The installer also requires your OpenShift pull-secret.${end}"
+            printf "%s\n\n" ""
+        elif [ "${PULL_MISSING:-none}" == "yes" ]
+        then
+            printf "%s\n" "    ${red}The installer also requires your OpenShift pull-secret.${end}"
+        elif [ "${QCOW_MISSING:-none}" == "yes" ]
+        then
+            printf "%s\n" "    ${red}The installer requires the RHEL qcow image use for deploying the IdM VM.${end}"
+        else
+            echo required_files_present >/dev/null
+        fi
+
+        printf "%s\n" "    ${yel}OPTIONS 1: RHSM offline token${end}"
+        printf "%s\n" "    You can provide a file with your RHSM offline api token"
+        printf "%s\n" "    to have the installer download the missing files:"
+        printf "%s\n\n" "        ${blu}* ${project_dir}/rhsm-offline-token.txt${end}"
+        printf "%s\n" "    ${yel}OPTION 2: Download the missing files${end}"
+        printf "%s\n" "    Download the reported missing files to the expected location."
+        if [ "A${PULL_MISSING}" == "Ayes" ]
+        then
+            printf "%s\n" "        * OpenShift Pull Secret: ${blu}${project_dir}/openshift-pull-secret.txt${end}"
+        fi
+        if [ "A${QCOW_MISSING}" == "Ayes" ]
+        then
+            printf "%s\n\n" "        * RHEL Qcow Image: ${blu}${project_dir}/$artifact_qcow_image${end}"
+        fi
+        printf "%s\n\n" "    Please refer to the documentation for details"
 }
 
 setup_download_options () {
-    CAN_DWLD=no
-    RHSM_TOKEN="${project_dir}/rhsm_token"
-    OCP_TOKEN="${project_dir}/ocp_token"
-    DWL_PULLSECRET=no
-
     # Ensure user is setup for sudo
     setup_sudoers
 
-    # check for user provided ocp token or pull secret
-    OCP_TOKEN_STATUS="notexist"
-    PULLSECRET_STATUS="notexist"
-    if [ -f $OCP_TOKEN ]
-    then
-        OCP_TOKEN_STATUS=exist
-        DWL_PULLSECRET=yes
-    fi
-
     # check for pull secret
-    if [ "A${CHECK_PULL_SECRET}" != "Ayes" ]
+    if [ "${CHECK_PULL_SECRET:-none}" != "yes" ]
     then
         # set status to exist to prevent check for pull secret when it's not required
         PULLSECRET_STATUS="exist"
     else
-        if [ -f "${project_dir}/pull-secret.txt" ]
+        if [ -f "${project_dir}/openshift-pull-secret.txt" ]
         then
             PULLSECRET_STATUS="exist"
         else
@@ -224,7 +225,6 @@ setup_download_options () {
     # check for required OS qcow image or token
     TOKEN_STATUS="notexist"
     QCOW_STATUS="notexist"
-    DWL_QCOW=no
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     artifact_qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     if sudo test -f "${libvirt_dir}/${artifact_qcow_image}"
@@ -234,32 +234,36 @@ setup_download_options () {
         if [[ ! -f "${libvirt_dir}/${artifact_qcow_image}" ]] && [[ ! -f "${project_dir}/${artifact_qcow_image}" ]]
         then
             # check for user provided token
-            if [ -f $RHSM_TOKEN ]
+            if [ -f "{project_dir}/rhsm-offline-token.txt" ]
             then
                 TOKEN_STATUS=exist
-                DWL_QCOW=yes
             fi
         else
             QCOW_STATUS=exist
         fi
     fi
 
-    if [[ "A${OCP_TOKEN_STATUS}" == "Anotexist" ]] && [[ "A${PULLSECRET_STATUS}" == "Anotexist" ]]
+    if [[ "${TOKEN_STATUS:-none}" == "notexist" ]] && [[ "${PULLSECRET_STATUS:-none}" == "notexist" ]]
     then
         PULL_MISSING=yes
-        artifact_string="your OCP pull-secret.txt"
+        artifact_string="your OCP openshift-pull-secret.txt"
     fi
 
-    if [[ "A${QCOW_STATUS}" == "Anotexist" ]] && [[ "A${TOKEN_STATUS}" == "Anotexist" ]]
+    if [[ "${QCOW_STATUS:-none}" == "notexist" ]] && [[ "${TOKEN_STATUS:-none}" == "notexist" ]]
     then
         QCOW_MISSING=yes
         artifact_string="the $artifact_qcow_image image"
     fi
 
-    if  [[ "A${PULL_MISSING}" == "Ayes" ]] || [[ "A${QCOW_MISSING}" == "Ayes" ]]
+    if  [[ "${PULL_MISSING:-none}" == "yes" ]] || [[ "${QCOW_MISSING:-none}" == "yes" ]]
     then
-        installer_artifacts_msg
-        exit 1
+        if [ -f "${project_dir}/rhsm-offline-token.txt" ]
+        then
+           printf "%s\n" "    Required files will be downloaded as needed" >/dev/null
+        else
+            installer_artifacts_msg
+            exit 1
+        fi
     fi
 
     # Ensure qcow image is copied to the libvirt directory
@@ -269,103 +273,25 @@ setup_download_options () {
         then
             sudo cp "${project_dir}/${artifact_qcow_image}"  "${libvirt_dir}/${artifact_qcow_image}"
         else
-            echo "  Did not find ${artifact_qcow_image} in path ${project_dir}."
-            echo "  Download and copy ${artifact_qcow_image} to ${project_dir}."
-            exit 1
-        fi
-    fi
-}
-
-function installer_artifacts_msg () {
-        printf "%s\n\n" ""
-        if [[ "A${PULL_MISSING}" == "Ayes" ]] && [[ "A${QCOW_MISSING}" == "Ayes" ]]
-        then
-            printf "%s\n" "    ${yel}The installer requires the RHEL qcow image and your OCP pull-secret.${end}"
-            printf "%s\n" "    ${yel}The installer expects to find either the artifact or the token to${end}"
-            printf "%s\n\n" "    ${yel}download the required artifact under ${project_dir}.${end}"
-        else
-            printf "%s\n" "    ${yel}The installer requires $artifact_string.${end}"
-            printf "%s\n" "    ${yel}The installer expects to find either the required artifact or the token to${end}"
-            printf "%s\n\n" "    ${yel}download the required artifact under ${project_dir}.${end}"
-        fi
-
-
-        printf "%s\n" "    ${yel}Tokens:${end}"
-
-        if [ "A${QCOW_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n" "        ${blu}* rhsm_token${end}"
-        fi
-
-        if [ "A${PULL_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n\n" "        ${blu}* ocp_token${end}"
-        fi
-
-        printf "%s\n" "    ${yel}Artifacts:${end}"
-
-        if [ "A${PULL_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n" "        ${blu}* ${project_dir}/pull-secret.txt${end}"
-        fi
-
-        if [ "A${QCOW_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n\n" "        ${blu}* ${project_dir}/$artifact_qcow_image${end}"
-        fi
-
-        printf "%s\n\n" "    ${yel}Please refer to the documentation for details${end}"
-}
-
-download_files () {
-    RHSM_CLI=no
-    RHSM_CLI_CMD="${project_dir}/.python/rhsm_cli/bin/rhsm-cli"
-    RHSM_CLI_CONFIG="/home/${ADMIN_USER}/.config/rhsm-cli.conf"
-    qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
-    qcow_image_checksum=$(grep "qcow_rhel${rhel_major}u._checksum:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
-
-
-    if [ -f $RHSM_CLI ]
-    then
-        RHSM_CLI=yes
-    fi
-
-    if [[ "A${TOKEN_STATUS}" == "Aexist" ]] && [[ "A${DWL_QCOW}" == "Ayes" ]]
-    then
-        # save token to config file
-        if [ ! -f $RHSM_CLI_CONFIG ]
-        then
-            TOKEN=$(cat $RHSM_TOKEN)
-            $RHSM_CLI_CMD -t $TOKEN savetoken 2>/dev/null
-            if [ $? -ne 0 ]
+            if [ -f "${project_dir}/rhsm-offline-token.txt" ]
             then
-                printf "%s\n" "    Failure validating token provided by $RHSM_TOKEN"
-                printf "%s\n" "    Please verify your token is correct or generate a new one and try again"
-                printf "%s\n\n" "    You can also just download the required files and per the documentation"
-                printf "%s\n" "    If you are certain your token is correct. Then there may be isues with the"
-                printf "%s\n" "    Red Hat API end-point. Please refer to the documentation on how to download"
-                printf "%s\n\n" "    the required files."
-                exit
+                printf "%s\n" "    Required files will be downloaded as needed" >/dev/null
             else
-                rm -f $RHSM_TOKEN
+                printf "%s\n" "  Did not find ${artifact_qcow_image} in path ${project_dir}."
+                printf "%s\n" "  Download and copy ${artifact_qcow_image} to ${project_dir}."
+                exit 1
             fi
         fi
+    fi
+}
 
-        if [ -f $RHSM_CLI_CONFIG ]
-        then
-            if [ "A${qcow_image_checksum}" != "A" ]
-            then
-                $RHSM_CLI_CMD images --checksum $qcow_image_checksum 2>/dev/null
-                if [ -f ${project_dir}/${qcow_image_name} ]
-                then
-                    DWLD_CHECKSUM=$(sha256sum ${project_dir}/${qcow_image_name}|awk '{print $1}')
-                    if [ $DWLD_CHECKSUM != $qcow_image_checksum ]
-                    then
-                        echo "The downloaded $qcow_image_name validation fail"
-                        exit 1
-                    fi
-                fi
-            fi
-        fi
+
+download_required_redhat_files () {
+    cd "${project_dir}"
+    if [ -f "${project_dir}/rhsm-offline-token.txt" ]
+    then
+        ansible-playbook playbooks/download-redhat-files.yml
+    else
+        installer_artifacts_msg
     fi
 }

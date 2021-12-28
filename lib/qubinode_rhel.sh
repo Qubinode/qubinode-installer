@@ -148,8 +148,7 @@ function qubinode_rhel () {
 
     ## Ensure RHEL qcow image is available
     setup_download_options
-    install_rhsm_cli
-    download_files
+    download_required_redhat_files
 }
 
 function run_rhel_deployment () {

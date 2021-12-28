@@ -12,8 +12,11 @@ deploy_idm_server: yes
 # This ensures the installer prompts to collect IdM information
 ask_for_idm_info: yes
 
-## When using existing IdM server this should be the FQDN of that idm server
+# FQDN for the IdM server
 idm_server_fqdn_name: dns01
+
+# IdM server IP address
+idm_server_ip: ""
 
 ## This is used by OpenShift and should be set to the FQDN of the idm_server
 ipa_host: "{{ idm_server_fqdn_name }}"
@@ -38,7 +41,6 @@ rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
 cloud_init_vm_image: rhel-8.5-x86_64-kvm.qcow2
-idm_server_ip: ""
 idm_public_ip: ""
 idm_zone_overlap: false
 idm_hostname: "{{ instance_prefix }}-{{ idm_server_name_suffix }}"

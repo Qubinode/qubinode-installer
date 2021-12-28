@@ -9,7 +9,7 @@ function qubinode_product_deployment () {
     AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower"
     case $PRODUCT_OPTION in
           okd4)
-	      openshift4_variables
+	          openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
@@ -23,7 +23,7 @@ function qubinode_product_deployment () {
               ;;
           ocp4)
               CHECK_PULL_SECRET=yes
-	      openshift4_variables
+	          openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
@@ -45,7 +45,7 @@ function qubinode_product_deployment () {
                   rhel_major=7
                   CHECK_PULL_SECRET=no
                   setup_download_options
-                  download_files
+                  download_required_redhat_files
                   qubinode_deploy_satellite
               fi
               ;;
@@ -56,7 +56,7 @@ function qubinode_product_deployment () {
               else
                   CHECK_PULL_SECRET=no
                   setup_download_options
-                  download_files
+                  download_required_redhat_files
                   qubinode_deploy_tower
               fi
               ;;
@@ -72,7 +72,7 @@ function qubinode_product_deployment () {
                   CHECK_PULL_SECRET=no
                   echo "Running IdM VM deploy function"
                   setup_download_options
-                  download_files
+                  download_required_redhat_files
                   qubinode_deploy_idm
               fi
               ;;
@@ -87,7 +87,7 @@ function qubinode_product_deployment () {
                   else
                       CHECK_PULL_SECRET=no
                       #setup_download_options
-                      download_files
+                      download_required_redhat_files
                       qubinode_deploy_rhel
                   fi
               fi

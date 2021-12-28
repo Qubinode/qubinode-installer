@@ -14,8 +14,6 @@ idm_generated_fqdn="$prefix-$suffix.$domain"
 idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
 
-
-
 # Set the VM OS release to match the host system
 sed -i "s/^rhel_major:.*/rhel_major: $rhel_major/g" $idm_vars_file
 
@@ -59,7 +57,7 @@ function ask_user_for_idm_password () {
     # This is the password used to log into the IDM server webconsole and also the admin user
     #if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
     idm_admin_pwd=$(ansible-vault view ${vaultfile}|awk '/idm_admin_pwd:/ {print $2;exit}')
-    if [ "A${idm_admin_pwd}" == 'A""' ];
+    if [ "${idm_admin_pwd:-none}" == '""' ];
     then
         unset idm_admin_pwd
         while [[ ${#idm_admin_pwd} -lt 8 ]]
@@ -97,7 +95,7 @@ function ask_user_for_custom_idm_server () {
     deploy_idm_server=$(awk '/deploy_idm_server:/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
     ask_for_idm_info=$(awk '/ask_for_idm_info:/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
 
-    # Ask if this host should be setup as a qubinode host
+    # Ask if a IdM vm should be deployed or use an existing IdM server
     if [ "${ask_for_idm_info:-none}" == 'yes' ]
     then
         printf "%s\n" "  ${cyn}IdM Server Deployment Options${end}"
@@ -118,13 +116,13 @@ function ask_user_for_custom_idm_server () {
 
             printf "%s\n\n" ""
             printf "%s\n" "  Please provide the hostname of the existing DNS server."
-            printf "%s\n\n" "  For example if you IdM server is ${yel}dns01.lab.com${end}, you should enter ${yel}dns01${end}."
-            read -p "  ${blu}What is the hostname of the existing DNS server?${end} " IDM_NAME
+            #printf "%s\n\n" "  For example if you IdM server is ${yel}dns01.lab.com${end}, you should enter ${yel}dns01${end}."
+            read -p "  ${blu}What is the FQDN of the existing DNS server?${end} " IDM_NAME
             idm_hostname="${IDM_NAME}"
             confirm "  You entered $idm_hostname, is this correct? ${yel}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
+            if [ "${response:-none}" == "yes" ]
             then
-                
+                sed -i "s/idm_server_fqdn_name:.*/idm_server_fqdn_name: "$idm_hostname"/g" "${idm_vars_file}"
                 printf "%s\n" ""
                 printf "%s\n" "  ${blu}Your IdM server hostname is set to${end} ${yel}$idm_hostname${end}"
             fi
@@ -321,10 +319,10 @@ function qubinode_teardown_idm () {
      local vmdisk="${libvirt_dir}/${idm_server_hostname}_vda.qcow2"
      if sudo virsh list --all |grep -q "${idm_server_hostname}"
      then
-         echo "Remove IdM VM"
+         printf "%s\n" "    Remove IdM VM"
          ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_teardown=true" || exit $?
      fi
-     echo "Ensure IdM server deployment is cleaned up"
+     printf "%s\n" "    Ensure IdM server deployment is cleaned up"
      ansible-playbook "${IDM_PLAY_CLEANUP}" || exit $?
      sudo test -f "${vmdisk}" && sudo rm -f "${vmdisk}"
 
@@ -336,28 +334,22 @@ function qubinode_teardown_idm () {
 function qubinode_deploy_idm_vm () {
     if grep deploy_idm_server "${idm_vars_file}" | grep -q yes
     then
-        isIdMrunning
-        if [ "A${idm_running}" == "Afalse" ]
-        then
-            qubinode_setup
-        fi
-
         IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
         SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
 
-        if [ "A${idm_running}" == "Afalse" ]
-        then
-            echo "running playbook ${IDM_VM_PLAY}"
+        #if [ "A${idm_running}" == "Afalse" ]
+        #then
+            printf "%s\n" "    running playbook ${IDM_VM_PLAY}"
             if [ "A${SET_IDM_STATIC_IP}" == "Ayes" ]
             then
-                echo "Deploy with custom IP"
+                printf "%s\n" "    Deploy with custom IP"
                 idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
                 ansible-playbook "${IDM_VM_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}"|| exit $?
              else
-                 echo "Deploy without custom IP"
+                 printf "%s\n" "    Deploy without custom IP"
                  ansible-playbook "${IDM_VM_PLAY}" || exit $?
              fi
-         fi
+        # fi
      fi
 }
 
@@ -391,33 +383,46 @@ function qubinode_idm_status () {
 }
 
 function qubinode_install_idm () {
-    isIdMrunning
-    if [ "${idm_running:-none}" != "true" ]
-    then
+    #isIdMrunning
+    #if [ "${idm_running:-none}" != "true" ]
+    #then
         ask_user_input
         IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
-
-        echo "Install and configure the IdM server"
-        idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
-        echo "Current IP of IDM Server ${idm_server_ip}" || exit $?
-        ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
-	    qubinode_idm_status
-     else
-	    qubinode_idm_status
-     fi
+        if grep deploy_idm_server "${idm_vars_file}" | grep -q yes
+        then
+            printf "%s\n" "    Install and configure the IdM server"
+            idm_server_ip=$(awk '/idm_server_ip:/ {print $2}' "${idm_vars_file}")
+            printf "%s\n" "    Current IP of IDM Server ${idm_server_ip}" || exit $?
+    
+            ansible-playbook "${IDM_INSTALL_PLAY}" --extra-vars "vm_ipaddress=${idm_server_ip}" || exit $?
+	        qubinode_idm_status
+        fi
+     #else
+	    #qubinode_idm_status
+     #fi
 }
 
 function qubinode_deploy_idm () {
-    check_additional_storage
+    #check_additional_storage
+    isIdMrunning
+  
 
     # Ensure host system is setup as a KVM host
     kvm_host_health_check
-    if [[ "A${KVM_IN_GOOD_HEALTH}" != "Aready"  ]]; then
+    if [ "${KVM_IN_GOOD_HEALTH:-none}" != "ready" ]
+    then
         qubinode_setup_kvm_host
     fi
 
-    qubinode_deploy_idm_vm
-    qubinode_install_idm
+    if [ "${idm_running:-none}" == "false" ]
+    then
+        qubinode_setup
+        ask_user_for_idm_domain
+        ask_user_for_custom_idm_server
+        qubinode_deploy_idm_vm
+        qubinode_install_idm
+    fi
+    
 }
 
 function qubinode_idm_maintenance () {

@@ -46,15 +46,15 @@ function ensure_supported_ansible_version () {
 function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
-    HAS_SUDO=$(has_sudo)
+    #HAS_SUDO=$(has_sudo)
     RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
 
-    if [ "A${HAS_SUDO}" == "Ano_sudo" ]
-    then
-        printf "%s\n" " ${red}You do not have sudo access${end}"
-        printf "%s\n" " Please run ${grn}qubinode-installer -m setup${end}"
-        exit 1
-    fi
+    #if [ "A${HAS_SUDO}" == "Ano_sudo" ]
+    #then
+    #    printf "%s\n" " ${red}You do not have sudo access${end}"
+    #    printf "%s\n" " Please run ${grn}qubinode-installer -m setup${end}"
+    #    exit 1
+    #fi
 
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
@@ -142,6 +142,7 @@ function qubinode_setup_ansible () {
         else
             printf "%s\n" " Downloading required roles"
             ansible-galaxy install -r "${project_dir}/playbooks/requirements.yml" > /dev/null 2>&1
+            #echo "ansible-galaxy install --force -r ${project_dir}/playbooks/requirements.yml"
         fi
 
         # Ensure required modules are downloaded
@@ -158,10 +159,13 @@ function qubinode_setup_ansible () {
         exit 1
     fi
 
-    sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
-    printf "\n\n${yel}    *******************************${end}\n"
-    printf "${yel}    *   Ansible Setup Complete   *${end}\n"
-    printf "${yel}    *******************************${end}\n\n"
+    if [ -d "${project_dir}/playbooks/roles/qubinode_kvmhost_setup" ]
+    then
+        sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
+        printf "\n\n${yel}    *******************************${end}\n"
+        printf "${yel}    *   Ansible Setup Complete   *${end}\n"
+        printf "${yel}    *******************************${end}\n\n"
+    fi
 
 }
 

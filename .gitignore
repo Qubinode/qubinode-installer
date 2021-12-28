@@ -34,3 +34,5 @@ rhsm_token
 lib/qubinode_acme_install.sh
 playbooks/files
 acme/
+openshift-pull-secret.txt
+rhsm-offline-token.txt

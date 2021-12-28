@@ -7,11 +7,11 @@ function openshift4_variables () {
     then
         product_samples_vars_file=${project_dir}/samples/okd4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/okd4.yml
-	deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
+	      deploy_product_playbook=${project_dir}/playbooks/deploy_okd4.yml
     else
         product_samples_vars_file=${project_dir}/samples/ocp4.yml
         ocp_vars_file=${project_dir}/playbooks/vars/ocp4.yml
-	deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
+	      deploy_product_playbook=${project_dir}/playbooks/deploy_ocp4.yml
     fi
 
     # ensure product vars file is in place
@@ -28,26 +28,34 @@ function openshift4_variables () {
     if [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" != "shut" ]]
     then
         cluster_vm_running=yes
-	cluster_vm_deployed=yes
+	      cluster_vm_deployed=yes
     elif [[ "A${cluster_vm_status}" != "A" ]] && [[ "A${cluster_vm_status}" == "shut" ]]
     then
         cluster_vm_running=no
-	cluster_vm_deployed=yes
+	      cluster_vm_deployed=yes
     else
         cluster_vm_running=no
-	cluster_vm_deployed=no
+	      cluster_vm_deployed=no
     fi
 
-    playbooks_dir="${project_dir}/playbooks"
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
-    ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
-    lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
-    podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
-    lb_name="${lb_name_prefix}-${cluster_name}"
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
-    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
-    idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  ## Create a random cluster name if one does not exist
+  cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
+  generated_num=$(echo $(((RANDOM%900+1))))
+  generated_cluster_name="qub${generated_num}"
+  if [ "A${cluster_name}" == 'A""' ]
+  then
+      sed -i "s/^cluster_name:.*/cluster_name: "$generated_cluster_name"/g" "${ocp_vars_file}"
+  fi
+
+  playbooks_dir="${project_dir}/playbooks"
+  ocp4_pull_secret="${project_dir}/openshift-pull-secret.txt"
+  ocp4_cluster_domain=$(awk '/^ocp4_cluster_domain/ {print $2; exit}' "${ocp_vars_file}")
+  lb_name_prefix=$(awk '/^lb_name_prefix/ {print $2; exit}' "${ocp_vars_file}")
+  podman_webserver=$(awk '/^podman_webserver/ {print $2; exit}' "${ocp_vars_file}")
+  lb_name="${lb_name_prefix}-${cluster_name}"
+  ocp4_pull_secret="${project_dir}/openshift-pull-secret.txt"
+  prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
+  idm_server_name=$(awk '/idm_server_name:/ {print $2;exit}' "${project_dir}/playbooks/vars/all.yml")
 
     # load kvmhost variables
     source ${project_dir}/lib/qubinode_kvmhost.sh
@@ -55,20 +63,54 @@ function openshift4_variables () {
 
     # OCP nodes vairiables
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
-    min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
-    min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
-    min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
-    min_mem=$(awk '/^min_mem:/ {print $2; exit}' "${product_samples_vars_file}")
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    min_ctrlplane_count=$(awk '/^min_ctrlplane_count:/ {print $2; exit}' "${ocp_vars_file}")
+    min_compute_count=$(awk '/^min_compute_count:/ {print $2; exit}' "${ocp_vars_file}")
+    min_vcpu=$(awk '/^min_vcpu:/ {print $2; exit}' "${ocp_vars_file}")
+    min_mem=$(awk '/^min_mem:/ {print $2; exit}' "${ocp_vars_file}")
     min_mem_h=$(echo "$min_mem/1024"|bc)
-    compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
-    ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
-    ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${product_samples_vars_file}")
-    ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
-    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)
+    compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp_vars_file}")
+    ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${ocp_vars_file}")
+    ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${ocp_vars_file}")
+    ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${ocp_vars_file}")
+    mem_h=$(echo "$ctrlplane_mem_size/1000"|bc)  
+}
+
+function get_latest_ocp_minor_release () {
+    local ocp_mirror="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable"
+    ocp_release=$(awk '/^ocp4_ystream_release:/ {print $2}' "${ocp_vars_file}")
+    auto_get_releases=$(awk '/^auto_get_releases:/ {print $2}' "${ocp_vars_file}")
+    ocp_minor_release=$(curl -k --silent ${ocp_mirror}-${ocp_release}/release.txt | awk '/Version:/ {print $2}')
+
+    if [ "${auto_get_releases:-none}" == 'yes' ]
+    then
+	    printf "%s\n" "    Getting latest releases"
+        local ocp_release_dir=$(mktemp -d)
+        local ocp4_ystream=$(awk '/^ocp4_ystream_release:/ {print $2}' "${ocp_vars_file}")
+        local ocp4_ystream=$(echo $ocp4_ystream | sed -e 's/^"//' -e 's/"$//')
+
+        cd "$ocp_release_dir"
+        ## Update rhcos dependancies release
+        curl -sOL "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/${ocp4_ystream}/latest/sha256sum.txt"
+        get_image_release=$(awk '/qemu.x86_64.qcow2.gz/ {print $2}' sha256sum.txt |perl -pe 'if(($v)=/([0-9]+([.][0-9]+)+)/){print"$v\n";exit}$_=""')
+
+        image_release="${get_image_release}"
+        if [ "${image_release:-none}" != 'none' ]
+        then
+            sed -i "s/^ocp4_image:.*/ocp4_image: ${image_release}/" "${ocp_vars_file}"
+            sed -i "s/^ocp4_release:.*/ocp4_release: ${image_release}/" "${ocp_vars_file}"
+        fi
+        # Get the lastest OCP4 version
+        # temporarly removing aut release
+        curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_ystream}/release.txt"
+        current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+        sed -i "s/^ocp4_client_version:.*/ocp4_client_version: ${current_version}/"   "${ocp_vars_file}"
+        sed -i "s/^ocp4_auto_updated_release:.*/ocp4_auto_updated_release: $ocp_minor_release/g" "${ocp_vars_file}"
+    fi
 }
 
 function check_for_pull_secret () {
-    ocp4_pull_secret="${project_dir}/pull-secret.txt"
+    ocp4_pull_secret="${project_dir}/openshift-pull-secret.txt"
     if [ -f ${project_dir}/ocp_token ]
     then
         OFFLINE_ACCESS_TOKEN=$(cat ${project_dir}/ocp_token)
@@ -87,6 +129,7 @@ function check_for_pull_secret () {
     fi
 
     # verify the pull scret is vailable
+    download_required_redhat_files
     if [ ! -f "${ocp4_pull_secret}" ]
     then
         printf "%s\n\n\n" ""
@@ -119,9 +162,42 @@ cat << EOF
    ${yel}======================================================${end}
    ${mag} Standard deployment of $total_ocp_nodes node cluster ${end}
    ${yel}======================================================${end}
-
    Each with ${mem_h}G memory and ${ctrlplane_vcpu}vCPU. 
+    ${cyn}========${end}
+    Features
+    ${cyn}========${end}
+     $feature_one
+     $feature_two
+EOF
 
+    printf "%s\n\n" ""
+    confirm "    Do you want to continue with this $ocp_size size cluster? yes/no"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${ocp_vars_file}"
+    else
+        ocp4_menu
+    fi
+}
+
+function openshift4_ocs_desc () {
+      openshift4_variables
+    if [ "A${standard_opt}" == "A6node" ]
+    then
+        reset_cluster_resources_default
+        compute_count=3
+        total_ocp_nodes=$(echo "$compute_count+$ctrlplane_count"|bc)
+    else
+        reset_cluster_resources_default
+	total_ocp_nodes=$(echo "$compute_count+$ctrlplane_count"|bc)
+    fi
+    feature_one="- nfs-provisioner for image registry"
+    feature_two="- OpenShift container Storage"
+cat << EOF
+   ${yel}======================================================${end}
+   ${mag} OCS deployment of $total_ocp_nodes node cluster ${end}
+   ${yel}======================================================${end}
+   Each with ${mem_h}G memory and ${ctrlplane_vcpu}vCPU. 
     ${cyn}========${end}
     Features
     ${cyn}========${end}
@@ -157,8 +233,8 @@ EOF
 }
 
 function openshift4_prechecks () {
-    ocp_vars_file="${ocp_vars_file}"
-    ocp4_sample_vars="${product_samples_vars_file}"
+    ocp_vars_file="${project_dir}/playbooks/vars/ocp4.yml"
+    ocp4_sample_vars="${project_dir}/samples/ocp4.yml"
     all_vars_file="${project_dir}/playbooks/vars/all.yml"
     if [ ! -f "${ocp_vars_file}" ]
     then
@@ -177,13 +253,17 @@ function openshift4_prechecks () {
       # Ensure firewall rules
       if ! sudo firewall-cmd --list-ports | grep -q '32700/tcp'
       then
-          echo "Setting firewall rules"
+          printf "%s\n" "    Setting firewall rules"
           sudo firewall-cmd --add-port={8080/tcp,80/tcp,443/tcp,6443/tcp,22623/tcp,32700/tcp} --permanent
           sudo firewall-cmd --reload
       fi
 
     fi
 
+    test -d "${project_dir}" && cd "${project_dir}"
+
+    # Get the latest ocp4 minor release
+    get_latest_ocp_minor_release
 }
 
 
@@ -206,45 +286,47 @@ function configure_local_storage () {
     reset_cluster_resources_default
     #TODO: you be presented with the choice between localstorage or ocs. Not both.
     printf "%s\n\n" ""
-    read -p "     ${def}Enter the size you want in GB for local storage, default is 100: ${end} " vdb
-    vdb_size="${vdb:-100}"
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 10: ${end} " vdb
+    vdb_size="${vdb:-10}"
     compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
         printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
 
-cat << EOF
-    ${yel}=========================${end}
-    ${mag}Select volume Mode: ${end}
-    ${yel}=========================${end}
-    1) Filesystem - Presented to the OS as a file system export to be mounted.
-    2) Block - Presented to the operating system (OS) as a block device.
-EOF
-    local choice
-	read -p " ${cyn}    Enter choice [ 1 - 2] ${end}" choice
-	case $choice in
-	    1) storage_type=filesystem
-            ;;
-            2) storage_type=block
-            ;;
-	    3) exit 0;;
-	    *) printf "%s\n\n" " ${RED}Error...${STD}" && sleep 2
-	esac
-        confirm "     Continue with $storage_type local storage volume? yes/no"
-        if [ "A${response}" == "Ayes" ]
-        then
-            set_local_volume_type
-        else
-            configure_local_storage
-        fi
 
-        printf "%s\n\n" ""
+    storage_type=block
+    set_local_volume_type
 	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
+    ask_to_use_external_bridge
 	openshift4_standard_desc
+}
+
+
+function configure_ocs_storage_size () {
+    # ensure cluster is back to the defaults
+    #reset_cluster_resources_default
+    #TODO: you be presented with the choice between localstorage or ocs. Not both.
+    printf "%s\n\n" ""
+    read -p "     ${def}Enter the size you want in GB for local storage, default is 300: ${end} " ocs_size
+    ocs_storage_size="${ocs_size:-300}"
+    final_ocs_storage_size=$(echo ${ocs_storage_size}| grep -o '[[:digit:]]*')
+    confirm "     ${def}You entered${end} ${yel}$final_ocs_storage_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
+    if [ "A${response}" == "Ayes" ]
+    then
+        sed -i "s/compute_ocs_size:.*/compute_ocs_size: "$final_ocs_storage_size"/g" "${ocp_vars_file}"
+        printf "%s\n" ""
+        printf "%s\n\n" "    ${def}The size OSC Storage is now set to${end} ${yel}${final_ocs_storage_size}G Per Node${end}"
+    fi
+
+    storage_type=block
+    set_local_volume_type
+
+    printf "%s\n\n" ""
 }
 
 function set_local_volume_type () {
@@ -258,6 +340,53 @@ function set_local_volume_type () {
     sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: false/g" "${ocp_vars_file}"
     sed -i "s/localstorage_block:.*/localstorage_block: true/g" "${ocp_vars_file}"
   fi 
+}
+
+function ask_to_use_external_bridge () {
+    ocp_libvirt_network_option=$(awk '/^use_external_bridge:/ {print $2; exit}' "${ocp_vars_file}")
+    if [ "A${ocp_libvirt_network_option}" == "A" ]
+    then
+        printf "%s\n" "    Would you like to deploy your OpenShift Nodes on to an external Bridge Network?"
+        printf "%s\n" "    The Default deployment Option is No this will deploy your OpenShift Nodes on the NAT Network?"
+        printf "%s\n" "    Default choice is to choose: No"
+        confirm " Yes/No"
+        if [ "A${response}" == "Ayes" ]
+        then
+            sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
+            ocp_kvm_ip_option=$(awk '/^kvm_host_ip:/ {print $2; exit}' "${kvm_host_vars_file}")
+            echo "KVM IP ADDRESS: ${ocp_kvm_ip_option}"
+            network_subnet=$(awk -F"." '{print $1"."$2"."$3".0"}'<<<$ocp_kvm_ip_option)
+            echo $network_subnet
+            sed -i "s/ocp4_subnet:.*/ocp4_subnet: \"${network_subnet}\"/g" ${ocp_vars_file}
+            # Get API octect infomation
+            node_octect=`echo ${ocp_kvm_ip_option} | cut -d . -f 4`
+            sed -i "s/api_int_octet:.*/api_int_octet: ${node_octect}/g" ${ocp_vars_file}
+            sed -i "s/api_octet:.*/api_octet: ${node_octect}/g" ${ocp_vars_file}
+            # get bootstrap ip and octect
+            read -p "     ${def}Enter the ip octet for bootstrap vm: ${end} " bootstrap_octect
+            boot_octect="${bootstrap_octect:-10}"
+            sed -i "s/bootstrap_octet:.*/bootstrap_octet: ${boot_octect}/g" ${ocp_vars_file}
+            bootstrap_ip_address=$(awk -F"." '{print $1"."$2"."$3".'${boot_octect}'"}'<<<$ocp_kvm_ip_option)
+            sed -i "s/bootstrap_node_ip:.*/bootstrap_node_ip: \"${bootstrap_ip_address}\"/g" ${ocp_vars_file}
+            # Get control plane octect
+            read -p "     ${def}Enter the starting ip octet for control plane vms: ${end} " control_plane_octect
+            ctl_octect="${control_plane_octect:-20}"
+            sed -i "s/ctrlplane_ip_octet:.*/ctrlplane_ip_octet: ${ctl_octect}/g" ${ocp_vars_file}
+            # Get Comupte node octect info
+            read -p "     ${def}Enter the starting ip octet for compute vms: ${end} " compute_node_octect
+            compute_octect="${compute_node_octect:-30}"
+            sed -i "s/compute_ip_octet:.*/compute_ip_octet: ${compute_octect}/g" ${ocp_vars_file}
+            # Get storage octect ino
+            # read -p "     ${def}Enter the starting ip octet for storage vms: ${end} " storage_node_octect
+            # storage_octect="${storage_node_octect:-40}"
+            # sed -i "s/storage_ip_octet:.*/storage_ip_octet: \"${storage_octect}\"/g" ${ocp_vars_file}
+            ###
+            ## Add test to detect if ips are in use
+            ###
+        else
+            sed -i "s/use_external_bridge:.*/use_external_bridge: false/g" ${ocp_vars_file}
+        fi
+    fi
 }
 
 function confirm_minimal_deployment () {
@@ -275,6 +404,7 @@ function confirm_minimal_deployment () {
         MSG2="The nodes functions as both control and computes."
     fi
 
+    ask_to_use_external_bridge
     openshift4_minimal_desc4
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"
@@ -313,10 +443,10 @@ is_node_up () {
     fi
     if [ "A${ETCD_CHECK}" != "A3" ]
     then
-        echo "Could not determine if $VMNAME was properly deployed."
+        printf "%s\n" "    Could not determine if $VMNAME was properly deployed."
         exit 1
     else
-        echo "$VMNAME was properly deployed"
+        printf "%s\n" "    $VMNAME was properly deployed"
     fi
 }
 
@@ -344,10 +474,10 @@ function ping_openshift4_nodes () {
         do
             vm="ctrlplane-$((i-1))"
             if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
-              echo "${vm}.${cluster_name}.lab.example is online"
+              printf "%s\n" "    ${vm}.${cluster_name}.lab.example is online"
               IS_OPENSHIFT4_NODES=ready
             else
-              echo "${vm}.${cluster_name}.lab.example is offline"
+              printf "%s\n" "    ${vm}.${cluster_name}.lab.example is offline"
               IS_OPENSHIFT4_NODES="not ready"
               break
             fi
@@ -363,10 +493,10 @@ function ping_openshift4_nodes () {
         do
             vm="compute-$((i-1))"
             if  pingreturnstatus ${vm}.${cluster_name}.${domain} > /dev/null 2>&1; then
-              echo "${vm}.${cluster_name}.lab.example is online"
+              printf "%s\n" "    ${vm}.${cluster_name}.lab.example is online"
               IS_OPENSHIFT4_NODES=ready
             else
-              echo "${vm}.${cluster_name}.lab.example is offline"
+              printf "%s\n" "    ${vm}.${cluster_name}.lab.example is offline"
               IS_OPENSHIFT4_NODES="not ready"
               break
             fi
@@ -404,15 +534,15 @@ function check_openshift4_size_yml () {
 }
 
 reset_cluster_resources_default () {
-    default_ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_ctrlplane_hd_size=$(awk '/^ctrlplane_hd_size:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_compute_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${product_samples_vars_file}")
-    default_compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${product_samples_vars_file}")
+    default_ctrlplane_count=$(awk '/^ctrlplane_count:/ {print $2; exit}' "${ocp_vars_file}")
+    default_ctrlplane_hd_size=$(awk '/^ctrlplane_hd_size:/ {print $2; exit}' "${ocp_vars_file}")
+    default_ctrlplane_mem_size=$(awk '/^ctrlplane_mem_size:/ {print $2; exit}' "${ocp_vars_file}")
+    default_ctrlplane_vcpu=$(awk '/^ctrlplane_vcpu:/ {print $2; exit}' "${ocp_vars_file}")
+    default_compute_count=$(awk '/^compute_count:/ {print $2; exit}' "${ocp_vars_file}")
+    default_compute_hd_size=$(awk '/^compute_hd_size:/ {print $2; exit}' "${ocp_vars_file}")
+    default_compute_mem_size=$(awk '/^compute_mem_size:/ {print $2; exit}' "${ocp_vars_file}")
+    default_compute_vcpu=$(awk '/^compute_vcpu:/ {print $2; exit}' "${ocp_vars_file}")
+    default_compute_local_storage=$(awk '/^compute_local_storage:/ {print $2; exit}' "${ocp_vars_file}")
 
     sed -i "s/ctrlplane_vcpu:.*/ctrlplane_vcpu: "$default_ctrlplane_vcpu"/g" "${ocp_vars_file}"
     sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$default_ctrlplane_mem_size"/g" "${ocp_vars_file}"
@@ -664,7 +794,7 @@ EOF
 		get_cluster_resources
                 ;;
             Save) break;;
-            * ) echo "Please answer a valid choice";;
+            * ) printf "%s\n" "    Please answer a valid choice";;
         esac
     done
 
@@ -700,7 +830,7 @@ EOF
                 break
                 ;;
             *)
-                echo "Please answer a valid choice"
+                printf "%s\n" "    Please answer a valid choice"
                 ;;
         esac
     done
@@ -712,34 +842,38 @@ EOF
 }
 
 function configure_ocs_storage () {
+    ## Jan 3, 2021 this function should be deleted
+    ## it's no longer in use.
+
     #------------------------------------------
     # configure OpenShift Container Storage
     #------------------------------------------
 
     OCS_STORAGE=no
     NFS_STORAGE=yes
-    LOCAL_STORAGE=no
-    LOCAL_STORAGE_FS=yes
-    LOCAL_STORAGE_BLOCK=no
+    LOCAL_STORAGE=yes
+    LOCAL_STORAGE_FS=no
+    LOCAL_STORAGE_BLOCK=yes
     FS_DISK="/dev/vdc"
 
-    configure_ocs_storage=$(awk '/^configure_ocs_storage:/ {print $2; exit}' "${ocp_vars_file}")
-    vdb_size=$(awk '/^compute_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
-    vdc_size=$(awk '/^compute_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
+    configure_ocs_storage=$(awk '/^configure_openshift_storage:/ {print $2; exit}' "${ocp_vars_file}")
+    vdb_size=$(awk '/^ctrlplane_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
+    vdc_size=$(awk '/^ctrlplane_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
     printf "%s\n\n" ""
-    printf "%s\n" "    ${yel}The deployment of OCS isn't fully automated.${end}"
-    printf "%s\n" "    ${yel}Once the cluster is up follow the install guide on the website.${end}"
+    printf "%s\n" "    ${yel}This will deploy OpenShift Storge.${end}"
     printf "%s\n" "    ${yel}This will ensure Local storage is deployed and the vms are deployed with the extra disk required.${end}"
     printf "%s\n\n" ""
     confirm "     Do you want to deploy OpenShift Container Storage? ${yel}yes/no${end}"
     if [ "A${response}" == "Ayes" ]
     then
         OCS_STORAGE=yes
-        NFS_STORAGE=no
+        NFS_STORAGE=yes
         LOCAL_STORAGE=yes
-        LOCAL_STORAGE_FS=yes
+        LOCAL_STORAGE_FS=no
         LOCAL_STORAGE_BLOCK=yes
         FS_DISK="/dev/vdb"
+
+        configure_ocs_storage_size
 
         confirm "     Current MON disk size is ${yel}$vdb_size${end}, do you want to change it? ${yel}yes/no${end}"
         if [ "A${response}" == "Ayes" ]
@@ -747,12 +881,12 @@ function configure_ocs_storage () {
             printf "%s\n" ""
             read -p "     ${blu}Enter the size you want in GB: ${end} " mon_vdb_size
             vdb_size="${mon_vdb_size:-10}"
-            compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
-            printf "%s\n" "    ${def}You entered${end} ${yel}$compute_vdb_size${end}"
+            ctrlplane_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdb_size${end}"
             confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+                sed -i "s/ctrlplane_vdb_size:.*/ctrlplane_vdb_size: "$ctrlplane_vdb_size"/g" "${ocp_vars_file}"
             fi
         fi
     
@@ -762,18 +896,18 @@ function configure_ocs_storage () {
             printf "%s\n" ""
             read -p "     ${blu}Enter the size you want in GB: ${end} " osd_vdc_size
             vdc_size="${osd_vdc_size:-100}"
-            compute_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
-            printf "%s\n" "    ${def}You entered${end} ${yel}$compute_vdc_size${end}"
+            ctrlplane_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
+            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdc_size${end}"
             confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
             if [ "A${response}" == "Ayes" ]
             then
-                sed -i "s/compute_vdc_size:.*/compute_vdc_size: "$compute_vdc_size"/g" "${ocp_vars_file}"
+                sed -i "s/ctrlplane_vdc_size:.*/ctrlplane_vdc_size: "$ctrlplane_vdc_size"/g" "${ocp_vars_file}"
             fi
         fi
     fi
 
     # Set OCS storage to deploy
-    sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
+    sed -i "s/configure_openshift_storage:.*/configure_openshift_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
     # Disable deployment of nfs
     sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp_vars_file}"
     # enable local storage 
@@ -785,6 +919,7 @@ function configure_ocs_storage () {
 
     # Enable local storage block device
     sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${ocp_vars_file}"
+    exit $?
 }
 
 function configure_nfs_storage () {
@@ -827,9 +962,9 @@ function configure_nfs_storage () {
         sed -i "s/provision_nfs_server:.*/provision_nfs_server: "$DEPLOY_NFS"/g" "${ocp_vars_file}"
 
         # Disable OCS
-        sed -i "s/configure_ocs_storage:.*/configure_ocs_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
+        sed -i "s/configure_openshift_storage:.*/configure_openshift_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
 
-        #provision_nfs_provisoner: true      # deploys the nfs provision
+        #provision_nfs_client_provisoner: true      # deploys the nfs provision
         #configure_registry: true
         #registry_pvc_size: 100Gi
     fi
@@ -907,11 +1042,11 @@ function remove_ocp4_compute () {
 		fi
 
 		# add host attributes to ansible vars
-                echo "  - hostname: $host" >> ${ocp4_computes_vars}
-                echo "    ipaddr: $IP" >> ${ocp4_computes_vars}
-                echo "    ptr_record: $PTR" >> ${ocp4_computes_vars}
-                echo "    vm_exist: $VM_EXIST" >> ${ocp4_computes_vars}
-                echo "    ocp_node_exist: $OCP_NODE_EXIST" >> ${ocp4_computes_vars}
+                printf "%s\n" "      - hostname: $host" >> ${ocp4_computes_vars}
+                printf "%s\n" "        ipaddr: $IP" >> ${ocp4_computes_vars}
+                printf "%s\n" "        ptr_record: $PTR" >> ${ocp4_computes_vars}
+                printf "%s\n" "        vm_exist: $VM_EXIST" >> ${ocp4_computes_vars}
+                printf "%s\n" "        ocp_node_exist: $OCP_NODE_EXIST" >> ${ocp4_computes_vars}
 
 		if [ "A${IP}" != "Afound:" ]
 		then
@@ -934,20 +1069,20 @@ function remove_ocp4_compute () {
             then
 	        echo REMOVAL_COUNT=$REMOVAL_COUNT
                 new_compute_count=$(echo $current_num_computes - $REMOVAL_COUNT|bc)
-	        echo "Setting total computes to $new_compute_count"
+	        printf "%s\n" "    Setting total computes to $new_compute_count"
                 sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp4_vars}"
                 sed -i "s/^compute_count_update:.*/compute_count_update: removed/g" "${ocp4_vars}"
 	    else
                 get_current_computes=$(sudo virsh list --all| grep compute | wc -l)
-                sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
+                $sed -i "s/compute_count:.*/compute_count: "$get_current_computes"/g" "${ocp4_vars}"
             fi
 	else
             exit
 	fi
 	
     else
-        echo "count must be a valid integer"
-        echo "./qubinode-installer -p ocp4 -m add-compute -a count=1"
+        printf "%s\n" "    count must be a valid integer"
+        printf "%s\n" "    ./qubinode-installer -p ocp4 -m add-compute -a count=1"
     fi
 }
 
@@ -988,19 +1123,26 @@ function add_ocp4_compute () {
             sed -i "s/^compute_count:.*/compute_count: "$new_compute_count"/g" "${ocp_vars_file}"
             sed -i "s/^compute_count_updated:.*/compute_count_update: add/g" "${ocp_vars_file}"
         else
-            echo "Max allowed computes is 10"
+            printf "%s\n" "    Max allowed computes is 10"
 	    exit
 	fi
     else
-        echo "count must be a valid integer"
-        echo "./qubinode-installer -p ocp4 -m add-compute -a count=1"
+        printf "%s\n" "    count must be a valid integer"
+        printf "%s\n" "    ./qubinode-installer -p ocp4 -m add-compute -a count=1"
     fi
 }
 
 openshift4_server_maintenance () {
+    # -a flags for storage and other openshift modfications
+    # Check for user provided variables
+    for var in "${product_options[@]}"
+    do
+       export storage_option="${var}"
+    done
+
     case ${product_maintenance} in
        diag)
-           echo "Perparing to run full Diagnostics: : not implemented yet"
+           printf "%s\n" "    Perparing to run full Diagnostics: : not implemented yet"
            ;;
        smoketest)
            printf "%s\n\n" ""
@@ -1019,8 +1161,8 @@ openshift4_server_maintenance () {
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
            if [ "A${response}" == "Ayes" ]
            then
-              ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }' -e '{ deploy_cluster: False }' -e '{ cluster_deployed_msg: "deployed" }' -t generate_inventory > /dev/null 2>&1 || exit $?
-              ansible-playbook ${deploy_product_playbook} -t shutdown -e shutdown_cluster=yes || exit 1
+              #ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
+              ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" || exit 1 
               printf "%s\n\n\n" "    "
               printf "%s\n\n" "    ${yel}Cluster has be shutdown${end}"
            else
@@ -1030,11 +1172,35 @@ openshift4_server_maintenance () {
        startup)
             printf "%s\n\n" ""
             printf "%s\n" "    ${yel}Starting up ${product_opt} Cluster!${end}"
-            ansible-playbook ${deploy_product_playbook} -t startup -e startup_cluster=yes || exit 1
-            /usr/local/bin/qubinode-ocp4-status
+            ansible-playbook ${deploy_product_playbook} -e "bootstrap_complete=yes" -e "startup_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "startup,generate_inventory" --skip-tags "always" || exit 1    
+            if [ -f /usr/local/bin/qubinode-ocp4-status ]
+            then
+                /usr/local/bin/qubinode-ocp4-status
+            else
+                printf "%s\n" "    /usr/local/bin/qubinode-ocp4-status not found"
+            fi
             ;;
        status)
-            /usr/local/bin/qubinode-ocp4-status
+            if [ -f /usr/local/bin/qubinode-ocp4-status ]
+            then
+                /usr/local/bin/qubinode-ocp4-status
+            else
+                printf "%s\n" "    /usr/local/bin/qubinode-ocp4-status not found"
+            fi
+            ;;
+       rebuild)
+            printf "%s\n" "    ${blu}This will delete and redeploy the current cluster.${end}"
+            ASK_SIZE=false
+            openshift4_qubinode_rebuild
+            confirm "Do you want to deploy a different size cluster? ${green}yes/no${end}"
+            if [ "${response}" == "yes" ]
+            then
+                ASK_SIZE=true
+            fi
+            qubinode_deploy_ocp4
+            ;;
+       setup)
+            qubinode_ocp4_setup
             ;;
        remove-compute)
            remove_ocp4_compute
@@ -1043,45 +1209,143 @@ openshift4_server_maintenance () {
 	   add_ocp4_compute
 	    ;;
        storage)
-	   configure_storage
+	   configure_storage "${storage_option}"
 	    ;;
+       rm-rhcos)
+            printf "%s\n" "    ${blu}This will delete the current cluster${end}"
+            openshift4_qubinode_rebuild
+            ;;
+       tools)
+           printf "%s\n" "    ${blu}Downloading OpenShift Client Tools${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools
+	   ;;
+       ignitions)
+           printf "%s\n" "    ${blu}Generating OpenShift node ignitions${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
+	   ;;
+       rhcos)
+	   local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,ignitions,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ;;
+       rhcos-mirror)
+	   if [ ! -f /usr/local/bin/filetranspile ]
+           then
+	       local current_dir=$(pwd)
+	       mkdir /tmp/filetranspile
+	       cd /tmp/filetranspile
+	       git clone https://github.com/ashcrow/filetranspiler.git
+	       sudo cp filetranspile/filetranspile /usr/local/bin
+	       sudo chmod +x /usr/local/bin/filetranspile
+	       cd $current_dir
+	   fi
+	   local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
+	   local install_dir="${project_dir}/ocp4"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
+cat << EOF > /tmp/etc-hosts-sinkhole
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+10.10.10.11 quay.io cloud.openshift.com registry.connect.redhat.com registry.redhat.io
+EOF
+
+           ignitions="bootstrap worker master"
+	   sudo chown -R admin.admin "${install_dir}"
+           for name in $(echo "$ignitions")
+           do
+               mkdir "${install_dir}/${name}/etc" -p
+               cp /tmp/etc-hosts-sinkhole "${install_dir}/${name}/etc/hosts"
+               mv "${install_dir}/${name}.ign" "${install_dir}/${name}.ign.back"
+               filetranspile  -i "${install_dir}/${name}.ign.back" -f "${install_dir}/${name}" -o "${install_dir}/${name}.ign"
+               rm -rvf "${install_dir}/${name}"
+               rm -rvf "${install_dir}/${name}.ign.back"
+           done
+
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -e "container_exist=no" -e "tear_down=no" -t "$rhcos_tags"
+	   ansible-playbook "${deploy_product_playbook}" -t bootstrap_cluster -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes"
+	   ansible-playbook "${deploy_product_playbook}" -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
+
+
+	   ;;
+       bootstrap)
+           printf "%s\n" "    ${blu}Bootstrap the OpenShift cluster${end}"
+	   qubinode_ocp4_preflight
+	   ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t generate_inventory,ocp4_nodes,bootstrap
+	   ;;
        *)
-           echo "No arguement was passed"
+           printf "%s\n" "    ${product_maintenance} Not a valid -m option. Options are:"
+	   printf "%s\n" "    setup, storage, add-compute, remove-compute, status, startup, shutdown, smoketest, diag"
            ;;
     esac
 }
 
 function configure_storage () {
-    # -a flags for storage and other openshift modfications
-    # Check for user provided variables
-    for var in "${product_options[@]}"
-    do
-       export $var
-    done
-
+    local storage_option="$1"
 
     #local storage options
-    if [ "A${storage}" != "A" ]
+    if [ "${storage_option:-none}" != "none" ]
     then
-        if [ "$storage" == "nfs" ]
-        then
-          echo "You are going to reconfigure ${storage}"
-          ansible-playbook  "${deploy_product_playbook}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed"
-        elif [ "$storage" == "nfs-remove" ]
-        then
-          echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${deploy_product_playbook}"  -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
-        fi
-
-        # localstorage option
-        if [ "$storage" == "localstorage" ]
-        then
-          echo "You are going to reconfigure ${storage}"
-          ansible-playbook  "${deploy_product_playbook}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed"
-        elif [ "$storage" == "localstorage-remove" ]
-        then
-          echo "You are going to Remove ${storage}  from the openshift cluster"
-          ansible-playbook  "${deploy_product_playbook}"  -t localstorage --extra-vars "configure_local_storag=true" --extra-vars "cluster_deployed_msg=deployed" --extra-vars "delete_deployment=true" --extra-vars "gather_facts=true"
-        fi
+	local playbook_file="${project_dir:?}/playbooks/setup-ocp-nfs-registry.yml"
+        case ${storage_option} in
+            ocp-registry)
+	        local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=yes' -e 'provision_nfs_client_provisoner=yes' -e 'configure_registry=yes'"
+                printf "%s\n" "    ${blu}Adding NFS PVC to OpenShift Registry${end}"
+                echo ansible-playbook "${playbook_file}" "${extra_vars}" |sh || exit "$?"
+	    ;;
+            ocp-registry-remove)
+               printf "%s\n" "    ${yel}This will remove the NFS PVC from the OpenShift Registry${end}"
+               confirm "    ${blu}Do you want to continue?${end} yes/no"
+               if [ "A${response}" == "Ayes" ]
+	       then
+	           local tags="-t remove_registry_pvc"
+	           local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=no' -e 'provision_nfs_client_provisoner=no' -e 'configure_registry=no' -e 'remove_registry_storage=yes' -e 'delete_deployment=yes'"
+                   printf "%s\n" "    ${blu}Removing OCP registry NFS PVC${end}"
+                   echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	       fi
+	    ;;
+            nfs)
+	        local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=yes' -e 'provision_nfs_client_provisoner=yes' -e 'configure_registry=no'"
+	        local tags="-t nfs_server,nfs_provisioner_configs"
+                printf "%s\n" "    ${blu}Configuring the NFS provisioner-client${end}"
+                echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	    ;;
+            nfs-remove)
+               printf "%s\n" "    ${yel}This will remove the NFS server and the PVC for the OpenShift Registry${end}"
+               confirm "    ${blu}Do you want to continue?${end} yes/no"
+               if [ "A${response}" == "Ayes" ]
+	       then
+	           local extra_vars="-e 'remove_nfs_server=yes'"
+	           local tags="-t remove_nfs_server"
+                   printf "%s\n" "    ${blu}Removing the NFS provisioner-client${end}"
+                   echo "ansible-playbook ${playbook_file} -t remove_registry_pvc -e remove_registry_storage=yes"|sh || exit "$?"
+                    echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	      fi
+	    ;;
+            localstorage)
+                printf "%s\n" "    ${blu}Adding local storage from the openshift cluster"
+                local extra_vars="-t localstorage -e 'configure_local_storag=true'"
+                echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	    ;;
+            localstorage-remove)
+               local extra_vars='-t localstorage -e "configure_local_storag=true"'
+               printf "%s\n" "    ${yel}This will remove local storage from the cluster.${end}"
+               confirm "    ${blu}Do you want to continue?${end} yes/no"
+               if [ "A${response}" == "Ayes" ]
+	       then
+                   printf "%s\n" "    ${blu}Removing local storage from the openshift cluster"
+                   echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"
+	       fi
+	    ;;
+	    *)
+		    printf "%s\n" "    $storage_option is not a valid option for -m storage -a"
+	        printf "%s\n" "    Valid -a storage options are:"
+	        printf "%s\n" "    nfs, nfs-remve, localstorage, localstorage-remove, ocp-registry, ocp-registry-remove"
+	    ;;
+	esac
     fi
 }
+
