@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd /tmp/acme.sh
+./acme.sh \
+    --install \
+    --log \
+    --home {{ project_dir }}/acme/bin \
+    --config-home {{ project_dir }}/acme/data \
+    --accountemail {{ user_email_address }} \
+    --useragent "{{ user_agent }}"
+
+STATUS=$?
+
+exit "${STATUS}"

@@ -8,9 +8,27 @@
 # The qubinode-installer depends on IdM as the DNS server.
 # If there is an existing Idm, then set this to no.
 deploy_idm_server: yes
-ask_use_existing_idm: no
-idm_server_name_prefix: "dns01"
+
 idm_server_name: "{{ idm_server_name_prefix }}-{{ vm_suffix }}"
+
+# This ensures the installer prompts to collect IdM information
+ask_for_idm_info: yes
+
+# FQDN for the IdM server
+idm_server_fqdn_name: dns01
+
+# IdM server IP address
+idm_server_ip: ""
+
+## This is used by OpenShift and should be set to the FQDN of the idm_server
+ipa_host: "{{ idm_server_fqdn_name }}"
+
+# Set this if you want the playbook to run eventhough IdM is already deployed
+force_idm_redeployment: false
+
+## default prefix for idm server name
+idm_server_name_suffix: "dns01"
+
 idm_check_static_ip: ""
 idm_admin_user: admin
 idm_realm: "{{ domain | upper }}"
@@ -18,19 +36,19 @@ idm_forward_ip: "{{ dns_forwarder }}"
 idm_admin_password: "{{ idm_admin_pwd }}"
 idm_reverse_zones:
   - "{{ qubinode_ptr }}"
-vm_mac: 52:54:00:32:f8:6d
-kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
+idm_zone_overlap: false
 
 ########################
 # RHEL IdM VM attributes
+vm_mac: 52:54:00:32:f8:6d
+kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-cloud_init_vm_image: rhel-8.4-x86_64-kvm.qcow2
-idm_server_ip: ""
-idm_zone_overlap: false
-idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"
-os_variant: "rhel8.3"
+idm_hostname: "{{ instance_prefix }}-{{ idm_server_name_suffix }}"
+os_variant: "rhel8.5"
+cloud_init_vm_image: rhel-8.5-x86_64-kvm.qcow2
+
 dns_server_vm:
     dns_name: "{{ idm_hostname }}"
     dns_vcpu: 2
@@ -55,22 +73,27 @@ os_release: "rhel{{ rhel8_version }}"
 idm_repos_8:
   - rhel-8-for-x86_64-baseos-rpms
   - rhel-8-for-x86_64-appstream-rpms
-
-#########################
-# IdM on RHEL 7 attributes
-idm_repos_7:
-  - rhel-7-server-rpms
-  - rhel-7-server-extras-rpms
-  - rhel-7-server-optional-rpms
 idm_packages:
   - ipa-server
   - ipa-server-dns
+
+# IdM ansible role vars
+# TODO: doublecheck these vars
+ipaserver_domain: "{{ domain }}"
+ipaserver_realm: "{{ idm_realm }}"
+ipaserver_setup_dns: "yes"
+ipaserver_no_host_dns: yes
+ipaserver_setup_kra: yes
+ipaadmin_password: "{{ idm_admin_password }}"
+ipadm_password: "{{ idm_dm_pwd }}"
+ipaserver_forwarders:
+  - "{{ dns_forwarder }}"
+ipaserver_allow_zone_overlap: "{{ idm_zone_overlap }}"
+ipaserver_reverse_zones: "{{ idm_reverse_zones }}"
 idm_ssh_pwd: "{{ admin_user_password }}"
 idm_ssh_user: "{{ admin_user }}"
-ipa_host: "{{ idm_hostname }}.{{ domain }}"
 
-# Set this if you want the playbook to run eventhough IdM is already deployed
-force_idm_redeployment: false
+
 
 ###############
 # Populate IdM

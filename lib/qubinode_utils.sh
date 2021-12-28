@@ -80,7 +80,6 @@ function canSSH () {
     user=$1
     host=$2
     RESULT=$(ssh -q -o StrictHostKeyChecking=no -o "BatchMode=yes" -i /home/${user}/.ssh/id_rsa "${user}@${host}" "echo 2>&1" && echo SSH_OK || echo SSH_NOK)
-    echo $RESULT
 }
 
 
@@ -355,6 +354,8 @@ function clean_up_stale_vms(){
         fi 
     fi
 
+    sudo test -f "${libvirt_dir}/qbn-ocp4-bootstrap-vda.qcow2" && sudo rm -f "${libvirt_dir}/qbn-ocp4-bootstrap-vda.qcow2"
+
 }
 
 function teardown_idm () {
@@ -498,9 +499,6 @@ function qubinode_setup () {
     else
        printf "${yel}    KVM Host Setup Complete  ${end}\n"
     fi
-
-    # Ensure RHSM cli is installed
-    install_rhsm_cli
 
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"

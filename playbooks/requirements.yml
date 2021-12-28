@@ -5,9 +5,6 @@
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
   version: v2.4.5
 
-- src: https://github.com/flyemsafe/ansible-idm.git
-  version: v1.0.0
-
 - src: https://github.com/Qubinode/swygue-redhat-subscription.git
   version: v2.4.6
 

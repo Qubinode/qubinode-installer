@@ -6,7 +6,7 @@
 installation_working_dir: "{{ project_dir }}"
 
 # Required Files
-pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+pull_secret: "{{ installation_working_dir }}/openshift-pull-secret.txt"
 generated_pull_secret: "{{ installation_working_dir }}/generated_pullsecret.json"
 
 # OpenShift/OKD Version
@@ -15,7 +15,14 @@ generated_pull_secret: "{{ installation_working_dir }}/generated_pullsecret.json
 #ocp4_user_wanted_release: ""
 ocp4_auto_updated_release: ""
 ocp4_okd4: ocp4
-ocp4_ystream_release: 4.8
+ocp4_ystream_release: 4.9
+
+# Set this to no to provide your own values for the below
+auto_get_releases: yes
+
+# these values will be populated when auto_get_releases is set to yes
+ocp4_auto_updated_release: ""
+ocp4_okd4: ocp4
 ocp4_release: "{{ ocp4_user_wanted_release | default(ocp4_auto_updated_release) }}"
 ocp4_image: "{{ ocp4_release }}"
 ocp4_image_version: "{{ ocp4_image }}"
