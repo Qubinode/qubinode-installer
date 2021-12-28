@@ -10,10 +10,6 @@ pull_secret: "{{ installation_working_dir }}/openshift-pull-secret.txt"
 generated_pull_secret: "{{ installation_working_dir }}/generated_pullsecret.json"
 
 # OpenShift/OKD Version
-
-## Uncomment this and specify the release you want
-#ocp4_user_wanted_release: ""
-ocp4_auto_updated_release: ""
 ocp4_okd4: ocp4
 ocp4_ystream_release: 4.9
 
@@ -38,6 +34,10 @@ ssh_ocp4_public_key: "{{ lookup('file', local_user_ssh_public_key) }}"
 additional_trust_bundle: ""
 image_content_sources: ""
 
+# This is for generating the virt-install-coreos.j2 for deployment
+# of the RHCOS vms. Use this if the node has multiple nics and you need
+# to specefiy the one that wil be able to download the rhcos-live-rootfs.x86_64.img.
+node_primary_nic: ""
 
 ########################
 # NFS Persistent Storage
