@@ -89,10 +89,7 @@ function qubinode_deploy_ocp4 () {
     qubinode_deploy_idm
 
     # Test idm server 
-    idm_srv_fqdn=$(awk '/idm_server_fqdn_name:/ {print $2;exit}' "${vars_file}")
-    #prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
-    #suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-    #idm_srv_fqdn="$prefix-$suffix.$domain"
+    idm_srv_fqdn=$(awk '/idm_server_fqdn_name:/ {print $2;exit}' "${idm_vars_file}")
 
     printf "%s\n" "  ${cyn}Checking dns status against ${idm_srv_fqdn}${end}"
     printf "%s\n\n" "  ${cyn}*********************************${end}"
