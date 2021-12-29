@@ -82,7 +82,7 @@ function qubinode_deploy_ocp4 () {
     check_openshift4_size_yml
 
     # Ensure the Deployment Network is configured
-    ask_to_use_external_bridge
+    #ask_to_use_external_bridge_ocp_nodes
 
     # make sure no old VMs from previous deployments are still around
     state_check
@@ -196,7 +196,7 @@ function qubinode_ocp4_setup () {
     check_openshift4_size_yml
 
     # Ensure the Deployment Network is configured
-    ask_to_use_external_bridge
+    #ask_to_use_external_bridge_ocp_nodes
 
     # make sure no old VMs from previous deployments are still around
     state_check

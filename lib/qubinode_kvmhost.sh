@@ -40,10 +40,10 @@ function getPrimaryDisk () {
     #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
     root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
     primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
-    if [ "A${primary_disk}" == "A" ];
+    if [ "${primary_disk:-none}" == "A" ];
     then
        primary_disk=$(/usr/bin/findmnt -nr -o source / | sed -e "s/\/dev\///g")
-       echo "lvs not found setting $primary_disk as primary disk"
+       printf "%s\n" "    lvs not found setting $primary_disk as primary disk"
     else
         primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
         #echo "lvs was found setting ${primary_disk} as primary disk"
@@ -81,29 +81,37 @@ function check_additional_storage () {
               fi
             done
 
+	    kvmhost_var_file="${project_dir}/playbooks/vars/kvm_host.yml"
             printf "%s\n" " "
-            printf "%s\n" "   It is recommended to dedicate a storage device for /var/lib/libvirt/images."
+            printf "%s\n" "   It is recommended to dedicate a storage device for ${libvirt_dir}."
             printf "%s\n" "   Choose one of the available storage devices and the installer will create a volume"
-            printf "%s\n\n" "   group, then a lv and mount /var/lib/libvirt/images to it."
+            printf "%s\n\n" "   group, then a lv and mount ${libvirt_dir} to it."
+
+            printf "%s\n" "   Ctrl-c to provide the path to a existing libvirt directory volume."
+            printf "%s\n" "   Edit the var ${cyn}kvm_host_libvirt_dir${end} in ${kvmhost_var_file}."
+            printf "%s\n" "   Run the installer again to use the provided path."
+            printf "%s\n\n" ""
 
             confirm "   Do you want to dedicate a storage device: ${blu}yes/no${end}"
-            printf "%s\n" " "
-            if [ "A${response}" == "Ayes" ]
+            printf "%s\n\n" " "
+            if [ "${response:-none}" == "yes" ]
             then
               getPrimaryDisk
-              echo "Please Select secondary disk to be used."
+              printf "%s\n" "    Please Select secondary disk to be used."
               DISK="${primary_disk}"
 
               declare -a ALL_DISKS=()
               mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
-	      VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-	      LIBVIRT_PATH=$(awk '/kvm_host_libvirt_dir:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+	          VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
 
-              printf "%s\n" "   ${yel}Please note, the installer will wipe the device${end} ${blu}$disk${end} if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
-              printf "%s\n" "   A logical volume is then created and mounted at ${blu}${LIBVIRT_PATH}${end}"
-              confirm "    Continue with $disk? ${blu}yes/no${end}"
+              printf "%s\n\n" ""
+              printf "%s\n" "     Please note the installer will wipe the device ${blu}$disk${end}"
+              printf "%s\n" "     if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
+              printf "%s\n" "     A logical volume is then created and mounted at ${blu}${libvirt_dir}${end}"
+              printf "%s\n\n" ""
+              confirm "      Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then
                   printf "%s\n\n" ""
@@ -116,16 +124,13 @@ function check_additional_storage () {
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
               fi
+              printf "%s\n\n" ""
             else
                 setsingledisk
             fi
         else
             setsingledisk
         fi
-    #else
-       #printf "%s\n" "     ${yel}*************************************${end}"
-       #printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
-       #printf "%s\n" "     ${yel}*************************************${end}"
     fi
 }
 

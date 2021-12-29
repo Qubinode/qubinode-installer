@@ -7,13 +7,13 @@ function elevate_cmd () {
 
     case "$HAS_SUDO" in
         user_not_have_sudo)
-             printf "%s\n" " Please supply root password for the following command: ${grn}su -c \"$cmd\"${end}"
+             printf "%s\n" "    Enter the root user password to execute the following command: ${grn}su -c \"$cmd\"${end}"
              su -c "$cmd"
 	     current_elevate_cmd='su -c'
              ;;
         user_has_sudo)
-            printf "%s\n" " Please supply sudo password for the following command: ${grn}sudo $cmd${end}"
-            sudo $cmd
+             printf "%s\n" "    Enter your sudo password to execute the following command: ${grn}sudo $cmd${end}"
+             sudo $cmd
 	     current_elevate_cmd="sudo"
             ;;
         *)
@@ -100,7 +100,7 @@ function setup_sudoers () {
         printf "%s\n" "   the password for the root user, please Ctrl+c to exit now."
         printf "%s\n" ""
         SUDOERS_TMP=$(mktemp)
-        printf "%s\n" " Setting up /etc/sudoers.d/${CURRENT_USER}"
+        printf "%s\n" "    Setting up /etc/sudoers.d/${CURRENT_USER}"
 	    echo "${CURRENT_USER} ALL=(ALL) NOPASSWD:ALL" > "${SUDOERS_TMP}"
         sudo_run_cmd=$(mktemp)
         echo "cp ${SUDOERS_TMP} /etc/sudoers.d/${CURRENT_USER}" > "${sudo_run_cmd}"

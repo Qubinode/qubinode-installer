@@ -45,7 +45,7 @@ kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-idm_hostname: "{{ instance_prefix }}-{{ idm_server_name_suffix }}"
+idm_hostname: "{{ instance_prefix }}-{{ idm_server_name_suffix }}-{{ vm_suffix }}"
 os_variant: "rhel8.5"
 cloud_init_vm_image: rhel-8.5-x86_64-kvm.qcow2
 

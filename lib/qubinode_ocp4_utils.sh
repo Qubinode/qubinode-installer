@@ -82,7 +82,8 @@ function get_latest_ocp_minor_release () {
 
     if [ "${auto_get_releases:-none}" == 'yes' ]
     then
-	    printf "%s\n" "    Getting latest releases"
+	printf "%s\n" ""
+	printf "%s\n" "    Getting latest OpenShift release"
         local ocp_release_dir=$(mktemp -d)
         local ocp4_ystream=$(awk '/^ocp4_ystream_release:/ {print $2}' "${ocp_vars_file}")
         local ocp4_ystream=$(echo $ocp4_ystream | sed -e 's/^"//' -e 's/"$//')
@@ -323,7 +324,7 @@ function configure_local_storage () {
     storage_type=block
     set_local_volume_type
 	feature_two="- ${compute_vdb_size}G size local $storage_type storage"
-    ask_to_use_external_bridge
+    #ask_to_use_external_bridge_ocp_nodes
 	openshift4_standard_desc
 }
 
@@ -363,7 +364,7 @@ function set_local_volume_type () {
   fi 
 }
 
-function ask_to_use_external_bridge () {
+function ask_to_use_external_bridge_ocp_nodes () {
     ocp_libvirt_network_option=$(awk '/^use_external_bridge:/ {print $2; exit}' "${ocp_vars_file}")
     if [ "A${ocp_libvirt_network_option}" == "A" ]
     then
@@ -428,7 +429,7 @@ function confirm_minimal_deployment () {
         MSG2="The nodes functions as both control and computes."
     fi
 
-    ask_to_use_external_bridge
+    #ask_to_use_external_bridge_ocp_nodes
     openshift4_minimal_desc4
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"

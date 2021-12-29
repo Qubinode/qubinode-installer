@@ -11,19 +11,15 @@ sed -i "s/^rhel_major:.*/rhel_major: $rhel_major/g" $idm_vars_file
 
 function idms_vars () {
     # Check if we should setup qubinode
-    vm_prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}"|tr -d '"')
-    idm_prefix=$(awk '/idm_server_name_suffix:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
-    vm_suffix=$(awk '/vm_suffix:/ {print $2;exit}' "${vars_file}" |tr -d \'\")
-    idm_server_hostname="${vm_prefix}-${idm_prefix}-${vm_suffix}"
-    idm_generated_fqdn="${idm_srv_hostname}.${domain}"
-
+    vm_prefix=$(awk '/^instance_prefix:/ {print $2;exit}' "${vars_file}"|tr -d '"')
+    idm_prefix=$(awk '/^idm_server_name_suffix:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
+    vm_suffix=$(awk '/^vm_suffix:/ {print $2;exit}' "${vars_file}" |tr -d \'\")
+    vm_domain=$(awk '/^domain:/ {print $2;exit}' "${vars_file}" |tr -d \'\")
+    idm_server_hostname="${vm_prefix}-${idm_prefix}-${vm_suffix}.${vm_domain}"
+    idm_generated_fqdn="${idm_server_hostname}"
 
     idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
     idm_admin_user=$(awk '/idm_admin_user:/ {print $2;exit}' "${idm_vars_file}" |tr -d \'\")
-    mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
-
-    #TODO: this sed statement should not be here
-    sed -i "s/vm_mac:.*/vm_mac: $mac_address/g" "${idm_vars_file}"
 
     ## These vars need to be reviewed
     IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
@@ -69,6 +65,7 @@ function ask_user_for_idm_domain () {
 }
 
 function ask_user_for_idm_password () {
+
     # This is the password used to log into the IDM server webconsole and also the admin user
     #if grep '""' "${vaultfile}"|grep -q idm_admin_pwd
     if $(which ansible-vault >/dev/null 2>&1)
@@ -103,7 +100,8 @@ function ask_user_for_idm_password () {
    fi
 }
 
-function generate_idm_dm_pwd(){
+function generate_idm_dm_pwd () {
+
     # Generate a ramdom password for IDM directory manager
     # This will not prompt the user
     #printf "%s\n" "  ${cyn}IDM directory manager password generation${end}"
@@ -122,6 +120,10 @@ function generate_idm_dm_pwd(){
 }
 
 function ask_user_for_custom_idm_server () {
+
+    # call IdM Vars
+    idms_vars
+
     deploy_idm_server=$(awk '/deploy_idm_server:/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
     ask_for_idm_info=$(awk '/ask_for_idm_info:/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
 
@@ -141,7 +143,6 @@ function ask_user_for_custom_idm_server () {
             static_ip_msg=" Enter the ip address for the existing IdM server"
             static_ip_result_msg=" The qubinode-installer will connect to the IdM server on"
             set_idm_static_ip
-            #sed -i "s/1.1.1.1/$idm_server_ip/g" ${project_dir}/playbooks/vars/*.yml
             idm_banner_title="User provided IdM Server"
 
             printf "%s\n\n" ""
@@ -272,6 +273,7 @@ function ask_user_for_custom_idm_server () {
 
 
 function set_idm_static_ip () {
+
     printf "%s\n" ""
     read -p " ${blu}$static_ip_msg:${end} " USER_IDM_SERVER_IP
     idm_server_ip="${USER_IDM_SERVER_IP}"
@@ -283,54 +285,13 @@ function set_idm_static_ip () {
         printf "%s\n\n" ""
         printf "%s\n\n" " $static_ip_result_msg ${yel}$idm_server_ip${end}"
     fi
-}
 
-function qubinode_idm_ask_ip_address () {
-    idms_vars
-    echo "${IDM_STATIC}" | grep -qE 'yes|no'
-    RESULT=$?
-    if [ "A${RESULT}" == "A1" ]
-    then
-        echo "Would you like to set a static IP for for the IdM server?"
-        echo "Default choice is to choose: No"
-        confirm " Yes/No"
-        if [ "A${response}" == "Ayes" ]
-        then
-            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: yes/g" ${idm_vars_file}
-        else
-            sed -i "s/idm_check_static_ip:.*/idm_check_static_ip: no/g" ${idm_vars_file}
-        fi
-    fi
 
-    # Check on vailable IP
-    IDM_STATIC=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
-    MSGUK="The varaible idm_server_ip in $idm_vars_file is set to an unknown value of $CURRENT_IDM_IP"
-
-    if ! curl -k -s "https://${idm_server_name}/ipa/config/ca.crt" > /dev/null
-    then
-        if [ "A${IDM_STATIC}" == "Ayes" ]
-        then
-            if [ "A${CURRENT_IDM_IP}" == 'A""' ]
-            then
-                set_idm_static_ip
-            elif [ "A${CURRENT_IDM_IP}" != 'A""' ]
-            then
-                 echo "IdM server ip address is set to ${CURRENT_IDM_IP}"
-                 confirm "Do you want to change? yes/no"
-                 if [ "A${response}" == "Ayes" ]
-                 then
-                     set_idm_static_ip
-                 fi
-             else
-                 echo "${MSGUK}"
-                 echo 'Please reset to "" and try again'
-                 exit 1
-             fi
-         fi
-     fi
 }
 
 function isIdMrunning () {
+
+    # call IdM Vars
     idms_vars
 
     if ! curl -k -s "https://${idm_server_name}/ipa/config/ca.crt" > /dev/null
@@ -345,7 +306,8 @@ function isIdMrunning () {
 }
 
 function qubinode_teardown_idm () {
-     idms_vars
+
+
      IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
      libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
      local vmdisk="${libvirt_dir}/${idm_server_hostname}_vda.qcow2"
@@ -364,14 +326,9 @@ function qubinode_teardown_idm () {
 }
 
 function qubinode_deploy_idm_vm () {
+
     if grep deploy_idm_server "${idm_vars_file}" | grep -q yes
     then
-        #isIdMrunning
-        #if [ "A${idm_running}" == "Afalse" ]
-        #then
-        #    qubinode_setup
-        #    ask_user_for_custom_idm_server
-        #fi
 
         IDM_PLAY_CLEANUP="${project_dir}/playbooks/idm_server_cleanup.yml"
         SET_IDM_STATIC_IP=$(awk '/idm_check_static_ip/ {print $2; exit}' "${idm_vars_file}"| tr -d '"')
@@ -401,6 +358,10 @@ function qubinode_deploy_idm_vm () {
 }
 
 function idm_status_message () {
+
+    # call IdM Vars
+    idms_vars
+
     local msg_header=$1
     printf "\n\n\n"
     printf "     ${blu} ${msg_header} ${end}\n"
@@ -414,6 +375,10 @@ function idm_status_message () {
 
 function qubinode_idm_status () {
 #TODO: this function should be merged with idm_status_message or call idm_status_message
+
+    # call IdM Vars
+    idms_vars
+
     isIdMrunning
     if [ "${idm_running:-none}" == "true" ]
     then
@@ -432,6 +397,7 @@ function qubinode_idm_status () {
 }
 
 function qubinode_install_idm () {
+
     ask_user_input
     IDM_INSTALL_PLAY="${project_dir}/playbooks/idm_server.yml"
 
@@ -446,6 +412,7 @@ function qubinode_install_idm () {
 }
 
 function qubinode_deploy_idm () {
+
     #check_additional_storage
     isIdMrunning
   
@@ -456,7 +423,6 @@ function qubinode_deploy_idm () {
     then
         qubinode_setup_kvm_host
     fi
-    ask_user_for_custom_idm_server
 
     if [ "${idm_running:-none}" == "false" ]
     then
@@ -470,7 +436,7 @@ function qubinode_deploy_idm () {
 }
 
 function qubinode_idm_maintenance () {
-    idms_vars
+
     case ${product_maintenance} in
        stop)
             name="${idm_server_hostname}"

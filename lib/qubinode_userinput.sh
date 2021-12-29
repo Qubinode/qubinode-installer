@@ -57,8 +57,8 @@ function ask_user_input () {
             ask_for_vault_values "${vault_vars_file}"
             ask_user_for_networking_info "${vars_file}"
             ask_user_for_idm_domain
-            #ask_user_for_idm_password
             ask_user_for_custom_idm_server
+            ask_to_use_external_bridge_ocp_nodes
             sed -i "s/^user_input_complete:.*/user_input_complete: yes/g" "${project_dir}/playbooks/vars/all.yml"
         fi
     fi
