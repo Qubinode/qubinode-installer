@@ -104,7 +104,9 @@ function get_latest_ocp_minor_release () {
         curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_ystream}/release.txt"
         current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
         sed -i "s/^ocp4_client_version:.*/ocp4_client_version: ${current_version}/"   "${ocp_vars_file}"
-        sed -i "s/^ocp4_auto_updated_release:.*/ocp4_auto_updated_release: $ocp_minor_release/g" "${ocp_vars_file}"
+
+	#TODO: remove this ocp4_auto_updated_release because it's not being use
+        #sed -i "s/^ocp4_auto_updated_release:.*/ocp4_auto_updated_release: $ocp_minor_release/g" "${ocp_vars_file}"
     fi
 
     cd "${project_dir}"
@@ -112,22 +114,6 @@ function get_latest_ocp_minor_release () {
 
 function check_for_pull_secret () {
     ocp4_pull_secret="${project_dir}/openshift-pull-secret.txt"
-    #if [ -f ${project_dir}/ocp_token ]
-    #then
-    #    OFFLINE_ACCESS_TOKEN=$(cat ${project_dir}/ocp_token)
-    #    local RELEASE=$(awk '/ocp4_release:/ {print $2}' ${ocp_vars_file} | cut -d. -f1,2)
-    #    JQ_CMD="${project_dir}/json-processor"
-    #    JQ_URL=https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-    #    OCP_SSO_URL=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-    #    OCP_API_URL=https://api.openshift.com/api/accounts_mgmt/v1/access_token
-    #    test -f $JQ_CMD || wget $JQ_URL -O $JQ_CMD
-    #    chmod +x $JQ_CMD 
-    #    export BEARER=$(curl --silent --data-urlencode "grant_type=refresh_token" \
-    #                         --data-urlencode "client_id=cloud-services" \
-    #                         --data-urlencode "refresh_token=${OFFLINE_ACCESS_TOKEN}" $OCP_SSO_URL | $JQ_CMD -r .access_token)
-    #    curl -X POST $OCP_API_URL --header "Content-Type:application/json" \
-    #                              --header "Authorization: Bearer $BEARER" | $JQ_CMD > $ocp4_pull_secret
-    #fi
 
     # verify the pull scret is vailable
     download_required_redhat_files
@@ -261,26 +247,27 @@ function openshift4_prechecks () {
 
     fi
 
-    local ocp_release_dir=$(mktemp -d)
-    local ocp4_ystream=$(awk '/^ocp4_ystream_release:/ {print $2}' "${ocp_vars_file}")
-    local ocp4_ystream=$(echo $ocp4_ystream | sed -e 's/^"//' -e 's/"$//')
-    cd "$ocp_release_dir"
+    #TODO: remove all the below commented out lines because the get_latest_ocp_minor_release takes care of that
+    #local ocp_release_dir=$(mktemp -d)
+    #local ocp4_ystream=$(awk '/^ocp4_ystream_release:/ {print $2}' "${ocp_vars_file}")
+    #local ocp4_ystream=$(echo $ocp4_ystream | sed -e 's/^"//' -e 's/"$//')
+    #cd "$ocp_release_dir"
 
-    ## Update rhcos dependancies release
-    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/${ocp4_ystream}/latest/sha256sum.txt"
-    get_image_release=$(awk '/qemu.x86_64.qcow2.gz/ {print $2}' sha256sum.txt |perl -pe 'if(($v)=/([0-9]+([.][0-9]+)+)/){print"$v\n";exit}$_=""')
-    image_release="${get_image_release}"
-    if [ "${image_release:-none}" != 'none' ]
-    then
-        sed -i "s/^ocp4_image:.*/ocp4_image: ${image_release}/" "${ocp_vars_file}"
-        sed -i "s/^ocp4_release:.*/ocp4_release: ${image_release}/" "${ocp_vars_file}"
-    fi
+    ### Update rhcos dependancies release
+    #curl -sOL "https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/${ocp4_ystream}/latest/sha256sum.txt"
+    #get_image_release=$(awk '/qemu.x86_64.qcow2.gz/ {print $2}' sha256sum.txt |perl -pe 'if(($v)=/([0-9]+([.][0-9]+)+)/){print"$v\n";exit}$_=""')
+    #image_release="${get_image_release}"
+    #if [ "${image_release:-none}" != 'none' ]
+    #then
+    #    sed -i "s/^ocp4_image:.*/ocp4_image: ${image_release}/" "${ocp_vars_file}"
+    #    sed -i "s/^ocp4_release:.*/ocp4_release: ${image_release}/" "${ocp_vars_file}"
+    #fi
 
-    # Get the lastest OCP4 version
-    # temporarly removing aut release
-    curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_ystream}/release.txt"
-    current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
-    sed -i "s/^ocp4_client_version:.*/ocp4_client_version: ${current_version}/"   "${ocp_vars_file}"
+    ## Get the lastest OCP4 version
+    ## temporarly removing aut release
+    #curl -sOL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-${ocp4_ystream}/release.txt"
+    #current_version=$(cat release.txt | grep Name:  |  awk '{print $2}')
+    #sed -i "s/^ocp4_client_version:.*/ocp4_client_version: ${current_version}/"   "${ocp_vars_file}"
 
     test -d "${project_dir}" && cd "${project_dir}"
 
@@ -315,7 +302,7 @@ function configure_local_storage () {
     if [ "A${response}" == "Ayes" ]
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
-        sed -i "s/compute_vdx_size:.*/compute_vdx_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
+        sed -i "s/openshift_storage_vd_size:.*/openshift_storage_vd_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
         printf "%s\n\n" "    ${def}The size for local storage is now set to${end} ${yel}${compute_vdb_size}G${end}"
     fi
@@ -1231,11 +1218,11 @@ openshift4_server_maintenance () {
            remove_ocp4_compute
            ;;
        add-compute)
-	   add_ocp4_compute
-	    ;;
+	       add_ocp4_compute
+	       ;;
        storage)
-	   configure_storage "${storage_option}"
-	    ;;
+	       configure_storage "${storage_option}"
+	       ;;
        rm-rhcos)
             printf "%s\n" "    ${blu}This will delete the current cluster${end}"
             openshift4_qubinode_rebuild
@@ -1297,7 +1284,12 @@ EOF
        bootstrap)
            printf "%s\n" "    ${blu}Bootstrap the OpenShift cluster${end}"
 	       qubinode_ocp4_preflight
-	       ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t generate_inventory,ocp4_nodes,bootstrap
+	       ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t generate_inventory,ocp4_nodes,bootstrap,deploy_nodes,libvirt_nat
+	       ;;
+       complete)
+           printf "%s\n" "    ${blu}Complete the OpenShift cluster deployment${end}"
+	       qubinode_ocp4_preflight
+	       ansible-playbook "${deploy_product_playbook}" -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
 	       ;;
        *)
            printf "%s\n" "    ${product_maintenance} Not a valid -m option. Options are:"

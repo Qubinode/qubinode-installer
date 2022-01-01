@@ -18,7 +18,6 @@ auto_get_releases: yes
 
 # these values will be populated when auto_get_releases is set to yes
 ocp4_auto_updated_release: ""
-ocp4_okd4: ocp4
 ocp4_release: "{{ ocp4_user_wanted_release | default(ocp4_auto_updated_release) }}"
 ocp4_image: "{{ ocp4_release }}"
 ocp4_image_version: "{{ ocp4_image }}"

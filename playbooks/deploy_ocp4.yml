@@ -13,6 +13,7 @@
     IPA_HOST: "{{ ipa_host }}"
     IPA_USER: "{{ user_idm_admin }}"
     IPA_PASS: "{{ user_idm_password }}"
+    IPA_TIMEOUT: 300
 
   tasks:
   - name: run the role ocp4_kvm_deployer
