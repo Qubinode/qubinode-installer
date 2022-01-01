@@ -50,6 +50,25 @@ function getPrimaryDisk () {
     fi
 }
 
+function show_libvirt_dir_volumes () {
+    local all_volumes
+    local pool
+    all_volumes=$(mktemp)
+
+    sudo virsh pool-list --name | while read line
+    do
+        pool="$line"
+        if [ "${pool:-none}" != "none" ]
+        then
+            sudo virsh pool-dumpxml $pool|grep -e path | grep -oP '(?<=\>).*?(?=\<)'
+        fi
+    done >> "${all_volumes}"
+
+    declare -a LIBVIRT_DIR_POOLS=()
+    mapfile -t LIBVIRT_DIR_POOLS < "$all_volumes"
+}
+
+
 function check_additional_storage () {
     # Load system wide variables
     setup_variables
@@ -58,20 +77,21 @@ function check_additional_storage () {
     then
         printf "%s\n" "  ${yel}****************************************************************************${end}"
         printf "%s\n\n" "    ${cyn}        Storage Setup${end}"
-        printf "%s\n" "   The installer checks for additional available disk and"
-        printf "%s\n" "   presents you with the option to dedicate that disk for"
-        printf "%s\n" "   the storage of the libvirt qcow disks. The default location"
-        printf "%s\n" "   is $libvirt_dir."
+        printf "%s\n" "   The installer checks for all available disk and libvirt directory pools."
+        printf "%s\n" ""
+        printf "%s\n" "   If there are additional disk you will have the option to use one as"
+        printf "%s\n" "   as a libvirt directory pool mounted as ${libvirt_dir} or you can"
+        printf "%s\n" "   choosing a existing libvirt directory pool if found."
         printf "%s\n" ""
 
+        # The the device of disk disk for /
         getPrimaryDisk
-        DISK="${primary_disk}"
 
         declare -a ALL_DISKS=()
         mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}')
         if [ ${#ALL_DISKS[@]} -gt 1 ]
         then
-            printf "%s\n" "   Your primary storage device appears to be ${yel}${DISK}${end}."
+            printf "%s\n" "   Your primary storage device appears to be ${yel}${primary_disk}${end}."
             printf "%s\n\n" "   The following additional storage devices where found:"
 
             for disk in $(echo ${ALL_DISKS[@]})
@@ -81,15 +101,12 @@ function check_additional_storage () {
               fi
             done
 
-	    kvmhost_var_file="${project_dir}/playbooks/vars/kvm_host.yml"
+	        kvmhost_var_file="${project_dir}/playbooks/vars/kvm_host.yml"
             printf "%s\n" " "
             printf "%s\n" "   It is recommended to dedicate a storage device for ${libvirt_dir}."
             printf "%s\n" "   Choose one of the available storage devices and the installer will create a volume"
             printf "%s\n\n" "   group, then a lv and mount ${libvirt_dir} to it."
 
-            printf "%s\n" "   Ctrl-c to provide the path to a existing libvirt directory volume."
-            printf "%s\n" "   Edit the var ${cyn}kvm_host_libvirt_dir${end} in ${kvmhost_var_file}."
-            printf "%s\n" "   Run the installer again to use the provided path."
             printf "%s\n\n" ""
 
             confirm "   Do you want to dedicate a storage device: ${blu}yes/no${end}"
@@ -98,43 +115,64 @@ function check_additional_storage () {
             then
               getPrimaryDisk
               printf "%s\n" "    Please Select secondary disk to be used."
-              DISK="${primary_disk}"
 
               declare -a ALL_DISKS=()
               mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
               createmenu "${ALL_DISKS[@]}"
-              disk=($(echo "${selected_option}"))
+              LIBVIRT_DISK=($(echo "${selected_option}"))
 	          VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
 
               printf "%s\n\n" ""
-              printf "%s\n" "     Please note the installer will wipe the device ${blu}$disk${end}"
+              printf "%s\n" "     Please note the installer will wipe the device ${blu}$LIBVIRT_DISK${end}"
               printf "%s\n" "     if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
               printf "%s\n" "     A logical volume is then created and mounted at ${blu}${libvirt_dir}${end}"
               printf "%s\n\n" ""
-              confirm "      Continue with $disk? ${blu}yes/no${end}"
-              if [ "A${response}" == "Ayes" ]
+              confirm "      Continue with $LIBVIRT_DISK? ${blu}yes/no${end}"
+              if [ "${response:-none}" == "yes" ]
               then
                   printf "%s\n\n" ""
-                  printf "%s\n\n" " ${mag}Using disk: $disk${end}"
-                  DISK="${disk}"
+                  printf "%s\n\n" " ${mag}Using disk: $LIBVIRT_DISK${end}"
                   sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
                   sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
+                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $LIBVIRT_DISK/g" "${kvm_host_vars_file}"
               else
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
               fi
               printf "%s\n\n" ""
-            else
-                setsingledisk
             fi
-        else
-            setsingledisk
+        fi 
+
+        # Present libvirt pool options
+        if [[ ${#LIBVIRT_DIR_POOLS[@]} -gt 1 ]] && [[ "${LIBVIRT_DISK:-none}" == "none" ]]
+        then
+            printf "%s\n" "    Please select a libvirt directory pool:"
+            createmenu "${LIBVIRT_DIR_POOLS[@]}"
+            LIBVIRT_DIR_VOLUME=($(echo "${selected_option}"))
+
+            confirm "      Continue with $LIBVIRT_DIR_VOLUME? ${blu}yes/no${end}"
+            if [ "${response:-none}" == "yes" ]
+            then
+                printf "%s\n\n" ""
+                printf "%s\n\n" " ${mag}Using livirt pool: $LIBVIRT_DIR_VOLUME${end}"
+                sed -i "s/^kvm_host_libvirt_dir:.*/kvm_host_libvirt_dir: $LIBVIRT_DIR_VOLUME/g" "${kvm_host_vars_file}"
+                sed -i "s/^run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
+                sed -i "s/^create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
+            else
+                  printf "%s\n\n" " ${red}We cannot continue without a storage option.${end}"
+                  printf "%s\n\n" " ${mag}Existing the installation${end}"
+                  exit 1
+            fi
+            printf "%s\n\n" ""
+            printf "%s\n" "  ${yel}****************************************************************************${end}"
         fi
+
+
     fi
 }
 
 #Configure System to use single disk
+#TODO: this function is now deprecated and should be removed
 function setsingledisk()
 {
     getPrimaryDisk
@@ -173,7 +211,7 @@ function ask_user_if_qubinode_setup () {
         printf "%s\n\n" "  ${mag}(*)${end} ${blu}You don't want to dedicate your extra storage device to Libvirt.${end}"
 
         confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
-        if [ "A${response}" == "Ayes" ]
+        if [ "${response:-none}" == "yes" ]
         then
             # Set varaible to configure storage and networking
             sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${kvm_host_vars_file}"
@@ -442,12 +480,12 @@ function qubinode_networking () {
 #
 #        confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
 #        printf "%s\n" " "
-#        if [ "A${response}" == "Ayes" ]
+#        if [ "${response:-none}" == "yes" ]
 #        then
 #          createmenu "${NAT_ARRAY[@]}"
 #          nat_network=($(echo "${selected_option}"))
 #          confirm "    Continue with $nat_network? ${blu}yes/no${end}"
-#          if [ "A${response}" == "Ayes" ]
+#          if [ "${response:-none}" == "yes" ]
 #          then
 #              printf "%s\n\n" ""
 #              printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
