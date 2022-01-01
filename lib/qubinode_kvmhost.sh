@@ -161,7 +161,7 @@ function check_additional_storage () {
             then
                 printf "%s\n\n" ""
                 printf "%s\n\n" " ${mag}Using livirt pool: $LIBVIRT_DIR_VOLUME${end}"
-                sed -i "s/^kvm_host_libvirt_dir:.*/kvm_host_libvirt_dir: $LIBVIRT_DIR_VOLUME/g" "${kvm_host_vars_file}"
+                sed -i "s#^kvm_host_libvirt_dir:.*#kvm_host_libvirt_dir: $LIBVIRT_DIR_VOLUME#g" "${kvm_host_vars_file}"
                 sed -i "s/^run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
                 sed -i "s/^create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
             else
