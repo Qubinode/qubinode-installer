@@ -144,7 +144,15 @@ function check_additional_storage () {
         mapfile -t LIBVIRT_DIR_POOLS < <(cat "${all_libvirt_directory_pools}")
         if [[ ${#LIBVIRT_DIR_POOLS[@]} -gt 1 ]] && [[ "${LIBVIRT_DISK:-none}" == "none" ]]
         then
-            printf "%s\n" "    Please select a libvirt directory pool:"
+
+            printf "%s\n\n" "   The following libvirt pools where found:"
+            for pool in $(echo ${LIBVIRT_DIR_POOLS[@]})
+            do
+              printf "%s\n" "     ${yel} * ${end}${blu}$disk${end}"
+            done
+
+            printf "%s\n" ""
+            printf "%s\n" "    Please select a libvirt directory pool for use:"
             createmenu "${LIBVIRT_DIR_POOLS[@]}"
             LIBVIRT_DIR_VOLUME=($(echo "${selected_option}"))
 
