@@ -51,9 +51,8 @@ function getPrimaryDisk () {
 }
 
 function show_libvirt_dir_volumes () {
-    local all_volumes
     local pool
-    all_volumes=$(mktemp)
+    all_libvirt_directory_pools=$(mktemp)
 
     sudo virsh pool-list --name | while read line
     do
@@ -62,12 +61,8 @@ function show_libvirt_dir_volumes () {
         then
             sudo virsh pool-dumpxml $pool|grep -e path | grep -oP '(?<=\>).*?(?=\<)'
         fi
-    done >> "${all_volumes}"
-
-    declare -a LIBVIRT_DIR_POOLS=()
-    mapfile -t LIBVIRT_DIR_POOLS < "$all_volumes"
+    done >> "${all_libvirt_directory_pools}"
 }
-
 
 function check_additional_storage () {
     # Load system wide variables
@@ -145,6 +140,8 @@ function check_additional_storage () {
 
         # Present libvirt pool options
         show_libvirt_dir_volumes
+        declare -a LIBVIRT_DIR_POOLS=()
+        mapfile -t LIBVIRT_DIR_POOLS < <(cat "${all_libvirt_directory_pools}")
         if [[ ${#LIBVIRT_DIR_POOLS[@]} -gt 1 ]] && [[ "${LIBVIRT_DISK:-none}" == "none" ]]
         then
             printf "%s\n" "    Please select a libvirt directory pool:"
@@ -166,9 +163,9 @@ function check_additional_storage () {
             fi
         else
             printf "%s\n\n" " ${red}Installer is existing because there are no storage options.${end}"
-            printf "%s\n\n" " ${mag}You did not provide a additional storage device for use as${end}"
-            printf "%s\n\n" " ${mag}a libvirt directory pool or the installer did not find any.${end}"
-            printf "%s\n\n" " ${mag}No existing libvirt pool directory where found.${end}"
+            printf "%s\n" " ${mag}You did not provide a additional storage device for use as${end}"
+            printf "%s\n" " ${mag}a libvirt directory pool or the installer did not find any.${end}"
+            printf "%s\n" " ${mag}No existing libvirt pool directory where found.${end}"
             exit 1
         fi
 
