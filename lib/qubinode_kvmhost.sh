@@ -148,7 +148,7 @@ function check_additional_storage () {
             printf "%s\n\n" "   The following libvirt pools where found:"
             for pool in $(echo ${LIBVIRT_DIR_POOLS[@]})
             do
-              printf "%s\n" "     ${yel} * ${end}${blu}$disk${end}"
+              printf "%s\n" "     ${yel} * ${end}${blu}$pool${end}"
             done
 
             printf "%s\n" ""
