@@ -144,6 +144,7 @@ function check_additional_storage () {
         fi 
 
         # Present libvirt pool options
+        show_libvirt_dir_volumes
         if [[ ${#LIBVIRT_DIR_POOLS[@]} -gt 1 ]] && [[ "${LIBVIRT_DISK:-none}" == "none" ]]
         then
             printf "%s\n" "    Please select a libvirt directory pool:"
@@ -163,10 +164,16 @@ function check_additional_storage () {
                   printf "%s\n\n" " ${mag}Existing the installation${end}"
                   exit 1
             fi
-            printf "%s\n\n" ""
-            printf "%s\n" "  ${yel}****************************************************************************${end}"
+        else
+            printf "%s\n\n" " ${red}Installer is existing because there are no storage options.${end}"
+            printf "%s\n\n" " ${mag}You did not provide a additional storage device for use as${end}"
+            printf "%s\n\n" " ${mag}a libvirt directory pool or the installer did not find any.${end}"
+            printf "%s\n\n" " ${mag}No existing libvirt pool directory where found.${end}"
+            exit 1
         fi
 
+        printf "%s\n\n" ""
+        printf "%s\n" "  ${yel}****************************************************************************${end}"
 
     fi
 }
