@@ -137,9 +137,10 @@ openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_fold
 ignition_files_dir: "{{ openshift_install_dir }}"
 virtinstall_dir: "{{ installation_working_dir }}/rhcos-install"
 
-
 dns_teardown: false
 product: "{{ openshift_product }}"
+
+ocp_client_cmd: /usr/local/bin/oc
 
 ########################
 # NFS Persistent Storage

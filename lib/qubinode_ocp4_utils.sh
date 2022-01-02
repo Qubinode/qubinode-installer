@@ -1160,7 +1160,7 @@ openshift4_server_maintenance () {
        smoketest)
            printf "%s\n\n" ""
            printf "%s\n" "    ${yel}Running smoke test on cluster by deploying a PHP LAMP Stack${end}"
-           ansible-playbook ${deploy_product_playbook} -t smoketest -e smoketest_cluster=yes
+           ansible-playbook ${deploy_product_playbook} -t smoketest -e smoketest_cluster=yes -e "bootstrap_complete=yes" -e "deploy_cluster=no" -e "cluster_install_status=yes"
            RESULT=$?
            if [ $RESULT -eq 0 ]
            then
