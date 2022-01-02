@@ -40,6 +40,7 @@ function openshift4_variables () {
 
   ## Create a random cluster name if one does not exist
   cluster_name=$(awk '/^cluster_name/ {print $2; exit}' "${ocp_vars_file}")
+  openshift_hosted_console_http=$(awk '/^openshift_hosted_console_http/ {print $2; exit}' "${ocp_vars_file}")
   generated_num=$(echo $(((RANDOM%900+1))))
   generated_cluster_name="qub${generated_num}"
   if [ "A${cluster_name}" == 'A""' ]
