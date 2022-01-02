@@ -159,7 +159,7 @@ EOF
 
     printf "%s\n\n" ""
     confirm "    Do you want to continue with this $ocp_size size cluster? yes/no"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${ocp_vars_file}"
     else
@@ -194,7 +194,7 @@ EOF
 
     printf "%s\n\n" ""
     confirm "    Do you want to continue with this $ocp_size size cluster? yes/no"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         sed -i "s/compute_count:.*/compute_count: $compute_count/g" "${ocp_vars_file}"
     else
@@ -299,7 +299,7 @@ function configure_local_storage () {
     vdb_size="${vdb:-10}"
     compute_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$compute_vdb_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         sed -i "s/compute_vdb_size:.*/compute_vdb_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
         sed -i "s/openshift_storage_vd_size:.*/openshift_storage_vd_size: "$compute_vdb_size"/g" "${ocp_vars_file}"
@@ -325,7 +325,7 @@ function configure_ocs_storage_size () {
     ocs_storage_size="${ocs_size:-300}"
     final_ocs_storage_size=$(echo ${ocs_storage_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$final_ocs_storage_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         sed -i "s/compute_ocs_size:.*/compute_ocs_size: "$final_ocs_storage_size"/g" "${ocp_vars_file}"
         printf "%s\n" ""
@@ -362,7 +362,7 @@ function ask_to_use_external_bridge_ocp_nodes () {
 
         printf "%s\n" "    Would you like to deploy your OpenShift nodes on the brridge network?"
         confirm " Yes/No"
-        if [ "A${response}" == "Ayes" ]
+        if [ "${response:-none}" == "yes" ]
         then
             sed -i "s/use_external_bridge:.*/use_external_bridge: true/g" ${ocp_vars_file}
             ocp_kvm_ip_option=$(awk '/^kvm_host_ip:/ {print $2; exit}' "${kvm_host_vars_file}")
@@ -420,7 +420,7 @@ function confirm_minimal_deployment () {
     openshift4_minimal_desc4
     printf "%s\n\n" ""
     confirm "    Do you want to continue with a minimal cluster? yes/no"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         sed -i "s/ctrlplane_mem_size:.*/ctrlplane_mem_size: "$min_mem"/g" "${ocp_vars_file}"
         sed -i "s/ctrlplane_count:.*/ctrlplane_count: "$min_ctrlplane_count"/g" "${ocp_vars_file}"
@@ -580,7 +580,7 @@ function update_node_count () {
     read -p "     ${def}Enter the number of ${NODE} nodes you would like: ${end} " user_input
     node_num="${user_input:-$DEFAULT_VALUE}"
     confirm "     ${def}You entered${end} ${yel}$node_num${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
@@ -613,7 +613,7 @@ function update_node_disk_size () {
     hd_size="${user_input:-$DEFAULT_VALUE}"
     node_disk_size=$(echo ${hd_size}| grep -o '[[:digit:]]*')
     confirm "     ${def}You entered${end} ${yel}$node_disk_size${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
@@ -646,7 +646,7 @@ function update_node_mem_size () {
     user_mem_input=$(echo ${mem_size}| grep -o '[[:digit:]]*')
     memory_size=$(echo $user_mem_input*1000|bc)
     confirm "     ${def}You entered${end} ${yel}$user_mem_input${end}${def}, is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
@@ -680,7 +680,7 @@ function update_node_vcpu_size () {
     user_vcpu_input=$(echo ${user_vcpu}| grep -o '[[:digit:]]*')
     user_vcpu_count=$user_vcpu_input
     confirm "     ${def}You entered${end} ${yel}$user_vcpu_count${end}${def},is this correct?${end} ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         printf "%s\n" ""
         if [ "A${NODE}" == "Actrlplane" ]
@@ -853,86 +853,86 @@ EOF
     sed -i "s/storage_profile:.*/storage_profile: custom/g" "${all_vars_file}"
 }
 
-function configure_ocs_storage () {
-    ## Jan 3, 2021 this function should be deleted
-    ## it's no longer in use.
-
-    #------------------------------------------
-    # configure OpenShift Container Storage
-    #------------------------------------------
-
-    OCS_STORAGE=no
-    NFS_STORAGE=yes
-    LOCAL_STORAGE=yes
-    LOCAL_STORAGE_FS=no
-    LOCAL_STORAGE_BLOCK=yes
-    FS_DISK="/dev/vdc"
-
-    configure_ocs_storage=$(awk '/^configure_openshift_storage:/ {print $2; exit}' "${ocp_vars_file}")
-    vdb_size=$(awk '/^ctrlplane_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
-    vdc_size=$(awk '/^ctrlplane_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
-    printf "%s\n\n" ""
-    printf "%s\n" "    ${yel}This will deploy OpenShift Storge.${end}"
-    printf "%s\n" "    ${yel}This will ensure Local storage is deployed and the vms are deployed with the extra disk required.${end}"
-    printf "%s\n\n" ""
-    confirm "     Do you want to deploy OpenShift Container Storage? ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
-    then
-        OCS_STORAGE=yes
-        NFS_STORAGE=yes
-        LOCAL_STORAGE=yes
-        LOCAL_STORAGE_FS=no
-        LOCAL_STORAGE_BLOCK=yes
-        FS_DISK="/dev/vdb"
-
-        configure_ocs_storage_size
-
-        confirm "     Current MON disk size is ${yel}$vdb_size${end}, do you want to change it? ${yel}yes/no${end}"
-        if [ "A${response}" == "Ayes" ]
-        then
-            printf "%s\n" ""
-            read -p "     ${blu}Enter the size you want in GB: ${end} " mon_vdb_size
-            vdb_size="${mon_vdb_size:-10}"
-            ctrlplane_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
-            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdb_size${end}"
-            confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
-            then
-                sed -i "s/ctrlplane_vdb_size:.*/ctrlplane_vdb_size: "$ctrlplane_vdb_size"/g" "${ocp_vars_file}"
-            fi
-        fi
-    
-        confirm "     Current OSD disk size is ${yel}$vdc_size${end}, do you want to change it? ${yel}yes/no${end}"
-        if [ "A${response}" == "Ayes" ]
-        then
-            printf "%s\n" ""
-            read -p "     ${blu}Enter the size you want in GB: ${end} " osd_vdc_size
-            vdc_size="${osd_vdc_size:-100}"
-            ctrlplane_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
-            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdc_size${end}"
-            confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
-            if [ "A${response}" == "Ayes" ]
-            then
-                sed -i "s/ctrlplane_vdc_size:.*/ctrlplane_vdc_size: "$ctrlplane_vdc_size"/g" "${ocp_vars_file}"
-            fi
-        fi
-    fi
-
-    # Set OCS storage to deploy
-    sed -i "s/configure_openshift_storage:.*/configure_openshift_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
-    # Disable deployment of nfs
-    sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp_vars_file}"
-    # enable local storage 
-    sed -i "s/configure_local_storage:.*/configure_local_storage: "$LOCAL_STORAGE"/g" "${ocp_vars_file}"
-    # Enable local storage filesystem
-    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: "$LOCAL_STORAGE_FS"/g" "${ocp_vars_file}"
-    # Enable local storage block device
-    sed -i "s/localstorage_block:.*/localstorage_block: "$LOCAL_STORAGE_BLOCK"/g" "${ocp_vars_file}"
-
-    # Enable local storage block device
-    sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${ocp_vars_file}"
-    exit $?
-}
+#function configure_ocs_storage () {
+#    ## TODO: 1/2022 this function should be deleted
+#    ## it's no longer in use.
+#
+#    #------------------------------------------
+#    # configure OpenShift Container Storage
+#    #------------------------------------------
+#
+#    OCS_STORAGE=no
+#    NFS_STORAGE=yes
+#    LOCAL_STORAGE=yes
+#    LOCAL_STORAGE_FS=no
+#    LOCAL_STORAGE_BLOCK=yes
+#    FS_DISK="/dev/vdc"
+#
+#    configure_ocs_storage=$(awk '/^configure_openshift_storage:/ {print $2; exit}' "${ocp_vars_file}")
+#    vdb_size=$(awk '/^ctrlplane_vdb_size:/ {print $2; exit}' "${ocp_vars_file}")
+#    vdc_size=$(awk '/^ctrlplane_vdc_size:/ {print $2; exit}' "${ocp_vars_file}")
+#    printf "%s\n\n" ""
+#    printf "%s\n" "    ${yel}This will deploy OpenShift Storge.${end}"
+#    printf "%s\n" "    ${yel}This will ensure Local storage is deployed and the vms are deployed with the extra disk required.${end}"
+#    printf "%s\n\n" ""
+#    confirm "     Do you want to deploy OpenShift Container Storage? ${yel}yes/no${end}"
+#    if [ "${response:-none}" == "yes" ]
+#    then
+#        OCS_STORAGE=yes
+#        NFS_STORAGE=yes
+#        LOCAL_STORAGE=yes
+#        LOCAL_STORAGE_FS=no
+#        LOCAL_STORAGE_BLOCK=yes
+#        FS_DISK="/dev/vdb"
+#
+#        configure_ocs_storage_size
+#
+#        confirm "     Current MON disk size is ${yel}$vdb_size${end}, do you want to change it? ${yel}yes/no${end}"
+#        if [ "${response:-none}" == "yes" ]
+#        then
+#            printf "%s\n" ""
+#            read -p "     ${blu}Enter the size you want in GB: ${end} " mon_vdb_size
+#            vdb_size="${mon_vdb_size:-10}"
+#            ctrlplane_vdb_size=$(echo ${vdb_size}| grep -o '[[:digit:]]*')
+#            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdb_size${end}"
+#            confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
+#            if [ "${response:-none}" == "yes" ]
+#            then
+#                sed -i "s/ctrlplane_vdb_size:.*/ctrlplane_vdb_size: "$ctrlplane_vdb_size"/g" "${ocp_vars_file}"
+#            fi
+#        fi
+#    
+#        confirm "     Current OSD disk size is ${yel}$vdc_size${end}, do you want to change it? ${yel}yes/no${end}"
+#        if [ "${response:-none}" == "yes" ]
+#        then
+#            printf "%s\n" ""
+#            read -p "     ${blu}Enter the size you want in GB: ${end} " osd_vdc_size
+#            vdc_size="${osd_vdc_size:-100}"
+#            ctrlplane_vdc_size=$(echo ${vdc_size}| grep -o '[[:digit:]]*')
+#            printf "%s\n" "    ${def}You entered${end} ${yel}$ctrlplane_vdc_size${end}"
+#            confirm "     ${blu}Is this correct?${end} ${yel}yes/no${end}"
+#            if [ "${response:-none}" == "yes" ]
+#            then
+#                sed -i "s/ctrlplane_vdc_size:.*/ctrlplane_vdc_size: "$ctrlplane_vdc_size"/g" "${ocp_vars_file}"
+#            fi
+#        fi
+#    fi
+#
+#    # Set OCS storage to deploy
+#    sed -i "s/configure_openshift_storage:.*/configure_openshift_storage: "$OCS_STORAGE"/g" "${ocp_vars_file}"
+#    # Disable deployment of nfs
+#    sed -i "s/configure_nfs_storage:.*/configure_nfs_storage: "$NFS_STORAGE"/g" "${ocp_vars_file}"
+#    # enable local storage 
+#    sed -i "s/configure_local_storage:.*/configure_local_storage: "$LOCAL_STORAGE"/g" "${ocp_vars_file}"
+#    # Enable local storage filesystem
+#    sed -i "s/localstorage_filesystem:.*/localstorage_filesystem: "$LOCAL_STORAGE_FS"/g" "${ocp_vars_file}"
+#    # Enable local storage block device
+#    sed -i "s/localstorage_block:.*/localstorage_block: "$LOCAL_STORAGE_BLOCK"/g" "${ocp_vars_file}"
+#
+#    # Enable local storage block device
+#    sed -i "s#localstorage_fs_disk:.*#localstorage_fs_disk: "$FS_DISK"#g" "${ocp_vars_file}"
+#    exit $?
+#}
 
 function configure_nfs_storage () {
     #------------------------------------------
@@ -954,7 +954,7 @@ function configure_nfs_storage () {
     printf "%s\n" "    ${yel}This also configures the OCP internal registry to use this as storage.${end}"
     printf "%s\n\n" ""
     confirm "     Do you want to configure NFS Storage? ${yel}yes/no${end}"
-    if [ "A${response}" == "Ayes" ]
+    if [ "${response:-none}" == "yes" ]
     then
         OCS_STORAGE=no
         NFS_STORAGE=yes
@@ -1064,18 +1064,18 @@ function remove_ocp4_compute () {
 		then
 		    RUN_PLAY=yes
 		else
-	            NOIP=yes
-	            MSG="could not find ip address for $hostname"
+	        NOIP=yes
+	        MSG="could not find ip address for $hostname"
 		fi
 
-                TOTAL=$((TOTAL+1))
+        TOTAL=$((TOTAL+1))
 		echo $IP $hostname $num_computes numbers_list=$numbers_list
             fi
         done
   
         # Run playbook to remove computes
         confirm "     ${cyn}Are you sure you want to delete the above nodes?${end} ${yel}yes/no${end}"
-        if [ "A${response}" == "Ayes" ]
+        if [ "${response:-none}" == "yes" ]
         then
             if ansible-playbook ${project_dir}/playbooks/remove_ocp4_computes.yml 
             then
@@ -1171,7 +1171,7 @@ openshift4_server_maintenance () {
        shutdown)
            printf "%s\n\n" ""
            confirm "    ${yel}Continue with shutting down the cluster?${end} yes/no"
-           if [ "A${response}" == "Ayes" ]
+           if [ "${response:-none}" == "yes" ]
            then
               #ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" --skip-tags "always" || exit 1
               ansible-playbook "${deploy_product_playbook}" -e "bootstrap_complete=yes" -e "shutdown_cluster=yes" -e "deploy_cluster=no" -e "container_running=no" -t "generate_inventory,shutdown" || exit 1 
@@ -1256,7 +1256,7 @@ openshift4_server_maintenance () {
 	       fi
 	       local rhcos_tags="idm,tools,libvirt_nat,firewall,tools,rhcos_files,node_profile,rhcos,deploy_nodes,bootstrap_check,containers"
 	       local install_dir="${project_dir}/ocp4"
-               printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
+           printf "%s\n" "    ${blu}Deploying OpenShift virtual nodes${end}"
 	       qubinode_ocp4_preflight
 	       ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' -t tools,ignitions
 cat << EOF > /tmp/etc-hosts-sinkhole
@@ -1314,7 +1314,7 @@ function configure_storage () {
             ocp-registry-remove)
                printf "%s\n" "    ${yel}This will remove the NFS PVC from the OpenShift Registry${end}"
                confirm "    ${blu}Do you want to continue?${end} yes/no"
-               if [ "A${response}" == "Ayes" ]
+               if [ "${response:-none}" == "yes" ]
 	       then
 	           local tags="-t remove_registry_pvc"
 	           local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=no' -e 'provision_nfs_client_provisoner=no' -e 'configure_registry=no' -e 'remove_registry_storage=yes' -e 'delete_deployment=yes'"
@@ -1331,7 +1331,7 @@ function configure_storage () {
             nfs-remove)
                printf "%s\n" "    ${yel}This will remove the NFS server and the PVC for the OpenShift Registry${end}"
                confirm "    ${blu}Do you want to continue?${end} yes/no"
-               if [ "A${response}" == "Ayes" ]
+               if [ "${response:-none}" == "yes" ]
 	       then
 	           local extra_vars="-e 'remove_nfs_server=yes'"
 	           local tags="-t remove_nfs_server"
@@ -1349,7 +1349,7 @@ function configure_storage () {
                local extra_vars='-t localstorage -e "configure_local_storag=true"'
                printf "%s\n" "    ${yel}This will remove local storage from the cluster.${end}"
                confirm "    ${blu}Do you want to continue?${end} yes/no"
-               if [ "A${response}" == "Ayes" ]
+               if [ "${response:-none}" == "yes" ]
 	       then
                    printf "%s\n" "    ${blu}Removing local storage from the openshift cluster"
                    echo ansible-playbook "${playbook_file}" "${extra_vars}" "${tags}"|sh || exit "$?"

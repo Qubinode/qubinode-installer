@@ -193,7 +193,9 @@ EOH
             ;;
             5) ocp_size=openshift-container-storage
         standard_opt=6node
-            configure_ocs_storage
+	    #TODO: remove this option
+            #configure_ocs_storage
+	    echo "This option has been deprecated"
             ;;
             6) ocp_size=custom
             openshift4_custom_desc

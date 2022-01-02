@@ -119,6 +119,9 @@ node_primary_nic: ""
 # file is for deploying ocp4 and this should not be changed.
 ocp4_okd4: ocp4
 
+# OpenShift RH console
+openshift_hosted_console_http="https://console.redhat.com/openshift"
+
 # OpenShift installer directory
 openshift_install_folder: ocp4
 

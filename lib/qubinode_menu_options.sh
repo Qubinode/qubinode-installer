@@ -145,10 +145,6 @@ function qubinode_maintenance_options () {
     then
         #TODO: this should remove all VMs and clean up the project folder
         qubinode_vm_manager undeploy
-    elif [ "${qubinode_maintenance_opt}" == "uninstall_openshift" ]
-    then
-      #TODO: this should remove all VMs and clean up the project folder
-        qubinode_uninstall_openshift
     else
         display_help
     fi

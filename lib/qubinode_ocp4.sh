@@ -128,7 +128,9 @@ function qubinode_deploy_ocp4 () {
 
 }
 
+
 function openshift4_qubinode_teardown () {
+    ocp_cluster_uid=$(oc get clusterversion version -o jsonpath='{.spec.clusterID}{"\n"}')
     confirm " ${yel}Are you sure you want to delete the${end} ${grn}$product_opt${end} ${yel}cluster${end}? yes/no"
     if [ "A${response}" == "Ayes" ]
     then
@@ -136,7 +138,9 @@ function openshift4_qubinode_teardown () {
         test -f "${ocp_vars_file}" && rm -f "${ocp_vars_file}"
         printf "%s\n\n\n\n" " }"
         printf "%s\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
-        
+        printf "%s\n" " ${grn}You will need to archive this cluster${end}" 
+        printf "%s\n" " ${grn}via $openshift_hosted_console_http${end}"
+        printf "%s\n" " ${grn}using the cluster uuid: $ocp_cluster_uid" 
     else
         exit 0
     fi
