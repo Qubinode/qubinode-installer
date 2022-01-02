@@ -1,17 +1,17 @@
 #!/bin/bash
 
-function setup_required_paths () {
-    current_dir="`dirname \"$0\"`"
-    project_dir="$(dirname ${current_dir})"
-    project_dir="`( cd \"$project_dir\" && pwd )`"
-    if [ -z "$project_dir" ] ; then
-        config_err_msg; exit 1
-    fi
-
-    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
-        config_err_msg; exit 1
-    fi
-}
+#function setup_required_paths () {
+#    current_dir="`dirname \"$0\"`"
+#    project_dir="$(dirname ${current_dir})"
+#    project_dir="`( cd \"$project_dir\" && pwd )`"
+#    if [ -z "$project_dir" ] ; then
+#        config_err_msg; exit 1
+#    fi
+#
+#    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+#        config_err_msg; exit 1
+#    fi
+#}
 
 check_if_cluster_deployed () {
 

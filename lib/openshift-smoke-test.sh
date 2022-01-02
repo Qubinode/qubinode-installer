@@ -5,9 +5,15 @@
 # and runs the config_err_msg if it can't determine
 # that start_deployment.conf can find the project directory
 function setup_required_paths () {
-    current_dir="`dirname \"$0\"`"
-    project_dir="$(dirname ${current_dir})"
-    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if which qubinode-installer >/dev/null 2>&1
+    then
+        discovered_path=$(which qubinode-installer)
+        project_dir=$(dirname "$discovered_path")
+    else
+        project_dir="`dirname \"$0\"`"
+        project_dir="`( cd \"$project_dir\" && pwd )`"
+    fi
+
     if [ -z "$project_dir" ] ; then
         config_err_msg; exit 1
     fi
