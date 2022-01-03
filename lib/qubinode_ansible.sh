@@ -85,7 +85,8 @@ function qubinode_setup_ansible () {
     if [ "${RHEL_VERSION:-none}" == "RHEL8" ]
     then
         ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
-    if [ "${RHEL_VERSION:-none}" == "RHEL7" ]
+    elif [ "${RHEL_VERSION:-none}" == "RHEL7" ]
+    then
         ANSIBLE_REPO=$(awk '/rhel7_ansible_repo:/ {print $2}' "${vars_file}")
     fi    
 
