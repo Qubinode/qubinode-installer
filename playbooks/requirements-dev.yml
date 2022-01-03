@@ -1,6 +1,9 @@
 ---
 collections:
-    - freeipa.ansible_freeipa
+  - freeipa.ansible_freeipa
+  - ansible.posix
+  - containers.podman
+
 
 roles:
   - src: https://github.com/Qubinode/deploy-kvm-vm.git

@@ -13,53 +13,81 @@ function ensure_supported_ansible_version () {
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
     RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
 
-    if [[ $RHEL_VERSION == "RHEL8" ]]; then
+    # Get the ansible version
+    if [ "${RHEL_VERSION:-none}" == "RHEL8" ]
+    then
         AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
-    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+    elif [ "${RHEL_VERSION:-none}" == "RHEL7" ]
+    then
         AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
     fi
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
+    if [ "${ANSIBLE_VERSION_GOOD:-none}" != "YES" ]
     then
-        if [ "A${AVAILABLE_VERSION}" != "A" ]
+        if [ "${AVAILABLE_VERSION:-none}" != "none" ]
         then
-            if [[ $RHEL_VERSION == "RHEL8" ]]; then
-                sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
-            elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-                sudo yum install "ansible-${AVAILABLE_VERSION}" -y
-            fi
+            # Update ansible
+            printf "%s\n" "   ${mag}Updating ansible ${end}"
+            sudo yum update -y --allowerasing ansible > /dev/null 2>&1
         else
-            printf "%s\n" " Could not find any available version of ansible greater than the"
-            printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
-            exit 1
+            printf "%s\n" ""
+            printf "%s\n" " ${cyn}**WARNING**${end}"
+            printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is older than the tested version of $ANSIBLE_VERSION"
         fi
     fi
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
-    then
-        printf "%s\n" ""
-        printf "%s\n" " ${cyn}**WARNING**${end}"
-        printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is later than the tested version of $ANSIBLE_VERSION"
-    fi
 }
 
+function qubinode_ansible_requirements_file_check () {
+    if $(which git >/dev/null 2>&1 && git symbolic-ref HEAD >/dev/null 2>&1)
+    then
+        local branch
+        local ansible_requirements
+	    branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
+
+	    if [[ "${branch:-none}" != "master" ]] || [[ "${branch:-none}" != "main" ]]
+	    then
+	        ansible_requirements="${project_dir}/playbooks/requirements-${branch}.yml"
+            if [ ! -f "${project_dir}/playbooks/requirements-${branch}.yml" ]
+            then
+                printf "%s\n" "     You appear to be developing for the qubinode-installer and you do not"
+                printf "%s\n" "     have a copy of the requirements-dev to match the branch ${blu}$branch${end} you are"
+                printf "%s\n" "     developing on."
+                confirm "      Do you want to use the ${blu}requirements-dev.yml${end} with your ${blu}$branch${end}?"
+                if [ "${response:-none}" == "yes" ]
+                then
+                    printf "%s\n" "     Copying ${blu}requirements-dev.yml${end} to ${blu}requirements-${branch}.yml${end}"
+                    printf "%s\n" "     Don't forget to merge ${blu}requirements-${branch}.yml${end} with ${blu}requirements-dev.yml${end}"
+                    cp "${project_dir}/playbooks/requirements-dev.yml" "${ansible_requirements}"
+                    ANSIBLE_REQUIREMENTS_FILE="${ansible_requirements}"
+
+                    #printf "%s\n" "     Reverting changes that may have been made to requirements.yml or requirements-dev.yml"
+                    #git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE >/dev/null 2>&1
+                fi
+            fi
+
+	    fi
+    fi    
+}
 function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
-    #HAS_SUDO=$(has_sudo)
     RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
-
-    #if [ "A${HAS_SUDO}" == "Ano_sudo" ]
-    #then
-    #    printf "%s\n" " ${red}You do not have sudo access${end}"
-    #    printf "%s\n" " Please run ${grn}qubinode-installer -m setup${end}"
-    #    exit 1
-    #fi
-
+    DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
+    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
+    
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
         check_rhsm_status
     fi
+
+    #Get required ansible repo
+    if [ "${RHEL_VERSION:-none}" == "RHEL8" ]
+    then
+        ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
+    if [ "${RHEL_VERSION:-none}" == "RHEL7" ]
+        ANSIBLE_REPO=$(awk '/rhel7_ansible_repo:/ {print $2}' "${vars_file}")
+    fi    
 
     # install python
     if [[ $RHEL_VERSION == "RHEL8" ]]
@@ -72,53 +100,35 @@ function qubinode_setup_ansible () {
             sudo dnf clean all > /dev/null 2>&1
             sudo rm -r /var/cache/dnf
             sudo yum install -y -q -e 0 python3 python3-pip python3-dns bc bind-utils> /dev/null 2>&1
-	    sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
-	fi
+	        sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
+	    fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         if [ ! -f /usr/bin/python ]
         then
             printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 python python3-pip python2-pip python-dns  bc bind-utils
-	    #sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python/g" "${vars_file}"
         fi
     else
        PYTHON=yes
     fi
 
-    # Update ansible
-    printf "%s\n" "   ${mag}Updating ansible ${end}"
-    sudo yum update -y --allowerasing ansible > /dev/null 2>&1
-
     # install ansible
     if [ ! -f /usr/bin/ansible ];
     then
-      if [[ $RHEL_VERSION == "RHEL8" ]]; then
-        ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
-      elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-        ANSIBLE_REPO=$(awk '/rhel7_ansible_repo:/ {print $2}' "${vars_file}")
-      fi
        CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
        # check to make sure the support ansible repo is enabled
        if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
        then
            sudo subscription-manager repos --disable="${CURRENT_REPO}"
            sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
-       fi
-       if [[ $RHEL_VERSION == "RHEL8" ]]; then
-            sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils
-            install_podman_dependainces
-        elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-            sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils
-            install_podman_dependainces
-        fi
-       ensure_supported_ansible_version
-    else
-       ensure_supported_ansible_version
-       #printf "%s\n" " ${cyn}Ansible is installed${end}"
+           sudo yum clean all > /dev/null 2>&1
+           sudo yum install -y -q -e 0 ansible git  bc bind-utils
+        fi    
     fi
+
+    # Verify ansible version
+    ensure_supported_ansible_version
 
     # setup vault
     if [ -f /usr/bin/ansible ];
@@ -136,24 +146,8 @@ function qubinode_setup_ansible () {
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi
 
-	# use the ansible requirements file that matches the current branch
-	branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
-	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
-	if [ "A${branch}" != "A" ]
-	then
-	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
-	    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
-
-	    # create a matching branch requirements file if one does not exist
-	    if [ ! -f "$ANSIBLE_REQUIREMENTS_FILE" ]
-      then
-          cp $DEFAULT_ANSIBLE_REQUIREMENTS_FILE $ANSIBLE_REQUIREMENTS_BRANCH_FILE
-		      #revert changes made to the default requirements file
-		      git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
-	    fi
-	else
-	    ANSIBLE_REQUIREMENTS_FILE="${DEFAULT_ANSIBLE_REQUIREMENTS_FILE}"
-	fi
+	    # Check if development and which requirements file to use
+        qubinode_ansible_requirements_file_check
 
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
@@ -203,10 +197,4 @@ function encrypt_ansible_vault () {
         cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
     fi
-}
-
-
-function install_podman_dependainces(){
-    ansible-galaxy collection install ansible.posix
-    ansible-galaxy collection install containers.podman
 }

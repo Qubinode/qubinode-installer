@@ -6,6 +6,11 @@
 # likely to change.
 #########################
 
+# This should be updated if you delete the kubeadmin user
+# You will need to setup a kubeconfig for the cluster admin
+# user.
+ocp_cluster_admin_kubeconfig: "{{ openshift_install_dir }}/auth/kubeconfig"
+
 # Default cluster id
 cluster_name: qub388
 
@@ -151,7 +156,6 @@ provision_nfs_client_provisoner: true      # deploys the nfs provision
 configure_nfs_storage: yes  # set to no to skip deploying nfs storage
 provision_nfs_server: true  # set to true to setup a nfs server
 nfs_server_directory_path: /ocp4-nfs
-kubeconfig_dir: "{{ openshift_install_dir }}"
 openshift_object_configs_files_dir: "{{ openshift_install_dir }}/object-configs"
 nfs_registry_pvc_object_file: "{{ openshift_object_configs_files }}/registry-pvc.yaml"
 nfs_provisioner_sc_object_file: "{{ openshift_object_configs_files }}/nfs-provisioner-sc.yaml"
