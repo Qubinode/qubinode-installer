@@ -1222,6 +1222,7 @@ openshift4_server_maintenance () {
 	       add_ocp4_compute
 	       ;;
        storage)
+           # ./qubinode-installer -p ocp4 -m storage -a nfs
 	       configure_storage "${storage_option}"
 	       ;;
        rm-rhcos)
@@ -1305,7 +1306,7 @@ function configure_storage () {
     #local storage options
     if [ "${storage_option:-none}" != "none" ]
     then
-	local playbook_file="${project_dir:?}/playbooks/setup-ocp-nfs-registry.yml"
+	    local playbook_file="${project_dir:?}/playbooks/setup-ocp-nfs-registry.yml"
         case ${storage_option} in
             ocp-registry)
 	        local extra_vars="-e 'remove_nfs_server=no' -e 'provision_nfs_server=yes' -e 'provision_nfs_client_provisoner=yes' -e 'configure_registry=yes'"
