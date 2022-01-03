@@ -52,12 +52,12 @@ function qubinode_ansible_requirements_file_check () {
             then
                 printf "%s\n" "     You appear to be developing for the qubinode-installer and you do not"
                 printf "%s\n" "     have a copy of the requirements-dev to match the branch ${blu}$branch${end} you are"
-                printf "%s\n" "     developing on."
-                confirm "      Do you want to use the ${blu}requirements-dev.yml${end} with your ${blu}$branch${end}?"
+                printf "%s\n\n\n" "     developing on."
+                confirm "     Do you want to use the ${blu}requirements-dev.yml${end} with your ${blu}$branch${end}? yes/no"
                 if [ "${response:-none}" == "yes" ]
                 then
                     printf "%s\n" "     Copying ${blu}requirements-dev.yml${end} to ${blu}requirements-${branch}.yml${end}"
-                    printf "%s\n" "     Don't forget to merge ${blu}requirements-${branch}.yml${end} with ${blu}requirements-dev.yml${end}"
+                    printf "%s\n\n" "     Don't forget to merge ${blu}requirements-${branch}.yml${end} with ${blu}requirements-dev.yml${end}"
                     cp "${project_dir}/playbooks/requirements-dev.yml" "${ansible_requirements}"
                     ANSIBLE_REQUIREMENTS_FILE="${ansible_requirements}"
 
