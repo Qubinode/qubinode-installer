@@ -137,10 +137,20 @@ function openshift4_qubinode_teardown () {
         ansible-playbook "${deploy_product_playbook}" -e '{ tear_down: True }' -e '{ deploy_cluster: False }' || exit $?
         test -f "${ocp_vars_file}" && rm -f "${ocp_vars_file}"
         printf "%s\n\n\n\n" " }"
-        printf "%s\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
-        printf "%s\n" " You will need to archive this cluster" 
-        printf "%s\n" " via ${grn}$openshift_hosted_console_http${end}"
-        printf "%s\n" " using the cluster uuid: ${grn}$ocp_cluster_uid${end}" 
+
+        if [ "${ocp_cluster_uid:-none}" != "none" ]
+        then
+            printf "%s\n\n" " ${grn}OpenShift Cluster destroyed!${end}"
+            printf "%s\n" " You will need to archive this cluster" 
+            printf "%s\n" " via ${grn}$openshift_hosted_console_http${end}"
+            printf "%s\n\n" " using the cluster uuid: ${grn}$ocp_cluster_uid${end}" 
+            printf "%s\n\n" " " 
+            printf "%s\n\n" " You can all view all deleted cluster ids here: ${project_dir}/.clusterids/deleted-clusters.txt" 
+
+            test -d "${project_dir}/.clusterids" || mkdir "${project_dir}/.clusterids"
+            echo "$ocp_cluster_uid" >> "${project_dir}/.clusterids/deleted-clusters.txt"
+            exit 0
+        fi
     else
         exit 0
     fi

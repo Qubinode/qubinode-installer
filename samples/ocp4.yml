@@ -342,3 +342,6 @@ ocp4_instances:
     qty: 1
     vm_type: bootstrap
     ip_octet: 30
+
+#TODO: this is for the nfsprovisioner role. this role should be updated
+kubeconfig_dir: "{{ openshift_install_dir }}"

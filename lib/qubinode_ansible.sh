@@ -42,12 +42,10 @@ function qubinode_ansible_requirements_file_check () {
     if $(which git >/dev/null 2>&1 && git symbolic-ref HEAD >/dev/null 2>&1)
     then
         local branch
-        local ansible_requirements
-	    branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
+	      branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
 
 	    if [[ "${branch:-none}" != "master" ]] || [[ "${branch:-none}" != "main" ]]
 	    then
-	        ansible_requirements="${project_dir}/playbooks/requirements-${branch}.yml"
             if [ ! -f "${project_dir}/playbooks/requirements-${branch}.yml" ]
             then
                 printf "%s\n" "     You appear to be developing for the qubinode-installer and you do not"
@@ -56,10 +54,10 @@ function qubinode_ansible_requirements_file_check () {
                 confirm "     Do you want to use the ${blu}requirements-dev.yml${end} with your ${blu}$branch${end}? yes/no"
                 if [ "${response:-none}" == "yes" ]
                 then
+	                  ANSIBLE_DEV_REQ_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
                     printf "%s\n" "     Copying ${blu}requirements-dev.yml${end} to ${blu}requirements-${branch}.yml${end}"
                     printf "%s\n\n" "     Don't forget to merge ${blu}requirements-${branch}.yml${end} with ${blu}requirements-dev.yml${end}"
-                    cp "${project_dir}/playbooks/requirements-dev.yml" "${ansible_requirements}"
-                    ANSIBLE_REQUIREMENTS_FILE="${ansible_requirements}"
+                    cp "${project_dir}/playbooks/requirements-dev.yml" "${ANSIBLE_DEV_REQ_FILE}"
 
                     #printf "%s\n" "     Reverting changes that may have been made to requirements.yml or requirements-dev.yml"
                     #git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE >/dev/null 2>&1
@@ -73,8 +71,7 @@ function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
     RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
-    DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
-    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
+    ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
     
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
@@ -149,6 +146,10 @@ function qubinode_setup_ansible () {
 
 	    # Check if development and which requirements file to use
         qubinode_ansible_requirements_file_check
+        if [ "${ANSIBLE_DEV_REQ_FILE:-none}" != "none" ]
+        then
+            ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_DEV_REQ_FILE}"
+        fi
 
         # Ensure roles are downloaded
         if [ "${qubinode_maintenance_opt}" == "ansible" ]
