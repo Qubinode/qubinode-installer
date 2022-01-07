@@ -67,6 +67,7 @@ function show_libvirt_dir_volumes () {
 function check_additional_storage () {
     # Load system wide variables
     setup_variables
+    local dedicated_disk
     CHECK_STORAGE=$(awk '/run_storage_check:/ {print $2;}' "${kvm_host_vars_file}" | tr -d '"')
     if [ "A${CHECK_STORAGE}" == "A" ]
     then
@@ -108,6 +109,7 @@ function check_additional_storage () {
             printf "%s\n\n" " "
             if [ "${response:-none}" == "yes" ]
             then
+              dedicated_disk="yes"
               getPrimaryDisk
               printf "%s\n" "    Please Select secondary disk to be used."
 
@@ -137,7 +139,9 @@ function check_additional_storage () {
               printf "%s\n\n" ""
             fi
         fi 
-
+        
+        if [ "${dedicated_disk:none}" != "yes" ]
+        then
         # Present libvirt pool options
         show_libvirt_dir_volumes
         declare -a LIBVIRT_DIR_POOLS=()
@@ -169,6 +173,7 @@ function check_additional_storage () {
                   printf "%s\n\n" " ${mag}Existing the installation${end}"
                   exit 1
             fi
+        fi
         else
             printf "%s\n\n" " ${red}Installer is existing because there are no storage options.${end}"
             printf "%s\n" " ${mag}You did not provide a additional storage device for use as${end}"
