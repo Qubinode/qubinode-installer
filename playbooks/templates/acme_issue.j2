@@ -1,0 +1,12 @@
+#!/bin/bash
+
+## Copy certs to cert dir
+{{ project_dir }}/acme/bin/acme.sh --force \
+    --install-cert -d ${LE_API} -d *.${LE_WILDCARD} \
+    --cert-file {{ certdir }}/cert.pem \
+    --key-file {{ certdir }}/privkey.pem \
+    --fullchain-file {{ certdir }}/fullchain.pem \
+    --ca-file {{ certdir }}/ca.cer
+STATUS=$?
+
+exit "${STATUS}"

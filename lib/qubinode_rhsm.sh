@@ -209,7 +209,7 @@ function qubinode_rhsm_register () {
     if [ "A${IS_REGISTERED}" != "AThis system is not yet registered" ]
     then
         sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"
-        printf "%s\n" " ${yel}RHSM setup completed${end}"
+        printf "%s\n" "    ${yel}RHSM setup completed${end}"
     fi 
 
 }

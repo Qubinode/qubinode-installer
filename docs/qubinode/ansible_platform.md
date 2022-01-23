@@ -8,10 +8,6 @@ There is also a dependancy on IdM as a dns server, refer to the [IdM install](id
 #### Get a Red Hat Ansible Automation Platform license 
 Link: https://www.redhat.com/en/technologies/management/ansible/try-it
 
-Place the tower license in the file below.
-```
-* $HOME/qubinode-installer/tower-license.txt
-```
 
 ### Deploying Ansible tower 
 

@@ -82,7 +82,7 @@ function qubinode_deploy_ocp4 () {
     check_openshift4_size_yml
 
     # Ensure the Deployment Network is configured
-    ask_to_use_external_bridge
+    #ask_to_use_external_bridge_ocp_nodes
 
     # make sure no old VMs from previous deployments are still around
     state_check
@@ -91,15 +91,13 @@ function qubinode_deploy_ocp4 () {
     qubinode_deploy_idm
 
     # Test idm server 
-    prefix=$(awk '/instance_prefix:/ {print $2;exit}' "${vars_file}")
-    suffix=$(awk '/idm_server_name:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
-    idm_srv_fqdn="$prefix-$suffix.$domain"
+    idm_srv_fqdn=$(awk '/idm_server_fqdn_name:/ {print $2;exit}' "${idm_vars_file}")
 
     printf "%s\n" "  ${cyn}Checking dns status against ${idm_srv_fqdn}${end}"
     printf "%s\n\n" "  ${cyn}*********************************${end}"
     if [ "$(dig +short  ${idm_srv_fqdn})" ];
     then 
-      echo "DNS found in resolv.conf."
+      printf "%s\n" " DNS found in resolv.conf."
     else
       idm_server_ip=$(awk '/idm_server_ip:/ {print $2;exit}' "${idm_vars_file}" |tr -d '"')
       update_resolv_conf ${idm_server_ip}
@@ -109,7 +107,9 @@ function qubinode_deploy_ocp4 () {
     get_latest_ocp_minor_release
 
     # Deploy OCP4
+    cd "${project_dir}"
     ansible-playbook "${deploy_product_playbook}" -e '{ deploy_cluster: True }' 
+    #ansible-playbook "${deploy_product_playbook}" -e '{ check_existing_cluster: False }'  -e '{ deploy_cluster: True }'
     RESULT=$?
     if [ $RESULT -eq 0 ]
     then
@@ -196,7 +196,7 @@ function qubinode_ocp4_setup () {
     check_openshift4_size_yml
 
     # Ensure the Deployment Network is configured
-    ask_to_use_external_bridge
+    #ask_to_use_external_bridge_ocp_nodes
 
     # make sure no old VMs from previous deployments are still around
     state_check

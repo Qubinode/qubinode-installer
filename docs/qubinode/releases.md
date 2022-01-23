@@ -5,6 +5,9 @@
 ### Release web page
 https://github.com/Qubinode/qubinode-installer/releases
 
+**Qubinode Dev Release notes**
+* Support for creating Let's Encrypt Certs and updating cluster
+* Add simple VM snapshot script lib/qubinode_snapshot_vm.sh
 
 **Qubinode v2.4.6 Release notes**
 * RHEL 8.4 default support 
@@ -14,6 +17,7 @@ https://github.com/Qubinode/qubinode-installer/releases
   * Using OCS pvc for registry pvc
 * Fixes for external network deployments
 * adding support for kcli
+* Adding Fixes for Anisble Tower Deployment
 
 
 **Qubinode v2.4.5 Release notes**

@@ -1,4 +1,4 @@
-#!/node_rhel_global_varsbin/bash
+#!/bin/bash
 function qubinode_rhel_global_vars () {
     ## This function sets up globally required variables
     setup_variables

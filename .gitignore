@@ -35,4 +35,8 @@ rhsm_token
 FIRSTBOOT
 lib/qubinode-ks-postinstall.sh
 new-vars/
-
+lib/qubinode_acme_install.sh
+playbooks/files
+acme/
+openshift-pull-secret.txt
+rhsm-offline-token.txt

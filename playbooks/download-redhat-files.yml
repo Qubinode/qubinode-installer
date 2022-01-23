@@ -1,0 +1,51 @@
+---
+
+- name: Downloads Red Hat ISO's and Qcow Images
+  hosts: localhost
+  gather_facts: no
+
+  vars_files:
+    - vars/all.yml
+    - vars/kvm_host.yml
+
+  vars:
+    qcow_download_dir: "{{ kvm_host_libvirt_dir }}"
+    pull_secret_file: "{{ project_dir }}/openshift-pull-secret.txt"
+    rhsm_token_file: "{{ project_dir }}/rhsm-offline-token.txt"
+   
+    redhat_downloads:
+      - name: rhel85
+        qcow_name: "rhel-8.5-x86_64-kvm.qcow2"
+        qcow_sha: "9b63267716fa557f76df4899fb6a591c4c8a6ae2828f6297458815bff55ce8cc"
+
+  tasks:
+    - name: Grab rhsm api token
+      set_fact:
+        rhsm_api_token: "{{ lookup('file', rhsm_token_file) }}"
+
+    - name: RHEL Generating an access token for access.redhat.com/downloads
+      uri:
+        url: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+        method: POST
+        body_format: form-urlencoded
+        return_content: true
+        body:
+          grant_type: "refresh_token"
+          client_id: "rhsm-api"
+          refresh_token: "{{ rhsm_api_token }}"
+      register: temp_token
+
+    - name: Get download URL for openshift pull secret
+      uri:
+        url: https://api.openshift.com/api/accounts_mgmt/v1/access_token
+        headers:
+          accept: "application/json"
+          Authorization: "Bearer {{ temp_token.json.access_token }}"
+        method: POST
+        dest: "{{ pull_secret_file }}"
+        creates: "{{ pull_secret_file }}"
+      register: pull_secret
+    
+    - name: Download Files From Red Hat
+      include_tasks: download-redhat-include.yml
+      loop: "{{ redhat_downloads }}"

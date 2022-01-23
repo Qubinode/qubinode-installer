@@ -10,7 +10,7 @@
     - vars/kvm_host.yml
     - vars/ocp4.yml
   environment:
-    IPA_HOST: "{{ idm_server_shortname }}.{{ internal_domain_name }}"
+    IPA_HOST: "{{ ipa_host }}"
     IPA_USER: "{{ user_idm_admin }}"
     IPA_PASS: "{{ user_idm_password }}"
 

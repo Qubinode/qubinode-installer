@@ -32,15 +32,15 @@
       include_role:
         name: deploy-kvm-vm
 
-    - name: ensure ansible-freeipa is installed
-      ansible.builtin.git:
-        repo: 'https://github.com/freeipa/ansible-freeipa.git'
-        dest: "{{ playbook_dir }}/roles/ansible-freeipa"
-        version: master
-      delegate_to: 127.0.0.1
-      become: yes
-      tags: ansiblefreeipa
-      when: not vm_teardown|bool
+    #- name: ensure ansible-freeipa is installed
+    #  ansible.builtin.git:
+    #    repo: 'https://github.com/freeipa/ansible-freeipa.git'
+    #    dest: "{{ playbook_dir }}/roles/ansible-freeipa"
+    #    version: master
+    #  delegate_to: 127.0.0.1
+    #  become: no
+    #  tags: ansiblefreeipa
+    #  when: not vm_teardown|bool
 
     - name: Ensure the KVM host is not pointing to the IdM server for DNS
       copy:

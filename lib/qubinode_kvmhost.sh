@@ -27,22 +27,23 @@ function kvm_host_variables () {
 }
 
 function getPrimaryDisk () {
-    #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
     # Try to install required rpms
     if [ ! -f /usr/sbin/lvs ]
     then
         sudo yum install -y -q -e 0 bc lvm2 bind-utils >/dev/null 2>&1
     fi
 
+    # find which disk slash root is mounted on
     root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
     primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
-    if [ "A${primary_disk}" == "A" ];
+
+    # If no logical volumes are found look for slash root on primary disk
+    if [ "${primary_disk:-none}" == "none" ];
     then
        primary_disk=$(/usr/bin/findmnt -nr -o source / | sed -e "s/\/dev\///g")
-       printf "%s\n" "   Setting $primary_disk as primary disk."
-    else
-        primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
     fi
+
+    printf "%s\n" "   Setting $primary_disk as primary disk."
 }
 
 function check_additional_storage () {
@@ -76,29 +77,37 @@ function check_additional_storage () {
               fi
             done
 
+	    kvmhost_var_file="${project_dir}/playbooks/vars/kvm_host.yml"
             printf "%s\n" " "
-            printf "%s\n" "   It is recommended to dedicate a storage device for /var/lib/libvirt/images."
+            printf "%s\n" "   It is recommended to dedicate a storage device for ${libvirt_dir}."
             printf "%s\n" "   Choose one of the available storage devices and the installer will create a volume"
-            printf "%s\n\n" "   group, then a lv and mount /var/lib/libvirt/images to it."
+            printf "%s\n\n" "   group, then a lv and mount ${libvirt_dir} to it."
+
+            printf "%s\n" "   Ctrl-c to provide the path to a existing libvirt directory volume."
+            printf "%s\n" "   Edit the var ${cyn}kvm_host_libvirt_dir${end} in ${kvmhost_var_file}."
+            printf "%s\n" "   Run the installer again to use the provided path."
+            printf "%s\n\n" ""
 
             confirm "   Do you want to dedicate a storage device: ${blu}yes/no${end}"
-            printf "%s\n" " "
-            if [ "A${response}" == "Ayes" ]
+            printf "%s\n\n" " "
+            if [ "${response:-none}" == "yes" ]
             then
               getPrimaryDisk
-              echo "Please Select secondary disk to be used."
+              printf "%s\n" "    Please Select secondary disk to be used."
               DISK="${primary_disk}"
 
               declare -a ALL_DISKS=()
               mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
               createmenu "${ALL_DISKS[@]}"
               disk=($(echo "${selected_option}"))
-	      VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-	      LIBVIRT_PATH=$(awk '/kvm_host_libvirt_dir:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+	          VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
 
-              printf "%s\n" "   ${yel}Please note, the installer will wipe the device${end} ${blu}$disk${end} if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
-              printf "%s\n" "   A logical volume is then created and mounted at ${blu}${LIBVIRT_PATH}${end}"
-              confirm "    Continue with $disk? ${blu}yes/no${end}"
+              printf "%s\n\n" ""
+              printf "%s\n" "     Please note the installer will wipe the device ${blu}$disk${end}"
+              printf "%s\n" "     if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
+              printf "%s\n" "     A logical volume is then created and mounted at ${blu}${libvirt_dir}${end}"
+              printf "%s\n\n" ""
+              confirm "      Continue with $disk? ${blu}yes/no${end}"
               if [ "A${response}" == "Ayes" ]
               then
                   printf "%s\n\n" ""
@@ -111,16 +120,13 @@ function check_additional_storage () {
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
               fi
+              printf "%s\n\n" ""
             else
                 setsingledisk
             fi
         else
             setsingledisk
         fi
-    #else
-       #printf "%s\n" "     ${yel}*************************************${end}"
-       #printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
-       #printf "%s\n" "     ${yel}*************************************${end}"
     fi
 }
 
@@ -396,62 +402,6 @@ function qubinode_networking () {
 }
 
 
-#function qubinode_check_for_libvirt_nat() {
-#    #TODO: This function is no longer needed and should be removed
-#    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-#    RESULT=$(sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}")
-#    if [[ "A${RESULT}" == "A" ]];
-#    then
-#        printf "%s\n" "    skipping ${DEFINED_LIBVIRT_NETWORK} configuration"
-#        linenum=$(cat "${kvm_host_vars_file}" | grep -n 'create:' | head -1| awk '{print $1}' | tr -d :)
-#        sed -i ''${linenum}'s/create:.*/create: false/' "${kvm_host_vars_file}"
-#    else
-#        printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
-#        printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"
-#
-#        nets=$(sudo virsh net-list --all --name)
-#        NAT_ARRAY=()
-#        printf "%s\n" "   Found libvirt networks:"
-#        for item in $(echo $nets)
-#        do
-#            mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
-#            if [ "A${mode}" == "Anat" ]
-#            then
-#                NAT_ARRAY+=(${item})
-#            fi
-#        done
-#
-#        for nat in ${NAT_ARRAY[@]}
-#        do
-#           printf "%s\n" "     ${yel} * ${end}${blu}$nat${end}"
-#        done
-#
-#        printf "%s\n" " "
-#        printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
-#        printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
-#
-#        confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
-#        printf "%s\n" " "
-#        if [ "A${response}" == "Ayes" ]
-#        then
-#          createmenu "${NAT_ARRAY[@]}"
-#          nat_network=($(echo "${selected_option}"))
-#          confirm "    Continue with $nat_network? ${blu}yes/no${end}"
-#          if [ "A${response}" == "Ayes" ]
-#          then
-#              printf "%s\n\n" ""
-#              printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
-#              sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
-#              linenum=$(cat "${kvm_host_vars_file}" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
-#              sed -i ''${linenum}'s/create:.*/create: false/' "${kvm_host_vars_file}"
-#          else
-#              printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
-#              exit 0
-#          fi
-#      fi
-#    fi
-#}
-
 kvm_host_health_check () {
     KVM_IN_GOOD_HEALTH=""
     #requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
@@ -540,7 +490,8 @@ function qubinode_setup_kvm_host () {
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           #qcow_check
+           qcow_check
+           network_check
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
        fi
@@ -551,12 +502,14 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-        #qcow_check
+        qcow_check
+        network_check
       else
           printf "%s\n" " ${blu}not a qubinode system${end}"
           printf "%s\n" "   Installing required packages"
           sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
-          #qcow_check
+          qcow_check
+          network_check
       fi
     fi
 
@@ -586,6 +539,15 @@ function qubinode_setup_kvm_host () {
     sudo systemctl restart libvirtd.service
 }
 
+function network_check(){
+    SECONDARY_INTERFACE_NAME=$(awk '/^kvm_host_interface:/ { print $2}' "${kvm_host_vars_file}")
+    echo "Collecting IP for  $SECONDARY_INTERFACE_NAME"
+    export CURRENT_IP=$(echo `ifconfig $SECONDARY_INTERFACE_NAME |awk '/inet/ {print $2}'| grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b"`)
+    if [ ! -z ${CURRENT_IP} ];
+    then 
+        sudo  nmcli connection down ${SECONDARY_INTERFACE_NAME} && sudo nmcli connection up ${SECONDARY_INTERFACE_NAME}
+    fi 
+}
 
 function qubinode_check_kvmhost () {
     qubinode_networking
@@ -662,5 +624,5 @@ function qubinode_check_kvmhost () {
         KVM_HOST_MSG="KVM host is setup"
     fi
 
-    echo $KVM_HOST_MSG
+    printf "%s\n" "  ${blu:?}$KVM_HOST_MSG${end:?}"
 }

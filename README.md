@@ -36,9 +36,11 @@ The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Start
 New Features |
 --|
 OpenShift 4.8 |
-Disconnected Instaltion | 
+IDM fixes |
+ODF fixes and updates |
 External Baremetal Support |
 kcli support |
+Fixes for Anisble Tower Deployment | 
 
 
 See [Release Document](docs/qubinode/releases.md) for features history.
@@ -93,6 +95,7 @@ Feature  |  Status
 Red Hat Satellite Server  | In progress
 CNV Support | Dev
 Cockpit Integration | In progress
+Disconnected Installation | In progress
 
 ## Roadmap
 * CNV Installation 
