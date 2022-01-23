@@ -77,8 +77,18 @@ function qubinode_rhel_global_vars () {
                 memory=8192
                 disk=120G
                 expand_os_disk=yes
+            elif [ "A${size}" == "Aqubinode" ]
+            then
+                vcpu=6
+                memory=65536
+                disk=500G
+                expand_os_disk=yes
             else
                 echo "using default size"
+                ## Default resources for VMs
+                vcpu=1
+                memory=800
+                disk=20G
            fi
         fi
 
@@ -129,6 +139,7 @@ function qubinode_rhel_global_vars () {
             sed -i "s/vm_mac:.*/vm_mac: "$mac"/g" "${rhel_vars_file}"
         fi
     fi
+
 }
 
 function qubinode_rhel () {
@@ -136,18 +147,12 @@ function qubinode_rhel () {
     qubinode_rhel_global_vars
     qubinode_rhel_pre_checks
 
-    ## Default resources for VMs
-    vcpu=1
-    memory=800
-    disk=20G
 
     ## End user input via -a agruments
     ##################################
 
     ## Ensure RHEL qcow image is available
     setup_download_options
-    install_rhsm_cli
-    download_files
 }
 
 function qubinode_generate_instance_id () {

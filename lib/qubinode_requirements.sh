@@ -130,6 +130,9 @@ function setup_variables () {
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     warn_storage_profile=$(awk '/^warn_storage_profile:/ {print $2; exit}' "${project_dir}/playbooks/vars/all.yml")
 
+    # This should be defined outside of this function is a vars file
+    export RHSM_OFFLINE_TOKEN="${project_dir}/rhsm-offline-token.txt"
+
 }
 
 function get_rhel_version() {
@@ -190,7 +193,7 @@ function installer_artifacts_msg () {
         printf "%s\n" "    ${yel}OPTIONS 1: RHSM offline token${end}"
         printf "%s\n" "    You can provide a file with your RHSM offline api token"
         printf "%s\n" "    to have the installer download the missing files:"
-        printf "%s\n\n" "        ${blu}* ${project_dir}/rhsm-offline-token.txt${end}"
+        printf "%s\n\n" "        ${blu}* ${RHSM_OFFLINE_TOKEN}${end}"
         printf "%s\n" "    ${yel}OPTION 2: Download the missing files${end}"
         printf "%s\n" "    Download the reported missing files to the expected location."
         if [ "A${PULL_MISSING}" == "Ayes" ]
@@ -209,6 +212,7 @@ setup_download_options () {
     # Ensure user is setup for sudo
     setup_sudoers
 
+
     # check for pull secret
     if [ "${CHECK_PULL_SECRET:-none}" != "yes" ]
     then
@@ -226,6 +230,9 @@ setup_download_options () {
     # check for required OS qcow image or token
     TOKEN_STATUS="notexist"
     QCOW_STATUS="notexist"
+    QCOW_MISSING="no"
+    PULL_MISSING="no"
+
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     artifact_qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     if sudo test -f "${libvirt_dir}/${artifact_qcow_image}"
@@ -235,7 +242,7 @@ setup_download_options () {
         if [[ ! -f "${libvirt_dir}/${artifact_qcow_image}" ]] && [[ ! -f "${project_dir}/${artifact_qcow_image}" ]]
         then
             # check for user provided token
-            if [ -f "{project_dir}/rhsm-offline-token.txt" ]
+            if [ -f "{RHSM_OFFLINE_TOKEN}" ]
             then
                 TOKEN_STATUS=exist
             fi
@@ -256,15 +263,18 @@ setup_download_options () {
         artifact_string="the $artifact_qcow_image image"
     fi
 
-    if  [[ "${PULL_MISSING:-none}" == "yes" ]] || [[ "${QCOW_MISSING:-none}" == "yes" ]]
+    # Ensure Qcow is present when not deploying OCP4"
+    if [[ "${product_opt:-none}" != "ocp4" ]] || [[ "${product_opt:-none}" != "okd4" ]]
     then
-        if [ -f "${project_dir}/rhsm-offline-token.txt" ]
+        if [[ "${QCOW_MISSING:-none}" == "yes" ]] && [[ ! -f "${RHSM_OFFLINE_TOKEN}" ]]
         then
-           printf "%s\n" "    Required files will be downloaded as needed" >/dev/null
-        else
             installer_artifacts_msg
             exit 1
-        fi
+	fi
+    elif  [[ "${PULL_MISSING:-none}" == "yes" ]] || [[ "${QCOW_MISSING:-none}" == "yes" ]] && [[ ! -f "${RHSM_OFFLINE_TOKEN}" ]]
+    then
+        installer_artifacts_msg
+        exit 1
     fi
 
     # Ensure qcow image is copied to the libvirt directory
@@ -288,10 +298,9 @@ setup_download_options () {
 
 download_required_redhat_files () {
     cd "${project_dir}"
+    setup_download_options
     if [ -f "${project_dir}/rhsm-offline-token.txt" ]
     then
         ansible-playbook playbooks/download-redhat-files.yml
-    else
-        installer_artifacts_msg
     fi
 }

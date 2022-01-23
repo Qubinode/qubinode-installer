@@ -1,0 +1,209 @@
+---
+######################################
+#         USER VARIABLES             #
+# The are automatically updated or   #
+# you can update them manually       #
+######################################
+inventory_dir: ""
+project_dir: ""
+admin_user: ""
+domain: ""
+
+# RHEL Version
+rhel_version: ""
+
+# PTR - The PTR record that should be use
+qubinode_ptr: changeme.in-addr.arpa
+
+# Public DNS server
+dns_forwarder: ""
+
+# ROLE: swygue-redhat-subscription
+# whether to use username/pass or RHSM
+rhsm_reg_method: ""
+
+######################################
+#         SYSTEM VARIABLES           #
+# You shouldn't need to change these #
+######################################
+
+# Ansible 2.6 is rhel-7-server-ansible-2.6-rpms
+# Ansible 2.9 on rhel 7  rhel-7-server-ansible-2.9-rpms
+rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
+rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
+ansible_version: 2.9.10
+ansible_release: 2.9
+rhel8_version: 8.4
+rhel7_version: 7.8
+
+# All VMs created name will begin with this prefix.
+instance_prefix: qbn
+preappend_host_name: "{{ instance_prefix }}-{{ product }}-"
+
+# Cluster name
+# This should be moved since this is now defined in the ocp* vars file
+#cluster_name: qbn
+
+vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
+update_inventory: true
+vm_data_dir: "/var/lib/vmdata"
+inventory_file: "{{ inventory_dir }}/hosts"
+admin_user_password: "{{ admin_user_password }}"
+kvm_vm_root_pwd: "{{ admin_user_password }}"
+vm_domain: "{{ domain }}"
+search_domains:
+  - "{{ vm_domain }}"
+# This is for /etc/resolv.conf
+dns_servers:
+  - "{{ idm_server_ip | default('1.1.1.1') }}"
+  - 8.8.8.8
+
+public_domain: "{{ domain }}"
+
+## When this var is set to true and the host gets it's ip address from
+## dhcp. It was take that IP address and configure the host to use static
+## ip address assignment. It's recommended that you create a DHCP reservation
+## for this host to ensure the DHCP lease does not expire and get consume by
+## another host on the network.
+convert_dhcp_to_static: true
+
+qubinode_installer_setup_completed: no
+qubinode_installer_rhsm_completed: no
+user_input_complete: no
+qubinode_installer_ansible_completed: no
+qubinode_base_reqs_completed: no
+
+# ROLE: swygue-redhat-subscription
+rhsm_org: "{{ rhsm_org }}"
+rhsm_activationkey: "{{ rhsm_activationkey }}"
+rhsm_org_id: "{{ rhsm_org }}"
+rhsm_setup_insights_client: false
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
+org_id: "{{ rhsm_org }}"
+
+# ROLE: swygue.edge_host_setup role
+# the user that will admin the system
+ssh_username: "{{ admin_user }}" # this var has been deprecated and should be removed
+
+# ROLE: deploy-kvm-vm
+#--------------------
+# Use to create VM
+# Red Hat Enterprise Linux 7.8 KVM Guest Image
+qcow_rhel7_name: rhel-server-7.8-x86_64-kvm.qcow2
+qcow_rhel8_name: rhel-8.4-x86_64-kvm.qcow2
+os_qcow_image_name: "{{ qcow_rhel8_name }}"
+qcow_rhel8_checksum: df9660e770711f797b311a04946ce45db19843ddb1c60ccadca8b77fa0444e4f
+
+cloud_init_vm_image: "{{ os_qcow_image_name }}"
+
+# setting this to true will result is no VMs being created and any existing vms to be deleted
+vm_teardown: False
+
+ipa_client_principal: "{{ idm_admin_user }}"
+ipa_client_pass: "{{ idm_dm_pwd }}"
+ipa_host: "{{ idm_hostname }}.{{ domain }}"
+ipa_client_install_flags: "--server='{{ ipa_host }}' --realm='{{ idm_realm }}' --mkhomedir --enable-dns-updates -N --domain='{{ domain }}'"
+
+ # LVM
+logical_volumes:
+  - name: qubi_images
+    size: "+100%FREE"
+    mount_dir: "{{ kvm_host_libvirt_dir | default('/var/lib/libvirt/images') }}"
+    fstype: xfs
+
+
+#################################
+#   Virtual Machines Variables  #
+#################################
+
+# Hardware profiles
+qubinode_minimal_memory: 30
+qubinode_standard_memory: 80
+qubinode_performance_memory: 88
+
+# We are not enforcing acutal sizes at this time
+qubinode_minimal_storage: 370      # actual is 640
+qubinode_standard_storage: 900     # actual is 1160
+qubinode_performance_storage: 1340 # actual is 1340
+
+# Suffix based on the last 4 of the primary interface mac adddress
+# This is appended to all VMs hostname
+vm_suffix: 0000
+
+# your system profile
+storage_profile: ""
+memory_profile: ""
+ocp_cluster_size: ""
+warn_storage_profile: yes
+
+# swygue.coreos-virt-install-iso
+nat_network_name: "{{ cluster_name }}"
+
+###########################################
+# variables for swygue.edge_host_setup role
+
+
+#This is for KVM host initial setup of /etc/resolv.conf
+libvirt_pkgs:
+   - virt-install
+   - libvirt-daemon-config-network
+   - libvirt-daemon-kvm
+   - libguestfs-tools
+   - libvirt-client
+   - qemu-kvm
+   - nfs-utils
+   - libvirt-daemon
+   - libvirt-client
+   - virt-top
+   - tuned
+   - openssh-server
+   - wget
+   - git
+   - net-tools
+   - bind-utils
+   - yum-utils
+   - iptables-services
+   - bash-completion
+   - kexec-tools
+   - sos
+   - psacct
+   - vim
+   - device-mapper-event-libs
+   - device-mapper-libs
+   - httpd-tools
+   - java-1.8.0-openjdk-devel.x86_64
+   - tmux
+   - python3-dns
+   - python3-lxml
+   - cockpit-machines
+
+###########################
+# General Networking Info #
+###########################
+
+####################
+## VM Network Info
+##-------------------
+## Currently we assume the VMs will use the name network as the host
+## This is why a bridge network is created by default. These values
+## can be changed to reflect a different network.
+vm_net_gateway: "{{ kvm_host_gw }}"
+vm_net_netmask: "{{ kvm_host_netmask }}"
+vm_gateway: "{{ vm_net_gateway }}"
+
+
+###########################
+# these should be deleted #
+# #########################
+
+# KVM host packages
+qubi_required_pkgs: |
+   "virt-install, libvirt-daemon-config-network, libvirt-daemon-kvm,
+   libguestfs-tools, libvirt-client, qemu-kvm, nfs-utils, libvirt-daemon,
+   libvirt-client, virt-top, cockpit, cockpit-networkmanager, cockpit-dashboard,
+   cockpit-storaged, cockpit-packagekit, cockpit-machines, cockpit-sosreport,
+   cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
+   wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
+   bash-completion, kexec-tools, sos, psacct, vim, ansible, lm_sensors, cargo,
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch, python-netaddr"

@@ -223,6 +223,42 @@ listen_address: "{{ kvm_host_ip }}"
 lb_name: "{{ ocp4_lb_container }}"
 dns_domain: "{{ domain }}"
 dns_server_ip: "{{ idm_server_ip }}"
+<<<<<<< HEAD
+=======
+bootstrap_webserver_ip: "{{ kvm_host_ip }}"
+
+# Bootstrap Webserver
+rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
+rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
+rhcos_metal_bios: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_metal_bios }}"
+rhcos_webserver_img_name: rhcos-webserver
+coreos_tmp_dir: /tmp/build_coreos_container
+webserver_directory: /opt/qubinode_webserver
+ocp4_release_dir: "{{ ocp4_release }}"
+
+# Containers info
+ocp4_lb_container: qbn-lb
+podman_webserver: qbn-httpd
+
+## Directory to store k8s object config files
+openshift_object_configs_files: "{{ openshift_install_dir }}/object-configs"
+
+# Your openshift cluster url
+openshift_url: "https://ctrlplane-0.{{ cluster_name }}.{{ ocp4_cluster_domain }}:6443"
+
+openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
+ignition_files_dir: "{{ openshift_install_dir }}"
+dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
+webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
+webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
+virtinstall_dir: "{{ installation_working_dir }}/rhcos-install"
+ocp4_subdomain: cloud
+ocp4_cluster_domain: "{{ ocp4_subdomain }}.{{ domain }}"
+dns_teardown: false
+idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
+idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
+dns_wildcard: "*.apps.{{ cluster_name }}"
+>>>>>>> local-merge
 nat_gateway: "192.168.50.1"
 ocp4_subnet: "192.168.50.0"
 ocp4_lb_container: qbn-lb
