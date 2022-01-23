@@ -1,6 +1,6 @@
-##################################################
-# Qubinode VM for Testing the qubinode-installer #
-##################################################
+#####################################################
+# Qubinode size for deploying a Satellite server VM #
+#####################################################
 qbn_rhel_vcpu: 4
 qbn_rhel_memory: 32768
 qbn_rhel_root_disk_size: 60G

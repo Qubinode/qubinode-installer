@@ -3,9 +3,6 @@
 # #############################################
 
 qbn_rhel_name: ""
-qbn_rhel_vcpu: 1
-qbn_rhel_memory: 800
-qbn_rhel_root_disk_size: 20G
 qbn_rhel_release: "8.4"
 qbn_rhel_major: "8"
 
