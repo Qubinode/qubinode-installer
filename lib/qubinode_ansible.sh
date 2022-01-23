@@ -39,6 +39,9 @@ function ensure_supported_ansible_version () {
 }
 
 function qubinode_ansible_requirements_file_check () {
+    
+    # this should be defined ina vars file and not here	
+    ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
     if $(which git >/dev/null 2>&1 && git symbolic-ref HEAD >/dev/null 2>&1)
     then
         local branch
@@ -54,24 +57,51 @@ function qubinode_ansible_requirements_file_check () {
                 confirm "     Do you want to use the ${blu}requirements-dev.yml${end} with your ${blu}$branch${end}? yes/no"
                 if [ "${response:-none}" == "yes" ]
                 then
-	                  ANSIBLE_DEV_REQ_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
+	            ANSIBLE_DEV_REQ_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
                     printf "%s\n" "     Copying ${blu}requirements-dev.yml${end} to ${blu}requirements-${branch}.yml${end}"
                     printf "%s\n\n" "     Don't forget to merge ${blu}requirements-${branch}.yml${end} with ${blu}requirements-dev.yml${end}"
                     cp "${project_dir}/playbooks/requirements-dev.yml" "${ANSIBLE_DEV_REQ_FILE}"
-
-                    #printf "%s\n" "     Reverting changes that may have been made to requirements.yml or requirements-dev.yml"
-                    #git reset HEAD $DEFAULT_ANSIBLE_REQUIREMENTS_FILE >/dev/null 2>&1
                 fi
             fi
 
 	    fi
     fi    
+        if [ "${ANSIBLE_DEV_REQ_FILE:-none}" != "none" ]
+        then
+            ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_DEV_REQ_FILE}"
+        fi
+
+        # Ensure roles are downloaded
+        #if [ "${qubinode_maintenance_opt}" == "ansible" ]
+        #then
+        printf "%s\n" "   ${mag}Downloading the latest ansible roles and collections required by qubinode${end}"
+        ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+	if grep -q galaxy_server.automation_hub "${project_dir}/.ansible.cfg"
+	then
+	    # Perhaps setup a separate collections file
+	    # for collections that require login to AAP HUB
+            ansible-galaxy collection install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+	fi
+
+        #else
+        #    printf "%s\n" " ${mag}Downloading required roles${end}"
+        #    ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+        #fi
+
+        # Ensure required modules are downloaded
+        if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
+        then
+            test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
+            CURRENT_DIR=$(pwd)
+            cd "${project_dir}/playbooks/modules/"
+            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
+            cd "${CURRENT_DIR}"
+        fi
 }
 function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
     RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
-    ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
     
     if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
     then
@@ -144,32 +174,6 @@ function qubinode_setup_ansible () {
             ansible-vault encrypt "${vaultfile}" > /dev/null 2>&1
         fi
 
-	    # Check if development and which requirements file to use
-        qubinode_ansible_requirements_file_check
-        if [ "${ANSIBLE_DEV_REQ_FILE:-none}" != "none" ]
-        then
-            ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_DEV_REQ_FILE}"
-        fi
-
-        # Ensure roles are downloaded
-        if [ "${qubinode_maintenance_opt}" == "ansible" ]
-        then
-	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
-            ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
-        else
-            printf "%s\n" " ${mag}Downloading required roles${end}"
-            ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
-        fi
-
-        # Ensure required modules are downloaded
-        if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
-        then
-            test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
-            CURRENT_DIR=$(pwd)
-            cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
-            cd "${CURRENT_DIR}"
-        fi
     else
         printf "%s\n" " Ansible not found, please install and retry."
         exit 1

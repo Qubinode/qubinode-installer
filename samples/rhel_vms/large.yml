@@ -1,0 +1,10 @@
+##################################################
+# Qubinode VM for Testing the qubinode-installer #
+##################################################
+qbn_rhel_vcpu: 4
+qbn_rhel_memory: 8192
+qbn_rhel_root_disk_size: 120G
+
+qbn_rhel_extra_storage:
+  - size: ""
+    enable: "no"
