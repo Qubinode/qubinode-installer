@@ -40,3 +40,5 @@ playbooks/files
 acme/
 openshift-pull-secret.txt
 rhsm-offline-token.txt
+!playbooks/requirements-dev.yml
+playbooks/requirements-*
