@@ -153,8 +153,6 @@ function qubinode_rhel () {
 
     ## Ensure RHEL qcow image is available
     setup_download_options
-    install_rhsm_cli
-    download_files
 }
 
 function qubinode_generate_instance_id () {
