@@ -1,34 +1,24 @@
-################
-# RHEL Server  #
-################
+---
+# RHEL VM server attributes
 
-# Dns server VM attributes
 rhel_server_vm:
-    rhel_name: ""
-    rhel_vcpu: 1
-    rhel_memory: 800
-    rhel_root_disk_size: 20G
-    rhel_teardown: false
-    rhel_recreate: false
+    rhel_name: "{{ qbn_rhel_name }}"
+    rhel_vcpu: "{{ qbn_rhel_vcpu }}"
+    rhel_memory: "{{ qbn_rhel_memory }}"
+    rhel_root_disk_size: "{{ qbn_rhel_root_disk_size }}"
     rhel_group: rhel
-    rhel_extra_storage:
-      - size: ""
-        enable: false
-    rhel_enable: true
+    rhel_extra_storage: "{{ qbn_rhel_extra_storage }}"
 
-cloud_init_vm_image: "rhel-server-7.8-x86_64-kvm.qcow2"
+vm_gateway: "{{ qbn_vm_gateway }}"
+vm_ipaddress: "{{ qbn_vm_ipaddress }}"
+vm_mask_prefix: "{{ qbn_vm_mask_prefix }}"
+vm_mac: "{{ qbn_vm_mac }}"
+os_release: "rhel{{ qbn_rhel_release }}"
+qcow_rhel_release: "{{ qbn_rhel_major | default(qbn_rhel_major) }}"
+expand_os_disk: "yes"
+
+# Not changeable by end user
+cloud_init_vm_image: "{{ qcow_rhel8_name }}"
 vm_qcow_image: "{{ cloud_init_vm_image }}"
-qcow_rhel_release: 7
-rhel_release: 7
-os_release: ""
-rhel_8_hash:
-rhel_7_hash:
-update_etc_resolv: no
-expand_os_disk: no
 vm_root_disk_size: "{{ rhel_server_vm.rhel_root_disk_size }}"
 
-## Static network configuration
-vm_gateway: ""
-vm_ipaddress: ""
-vm_mask_prefix: ""
-vm_mac: ""

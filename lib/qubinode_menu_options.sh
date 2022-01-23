@@ -86,8 +86,8 @@ function qubinode_product_deployment () {
                       qubinode_rhel_maintenance
                   else
                       CHECK_PULL_SECRET=no
-                      #setup_download_options
-                      download_required_redhat_files
+                      setup_download_options
+                      #download_required_redhat_files
                       qubinode_deploy_rhel
                   fi
               fi
