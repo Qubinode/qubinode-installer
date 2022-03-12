@@ -33,7 +33,7 @@ run_qubinode_setup: yes
 run_storage_check: ""
 
 # Enable cockpit service
-enable_cockpit: no
+enable_cockpit: yes
 
 # # Set to yes to add the admin_user to the libvirt group
 # # and change libvirt to be accessible user 
@@ -41,7 +41,7 @@ enable_libvirt_admin_user: yes
 
 # Configure the user bash shell login prompt
 # # This will overwrite your existing .bashrc, .vimrc and other terminal configuration files
-configure_shell: no
+configure_shell: yes
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images
