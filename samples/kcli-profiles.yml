@@ -1,6 +1,6 @@
 # /usr/lib/python3.6/site-packages/kvirt/defaults.py
 rhel8:
- image: rhel-8.4-x86_64-kvm.qcow2
+ image: rhel-8.5-update-2-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -18,7 +18,7 @@ rhel8:
 
 
 rhel8_static:
- image: rhel-8.4-x86_64-kvm.qcow2
+ image: rhel-8.5-update-2-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
