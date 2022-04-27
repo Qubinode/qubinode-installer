@@ -129,3 +129,23 @@ centos8jumpbox:
   - systemctl enable xrdp --now
   - firewall-cmd --permanent --add-port=3389/tcp 
   - firewall-cmd --reload
+
+ztpfwjumpbox:
+ image: 'CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2'
+ numcpus: 4
+ memory: 4096
+ disks:
+  - size: 49
+ reservedns: true
+ nets:
+  - name: qubinet
+  - name: bare-net
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
