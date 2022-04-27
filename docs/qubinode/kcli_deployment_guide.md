@@ -87,7 +87,7 @@ sudo kcli  delete vm testvm
 * Clone vm1 to new vm2
   * `kcli clone vm -b vm1 vm2`
 * Connect with ssh to vm vm1
-  * `kcli ssh vm vm1`
+  * `kcli ssh vm1`
 * Create a new network
   * `kcli create network -c 192.168.7.0/24 mynet`
 * Create new pool
