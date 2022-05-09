@@ -468,7 +468,8 @@ function qubinode_setup () {
     kvm_host_variables
 
     # Start user input session
-    ask_user_input
+    ask_user_input 
+    
     setup_variables
     setup_user_ssh_key
     if [ $ENABLE_IDM == "true" ];

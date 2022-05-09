@@ -7,7 +7,7 @@ function qubinode_required_prereqs () {
 
     # setup required paths
     setup_required_paths
-    vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
     idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
@@ -18,6 +18,12 @@ function qubinode_required_prereqs () {
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
+
+    if is_root; then
+        vault_key_file="/root/.vaultkey"
+    else 
+        vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+    fi
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -47,23 +53,6 @@ function qubinode_required_prereqs () {
         cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
     fi
 
-    # copy sample ocp3 file to playbook/vars directory
-    if [ "A${qubinode_product_opt}" == "Aocp3" ]
-    then
-        if [ ! -f "${ocp3_vars_file}" ]
-        then
-            cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
-        fi
-    fi
-
-    # copy sample okd3 file to playbook/vars directory
-    if [ "A${qubinode_product_opt}" == "Aokd3" ]
-    then
-        if [ ! -f "${okd3_vars_file}" ]
-        then
-            cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
-        fi
-    fi
 
     # create ansible inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
@@ -139,9 +128,12 @@ function get_rhel_version() {
     export BASE_OS="RHEL7"
   elif cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
     export BASE_OS="CENTOS8"
+  elif cat /etc/redhat-release  | grep "Fedora" > /dev/null 2>&1; then
+    export BASE_OS="FEDORA"
   else
     echo "Operating System not supported"
   fi
+  echo ${BASE_OS}
 
 }
 
@@ -178,6 +170,16 @@ function qcow_check () {
         else
             echo "  Did not find ${artifact_centos_qcow_image} in path ${project_dir}."
             echo "  Download and copy ${artifact_centos_qcow_image} to ${project_dir}."
+            exit 1
+        fi
+    elif sudo test ! -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
+    then 
+        if [ -f "${project_dir}/${artifact_fedora_qcow_image}" ]
+        then
+            sudo cp "${project_dir}/${artifact_fedora_qcow_image}"  "${libvirt_dir}/${artifact_fedora_qcow_image}"
+        else
+            echo "  Did not find ${artifact_fedora_qcow_image} in path ${project_dir}."
+            echo "  Download and copy ${artifact_fedora_qcow_image} to ${project_dir}."
             exit 1
         fi
     fi
@@ -241,6 +243,7 @@ setup_download_options () {
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     artifact_qcow_image=$(grep "^qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     artifact_centos_qcow_image=$(grep "^qcow_centos_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    artifact_fedora_qcow_image=$(grep "^qcow_fedora_image:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
     get_rhel_version
     echo  "Base Operating System ${BASE_OS}"
 
@@ -250,11 +253,14 @@ setup_download_options () {
     elif  sudo test -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS8" ]
     then 
         QCOW_STATUS=exist
+    elif  sudo test -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
+    then 
+        QCOW_STATUS=exist
     elif  sudo test ! -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS8" ]
     then
         if cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
             cd ${project_dir}
-            curl -OL https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
+            curl -OL https://cloud.centos.org/centos/8-stream/x86_64/images/${artifact_centos_qcow_image}
             qcow_image_checksum=$(grep "qcow_centos_checksum" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
             DWLD_CHECKSUM=$(sha256sum ${project_dir}/${artifact_centos_qcow_image}|awk '{print $1}')
             if [ $DWLD_CHECKSUM != $qcow_image_checksum ];
@@ -266,6 +272,24 @@ setup_download_options () {
             QCOW_STATUS=exists
         else
           echo "Release is not CentOS Stream release 8"
+          exit 1
+        fi 
+    elif  sudo test ! -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
+    then
+        if cat /etc/redhat-release  | grep "Fedora release" > /dev/null 2>&1; then
+            cd ${project_dir}
+            curl -OL https://download.fedoraproject.org/pub/fedora/linux/releases/35/Cloud/x86_64/images/${artifact_fedora_qcow_image}
+            qcow_image_checksum=$(grep "qcow_fedora_checksum" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            DWLD_CHECKSUM=$(sha256sum ${project_dir}/${artifact_fedora_qcow_image}|awk '{print $1}')
+            if [ $DWLD_CHECKSUM != $qcow_image_checksum ];
+            then
+                echo "The downloaded $qcow_image_name validation fail"
+                exit 1
+            fi
+            sudo cp "${project_dir}/${artifact_fedora_qcow_image}"  "${libvirt_dir}/${artifact_fedora_qcow_image}"
+            QCOW_STATUS=exists
+        else
+          echo "Release is not a Fedora release"
           exit 1
         fi 
     else

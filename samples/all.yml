@@ -93,10 +93,12 @@ ssh_username: "{{ admin_user }}" # this var has been deprecated and should be re
 qcow_rhel7_name: rhel-server-7.9-x86_64-kvm.qcow2
 qcow_rhel8_name: rhel-8.5-update-2-x86_64-kvm.qcow2
 qcow_centos_name: CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
+qcow_fedora_image: Fedora-Cloud-Base-35-1.2.x86_64.qcow2
 os_qcow_image_name: "{{ qcow_rhel8_name }}"
 qcow_rhel7u8_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
 qcow_rhel8u2_checksum: b2bfd0abc871143b97e6648183e69987b6bc2aded58972a866f967fd355d0e9a
 qcow_centos_checksum: a25560ab39e10594ee7a4a1dadcba7bf303b7c3c41559b4a7fc3c522540a6672
+qcow_fedora_checksum: fe84502779b3477284a8d4c86731f642ca10dd3984d2b5eccdf82630a9ca2de6
 
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 

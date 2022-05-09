@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+#set -xe
 function gozones_variables () {
     setup_variables
     gozones_vars_file="${project_dir}/playbooks/vars/gozones-dns.yml"
@@ -17,6 +17,34 @@ function gozones_variables () {
     ZTPFW_NETWORK_CIDR=$(cat "${gozones_vars_file}" | grep ztpfw_network_cidr: | awk '{print $2}' | sed -e 's/^"//' -e 's/"$//')
 }
 
+function ask_user_for_gozones_domain () {
+
+    # ask user for DNS domain or use default
+    if grep '""' "${varsfile}"|grep -q domain
+    then
+        printf "%s\n\n" ""
+        printf "%s\n" "  ${yel}****************************************************************************${end}"
+        printf "%s\n\n" "    ${cyn}        GoZone DNS${end}"
+        printf "%s\n" "   The installer deploys GoZones as a DNS server."
+        printf "%s\n\n" "   This requires a DNS domain, accept the default below or enter your own."
+
+        read -p "   Enter your dns domain or press ${mag}[ENTER]${end} for the default domain ${blu}[lab.qubinode.io]: ${end}" domain
+        domain=${domain:-lab.qubinode.io}
+        sed -i "s/domain: \"\"/domain: "$domain"/g" "${varsfile}"
+        printf "%s\n" ""
+    fi
+
+    # ask user to enter a upstream dns server or default to 1.1.1.1
+    if grep '""' "${varsfile}"|grep -q dns_forwarder
+    then
+        printf "%s\n\n" ""
+        printf "%s\n" "   By default the forwarder for external DNS queries are sent to 1.1.1.1."
+        printf "%s\n\n" "   You can change this to any dns server reachable via your network."
+        read -p "   Enter an upstream DNS server or press ${mag}[ENTER]${end} for the default ${blue}[1.1.1.1]:${end}" dns_forwarder
+        dns_forwarder=${dns_forwarder:-1.1.1.1}
+        sed -i "s/dns_forwarder: \"\"/dns_forwarder: "$dns_forwarder"/g" "${varsfile}"
+    fi
+}
 
 function restartcontianer(){
     sudo systemctl stop dns-go-zones

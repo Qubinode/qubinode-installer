@@ -5,23 +5,35 @@ function kvm_host_variables () {
     vars_file="${project_dir}/playbooks/vars/all.yml"
     libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep libvirt_pool_name: | awk '{print $2}')
     host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
-    RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
-    RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
+    RHEL_VERSION=$(get_rhel_version)
 
     echo  "Base Operating System ${RHEL_VERSION}"
+    if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
+    then 
+        RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
+        # Set the RHEL version
+        if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
+        then
+            rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+            sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
+        fi
+    fi 
 
-    # Set the RHEL version
-    if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release && [ $RHEL_VERSION != "CENTOS8" ]
-    then
-        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
-        sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
-    fi
 
-    local host_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
-    centos_check=$(cat /etc/redhat-release  | grep "CentOS Stream release 8")
+    if  [ $RHEL_VERSION == "CENTOS8" ] ;
+    then 
+        centos_check=$(cat /etc/redhat-release  | grep "CentOS Stream release 8")
+    elif [ $RHEL_VERSION == "FEDORA" ];
+    then 
+        fedora_check=$(cat /etc/redhat-release  | grep "Fedora release")
+    else
+        local host_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    fi 
+    
+    
     if [ "A${host_rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
@@ -31,12 +43,15 @@ function kvm_host_variables () {
     elif [ "A${centos_check}" == "ACentOS Stream release 8" ]
     then
        rhel_release=${centos_check}
+    elif [[ "A${fedora_check}" == *"AFedora release"* ]]
+    then
+       rhel_release=${fedora_check}
     else
         rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
     fi
 
 
-    if [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "CENTOS8" ]]; then
+    if [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "CENTOS8" ]] || [[ $RHEL_VERSION == "FEDORA" ]]; then
       sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
       sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"
@@ -317,7 +332,10 @@ function qubinode_networking () {
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
         test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
         test -f "${project_dir}/playbooks/vars/all.yml" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${project_dir}/playbooks/vars/all.yml"
-        test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
+        if [ $ENABLE_IDM] == true ];
+        then 
+            test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
+        fi 
     fi
 
     DEFINED_BRIDGE=""

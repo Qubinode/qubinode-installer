@@ -11,7 +11,7 @@ function ensure_supported_ansible_version () {
     CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
-    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+    RHEL_VERSION=$(get_rhel_version)
 
     if [[ $RHEL_VERSION == "RHEL8" ]]; then
         AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
@@ -47,7 +47,7 @@ function qubinode_setup_ansible () {
     qubinode_required_prereqs
     vaultfile="${vault_vars_file}"
     HAS_SUDO=$(has_sudo)
-    RHEL_VERSION=$(awk '/rhel_version/ {print $2}' "${vars_file}")
+    RHEL_VERSION=$(get_rhel_version)
 
     if [ "A${HAS_SUDO}" == "Ano_sudo" ]
     then
@@ -108,16 +108,19 @@ function qubinode_setup_ansible () {
         fi 
        if [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python-argcomplete
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "CENTOS8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+        elif [[ $RHEL_VERSION == "FEDORA" ]]; then
+            sudo dnf clean all > /dev/null 2>&1
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
