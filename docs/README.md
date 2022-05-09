@@ -105,13 +105,15 @@ If you downloaded the files instead, confirm that the project directory list the
 ```
 
 ## Install DNS server 
+* [GoZones DNS](qubinode/gozones_dns.md)
 * [Red Hat Identity Managment](qubinode/idm.md)
-
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
 
+
+## Setup RDP Enabled jumpbox
+*[Centos 8 Streams Jumpbox]()
+
 ## Currently Supported Products
-* [Red Hat OpenShift Platform](qubinode/openshift4_installation_steps.md)
-* [OKD - The Community Distribution of Kubernetes](qubinode/okd4_installation_steps.md)
 * [Red Hat Identity Managment](qubinode/idm.md)
 * [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
 

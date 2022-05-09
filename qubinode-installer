@@ -32,6 +32,10 @@ width=50
 
 export ENABLE_SATELLITE=false
 export ENABLE_IDM=false
+if [ -z $QUBINODE_BIN ];
+then 
+  export QUBINODE_BIN="false"
+fi 
 
 # Turn verbose off
 _V=1
