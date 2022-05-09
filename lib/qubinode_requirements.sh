@@ -6,7 +6,12 @@ function qubinode_required_prereqs () {
     # Sets up the inventory file
 
     # setup required paths
-    setup_required_paths
+    if [ $QUBINODE_BIN == "true" ];
+    then 
+        setup_required_bin_paths
+    else
+        setup_required_paths
+    fi 
 
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
