@@ -10,26 +10,33 @@ function kvm_host_variables () {
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
     RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
+
+    echo  "Base Operating System ${RHEL_VERSION}"
+
     # Set the RHEL version
-    if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
+    if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release && [ $RHEL_VERSION != "CENTOS8" ]
     then
         rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
         sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
     fi
 
     local host_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    centos_check=$(cat /etc/redhat-release  | grep "CentOS Stream release 8")
     if [ "A${host_rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
     elif [ "A${host_rhel_major}" == "A7" ]
     then
        rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
+    elif [ "A${centos_check}" == "ACentOS Stream release 8" ]
+    then
+       rhel_release=${centos_check}
     else
         rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
     fi
 
 
-    if [[ $RHEL_VERSION == "RHEL8" ]]; then
+    if [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "CENTOS8" ]]; then
       sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
       sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"
@@ -530,7 +537,7 @@ function qubinode_setup_kvm_host () {
     # Check if we should setup qubinode
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
 
-    if [ "A${OS}" != "AFedora" ]
+    if [ "A${OS}" != "AFedora" ] && [ $RHEL_VERSION != "CENTOS8" ]
     then
         set_rhel_release
     fi

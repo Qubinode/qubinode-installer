@@ -86,25 +86,26 @@ function qubinode_setup_ansible () {
        PYTHON=yes
     fi
 
-    # Update ansible
-    printf "%s\n" "   ${mag}Updating ansible ${end}"
-    sudo yum update -y --allowerasing ansible > /dev/null 2>&1
+
 
     # install ansible
     if [ ! -f /usr/bin/ansible ];
     then
-      if [[ $RHEL_VERSION == "RHEL8" ]]; then
+        if [[ $RHEL_VERSION == "RHEL8" ]]; then
         ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
-      elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+        elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         ANSIBLE_REPO=$(awk '/rhel7_ansible_repo:/ {print $2}' "${vars_file}")
-      fi
-       CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
-       # check to make sure the support ansible repo is enabled
-       if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
-       then
-           sudo subscription-manager repos --disable="${CURRENT_REPO}"
-           sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
-       fi
+        fi
+       
+        if [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "RHEL7" ]]; then
+            CURRENT_REPO=$(sudo subscription-manager repos --list-enabled| awk '/ID:/ {print $3}'|grep ansible)
+            # check to make sure the support ansible repo is enabled
+            if [ "A${CURRENT_REPO}" != "A${ANSIBLE_REPO}" ]
+            then
+                sudo subscription-manager repos --disable="${CURRENT_REPO}"
+                sudo subscription-manager repos --enable="${ANSIBLE_REPO}"
+            fi
+        fi 
        if [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 ansible git bc bind-utils
@@ -113,11 +114,19 @@ function qubinode_setup_ansible () {
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 ansible git  bc bind-utils
             install_podman_dependainces
+        elif [[ $RHEL_VERSION == "CENTOS8" ]]; then
+            sudo dnf clean all > /dev/null 2>&1
+            sudo dnf install -y -q -e 0 epel-release
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils
+            install_podman_dependainces
         fi
        ensure_supported_ansible_version
     else
-       ensure_supported_ansible_version
-       #printf "%s\n" " ${cyn}Ansible is installed${end}"
+        # Update ansible
+        printf "%s\n" "   ${mag}Updating ansible ${end}"
+        sudo dnf update -y --allowerasing ansible > /dev/null 2>&1
+        ensure_supported_ansible_version
+        #printf "%s\n" " ${cyn}Ansible is installed${end}"
     fi
 
     # setup vault

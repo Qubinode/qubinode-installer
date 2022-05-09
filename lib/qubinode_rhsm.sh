@@ -1,8 +1,11 @@
 #!/bin/bash
+kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+vars_file="${project_dir}/playbooks/vars/all.yml"
+RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-    if grep Fedora /etc/redhat-release
+    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
     then
         echo "Skipping checking RHSM status"
     else 
@@ -41,7 +44,10 @@ function check_rhsm_status () {
 function ask_user_for_rhsm_credentials () {
     # decrypt ansible vault file
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
-    if grep '""' "${vars_file}"|grep -q rhsm_reg_method
+    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
+    then
+        echo "Skipping checking RHSM status"
+    elif grep '""' "${vars_file}"|grep -q rhsm_reg_method
     then
         printf "%s\n" "  ${yel}****************************************************************************${end}"
         printf "%s\n\n" "    ${cyn}        Red Hat Subscription Registration${end}"
@@ -105,7 +111,7 @@ function ask_user_for_rhsm_credentials () {
 # validate the registration or register the system
 # if it's not registered
 function qubinode_rhsm_register () {
-    if grep Fedora /etc/redhat-release
+    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
     then
         printf "%s\n" " Skipping registering to RHSM"
     else
