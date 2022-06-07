@@ -16,11 +16,10 @@ rhel8:
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
-
 rhel8_mirror_vm:
  image: rhel-8.5-update-2-x86_64-kvm.qcow2
  rhnregister: true
- numcpus: 2
+ numcpus: 4
  memory: 8192
  disks:
   - size: 500
@@ -133,9 +132,9 @@ centos8jumpbox:
 ztpfwjumpbox:
  image: 'CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2'
  numcpus: 4
- memory: 4096
+ memory: 8192
  disks:
-  - size: 49
+  - size: 50
  reservedns: true
  nets:
   - name: qubinet
