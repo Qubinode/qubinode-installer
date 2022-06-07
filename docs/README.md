@@ -120,3 +120,4 @@ At this point you refer to the [documentation](#Currently-Supported-Products) fo
 ## Products in Development
 * [Ansible Automation Platform](qubinode/ansible_platform.md)
 * [Red Hat Satellite](qubinode/qubinode_satellite_install.md)
+* [Quay Mirror Registry](qubinode/quay_mirror_registry.md)
