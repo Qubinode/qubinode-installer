@@ -111,7 +111,7 @@ At this point you refer to the [documentation](#Currently-Supported-Products) fo
 
 
 ## Setup RDP Enabled jumpbox
-*[Centos 8 Streams Jumpbox]()
+* [Centos 8 Streams Jumpbox](qubinode/rdpjumpbox.md)
 
 ## Currently Supported Products
 * [Red Hat Identity Managment](qubinode/idm.md)
@@ -121,3 +121,10 @@ At this point you refer to the [documentation](#Currently-Supported-Products) fo
 * [Ansible Automation Platform](qubinode/ansible_platform.md)
 * [Red Hat Satellite](qubinode/qubinode_satellite_install.md)
 * [Quay Mirror Registry](qubinode/quay_mirror_registry.md)
+
+## Workflows
+* [ZTP for Factory Workflow qubinode dev box](https://gist.github.com/tosin2013/3b99a883078025de1a5327d532bf2cae)
+* [RHEL for Edge Automation Architecture Qubinode dev box](https://gist.github.com/tosin2013/72eb9a095d0f5ca5082c3a9597d2ae4f)
+* [Assisted Installer Hack-y scripts](https://github.com/tosin2013/openshift-4-deployment-notes/blob/master/assisted-installer/hack/README.md)
+* [Assisted Installer Qubinode Deployments Ansible](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
+* [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/tosin2013/ocp4-ai-svc-universal/tree/main)
