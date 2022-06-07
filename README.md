@@ -21,11 +21,11 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.5
+* Red Hat Enteprise Linux 9.0
 Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md)_.
-On of the  required base OS is Red Hat Enterprise Linux 8.5 refer to the [Getting Started Guide](docs/README.md)
-* Or Centos 8 Streams 
-* Or Fedora 35 (Testing)
+One of the  supported base OS is Red Hat Enterprise Linux 8.5 refer to the [Getting Started Guide](docs/README.md)
+* Centos 8 Streams is supported base OS.
+* Or Fedora 36 (Testing) is a supported base OS.
 
 ## Qubinode Release Information
 
