@@ -146,7 +146,8 @@ function qubinode_maintenance_options () {
     then
 	## this should be replace as qubinode_setup does everthing that's required
         #qubinode_setup_kvm_host
-	qubinode_setup
+        qubinode_networking
+	    qubinode_setup
     elif [ "${qubinode_maintenance_opt}" == "rebuild_qubinode" ]
     then
         rebuild_qubinode

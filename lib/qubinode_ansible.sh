@@ -89,7 +89,7 @@ function qubinode_setup_ansible () {
             sudo rm -r /var/cache/dnf
             sudo yum install -y -q -e 0 python3 python3-pip python3-dns bc bind-utils> /dev/null 2>&1
 	    sed -i "s/ansible_python_interpreter:.*/ansible_python_interpreter: /usr/bin/python3/g" "${vars_file}"
-	fi
+	    fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         if [ ! -f /usr/bin/python ]
         then
@@ -109,7 +109,7 @@ function qubinode_setup_ansible () {
     then
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             echo "Installing ansible.."
-        if [[ $RHEL_VERSION == "RHEL8" ]]; then
+        elif [[ $RHEL_VERSION == "RHEL8" ]]; then
             ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             ANSIBLE_REPO=$(awk '/rhel7_ansible_repo:/ {print $2}' "${vars_file}")

@@ -370,6 +370,12 @@ function qubinode_networking () {
         mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
         KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
 
+        if ! ipcalc -v  &> /dev/null
+        then
+            sudo yum install net-tools -y
+            KVM_HOST_NETMASK=$(sudo ifconfig | grep -i netmask | grep -v 127.0.0.1 | awk '{print $4}')
+        fi 
+
         # Set KVM host ip info
         iSkvm_host_netmask=$(awk '/^kvm_host_netmask:/ { print $2}' "${kvm_host_vars_file}")
         if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
