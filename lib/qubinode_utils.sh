@@ -80,6 +80,7 @@ function canSSH () {
     user=$1
     host=$2
     RESULT=$(ssh -q -o StrictHostKeyChecking=no -o "BatchMode=yes" -i /home/${user}/.ssh/id_rsa "${user}@${host}" "echo 2>&1" && echo SSH_OK || echo SSH_NOK)
+    echo $RESULT
 }
 
 
@@ -354,8 +355,6 @@ function clean_up_stale_vms(){
         fi 
     fi
 
-    sudo test -f "${libvirt_dir}/qbn-ocp4-bootstrap-vda.qcow2" && sudo rm -f "${libvirt_dir}/qbn-ocp4-bootstrap-vda.qcow2"
-
 }
 
 function teardown_idm () {
@@ -469,11 +468,14 @@ function qubinode_setup () {
     kvm_host_variables
 
     # Start user input session
-    ask_user_input
+    ask_user_input 
+    
     setup_variables
     setup_user_ssh_key
-    #ask_user_for_idm_password
-    #ask_user_for_custom_idm_server
+    if [ $ENABLE_IDM == "true" ];
+    then 
+      ask_user_for_idm_password
+    fi 
     #ask_user_for_networking_info "${vars_file}"
 
     # Ensure ./qubinode-installer -m rhsm is completed
@@ -501,6 +503,9 @@ function qubinode_setup () {
        printf "${yel}    KVM Host Setup Complete  ${end}\n"
     fi
 
+    # Ensure RHSM cli is installed
+    install_rhsm_cli
+
     sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
     sed -i "s/qubinode_installer_setup_completed:.*/qubinode_installer_setup_completed: yes/g" "${vars_file}"
 
@@ -518,8 +523,8 @@ function qubinode_base_requirements () {
         # Ensure user is setup for sudoers
         setup_sudoers
 
-        # check if there is a nvme or additional storage device
         check_additional_storage
+        #ask_user_if_qubinode_setup
 
         # load kvmhost variables
         kvm_host_variables

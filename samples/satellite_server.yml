@@ -1,0 +1,225 @@
+---
+####################################
+# Empty values need to be updated
+# and existing values can be changed
+
+# set to true to uninstall satellite
+teardown_satelite: no
+
+# set to true to rebuild satellite
+recreate_satellite: no
+
+# server VM attributes
+sat_memory: 20480
+sat_vcpu: 4
+sat_root_disk_size: "60G"
+sat_content_disk_size: "300G"
+
+# Satelite volume group name
+satellite_vg_name: satdata
+
+# Satellite logical volumes
+pgsql_lv_size: "10g"
+mongodb_lv_size: "50g"
+pulp_lv_size: "100g"
+
+# Satellite server attributes
+satellite_default_location: Orlando
+satellite_default_organization: ACME
+subnet: 172.24.24.0
+subnet_dhcp_start: 172.24.24.200
+subnet_dhcp_end: 172.24.24.205
+subnet_name: lunchnet
+compute_resource_name: "KVMhost"
+
+# This is the default tested verion
+# if you change this value you must ensure varaible *satellite_repos*
+# below refeclts the correct repos needed
+satellite_version: 6.7
+
+# Satellite hostname suffix, default prefix is qbn
+# default hostname would be qbn-sat01
+hostname_suffix: sat01
+
+# Which release of RHEL the satellite_version is supported on
+rhel_major: 7
+rhel_release: 7
+
+# Satellite RHSM pool id
+satellite_pool_id: ""
+
+###################################################
+# These values don't need to be change since they
+# either reference above variables or they are
+# updated by the installer script each time it's
+# executed.
+sat_server_vm:
+    sat_name: "{{ sat_server_hostname }}"
+    sat_vcpu: "{{ sat_vcpu }}"
+    sat_memory: "{{ sat_memory }}"
+    sat_root_disk_size: "{{ sat_root_disk_size }}"
+    sat_teardown: "{{ teardown_satelite }}"
+    sat_recreate: "{{ recreate_satellite }}"
+    sat_group: satellite
+    sat_extra_storage:
+      - size: "{{ sat_content_disk_size }}"
+        enable: true
+    sat_enable: true
+
+# The cloud image value gets updated by the install script
+cloud_init_vm_image: ""
+
+# IP address of the satellite server
+sat_server_ip: ""
+
+# Satellite server hostname
+sat_server_hostname: "{{ instance_prefix }}-{{ hostname_suffix }}"
+
+# RHSM info
+rhsm_pool_ids: "{{ satellite_pool_id | default('') }}"
+
+# Filesystems
+device: vdb
+host_device: "{{ device }}"
+vgname: "{{ satellite_vg_name }}"
+
+logical_volumes:
+  - name: pgsql
+    size: "{{ pgsql_lv_size }}"
+    mount_dir: /var/lib/pgsql
+    fstype: xfs
+  - name: mongodb
+    size: "{{ mongodb_lv_size }}"
+    mount_dir: /var/lib/mongodb
+    fstype: xfs
+  - name: pulp
+    size: "{{ pulp_lv_size }}"
+    mount_dir: /var/lib/pulp
+    fstype: xfs
+
+# For Satellite installation
+satellite_domain: "{{ domain }}"
+satellite_hostname: "{{ sat_server_hostname }}"
+satellite_ip_address: "{{ sat_server_ip }}"
+satellite_user: "{{ admin_user }}"
+satellite_pass: "{{ admin_user_password }}"
+
+satellite_repos:
+  - rhel-7-server-rpms
+  - rhel-server-rhscl-7-rpms
+  - "rhel-7-server-satellite-{{ satellite_version }}-rpms"
+  - rhel-7-server-satellite-maintenance-6-rpms
+  - rhel-7-server-ansible-2.8-rpms
+
+# The below is for Satellite post installation
+satellite_admin_user: "{{ satellite_user }}"
+satellite_user_pass: "{{ satellite_pass }}"
+satellite_url: "https://{{ satellite_hostname }}.{{ domain }}"
+satellite_verify_ssl: no
+rhsm_user: "{{ rhsm_username }}"
+rhsm_pass: "{{ rhsm_password }}"
+manifest_download_path: /root
+local_manifest_path: "{{ project_dir }}"
+default_subscription:
+  - name: "Red Hat Satellite Infrastructure Subscription"
+
+# This dictionary defines the Satellite organizaitons along with
+# All the associated objects
+satellite_orgs:
+  - name: "{{ satellite_default_organization }}"
+    state: present
+    manifest: satellite-server-manifest
+    manifest_state: present
+    manifest_force_upload: False
+    sync_right_away: True
+    use_local_manifest: True
+    cdn_url: https://cdn.redhat.com
+    wait_for_respo_sync: false
+    pool:
+      - id: 8a85f99b6977b7c0016979464ee772cb
+        pool_state: present
+        quantity: 7
+    location:
+      - name: "{{ satellite_default_location }}"
+        state: present
+    products:
+      - rhel7
+      - rhel8
+      - ansible
+    lifecycle_environments:
+      - name: Dev
+        prior: Library
+        state: present
+        description: Dev environment
+      - name: QA
+        prior: Dev
+        state: present
+        description: QA environment
+      - name: Production
+        prior: QA
+        state: present
+        description: Production environment
+    sync_plans:
+      - name: "Red Hat Sync Plan"
+        date: "2019/10/09 00:00:00 +0000"
+        interval: daily
+        enabled: true
+        description: "Sync Plan for Red Hat products"
+    domains:
+      - name: "{{ domain }}"
+        locations:
+          - "{{ satellite_default_location }}"
+        organizations:
+          - "{{ satellite_default_organization }}"
+        state: present
+        description: "{{ domain }}"
+    subnets:
+      - name: "{{ subnet_name }}"
+        locations:
+          - "{{ satellite_default_location }}"
+        organizations:
+          - "{{ satellite_default_organization }}"
+        network: "{{ subnet }}"
+        mask: "{{ kvm_host_netmask }}"
+        gateway: "{{ kvm_host_gw }}"
+        from_ip: "{{ subnet_dhcp_start }}"
+        to_ip: "{{ subnet_dhcp_end }}"
+        domains:
+          - "{{ domain }}"
+        state: present
+        description: "{{ subnet }}"
+    compute_resource:
+      - name: "{{ compute_resource_name }}"
+        locations:
+          - "{{ satellite_default_location }}"
+        organizations:
+          - "{{ satellite_default_organization }}"
+        state: present
+        provider: libvirt
+        provider_params:
+          url: "qemu+ssh://root@{{ kvm_host_ip }}/system"
+          display_type: vnc
+        description: KVM Compute Host
+
+# Ansible Tower Integration Role
+role_name: "ansible_tower_integration_role"
+role_description: "Ansible Tower Integration Role"
+role_state: present
+role_filters:
+  - resource: 'Host'
+    permissions:
+      - view_hosts
+  - resource: 'Host Group'
+    permissions:
+      - view_hostgroups
+  - resource: 'Fact value'
+    permissions:
+      - view_facts
+addtl_username: ansible_integration
+addtl_firstname: Ansible
+addtl_lastname: Integration
+addtl_description: "Ansible Integration User"
+addtl_admin: no
+addtl_password: redhat2019 
+addtl_state: present
+

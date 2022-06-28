@@ -6,10 +6,10 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones"
     case $PRODUCT_OPTION in
           okd4)
-	          openshift4_variables
+	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
@@ -23,7 +23,7 @@ function qubinode_product_deployment () {
               ;;
           ocp4)
               CHECK_PULL_SECRET=yes
-	          openshift4_variables
+	      openshift4_variables
               if [ "A${teardown}" == "Atrue" ]
               then
                   openshift4_qubinode_teardown
@@ -45,7 +45,7 @@ function qubinode_product_deployment () {
                   rhel_major=7
                   CHECK_PULL_SECRET=no
                   setup_download_options
-                  download_required_redhat_files
+                  download_files
                   qubinode_deploy_satellite
               fi
               ;;
@@ -56,7 +56,7 @@ function qubinode_product_deployment () {
               else
                   CHECK_PULL_SECRET=no
                   setup_download_options
-                  download_required_redhat_files
+                  download_files
                   qubinode_deploy_tower
               fi
               ;;
@@ -72,7 +72,7 @@ function qubinode_product_deployment () {
                   CHECK_PULL_SECRET=no
 		  printf "%s\n" "   ${blu}Running IdM VM deploy function${end}"
                   setup_download_options
-                  download_required_redhat_files
+                  download_files
                   qubinode_deploy_idm
               fi
               ;;
@@ -86,8 +86,8 @@ function qubinode_product_deployment () {
                       qubinode_rhel_maintenance
                   else
                       CHECK_PULL_SECRET=no
-                      setup_download_options
-                      #download_required_redhat_files
+                      #setup_download_options
+                      download_files
                       qubinode_deploy_rhel
                   fi
               fi
@@ -103,6 +103,15 @@ function qubinode_product_deployment () {
               else
 		    printf "%s\n" "   ${blu}Configuring kcli${end}"
                     qubinode_setup_kcli
+              fi
+              ;;
+          gozones)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_gozones_maintenance
+              else
+		    printf "%s\n" "   ${blu}Configuring gozones dns${end}"
+                    qubinode_setup_gozones
               fi
               ;;
           *)
@@ -145,6 +154,10 @@ function qubinode_maintenance_options () {
     then
         #TODO: this should remove all VMs and clean up the project folder
         qubinode_vm_manager undeploy
+    elif [ "${qubinode_maintenance_opt}" == "uninstall_openshift" ]
+    then
+      #TODO: this should remove all VMs and clean up the project folder
+        qubinode_uninstall_openshift
     else
         display_help
     fi

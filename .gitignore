@@ -7,7 +7,6 @@ playbooks/vars/*
 !playbooks/vars/.gitkeep
 inventory/*
 !inventory/.gitkeep
-!inventory/group_vars
 *.swp
 all.yml
 rhel-server-*-x86_64-kvm.qcow2
@@ -35,10 +34,4 @@ rhsm_token
 FIRSTBOOT
 lib/qubinode-ks-postinstall.sh
 new-vars/
-lib/qubinode_acme_install.sh
-playbooks/files
-acme/
-openshift-pull-secret.txt
-rhsm-offline-token.txt
-!playbooks/requirements-dev.yml
-playbooks/requirements-*
+

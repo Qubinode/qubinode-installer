@@ -5,59 +5,71 @@ function kvm_host_variables () {
     vars_file="${project_dir}/playbooks/vars/all.yml"
     libvirt_pool_name=$(cat "${kvm_host_vars_file}" | grep libvirt_pool_name: | awk '{print $2}')
     host_completed=$(awk '/qubinode_installer_host_completed:/ {print $2;exit}' ${kvm_host_vars_file})
-    RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' ${kvm_host_vars_file} | tr -d '"')
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
-    RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
-    # Set the RHEL version
-    if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
-    then
-        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
-        sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
-    fi
+    RHEL_VERSION=$(get_rhel_version)
 
-    local host_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    echo  "Base Operating System ${RHEL_VERSION}"
+    if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
+    then 
+        RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
+        # Set the RHEL version
+        if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
+        then
+            rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+            sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
+        fi
+    fi 
+
+
+    if  [ $RHEL_VERSION == "CENTOS8" ] ;
+    then 
+        centos_check=$(cat /etc/redhat-release  | grep "CentOS Stream release 8")
+    elif [ $RHEL_VERSION == "FEDORA" ];
+    then 
+        fedora_check=$(cat /etc/redhat-release  | grep "Fedora release")
+    else
+        local host_rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
+    fi 
+    
+    
     if [ "A${host_rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
+    elif [ "A${host_rhel_major}" == "A7" ]
+    then
+       rhel_release=$(awk '/rhel7_version:/ {print $2}' "${vars_file}")
+    elif [ "A${centos_check}" == "ACentOS Stream release 8" ]
+    then
+       rhel_release=${centos_check}
+    elif [[ "A${fedora_check}" == *"AFedora release"* ]]
+    then
+       rhel_release=${fedora_check}
     else
         rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+    fi
+
+
+    if [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "CENTOS8" ]] || [[ $RHEL_VERSION == "FEDORA" ]]; then
+      sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
+    elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+      sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"
     fi
 }
 
 function getPrimaryDisk () {
-    # Try to install required rpms
-    if [ ! -f /usr/sbin/lvs ]
-    then
-        sudo yum install -y -q -e 0 bc lvm2 bind-utils >/dev/null 2>&1
-    fi
-
-    # find which disk slash root is mounted on
+    #root_mount_lvm=$(df -P /root | awk '{print $1}' | grep -v Filesystem)
     root_mount_lvm=$(/usr/bin/findmnt -nr -o source /)
     primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
-
-    # If no logical volumes are found look for slash root on primary disk
-    if [ "${primary_disk:-none}" == "none" ];
+    if [ "A${primary_disk}" == "A" ];
     then
        primary_disk=$(/usr/bin/findmnt -nr -o source / | sed -e "s/\/dev\///g")
+       echo "lvs not found setting $primary_disk as primary disk"
+    else
+        primary_disk=$(sudo lvs -o devices --no-headings $root_mount_lvm 2>/dev/null |grep -oP '\/dev\/.*(a)' | awk -F'/' '{print $3}'|sort -un)
+        #echo "lvs was found setting ${primary_disk} as primary disk"
     fi
-
-    printf "%s\n" "   Setting $primary_disk as primary disk."
-}
-
-function show_libvirt_dir_volumes () {
-    local pool
-    all_libvirt_directory_pools=$(mktemp)
-
-    sudo virsh pool-list --name | while read line
-    do
-        pool="$line"
-        if [ "${pool:-none}" != "none" ]
-        then
-            sudo virsh pool-dumpxml $pool|grep -e path | grep -oP '(?<=\>).*?(?=\<)'
-        fi
-    done >> "${all_libvirt_directory_pools}"
 }
 
 function check_additional_storage () {
@@ -68,21 +80,20 @@ function check_additional_storage () {
     then
         printf "%s\n" "  ${yel}****************************************************************************${end}"
         printf "%s\n\n" "    ${cyn}        Storage Setup${end}"
-        printf "%s\n" "   The installer checks for all available disk and libvirt directory pools."
-        printf "%s\n" ""
-        printf "%s\n" "   If there are additional disk you will have the option to use one as"
-        printf "%s\n" "   as a libvirt directory pool mounted as ${libvirt_dir} or you can"
-        printf "%s\n" "   choosing a existing libvirt directory pool if found."
+        printf "%s\n" "   The installer checks for additional available disk and"
+        printf "%s\n" "   presents you with the option to dedicate that disk for"
+        printf "%s\n" "   the storage of the libvirt qcow disks. The default location"
+        printf "%s\n" "   is $libvirt_dir."
         printf "%s\n" ""
 
-        # The the device of disk disk for /
         getPrimaryDisk
+        DISK="${primary_disk}"
 
         declare -a ALL_DISKS=()
         mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}')
         if [ ${#ALL_DISKS[@]} -gt 1 ]
         then
-            printf "%s\n" "   Your primary storage device appears to be ${yel}${primary_disk}${end}."
+            printf "%s\n" "   Your primary storage device appears to be ${yel}${DISK}${end}."
             printf "%s\n\n" "   The following additional storage devices where found:"
 
             for disk in $(echo ${ALL_DISKS[@]})
@@ -92,95 +103,55 @@ function check_additional_storage () {
               fi
             done
 
-	        kvmhost_var_file="${project_dir}/playbooks/vars/kvm_host.yml"
             printf "%s\n" " "
-            printf "%s\n" "   It is recommended to dedicate a storage device for ${libvirt_dir}."
+            printf "%s\n" "   It is recommended to dedicate a storage device for /var/lib/libvirt/images."
             printf "%s\n" "   Choose one of the available storage devices and the installer will create a volume"
-            printf "%s\n\n" "   group, then a lv and mount ${libvirt_dir} to it."
-
-            printf "%s\n\n" ""
+            printf "%s\n\n" "   group, then a lv and mount /var/lib/libvirt/images to it."
 
             confirm "   Do you want to dedicate a storage device: ${blu}yes/no${end}"
-            printf "%s\n\n" " "
-            if [ "${response:-none}" == "yes" ]
+            printf "%s\n" " "
+            if [ "A${response}" == "Ayes" ]
             then
               getPrimaryDisk
-              printf "%s\n" "    Please Select secondary disk to be used."
+              echo "Please Select secondary disk to be used."
+              DISK="${primary_disk}"
 
               declare -a ALL_DISKS=()
               mapfile -t ALL_DISKS < <(lsblk -dp | grep -o '^/dev[^ ]*'|awk -F'/' '{print $3}' | grep -v ${primary_disk})
               createmenu "${ALL_DISKS[@]}"
-              LIBVIRT_DISK=($(echo "${selected_option}"))
-	          VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+              disk=($(echo "${selected_option}"))
+	      VG_NAME=$(awk '/vg_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+	      LIBVIRT_PATH=$(awk '/kvm_host_libvirt_dir:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
 
-              printf "%s\n\n" ""
-              printf "%s\n" "     Please note the installer will wipe the device ${blu}$LIBVIRT_DISK${end}"
-              printf "%s\n" "     if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
-              printf "%s\n" "     A logical volume is then created and mounted at ${blu}${libvirt_dir}${end}"
-              printf "%s\n\n" ""
-              confirm "      Continue with $LIBVIRT_DISK? ${blu}yes/no${end}"
-              if [ "${response:-none}" == "yes" ]
+              printf "%s\n" "   ${yel}Please note, the installer will wipe the device${end} ${blu}$disk${end} if it does not alreagy have a volume group called ${blu}${VG_NAME}${end}."
+              printf "%s\n" "   A logical volume is then created and mounted at ${blu}${LIBVIRT_PATH}${end}"
+              confirm "    Continue with $disk? ${blu}yes/no${end}"
+              if [ "A${response}" == "Ayes" ]
               then
                   printf "%s\n\n" ""
-                  printf "%s\n\n" " ${mag}Using disk: $LIBVIRT_DISK${end}"
+                  printf "%s\n\n" " ${mag}Using disk: $disk${end}"
+                  DISK="${disk}"
                   sed -i "s/create_lvm:.*/create_lvm: "yes"/g" "${kvm_host_vars_file}"
                   sed -i "s/run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $LIBVIRT_DISK/g" "${kvm_host_vars_file}"
+                  sed -i "s/kvm_host_libvirt_extra_disk:.*/kvm_host_libvirt_extra_disk: $DISK/g" "${kvm_host_vars_file}"
               else
                   printf "%s\n\n" " ${mag}Exiting the install, please examine your disk choices and try again.${end}"
                   exit 0
               fi
-              printf "%s\n\n" ""
-            fi
-        fi 
-
-        # Present libvirt pool options
-        show_libvirt_dir_volumes
-        declare -a LIBVIRT_DIR_POOLS=()
-        mapfile -t LIBVIRT_DIR_POOLS < <(cat "${all_libvirt_directory_pools}")
-        if [[ ${#LIBVIRT_DIR_POOLS[@]} -gt 1 ]] && [[ "${LIBVIRT_DISK:-none}" == "none" ]]
-        then
-
-            printf "%s\n\n" "   The following libvirt pools where found:"
-            for pool in $(echo ${LIBVIRT_DIR_POOLS[@]})
-            do
-              printf "%s\n" "     ${yel} * ${end}${blu}$pool${end}"
-            done
-
-            printf "%s\n" ""
-            printf "%s\n" "    Please select a libvirt directory pool for use:"
-            createmenu "${LIBVIRT_DIR_POOLS[@]}"
-            LIBVIRT_DIR_VOLUME=($(echo "${selected_option}"))
-
-            confirm "      Continue with $LIBVIRT_DIR_VOLUME? ${blu}yes/no${end}"
-            if [ "${response:-none}" == "yes" ]
-            then
-                printf "%s\n\n" ""
-                printf "%s\n\n" " ${mag}Using livirt pool: $LIBVIRT_DIR_VOLUME${end}"
-                sed -i "s#^kvm_host_libvirt_dir:.*#kvm_host_libvirt_dir: $LIBVIRT_DIR_VOLUME#g" "${kvm_host_vars_file}"
-                sed -i "s/^run_storage_check:.*/run_storage_check: "skip"/g" "${kvm_host_vars_file}"
-                sed -i "s/^create_lvm:.*/create_lvm: "no"/g" "${kvm_host_vars_file}"
             else
-                  printf "%s\n\n" " ${red}We cannot continue without a storage option.${end}"
-                  printf "%s\n\n" " ${mag}Existing the installation${end}"
-                  exit 1
+                setsingledisk
             fi
         else
-            printf "%s\n\n" " ${red}Installer is existing because there are no storage options.${end}"
-            printf "%s\n" " ${mag}You did not provide a additional storage device for use as${end}"
-            printf "%s\n" " ${mag}a libvirt directory pool or the installer did not find any.${end}"
-            printf "%s\n" " ${mag}No existing libvirt pool directory where found.${end}"
-            exit 1
+            setsingledisk
         fi
-
-        printf "%s\n\n" ""
-        printf "%s\n" "  ${yel}****************************************************************************${end}"
-
+    #else
+       #printf "%s\n" "     ${yel}*************************************${end}"
+       #printf "%s\n" "     ${yel}*${end} ${cyn}Skipping Disk configuration check${end} ${yel}*${end}"
+       #printf "%s\n" "     ${yel}*************************************${end}"
     fi
 }
 
 #Configure System to use single disk
-#TODO: this function is now deprecated and should be removed
 function setsingledisk()
 {
     getPrimaryDisk
@@ -219,7 +190,7 @@ function ask_user_if_qubinode_setup () {
         printf "%s\n\n" "  ${mag}(*)${end} ${blu}You don't want to dedicate your extra storage device to Libvirt.${end}"
 
         confirm "${yel} Do you want to continue as a Qubinode?${end} ${blu}yes/no ${end}"
-        if [ "${response:-none}" == "yes" ]
+        if [ "A${response}" == "Ayes" ]
         then
             # Set varaible to configure storage and networking
             sed -i "s/run_qubinode_setup:.*/run_qubinode_setup: "$response"/g" "${kvm_host_vars_file}"
@@ -361,7 +332,10 @@ function qubinode_networking () {
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
         test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
         test -f "${project_dir}/playbooks/vars/all.yml" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${project_dir}/playbooks/vars/all.yml"
-        test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
+        if [ $ENABLE_IDM] == true ];
+        then 
+            test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
+        fi 
     fi
 
     DEFINED_BRIDGE=""
@@ -452,10 +426,66 @@ function qubinode_networking () {
 }
 
 
+#function qubinode_check_for_libvirt_nat() {
+#    #TODO: This function is no longer needed and should be removed
+#    DEFINED_LIBVIRT_NETWORK=$(awk '/vm_libvirt_net:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
+#    RESULT=$(sudo virsh net-list --all --name | grep -q "${DEFINED_LIBVIRT_NETWORK}")
+#    if [[ "A${RESULT}" == "A" ]];
+#    then
+#        printf "%s\n" "    skipping ${DEFINED_LIBVIRT_NETWORK} configuration"
+#        linenum=$(cat "${kvm_host_vars_file}" | grep -n 'create:' | head -1| awk '{print $1}' | tr -d :)
+#        sed -i ''${linenum}'s/create:.*/create: false/' "${kvm_host_vars_file}"
+#    else
+#        printf "%s\n" " Could not find the defined libvirt network ${DEFINED_LIBVIRT_NETWORK}"
+#        printf "%s\n" " Will attempt to find and use the first bridge or nat libvirt network"
+#
+#        nets=$(sudo virsh net-list --all --name)
+#        NAT_ARRAY=()
+#        printf "%s\n" "   Found libvirt networks:"
+#        for item in $(echo $nets)
+#        do
+#            mode=$(sudo virsh net-dumpxml $item | awk -F"'" '/forward mode/ {print $2}')
+#            if [ "A${mode}" == "Anat" ]
+#            then
+#                NAT_ARRAY+=(${item})
+#            fi
+#        done
+#
+#        for nat in ${NAT_ARRAY[@]}
+#        do
+#           printf "%s\n" "     ${yel} * ${end}${blu}$nat${end}"
+#        done
+#
+#        printf "%s\n" " "
+#        printf "%s\n" "   It is recommended to configure a nat network for OCP4 deployments."
+#        printf "%s\n" "   Choose one of the options below and the installer will use the selected nat natwork for deployment"
+#
+#        confirm "   Do you want to use libvirt net: ${blu}yes/no${end}"
+#        printf "%s\n" " "
+#        if [ "A${response}" == "Ayes" ]
+#        then
+#          createmenu "${NAT_ARRAY[@]}"
+#          nat_network=($(echo "${selected_option}"))
+#          confirm "    Continue with $nat_network? ${blu}yes/no${end}"
+#          if [ "A${response}" == "Ayes" ]
+#          then
+#              printf "%s\n\n" ""
+#              printf "%s\n\n" " ${mag}Using  libvirt net: $nat_network${end}"
+#              sed -i "s/vm_libvirt_net:.*/vm_libvirt_net: "$nat_network"/g" "${kvm_host_vars_file}"
+#              linenum=$(cat "${kvm_host_vars_file}" | grep -n 'create:' | head -1 | awk '{print $1}' | tr -d :)
+#              sed -i ''${linenum}'s/create:.*/create: false/' "${kvm_host_vars_file}"
+#          else
+#              printf "%s\n\n" " ${mag}Setup will configure nat network.${end}"
+#              exit 0
+#          fi
+#      fi
+#    fi
+#}
+
 kvm_host_health_check () {
     KVM_IN_GOOD_HEALTH=""
-    #requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
-    check_image_path=$(cat "${project_dir}/playbooks/vars/kvm_host.yml" | grep kvm_host_libvirt_dir: | awk '{print $2}')
+    requested_nat=$(cat ${vars_file}|grep  cluster_name: | awk '{print $2}' | sed 's/"//g')
+    check_image_path=$(cat ${vars_file}| grep kvm_host_libvirt_dir: | awk '{print $2}')
     requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
@@ -525,7 +555,7 @@ function qubinode_setup_kvm_host () {
     # Check if we should setup qubinode
     QUBINODE_SYSTEM=$(awk '/run_qubinode_setup:/ {print $2; exit}' "${kvm_host_vars_file}" | tr -d '"')
 
-    if [ "A${OS}" != "AFedora" ]
+    if [ "A${OS}" != "AFedora" ] && [ $RHEL_VERSION != "CENTOS8" ]
     then
         set_rhel_release
     fi
@@ -674,5 +704,5 @@ function qubinode_check_kvmhost () {
         KVM_HOST_MSG="KVM host is setup"
     fi
 
-    printf "%s\n" "  ${blu:?}$KVM_HOST_MSG${end:?}"
+    echo $KVM_HOST_MSG
 }

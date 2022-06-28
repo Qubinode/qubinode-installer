@@ -6,17 +6,29 @@ function qubinode_required_prereqs () {
     # Sets up the inventory file
 
     # setup required paths
-    setup_required_paths
-    vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+    if [ $QUBINODE_BIN == "true" ];
+    then 
+        setup_required_bin_paths
+    else
+        setup_required_paths
+    fi 
+
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
     vars_file="${project_dir}/playbooks/vars/all.yml"
     idm_vars_file="${project_dir}/playbooks/vars/idm.yml"
+    gozones_vars_file="${project_dir}/playbooks/vars/gozones-dns.yml"
     hosts_inventory_dir="${project_dir}/inventory"
     inventory_file="${hosts_inventory_dir}/hosts"
     ocp3_vars_file="${project_dir}/playbooks/vars/ocp3.yml"
     okd3_vars_file="${project_dir}/playbooks/vars/okd3.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     generate_all_yaml_script="${project_dir}/lib/generate_all_yaml.sh"
+
+    if is_root; then
+        vault_key_file="/root/.vaultkey"
+    else 
+        vault_key_file="/home/${CURRENT_USER}/.vaultkey"
+    fi
 
     # copy sample vars file to playbook/vars directory
     if [ ! -f "${vars_file}" ]
@@ -35,29 +47,17 @@ function qubinode_required_prereqs () {
      cp "${project_dir}/samples/idm.yml" "${idm_vars_file}"
     fi
 
+    if [ ! -f "${gozones_vars_file}" ]
+    then
+     cp "${project_dir}/samples/gozones-dns.yml" "${gozones_vars_file}"
+    fi
+
     # copy sample vault file to playbook/vars directory
     if [ ! -f "${vault_vars_file}" ]
     then
         cp "${project_dir}/samples/vault.yml" "${vault_vars_file}"
     fi
 
-    # copy sample ocp3 file to playbook/vars directory
-    if [ "A${qubinode_product_opt}" == "Aocp3" ]
-    then
-        if [ ! -f "${ocp3_vars_file}" ]
-        then
-            cp "${project_dir}/samples/ocp3.yml" "${ocp3_vars_file}"
-        fi
-    fi
-
-    # copy sample okd3 file to playbook/vars directory
-    if [ "A${qubinode_product_opt}" == "Aokd3" ]
-    then
-        if [ ! -f "${okd3_vars_file}" ]
-        then
-            cp "${project_dir}/samples/okd3.yml" "${okd3_vars_file}"
-        fi
-    fi
 
     # create ansible inventory file
     if [ ! -f "${hosts_inventory_dir}/hosts" ]
@@ -79,17 +79,11 @@ function setup_variables () {
         sed -i "s#inventory_dir: \"\"#inventory_dir: "$hosts_inventory_dir"#g" "${vars_file}"
     fi
 
-    # Set the qubinode-installer directory as the project path
+    # Set KVM project dir
     if grep '""' "${vars_file}"|grep -q project_dir
     then
         #echo "Adding project_dir variable"
         sed -i "s#project_dir: \"\"#project_dir: "$project_dir"#g" "${vars_file}"
-    else
-        current_project_dir_value=$(awk '/^project_dir:/ {print $2}' "${vars_file}")
-        if [ "${current_project_dir_value:-none}" != "${project_dir}" ]
-        then
-            sed -i "s#project_dir:.*#project_dir: "$project_dir"#g" "${vars_file}"
-        fi
     fi
 
     # Setup admin user variable
@@ -130,27 +124,31 @@ function setup_variables () {
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     warn_storage_profile=$(awk '/^warn_storage_profile:/ {print $2; exit}' "${project_dir}/playbooks/vars/all.yml")
 
-    # This should be defined outside of this function is a vars file
-    export RHSM_OFFLINE_TOKEN="${project_dir}/rhsm-offline-token.txt"
-
 }
 
 function get_rhel_version() {
   if cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
-    echo "RHEL8"
+    export BASE_OS="RHEL8"
   elif cat /etc/redhat-release  | grep 7.[0-9] > /dev/null 2>&1; then
-    echo  "RHEL7"
+    export BASE_OS="RHEL7"
+  elif cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
+    export BASE_OS="CENTOS8"
+  elif cat /etc/redhat-release  | grep "Fedora" > /dev/null 2>&1; then
+    export BASE_OS="FEDORA"
   else
     echo "Operating System not supported"
   fi
+  echo ${BASE_OS}
 
 }
 
 
 function qcow_check () {
     # TODO: this should be removed
+    download_files
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    artifact_centos_qcow_image=$(grep "^qcow_centos_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
 
     # update IdM server with qcow image file
     if [ -f $idm_vars_file ]
@@ -159,7 +157,7 @@ function qcow_check () {
     fi
 
 
-    if sudo test ! -f "${libvirt_dir}/${qcow_image_name}"
+    if sudo test ! -f "${libvirt_dir}/${qcow_image_name}" && [ ${BASE_OS} == "RHEL8" ]
     then
         if [ -f "${project_dir}/${qcow_image_name}" ]
         then
@@ -169,57 +167,73 @@ function qcow_check () {
             echo "  Download and copy ${qcow_image_name} to ${project_dir}."
             exit 1
         fi
+    elif sudo test ! -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS8" ]
+    then 
+        if [ -f "${project_dir}/${artifact_centos_qcow_image}" ]
+        then
+            sudo cp "${project_dir}/${artifact_centos_qcow_image}"  "${libvirt_dir}/${artifact_centos_qcow_image}"
+        else
+            echo "  Did not find ${artifact_centos_qcow_image} in path ${project_dir}."
+            echo "  Download and copy ${artifact_centos_qcow_image} to ${project_dir}."
+            exit 1
+        fi
+    elif sudo test ! -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
+    then 
+        if [ -f "${project_dir}/${artifact_fedora_qcow_image}" ]
+        then
+            sudo cp "${project_dir}/${artifact_fedora_qcow_image}"  "${libvirt_dir}/${artifact_fedora_qcow_image}"
+        else
+            echo "  Did not find ${artifact_fedora_qcow_image} in path ${project_dir}."
+            echo "  Download and copy ${artifact_fedora_qcow_image} to ${project_dir}."
+            exit 1
+        fi
     fi
 }
 
-function installer_artifacts_msg () {
-        printf "%s\n\n" ""
 
-        if [[ "${PULL_MISSING:-none}" == "yes" ]] && [[ "${QCOW_MISSING:-none}" == "yes" ]]
-        then
-            printf "%s\n" "    ${red}The installer requires the RHEL qcow image use for deploying the IdM VM.${end}"
-            printf "%s\n" "    ${red}The installer also requires your OpenShift pull-secret.${end}"
-            printf "%s\n\n" ""
-        elif [ "${PULL_MISSING:-none}" == "yes" ]
-        then
-            printf "%s\n" "    ${red}The installer also requires your OpenShift pull-secret.${end}"
-        elif [ "${QCOW_MISSING:-none}" == "yes" ]
-        then
-            printf "%s\n" "    ${red}The installer requires the RHEL qcow image use for deploying the IdM VM.${end}"
-        else
-            echo required_files_present >/dev/null
-        fi
-
-        printf "%s\n" "    ${yel}OPTIONS 1: RHSM offline token${end}"
-        printf "%s\n" "    You can provide a file with your RHSM offline api token"
-        printf "%s\n" "    to have the installer download the missing files:"
-        printf "%s\n\n" "        ${blu}* ${RHSM_OFFLINE_TOKEN}${end}"
-        printf "%s\n" "    ${yel}OPTION 2: Download the missing files${end}"
-        printf "%s\n" "    Download the reported missing files to the expected location."
-        if [ "A${PULL_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n" "        * OpenShift Pull Secret: ${blu}${project_dir}/openshift-pull-secret.txt${end}"
-        fi
-        if [ "A${QCOW_MISSING}" == "Ayes" ]
-        then
-            printf "%s\n\n" "        * RHEL Qcow Image: ${blu}${project_dir}/$artifact_qcow_image${end}"
-        fi
-
-	printf "%s\n\n" "    Please refer to the documentation for details"
+function install_rhsm_cli () {
+    if [ ! -f ${project_dir}/.python/rhsm_cli/bin/rhsm-cli ]
+    then
+        echo "Install install_rhsm_cli"
+        rpm -qa | grep python3-pip || sudo yum install -y python3-pip
+        test -d "${project_dir}/.python" || mkdir "${project_dir}/.python"
+        cd "${project_dir}/.python"
+        python3 -m venv rhsm_cli
+        source "${project_dir}/.python/rhsm_cli/bin/activate"
+        git clone https://github.com/antonioromito/rhsm-api-client > /dev/null 2>&1
+        cd rhsm-api-client
+        pip install -r requirements.txt > /dev/null 2>&1
+        python setup.py install --record files.txt > /dev/null 2>&1
+        deactivate
+        cd "${project_dir}"
+    fi
 }
 
 setup_download_options () {
+    CAN_DWLD=no
+    RHSM_TOKEN="${project_dir}/rhsm_token"
+    OCP_TOKEN="${project_dir}/ocp_token"
+    DWL_PULLSECRET=no
+
     # Ensure user is setup for sudo
     setup_sudoers
 
+    # check for user provided ocp token or pull secret
+    OCP_TOKEN_STATUS="notexist"
+    PULLSECRET_STATUS="notexist"
+    if [ -f $OCP_TOKEN ]
+    then
+        OCP_TOKEN_STATUS=exist
+        DWL_PULLSECRET=yes
+    fi
 
     # check for pull secret
-    if [ "${CHECK_PULL_SECRET:-none}" != "yes" ]
+    if [ "A${CHECK_PULL_SECRET}" != "Ayes" ]
     then
         # set status to exist to prevent check for pull secret when it's not required
         PULLSECRET_STATUS="exist"
     else
-        if [ -f "${project_dir}/openshift-pull-secret.txt" ]
+        if [ -f "${project_dir}/pull-secret.txt" ]
         then
             PULLSECRET_STATUS="exist"
         else
@@ -230,77 +244,187 @@ setup_download_options () {
     # check for required OS qcow image or token
     TOKEN_STATUS="notexist"
     QCOW_STATUS="notexist"
-    QCOW_MISSING="no"
-    PULL_MISSING="no"
-
+    DWL_QCOW=no
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir:/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
-    artifact_qcow_image=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
-    if sudo test -f "${libvirt_dir}/${artifact_qcow_image}"
+    artifact_qcow_image=$(grep "^qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    artifact_centos_qcow_image=$(grep "^qcow_centos_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    artifact_fedora_qcow_image=$(grep "^qcow_fedora_image:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    get_rhel_version
+    echo  "Base Operating System ${BASE_OS}"
+
+    if sudo test -f "${libvirt_dir}/${artifact_qcow_image}" && [ ${BASE_OS} == "RHEL8" ]
     then
         QCOW_STATUS=exist
+    elif  sudo test -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS8" ]
+    then 
+        QCOW_STATUS=exist
+    elif  sudo test -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
+    then 
+        QCOW_STATUS=exist
+    elif  sudo test ! -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS8" ]
+    then
+        if cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
+            cd ${project_dir}
+            curl -OL https://cloud.centos.org/centos/8-stream/x86_64/images/${artifact_centos_qcow_image}
+            qcow_image_checksum=$(grep "qcow_centos_checksum" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            DWLD_CHECKSUM=$(sha256sum ${project_dir}/${artifact_centos_qcow_image}|awk '{print $1}')
+            if [ $DWLD_CHECKSUM != $qcow_image_checksum ];
+            then
+                echo "The downloaded $qcow_image_name validation fail"
+                exit 1
+            fi
+            sudo cp "${project_dir}/${artifact_centos_qcow_image}"  "${libvirt_dir}/${artifact_centos_qcow_image}"
+            QCOW_STATUS=exists
+        else
+          echo "Release is not CentOS Stream release 8"
+          exit 1
+        fi 
+    elif  sudo test ! -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
+    then
+        if cat /etc/redhat-release  | grep "Fedora release" > /dev/null 2>&1; then
+            cd ${project_dir}
+            curl -OL https://download.fedoraproject.org/pub/fedora/linux/releases/35/Cloud/x86_64/images/${artifact_fedora_qcow_image}
+            qcow_image_checksum=$(grep "qcow_fedora_checksum" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            DWLD_CHECKSUM=$(sha256sum ${project_dir}/${artifact_fedora_qcow_image}|awk '{print $1}')
+            if [ $DWLD_CHECKSUM != $qcow_image_checksum ];
+            then
+                echo "The downloaded $qcow_image_name validation fail"
+                exit 1
+            fi
+            sudo cp "${project_dir}/${artifact_fedora_qcow_image}"  "${libvirt_dir}/${artifact_fedora_qcow_image}"
+            QCOW_STATUS=exists
+        else
+          echo "Release is not a Fedora release"
+          exit 1
+        fi 
     else
         if [[ ! -f "${libvirt_dir}/${artifact_qcow_image}" ]] && [[ ! -f "${project_dir}/${artifact_qcow_image}" ]]
         then
             # check for user provided token
-            if [ -f "{RHSM_OFFLINE_TOKEN}" ]
+            if [ -f $RHSM_TOKEN ]
             then
                 TOKEN_STATUS=exist
+                DWL_QCOW=yes
             fi
         else
             QCOW_STATUS=exist
         fi
     fi
 
-    if [[ "${TOKEN_STATUS:-none}" == "notexist" ]] && [[ "${PULLSECRET_STATUS:-none}" == "notexist" ]]
+    if [[ "A${OCP_TOKEN_STATUS}" == "Anotexist" ]] && [[ "A${PULLSECRET_STATUS}" == "Anotexist" ]]
     then
         PULL_MISSING=yes
-        artifact_string="your OCP openshift-pull-secret.txt"
+        artifact_string="your OCP pull-secret.txt"
     fi
 
-    if [[ "${QCOW_STATUS:-none}" == "notexist" ]] && [[ "${TOKEN_STATUS:-none}" == "notexist" ]]
+    if [[ "A${QCOW_STATUS}" == "Anotexist" ]] && [[ "A${TOKEN_STATUS}" == "Anotexist" ]]
     then
         QCOW_MISSING=yes
         artifact_string="the $artifact_qcow_image image"
     fi
 
-    # Ensure Qcow is present when not deploying OCP4"
-    if [[ "${product_opt:-none}" != "ocp4" ]] || [[ "${product_opt:-none}" != "okd4" ]]
-    then
-        if [[ "${QCOW_MISSING:-none}" == "yes" ]] && [[ ! -f "${RHSM_OFFLINE_TOKEN}" ]]
-        then
-            installer_artifacts_msg
-            exit 1
-	fi
-    elif  [[ "${PULL_MISSING:-none}" == "yes" ]] || [[ "${QCOW_MISSING:-none}" == "yes" ]] && [[ ! -f "${RHSM_OFFLINE_TOKEN}" ]]
+    if  [[ "A${PULL_MISSING}" == "Ayes" ]] || [[ "A${QCOW_MISSING}" == "Ayes" ]]
     then
         installer_artifacts_msg
         exit 1
     fi
 
     # Ensure qcow image is copied to the libvirt directory
-    if sudo test ! -f "${libvirt_dir}/${artifact_qcow_image}"
+    if sudo test ! -f "${libvirt_dir}/${artifact_qcow_image}" && [ ${BASE_OS} == "RHEL8" ]
     then
         if [ -f "${project_dir}/${artifact_qcow_image}" ]
         then
             sudo cp "${project_dir}/${artifact_qcow_image}"  "${libvirt_dir}/${artifact_qcow_image}"
         else
-            if [ -f "${project_dir}/rhsm-offline-token.txt" ]
-            then
-                printf "%s\n" "    Required files will be downloaded as needed" >/dev/null
-            else
-                printf "%s\n" "  Did not find ${artifact_qcow_image} in path ${project_dir}."
-                printf "%s\n" "  Download and copy ${artifact_qcow_image} to ${project_dir}."
-                exit 1
-            fi
+            echo "  Did not find ${artifact_qcow_image} in path ${project_dir}."
+            echo "  Download and copy ${artifact_qcow_image} to ${project_dir}."
+            exit 1
         fi
     fi
 }
 
-download_required_redhat_files () {
-    cd "${project_dir}"
-    setup_download_options
-    if [ -f "${project_dir}/rhsm-offline-token.txt" ]
+function installer_artifacts_msg () {
+	rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
+	rhel_qcow_checksum=$(awk '/qcow_rhel8u2_checksum:/ {print $2}' "${vars_file}")
+        printf "%s\n\n" ""
+        if [[ "A${PULL_MISSING}" == "Ayes" ]] && [[ "A${QCOW_MISSING}" == "Ayes" ]]
+        then
+            printf "%s\n" "    ${yel}The installer requires the RHEL qcow image and your OCP pull-secret.${end}"
+            printf "%s\n" "    The installer expects to find the artifacts under"
+            printf "%s\n\n" "    ${blu}${project_dir}.${end}"
+        else
+            printf "%s\n\n" "    ${yel}The installer requires $artifact_string.${end}"
+            printf "%s\n" "    The installer expects to find either of the following:"
+        fi
+
+        if [ "A${PULL_MISSING}" == "Ayes" ]
+        then
+            printf "%s\n" "        ${mag}* ${project_dir}/pull-secret.txt${end}"
+        fi
+
+        if [ "A${QCOW_MISSING}" == "Ayes" ]
+        then
+            printf "%s\n" "        ${mag}* ${project_dir}/$artifact_qcow_image${end}"
+            printf "%s\n\n" "        ${mag}* ${libvirt_dir}/$artifact_qcow_image${end}"
+        fi
+
+        printf "%s\n" "    You can download the this qcow image from:" 
+	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---8/${rhel_release}/x86_64/product-software${end}."
+        printf "%s\n" "    The current tested checksum is:"
+        printf "%s\n" "    ${mag}${rhel_qcow_checksum}${end}"
+        printf "%s\n" "    Copy the url from the download page and download with:"
+        printf "%s\n\n" "    ${mag}wget -c -t 100 -O \"${artifact_qcow_image}\" \"rhel-qcow-image-url\"${end}"
+}
+
+download_files () {
+    RHSM_CLI=no
+    RHSM_CLI_CMD="${project_dir}/.python/rhsm_cli/bin/rhsm-cli"
+    RHSM_CLI_CONFIG="/home/${ADMIN_USER}/.config/rhsm-cli.conf"
+    qcow_image_name=$(grep "qcow_rhel${rhel_major}_name:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+    qcow_image_checksum=$(grep "qcow_rhel${rhel_major}u._checksum:" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+
+
+    if [ -f $RHSM_CLI ]
     then
-        ansible-playbook playbooks/download-redhat-files.yml
+        RHSM_CLI=yes
+    fi
+
+    if [[ "A${TOKEN_STATUS}" == "Aexist" ]] && [[ "A${DWL_QCOW}" == "Ayes" ]]
+    then
+        # save token to config file
+        if [ ! -f $RHSM_CLI_CONFIG ]
+        then
+            TOKEN=$(cat $RHSM_TOKEN)
+            $RHSM_CLI_CMD -t $TOKEN savetoken 2>/dev/null
+            if [ $? -ne 0 ]
+            then
+                printf "%s\n" "    Failure validating token provided by $RHSM_TOKEN"
+                printf "%s\n" "    Please verify your token is correct or generate a new one and try again"
+                printf "%s\n\n" "    You can also just download the required files and per the documentation"
+                printf "%s\n" "    If you are certain your token is correct. Then there may be isues with the"
+                printf "%s\n" "    Red Hat API end-point. Please refer to the documentation on how to download"
+                printf "%s\n\n" "    the required files."
+                exit
+            else
+                rm -f $RHSM_TOKEN
+            fi
+        fi
+
+        if [ -f $RHSM_CLI_CONFIG ]
+        then
+            if [ "A${qcow_image_checksum}" != "A" ]
+            then
+                $RHSM_CLI_CMD images --checksum $qcow_image_checksum 2>/dev/null
+                if [ -f ${project_dir}/${qcow_image_name} ]
+                then
+                    DWLD_CHECKSUM=$(sha256sum ${project_dir}/${qcow_image_name}|awk '{print $1}')
+                    if [ $DWLD_CHECKSUM != $qcow_image_checksum ]
+                    then
+                        echo "The downloaded $qcow_image_name validation fail"
+                        exit 1
+                    fi
+                fi
+            fi
+        fi
     fi
 }
