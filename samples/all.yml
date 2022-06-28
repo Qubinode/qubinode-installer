@@ -186,7 +186,8 @@ libvirt_pkgs_8:
    - python3-dns
    - python3-lxml
    - cockpit-machines
-
+   - cockpit-composer
+   - osbuild-composer
 libvirt_pkgs_7:
    - virt-install
    - libvirt-daemon-config-network
