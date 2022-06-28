@@ -70,8 +70,6 @@ function qubinode_setup_ansible () {
     then
         if [ ! -f /usr/bin/python3 ]
         then
-            sudo subscription-manager repos --enable="rhel-9-for-x86_64-baseos-rpms" > /dev/null 2>&1
-            sudo subscription-manager repos --enable="rhel-9-for-x86_64-appstream-rpms" > /dev/null 2>&1
             printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo dnf clean all > /dev/null 2>&1
             sudo rm -r /var/cache/dnf
