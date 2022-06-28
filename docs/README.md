@@ -100,21 +100,31 @@ If you are using tokens it should be:
 
 If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions:
 ```
-* $HOME/qubinode-installer/rhel-server-7.8-x86_64-kvm.qcow2
-* $HOME/qubinode-installer/rhel-8.4-x86_64-kvm.qcow2
+* $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
+* $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
 ```
 
 ## Install DNS server 
+* [GoZones DNS](qubinode/gozones_dns.md)
 * [Red Hat Identity Managment](qubinode/idm.md)
-
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
 
+
+## Setup RDP Enabled jumpbox
+* [Centos 8 Streams Jumpbox](qubinode/rdpjumpbox.md)
+
 ## Currently Supported Products
-* [Red Hat OpenShift Platform](qubinode/openshift4_installation_steps.md)
-* [OKD - The Community Distribution of Kubernetes](qubinode/okd4_installation_steps.md)
 * [Red Hat Identity Managment](qubinode/idm.md)
 * [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
 
 ## Products in Development
 * [Ansible Automation Platform](qubinode/ansible_platform.md)
 * [Red Hat Satellite](qubinode/qubinode_satellite_install.md)
+* [Quay Mirror Registry](qubinode/quay_mirror_registry.md)
+
+## Workflows
+* [ZTP for Factory Workflow qubinode dev box](https://gist.github.com/tosin2013/3b99a883078025de1a5327d532bf2cae)
+* [RHEL for Edge Automation Architecture Qubinode dev box](https://gist.github.com/tosin2013/72eb9a095d0f5ca5082c3a9597d2ae4f)
+* [Assisted Installer Hack-y scripts](https://github.com/tosin2013/openshift-4-deployment-notes/blob/master/assisted-installer/hack/README.md)
+* [Assisted Installer Qubinode Deployments Ansible](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
+* [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/tosin2013/ocp4-ai-svc-universal/tree/main)

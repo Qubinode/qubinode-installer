@@ -30,6 +30,13 @@ width=50
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+export ENABLE_SATELLITE=false
+export ENABLE_IDM=false
+if [ -z $QUBINODE_BIN ];
+then 
+  export QUBINODE_BIN="false"
+fi 
+
 # Turn verbose off
 _V=1
 
@@ -51,15 +58,8 @@ function report_error () {
 # and runs the config_err_msg if it can't determine
 # that start_deployment.conf can find the project directory
 function setup_required_paths () {
-    if which qubinode-installer >/dev/null 2>&1
-    then
-        discovered_path=$(which qubinode-installer)
-        project_dir=$(dirname "$discovered_path")
-    else
-        project_dir="`dirname \"$0\"`"
-        project_dir="`( cd \"$project_dir\" && pwd )`"
-    fi
-
+    project_dir="`dirname \"$0\"`"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
     if [ -z "$project_dir" ] ; then
         config_err_msg; exit 1
     fi
@@ -67,9 +67,21 @@ function setup_required_paths () {
     if [ ! -d "${project_dir}/playbooks/vars" ] ; then
         config_err_msg; exit 1
     fi
-
-    cd "$project_dir"
 }
+
+
+function setup_required_bin_paths () {
+    project_dir="/opt/qubinode-installer/"
+    project_dir="`( cd \"$project_dir\" && pwd )`"
+    if [ -z "$project_dir" ] ; then
+        config_err_msg; exit 1
+    fi
+
+    if [ ! -d "${project_dir}/playbooks/vars" ] ; then
+        config_err_msg; exit 1
+    fi
+}
+
 
 ##       MAIN               ##
 ##############################
@@ -78,7 +90,13 @@ function setup_required_paths () {
 teardown="false"
 CURRENT_USER=$(whoami)
 CHECK_PULL_SECRET=no
-setup_required_paths
+if [ $QUBINODE_BIN == "true" ];
+then 
+    setup_required_bin_paths
+else
+    setup_required_paths
+fi 
+
 rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 
 # Include all required functions
@@ -93,17 +111,27 @@ rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 . "${project_dir}/lib/qubinode_idm.sh"
 . "${project_dir}/lib/qubinode_ansible.sh"
 . "${project_dir}/lib/qubinode_rhsm.sh"
-. "${project_dir}/lib/qubinode_ocp4_utils.sh"
-. "${project_dir}/lib/qubinode_ocp4.sh"
-. "${project_dir}/lib/qubinode_satellite.sh"
+. "${project_dir}/lib/qubinode_gozonesdns.sh"
+if [ $ENABLE_SATELLITE == "true" ] || [ -z $ENABLE_SATELLITE ];
+then 
+    . "${project_dir}/lib/qubinode_satellite.sh"
+fi 
 . "${project_dir}/lib/qubinode_tower.sh"
 . "${project_dir}/lib/qubinode_rhel.sh"
 . "${project_dir}/lib/qubinode_kcli.sh"
 
 # Exit if this is executed as the root user
 if is_root; then
-    echo "Error: qubi-installer should be run as a normal user, not as root!"
-    exit 1
+    if grep -Fq "QUBINODE_BIN" /root/.bash_profile;
+    then
+        echo "Skipping all users setup"
+        setup_required_bin_paths
+    else
+        ln -s /root/qubinode-installer /opt/
+        ln -s /opt/qubinode-installer/qubinode-installer /usr/local/bin/qubinode-installer 
+        echo "export QUBINODE_BIN=true" >>  /root/.bash_profile
+    fi
+
 fi
 
 echo ""

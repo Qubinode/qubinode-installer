@@ -106,7 +106,7 @@ display_other_options () {
         then
             CHECK_PULL_SECRET=no
             setup_download_options
-	    download_required_redhat_files
+            download_files
             qubinode_deploy_tower
         else
             display_other_options

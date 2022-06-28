@@ -37,33 +37,47 @@
         validate_certs: no
       register: idm_status
 
-    - name: running removal steps for VM
-      when: vm_teardown|bool
-      block:
-        - name: call the include_idm_records_tasks.yml to remove dns records
-          include_tasks: include_idm_records_tasks.yml
-
-        - name: Include deploy-kvm-vm role
-          include_role:
-            name: deploy-kvm-vm
-
-        - name: REMOVE|ensure {{ vm_name }} is removed from inventory
-          lineinfile:
-            path: "{{ inventory_file }}"
-            regexp: "^{{ vm_name }}"
-            state: absent
-          when: vm_teardown|bool
-
     - name: Include deploy-kvm-vm role
       include_role:
         name: deploy-kvm-vm
-      when: not vm_teardown|bool
 
     - meta: refresh_inventory
 
-    - name: call the include_idm_records_tasks.yml to add dns records
-      include_tasks: include_idm_records_tasks.yml
-      when: not vm_teardown|bool
+    - name: determine if we are creating or deleting the DNS record
+      set_fact:
+        dns_a_result: "none"
+        dns_ptr_result: "none"
+        record_state: "{{ 'absent' if vm_teardown|bool else 'present' }}"
+      tags: create_dns_records
 
+    - name: Create or Delete {{ vm_name }} A Records
+      when: idm_status.status == 200
+      ipa_dnsrecord:
+        zone_name: "{{ domain }}"
+        record_name: "{{ hostvars[vm_name].inventory_hostname }}"
+        record_type: A
+        #record_ttl: 300
+        record_value: "{{ hostvars[vm_name].ansible_host }}"
+        state: "{{ record_state }}"
+        validate_certs: no
+      tags: create_dns_records
 
+    - name: Create or Delete {{ vm_name }} PTR Records
+      when: idm_status.status == 200
+      ipa_dnsrecord:
+        zone_name: "{{ qubinode_ptr }}"
+        record_name: "{{ hostvars[vm_name].ansible_host.split('.')[3:4] | join('.') }}"
+        record_type: PTR
+        #record_ttl: 300
+        record_value: "{{ hostvars[vm_name].inventory_hostname }}.{{ domain }}."
+        state: "{{ record_state }}"
+        validate_certs: no
+      tags: create_dns_records
+
+    - name: REMOVE|ensure {{ vm_name }} is removed from inventory
+      lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ vm_name }}"
+        state: absent
+      when: vm_teardown|bool
 
