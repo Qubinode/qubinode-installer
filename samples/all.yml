@@ -32,7 +32,9 @@ rhsm_reg_method: ""
 rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
 rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
 ansible_version: 2.9.10
+ansible_core_version: 2.12.2
 ansible_release: 2.9
+rhel9_version: 9.0
 rhel8_version: 8.5
 rhel7_version: 7.9
 

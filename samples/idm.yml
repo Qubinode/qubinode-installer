@@ -23,7 +23,7 @@ kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
 
 ########################
 # RHEL IdM VM attributes
-rhel_major: "8"
+rhel_major: "9"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
 cloud_init_vm_image: rhel-8.5-x86_64-kvm.qcow2

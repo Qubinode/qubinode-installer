@@ -11,13 +11,13 @@ function kvm_host_variables () {
     RHEL_VERSION=$(get_rhel_version)
 
     echo  "Base Operating System ${RHEL_VERSION}"
-    if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
+    if  [ $RHEL_VERSION == "RHEL9" ] || [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
     then 
         RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
         # Set the RHEL version
         if grep '""' "${kvm_host_vars_file}"|grep -q rhel_release
         then
-            rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+            rhel_release=$(cat /etc/redhat-release | grep -o [7-9].[0-9])
             sed -i "s#rhel_release: \"\"#rhel_release: "$rhel_release"#g" "${kvm_host_vars_file}"
         fi
     fi 
@@ -34,7 +34,10 @@ function kvm_host_variables () {
     fi 
     
     
-    if [ "A${host_rhel_major}" == "A8" ]
+    if [ "A${host_rhel_major}" == "A9" ]
+    then
+       rhel_release=$(awk '/rhel9_version:/ {print $2}' "${vars_file}")
+    elif [ "A${host_rhel_major}" == "A8" ]
     then
        rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
     elif [ "A${host_rhel_major}" == "A7" ]
@@ -47,11 +50,11 @@ function kvm_host_variables () {
     then
        rhel_release=${fedora_check}
     else
-        rhel_release=$(cat /etc/redhat-release | grep -o [7-8].[0-9])
+        rhel_release=$(cat /etc/redhat-release | grep -o [7-9].[0-9])
     fi
 
 
-    if [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "CENTOS8" ]] || [[ $RHEL_VERSION == "FEDORA" ]]; then
+    if  [[ $RHEL_VERSION == "RHEL9" ]] || [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "CENTOS8" ]] || [[ $RHEL_VERSION == "FEDORA" ]]; then
       sed -i 's#libvirt_pkgs_8:#libvirt_pkgs:#g' "${vars_file}"
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
       sed -i 's#libvirt_pkgs_7:#libvirt_pkgs:#g' "${vars_file}"

@@ -127,7 +127,9 @@ function setup_variables () {
 }
 
 function get_rhel_version() {
-  if cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
+  if cat /etc/redhat-release  | grep 9.[0-9] > /dev/null 2>&1; then
+    export BASE_OS="RHEL9"
+  elif cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL8"
   elif cat /etc/redhat-release  | grep 7.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL7"
@@ -344,8 +346,8 @@ setup_download_options () {
 }
 
 function installer_artifacts_msg () {
-	rhel_release=$(awk '/rhel8_version:/ {print $2}' "${vars_file}")
-	rhel_qcow_checksum=$(awk '/qcow_rhel8u2_checksum:/ {print $2}' "${vars_file}")
+	rhel_release=$(awk '/rhel9_version:/ {print $2}' "${vars_file}")
+	rhel_qcow_checksum=$(awk '/qcow_rhel9_checksum:/ {print $2}' "${vars_file}")
         printf "%s\n\n" ""
         if [[ "A${PULL_MISSING}" == "Ayes" ]] && [[ "A${QCOW_MISSING}" == "Ayes" ]]
         then
@@ -369,7 +371,7 @@ function installer_artifacts_msg () {
         fi
 
         printf "%s\n" "    You can download the this qcow image from:" 
-	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---8/${rhel_release}/x86_64/product-software${end}."
+	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---9/${rhel_release}/x86_64/product-software${end}."
         printf "%s\n" "    The current tested checksum is:"
         printf "%s\n" "    ${mag}${rhel_qcow_checksum}${end}"
         printf "%s\n" "    Copy the url from the download page and download with:"
