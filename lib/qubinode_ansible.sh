@@ -8,13 +8,13 @@ function ensure_supported_ansible_version () {
     ANSIBLE_VERSION=$(awk '/ansible_version/ {print $2}' "${vars_file}")
     ANSIBLE_RELEASE=$(awk '/ansible_release/ {print $2}' "${vars_file}")
     ANSIBLE_RPM=$(awk '/ansible_rpm/ {print $2}' "${vars_file}")
-    CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
+     CURRENT_ANSIBLE_VERSION=$(ansible --version | awk '/^ansible/ {print $2}')
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
     RHEL_VERSION=$(get_rhel_version)
 
     if [[ $RHEL_VERSION == "RHEL9" ]]; then
-        AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+        AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible-core | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
     elif [[ $RHEL_VERSION == "RHEL8" ]]; then
         AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
@@ -106,7 +106,7 @@ function qubinode_setup_ansible () {
     if [ ! -f /usr/bin/ansible ];
     then
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
-            echo "Installing ansible.."
+           ANSIBLE_REPO=$(awk '/rhel9_ansible_repo:/ {print $2}' "${vars_file}")
         elif [[ $RHEL_VERSION == "RHEL8" ]]; then
             ANSIBLE_REPO=$(awk '/rhel8_ansible_repo:/ {print $2}' "${vars_file}")
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
