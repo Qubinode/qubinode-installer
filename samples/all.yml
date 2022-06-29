@@ -33,7 +33,7 @@ rhel7_ansible_repo: rhel-7-server-ansible-2.9-rpms
 rhel8_ansible_repo: ansible-2.9-for-rhel-8-x86_64-rpms
 ansible_version: 2.9.10
 ansible_release: 2.9
-rhel8_version: 8.5
+rhel8_version: 8.6
 rhel7_version: 7.9
 
 # All VMs created name will begin with this prefix.
