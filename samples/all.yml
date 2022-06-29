@@ -189,6 +189,7 @@ libvirt_pkgs_8:
    - cockpit-machines
    - cockpit-composer
    - osbuild-composer
+   - composer-cli
 libvirt_pkgs_7:
    - virt-install
    - libvirt-daemon-config-network

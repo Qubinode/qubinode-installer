@@ -56,8 +56,3 @@
 - src: linux-system-roles.cockpit
 
 - src: linux-system-roles.firewall
-
-collections:
-- community.general
-- ansible.posix
-- community.libvirt

@@ -21,30 +21,32 @@ function ensure_supported_ansible_version () {
         AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
     fi
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
-    then
-        if [ "A${AVAILABLE_VERSION}" != "A" ]
+    if [[ $RHEL_VERSION == "RHEL9" ]] ||  [[ $RHEL_VERSION == "RHEL8" ]] || [[ $RHEL_VERSION == "RHEL7" ]]; then
+        if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
         then
-            if [[ $RHEL_VERSION == "RHEL9" ]]; then
-                sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
-            elif [[ $RHEL_VERSION == "RHEL8" ]]; then
-                sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
-            elif [[ $RHEL_VERSION == "RHEL7" ]]; then
-                sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+            if [ "A${AVAILABLE_VERSION}" != "A" ]
+            then
+                if [[ $RHEL_VERSION == "RHEL9" ]]; then
+                    sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
+                elif [[ $RHEL_VERSION == "RHEL8" ]]; then
+                    sudo dnf install "ansible-${AVAILABLE_VERSION}" -y
+                elif [[ $RHEL_VERSION == "RHEL7" ]]; then
+                    sudo yum install "ansible-${AVAILABLE_VERSION}" -y
+                fi
+            else
+                printf "%s\n" " Could not find any available version of ansible greater than the"
+                printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
+                exit 1
             fi
-        else
-            printf "%s\n" " Could not find any available version of ansible greater than the"
-            printf "%s\n" " current installed version $CURRENT_ANSIBLE_VERSION"
-            exit 1
         fi
-    fi
 
-    if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
-    then
-        printf "%s\n" ""
-        printf "%s\n" " ${cyn}**WARNING**${end}"
-        printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is later than the tested version of $ANSIBLE_VERSION"
-    fi
+        if [ "A${ANSIBLE_VERSION_GOOD}" != "AYES" ]
+        then
+            printf "%s\n" ""
+            printf "%s\n" " ${cyn}**WARNING**${end}"
+            printf "%s\n" " Your ansible version $CURRENT_ANSIBLE_VERSION is later than the tested version of $ANSIBLE_VERSION"
+        fi
+    fi 
 }
 
 function qubinode_setup_ansible () {
@@ -138,10 +140,10 @@ function qubinode_setup_ansible () {
         elif [[ $RHEL_VERSION == "CENTOS8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
@@ -193,6 +195,9 @@ function qubinode_setup_ansible () {
         then
 	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy collection install community.general > /dev/null 2>&1 || exit $?
+            ansible-galaxy collection install ansible.posix > /dev/null 2>&1 || exit $?
+            ansible-galaxy collection install community.libvirt > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " ${mag}Downloading required roles${end}"
             ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
