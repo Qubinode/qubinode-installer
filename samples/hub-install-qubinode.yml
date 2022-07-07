@@ -1,0 +1,16 @@
+# https://kcli.readthedocs.io/en/latest/#plans
+version: stable
+network_type: OVNKubernetes
+kvm_openstack: true
+cluster: ocp4
+domain: lab.qubinode.io
+numcpus: 16
+disk_size: 120
+masters: 3
+workers: 3
+extra_worker_disks:
+  - 250
+network: bare-net
+metal3: true
+api_ip: 192.168.150.253
+ingress_ip: 192.168.150.252
