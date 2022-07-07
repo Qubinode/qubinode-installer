@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -xe
+set -xe
 function gozones_variables () {
     setup_variables
     gozones_vars_file="${project_dir}/playbooks/vars/gozones-dns.yml"
@@ -56,13 +56,13 @@ function restartcontianer(){
 }
 
 function remove_gozones(){
-    kcli delete network bare-net -y
-    kcli delete network ztpfw -y
+    #kcli delete network bare-net -y
+    #kcli delete network ztpfw -y
     sudo systemctl stop dns-go-zones
     sudo systemctl disable dns-go-zones
     sudo rm -rf  /etc/systemd/system/dns-go-zones.service
     sudo systemctl daemon-reload
-    sudo rm -rf ${1}
+    sudo rm -rf  ${1}/config
     if [ $( sudo podman ps -qa -f status=running | wc -l) -eq 1 ]; then
         sudo podman stop $(sudo podman ps | grep dns-go-zones | awk '{print $1}')
     fi 
@@ -108,55 +108,100 @@ EOT
 
 function start_deployment(){
     # Create the YAML File
-    sudo mkdir -p ${1}/dns/volumes/go-zones/
-    sudo mkdir -p ${1}/dns/volumes/bind/
-    sudo curl -L https://raw.githubusercontent.com/kenmoini/go-zones/main/container_root/opt/app-root/vendor/bind/named.conf  --output ${1}/dns/volumes/bind/named.conf
-    sudo ls -alth  ${1}/dns/volumes/bind/named.conf || exit $?
+    sudo mkdir -p ${1}/config
 
-sudo tee  ${1}/dns/volumes/go-zones/zones.yml > /dev/null <<EOT
-zones:
-  - name: ${2}
-    subnet: ${3}
-    network: internal
-    primary_dns_server: ${4}.${2}
-    ttl: 3600
-    records:
-      NS:
-        - name: ${4}
-          ttl: 86400
-          domain: ${2}.
-          anchor: '@'
-      A:
-        - name: ${4}
-          ttl: 6400
-          value: ${5}
-        - name: api.ocp4
-          ttl: 6400
-          value: ${6}.253
-        - name: api-int.ocp4
-          ttl: 6400
-          value: ${6}.253
-        - name: '*.apps.ocp4'
-          ttl: 6400
-          value: ${6}.252
+sudo tee  ${1}/config/config.yml > /dev/null <<EOT
+app:
+
+  server:
+    host: 0.0.0.0
+    base_path: "/app"
+    port: 8080
+    timeout:
+      server: 30
+      read: 15
+      write: 10
+      idle: 5
+EOT
+sudo tee   ${1}/config/server.yml > /dev/null <<EOT
+# example DNS Server Configuration
+dns:
+  ##########################################################################################
+  # acls is a list of named network groups
+  acls:
+    # privatenets can respond to internal client queries with an internal IP
+    - name: privatenets
+      networks:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        - localhost
+        - localnets
+    # externalwan would match any external network
+    - name: externalwan
+      networks:
+        - any
+        - "!10.0.0.0/8"
+        - "!172.16.0.0/12"
+        - "!192.168.0.0/16"
+        - "!localhost"
+        - "!localnets"
+
+  ##########################################################################################
+  # views is a list of named views that glue together acls and zones
+  views:
+    - name: internalNetworks
+      # acls is a list of the named ACLs from above that this view will be applied to
+      acls:
+      - privatenets
+      # recursion is a boolean that controls whether this view will allow recursive DNS queries
+      recursion: true
+      # if recursion is true, then you can provide forwarders to be used for recursive queries 
+      #  such as a PiHole DNS server or just something like Cloudflare DNS at 1.0.0.1 and 1.1.1.1
+      forwarders:
+      - 1.1.1.1
+      - 1.0.0.1
+      # zones is a list of named Zones to associate with this view
+      zones:
+      - qubinode-network
+  zones:
+    - name: qubinode-network
+      zone:  ${2}
+      primary_dns_server: ${4}.${2}
+      default_ttl: 3600
+      records:
+        NS:
+          - name: ${4}
+            ttl: 86400
+            domain: ${2}.
+            anchor: '@'
+        A:
+          - name: ${4}
+            ttl: 6400
+            value: ${5}
+          - name: api.ocp4
+            ttl: 6400
+            value: ${6}.253/24
+          - name: api-int.ocp4
+            ttl: 6400
+            value: ${6}.253
+          - name: '*.apps.ocp4'
+            ttl: 6400
+            value: ${6}.252
 EOT
 
-    ## Create a forwarder file to redirect all other inqueries to this Mirror VM
-    sudo mkdir -p ${1}/dns/volumes/bind/
-sudo tee ${1}/dns/volumes/bind/external_forwarders.conf> /dev/null <<EOT
-    forwarders {
-    127.0.0.53;
-    ${FORWARD_IP};
-    };
-EOT
 
-    sudo podman run -d --name dns-go-zones \
-    --net host \
-    -m 512m \
-    -v ${1}/dns/volumes/go-zones:/etc/go-zones/:Z \
-    -v ${1}/dns/volumes/bind:/opt/app-root/vendor/bind/:Z \
-    quay.io/kenmoini/go-zones:file-to-bind || exit 1
-
+    #sudo podman run -d --name dns-go-zones \
+    #--net host \
+    #-m 512m \
+    #-v ${1}/dns/volumes/go-zones:/etc/go-zones/:Z \
+    #-v ${1}/dns/volumes/bind:/opt/app-root/vendor/bind/:Z \
+    #quay.io/kenmoini/go-zones:file-to-bind || exit 1
+    sudo sed -i 's/enforcing/permissive/g' /etc/selinux/config
+    sudo setenforce 0
+    sudo podman run --name dns-go-zones -d -p 53 -m 512m --net host -v  "${1}"/config:/etc/go-zones:Z quay.io/kenmoini/go-zones:file-to-bind-latest || exit 1
+    sudo podman ps 
+    sudo podman ps -a 
     sudo podman generate systemd \
         --new --name dns-go-zones \
         | sudo tee /etc/systemd/system/dns-go-zones.service

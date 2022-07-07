@@ -23,7 +23,7 @@ primary_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
 qubinode_bridge_name: qubibr0
 
 # RHEL 7.9 is the current tested RHEL 7 minor release.
-# RHEL 8.5  is the current tested RHEL 8 minor release.
+# RHEL 8.6  is the current tested RHEL 8 minor release.
 rhel_release: ""
 
 # This variable is being phased out
