@@ -125,7 +125,7 @@ app:
 EOT
 if [ -f "${project_dir}/samples/dns-server.yml" ];
 then 
-  cp "${project_dir}/samples/dns-server.yml" "${1}/config/dns-server.yml"
+  sudo cp "${project_dir}/samples/dns-server.yml" "${1}/config/dns-server.yml"
 else
 sudo tee   ${1}/config/server.yml > /dev/null <<EOT
 # example DNS Server Configuration
