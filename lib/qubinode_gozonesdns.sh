@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+#set -xe
 function gozones_variables () {
     setup_variables
     gozones_vars_file="${project_dir}/playbooks/vars/gozones-dns.yml"

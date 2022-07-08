@@ -3,7 +3,7 @@
 # This script is also used to auto configure to the dns server server your qubinode is currently using.
 # Tested on Fedora 30
 
-set -xe
+#set -xe
 
 read -p 'Enter IDM Server Endpoint: ' idmserver
 read -p 'Enter OpenShift Endpoint: ' openshifturl
