@@ -70,22 +70,9 @@ rhel8_static:
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
-rhel7:
- image: rhel-server-7.9-update-3-x86_64-kvm.qcow2
- numcpus: 2
- memory: 4096
- rhnregister: true
- reservedns: true
- nets:
-  - name: qubinet
- disks:
-  - size: 20
- cmds:
-  - echo CHANGEPASSWORD | passwd --stdin root
-  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
-fedora35:
- image: Fedora-Cloud-Base-35-1.2.x86_64.qcow2
+fedora36:
+ image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
  numcpus: 2
  memory: 4096
  nets:
@@ -98,7 +85,7 @@ fedora35:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 centos8stream:
- image: 'CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2'
+ image: '	CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
  numcpus: 2
  memory: 4096
  disks:
@@ -111,7 +98,7 @@ centos8stream:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 centos8jumpbox:
- image: 'CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2'
+ image: '	CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
  numcpus: 4
  memory: 4096
  disks:
@@ -130,7 +117,7 @@ centos8jumpbox:
   - firewall-cmd --reload
 
 ztpfwjumpbox:
- image: 'CentOS-Stream-GenericCloud-8-20210603.0.x86_64.qcow2'
+ image: '	CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
