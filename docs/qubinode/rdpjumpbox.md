@@ -27,7 +27,7 @@ sudo kcli info vm jumpbox
 ```
 
 ```
-sudo kcli ssh jumpbox "ip addr"
+sudo kcli ssh jumpbox 
 ```
 
 ### Delete Jumpbox
