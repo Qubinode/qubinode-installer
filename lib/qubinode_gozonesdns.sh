@@ -123,7 +123,7 @@ app:
       write: 10
       idle: 5
 EOT
-if [ -f cp "${project_dir}/samples/dns-server.yml" ];
+if [ -f "${project_dir}/samples/dns-server.yml" ];
 then 
   cp "${project_dir}/samples/dns-server.yml" "${1}/config/dns-server.yml"
 else
