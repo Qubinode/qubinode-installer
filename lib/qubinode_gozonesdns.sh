@@ -125,7 +125,7 @@ app:
 EOT
 if [ -f "${project_dir}/samples/dns-server.yml" ];
 then 
-  sudo cp "${project_dir}/samples/dns-server.yml" "${1}/config/dns-server.yml"
+  sudo cp "${project_dir}/samples/dns-server.yml" "${1}/config/server.yml"
 else
 sudo tee   ${1}/config/server.yml > /dev/null <<EOT
 # example DNS Server Configuration
@@ -234,8 +234,8 @@ function qubinode_setup_gozones() {
         configure_libvirt_networks ${ZTPFW_NETWORK_CIDR}  ${ISOLATED_NETWORK_CIDR} 
         disable_ivp6
         start_deployment ${MIRROR_BASE_PATH}  $ISOLATED_NETWORK_DOMAIN  $ISOLATED_NETWORK_CIDR $MIRROR_VM_HOSTNAME $MIRROR_VM_ISOLATED_BRIDGE_IFACE_IP ${ISOLATED_OCTECT}
-        start_service
-        test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
+        #start_service
+        #test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
     elif [ $( sudo podman ps -qa -f status=exited ) ]; then
         gozones_variables 
         remove_gozones ${MIRROR_BASE_PATH}
