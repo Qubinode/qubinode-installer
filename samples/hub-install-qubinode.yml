@@ -4,7 +4,7 @@ network_type: OVNKubernetes
 kvm_openstack: true
 cluster: ocp4
 domain: lab.qubinode.io
-numcpus: 16
+numcpus: 4
 disk_size: 120
 masters: 3
 workers: 3
