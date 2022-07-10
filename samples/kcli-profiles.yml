@@ -1,6 +1,6 @@
 # /usr/lib/python3.6/site-packages/kvirt/defaults.py
 rhel8:
- image: rhel-8.5-update-2-x86_64-kvm.qcow2
+ image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -17,7 +17,7 @@ rhel8:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel8_mirror_vm:
- image: rhel-8.5-update-2-x86_64-kvm.qcow2
+ image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 4
  memory: 8192
@@ -50,7 +50,7 @@ rhel8_mirror_vm:
   - cp /home/admin/qubinode-installer/pull_secret.json /home/cloud-user/pull_secret.json
 
 rhel8_static:
- image: rhel-8.5-update-2-x86_64-kvm.qcow2
+ image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -71,7 +71,7 @@ rhel8_static:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel8_jumpbox:
- image: rhel-8.5-update-2-x86_64-kvm.qcow2
+ image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 4
  memory: 8192
