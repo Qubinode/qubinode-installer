@@ -123,6 +123,10 @@ app:
       write: 10
       idle: 5
 EOT
+if [ -f "${project_dir}/samples/dns-server.yml" ];
+then 
+  sudo cp "${project_dir}/samples/dns-server.yml" "${1}/config/server.yml"
+else
 sudo tee   ${1}/config/server.yml > /dev/null <<EOT
 # example DNS Server Configuration
 dns:
@@ -189,7 +193,7 @@ dns:
             ttl: 6400
             value: ${6}.252
 EOT
-
+fi 
 
     #sudo podman run -d --name dns-go-zones \
     #--net host \

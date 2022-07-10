@@ -23,7 +23,7 @@ for the default deployment of a cluster with 3 controlplane and 3 computes.
 **Software**
 * Red Hat Enteprise Linux 9.0
 Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md)_.
-One of the  supported base OS is Red Hat Enterprise Linux 8.5 refer to the [Getting Started Guide](docs/README.md)
+One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](docs/README.md)
 * Centos 8 Streams is supported base OS.
 * Or Fedora 36 (Testing) is a supported base OS.
 
@@ -31,7 +31,7 @@ One of the  supported base OS is Red Hat Enterprise Linux 8.5 refer to the [Gett
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.5     | 2.9               | 2.5.0 |
+|     Release 2.5     | 2.10               | 2.8.0 |
 
 
 ### Features in v2.5.0 Version
@@ -94,20 +94,6 @@ We kindly ask you to open an issue if you find anything wrong and or something t
 If you have any direct questions, reach out to us [using the guide](docs/communication.md).
 
 ## Known issues
-
-## Qubinode Dev Branch for next release
-Feature  |  Status
---|---
-Red Hat Satellite Server  | In progress
-CNV Support | Dev
-Cockpit Integration | In progress
-Disconnected Installation | In progress
-
-## Roadmap
-* CNV Installation 
-* Multinode Depolyment
-* Libvirt with KVM  OCP - (Experimental)
-* OpenWrt Router Support - (Experimental
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)
