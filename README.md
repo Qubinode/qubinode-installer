@@ -21,26 +21,32 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 8.4 installed 
-Refer to the _[hardware recommendation for lab hardware suggestions](docs/qubinode/hardwareguide.md)_.
-The required base OS is Red Hat Enterprise Linux 7.8 refer to the [Getting Started Guide](docs/README.md)
+* Red Hat Enteprise Linux 9.0
+Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md)_.
+One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](docs/README.md)
+* Centos 8 Streams is supported base OS.
+* Or Fedora 36 (Testing) is a supported base OS.
 
 ## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.4.6     | 2.9               | 2.4.6 |
+|     Release 2.5     | 2.10               | 2.8.0 |
 
 
-### Features in v2.4.6 Version
+### Features in v2.5.0 Version
 New Features |
 --|
-OpenShift 4.8 |
-IDM fixes |
-ODF fixes and updates |
-External Baremetal Support |
-kcli support |
-Fixes for Anisble Tower Deployment | 
+OpenShift 4.10 |
+Gozones DNS |
+Compitability with Centos 8 Streams|
+Compitability with Fedora Server |
+[Microshift](https://github.com/redhat-et/microshift) | 
+[OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/kenmoini/ocp4-ai-svc-libvirt) | 
+[ztp-pipeline-relocatable](https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable) development box | 
+[Assisted Installer Scripts](https://github.com/tosin2013/openshift-4-deployment-notes/tree/master/assisted-installer) development box | 
+[YAKKO](https://github.com/ozchamo/YAKKO) |
+
 
 
 See [Release Document](docs/qubinode/releases.md) for features history.
@@ -88,20 +94,6 @@ We kindly ask you to open an issue if you find anything wrong and or something t
 If you have any direct questions, reach out to us [using the guide](docs/communication.md).
 
 ## Known issues
-
-## Qubinode Dev Branch for next release
-Feature  |  Status
---|---
-Red Hat Satellite Server  | In progress
-CNV Support | Dev
-Cockpit Integration | In progress
-Disconnected Installation | In progress
-
-## Roadmap
-* CNV Installation 
-* Multinode Depolyment
-* Libvirt with KVM  OCP - (Experimental)
-* OpenWrt Router Support - (Experimental
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)

@@ -26,7 +26,7 @@ kvm_vm_pool_dir: "{{ kvm_host_libvirt_dir }}"
 rhel_major: "8"
 qcow_rhel_release: "{{ rhel_major }}"
 rhel_release: "{{ rhel_major }}"
-cloud_init_vm_image: rhel-8.4-x86_64-kvm.qcow2
+cloud_init_vm_image: rhel-8.5-x86_64-kvm.qcow2
 idm_server_ip: ""
 idm_zone_overlap: false
 idm_hostname: "{{ instance_prefix }}-{{ idm_server_name }}"

@@ -22,8 +22,8 @@ primary_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
 # deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
 qubinode_bridge_name: qubibr0
 
-# RHEL 7.8 is the current tested RHEL 7 minor release.
-# RHEL 8.3  is the current tested RHEL 8 minor release.
+# RHEL 7.9 is the current tested RHEL 7 minor release.
+# RHEL 8.6  is the current tested RHEL 8 minor release.
 rhel_release: ""
 
 # This variable is being phased out
@@ -33,7 +33,7 @@ run_qubinode_setup: yes
 run_storage_check: ""
 
 # Enable cockpit service
-enable_cockpit: no
+enable_cockpit: yes
 
 # # Set to yes to add the admin_user to the libvirt group
 # # and change libvirt to be accessible user 
@@ -41,7 +41,7 @@ enable_libvirt_admin_user: yes
 
 # Configure the user bash shell login prompt
 # # This will overwrite your existing .bashrc, .vimrc and other terminal configuration files
-configure_shell: no
+configure_shell: yes
 
 # set path to libvirt images
 kvm_host_libvirt_dir: /var/lib/libvirt/images

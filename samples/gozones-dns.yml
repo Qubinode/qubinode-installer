@@ -1,0 +1,8 @@
+---
+mirror_base_path: "/opt/service-containers/"
+mirror_vm_hostname: "dns"
+mirror_vm_isolated_bridge_iface_ip: "192.168.150.1"
+isolated_network_cidr: "192.168.150.0/24"
+isolated_octect: "192.168.150"
+forward_ip: "1.1.1.1"
+ztpfw_network_cidr: "192.168.7.0/24"
