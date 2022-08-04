@@ -42,7 +42,7 @@ function kcli_configure_images(){
     echo "Downloading Centos Streams"
     sudo kcli download image centos8stream
     #echo "Downloading Red Hat Enterprise Linux 8"
-    #sudo kcli download image rhel8
+    sudo kcli download image rhel8
 
 }
 
