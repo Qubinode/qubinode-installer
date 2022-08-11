@@ -67,6 +67,7 @@ function remove_gozones(){
         sudo podman stop $(sudo podman ps | grep dns-go-zones | awk '{print $1}')
     fi 
     sudo podman rm $(sudo podman ps -a | grep dns-go-zones | awk '{print $1}')
+    update_resolv_conf $FORWARD_IP
 }
 
 function qubinode_gozones_maintenance () {
@@ -236,6 +237,7 @@ function qubinode_setup_gozones() {
         start_deployment ${MIRROR_BASE_PATH}  $ISOLATED_NETWORK_DOMAIN  $ISOLATED_NETWORK_CIDR $MIRROR_VM_HOSTNAME $MIRROR_VM_ISOLATED_BRIDGE_IFACE_IP ${ISOLATED_OCTECT}
         start_service
         test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
+        update_resolv_conf  ${KVM_HOST_IP}
     elif [ $( sudo podman ps -qa -f status=exited ) ]; then
         gozones_variables 
         remove_gozones ${MIRROR_BASE_PATH}
@@ -244,6 +246,7 @@ function qubinode_setup_gozones() {
         start_deployment ${MIRROR_BASE_PATH}  $ISOLATED_NETWORK_DOMAIN  $ISOLATED_NETWORK_CIDR $MIRROR_VM_HOSTNAME $MIRROR_VM_ISOLATED_BRIDGE_IFACE_IP ${ISOLATED_OCTECT}
         start_service
         test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
+        update_resolv_conf  ${KVM_HOST_IP}
     elif [ $( sudo podman ps -qa -f status=running | wc -l ) -gt 0 ]; then
       echo "gozones is installed"
       gozones_variables
