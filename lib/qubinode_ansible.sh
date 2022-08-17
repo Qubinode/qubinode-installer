@@ -127,23 +127,23 @@ function qubinode_setup_ansible () {
 
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete
             install_podman_dependainces
-        elif [[ $RHEL_VERSION == "CENTOS8" ]]; then
+        elif [ $(get_distro) == "centos" ]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils 
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
@@ -173,10 +173,16 @@ function qubinode_setup_ansible () {
 
 	# use the ansible requirements file that matches the current branch
 	branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
+
 	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
+    echo $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
+
+    DEFAULT_ANSIBLE_COLLECTIONS_FILE="${project_dir}/collections/requirements.yml"
+    echo $DEFAULT_ANSIBLE_COLLECTIONS_FILE
+
 	if [ "A${branch}" != "A" ]
 	then
-	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
+	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements.yml"
 	    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
 
 	    # create a matching branch requirements file if one does not exist
@@ -195,18 +201,20 @@ function qubinode_setup_ansible () {
         then
 	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy collection install --force -r "${DEFAULT_ANSIBLE_COLLECTIONS_FILE}" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " ${mag}Downloading required roles${end}"
-            ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy collection install --force -r "${DEFAULT_ANSIBLE_COLLECTIONS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 
         # Ensure required modules are downloaded
-        if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
+        if [ ! -f "${project_dir}/module_utils/redhat_repositories.py" ]
         then
-            test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
+            test -d "${project_dir}/module_utils" || mkdir "${project_dir}/module_utils"
             CURRENT_DIR=$(pwd)
-            cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
+            cd "${project_dir}/module_utils/"
+            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
             cd "${CURRENT_DIR}"
         fi
     else
@@ -220,7 +228,7 @@ function qubinode_setup_ansible () {
 }
 
 function decrypt_ansible_vault () {
-    vaultfile="${project_dir}/playbooks/vars/vault.yml"
+    vaultfile="${project_dir}/host_vars/vault.yml"
     grep -q VAULT "${vault_vars_file}"
     if [ "A$?" == "A0" ]
     then
@@ -231,7 +239,7 @@ function decrypt_ansible_vault () {
 }
 
 function encrypt_ansible_vault () {
-    vaultfile="${project_dir}/playbooks/vars/vault.yml"
+    vaultfile="${project_dir}/host_vars/vault.yml"
     grep -q VAULT "${vaultfile}"
     if [ "A$?" != "A0" ]
     then
