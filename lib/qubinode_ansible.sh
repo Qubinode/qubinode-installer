@@ -177,8 +177,6 @@ function qubinode_setup_ansible () {
 	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
     echo $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
 
-    DEFAULT_ANSIBLE_COLLECTIONS_FILE="${project_dir}/collections/requirements.yml"
-    echo $DEFAULT_ANSIBLE_COLLECTIONS_FILE
 
 	if [ "A${branch}" != "A" ]
 	then
@@ -201,11 +199,9 @@ function qubinode_setup_ansible () {
         then
 	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
-            ansible-galaxy collection install --force -r "${DEFAULT_ANSIBLE_COLLECTIONS_FILE}" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " ${mag}Downloading required roles${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
-            ansible-galaxy collection install --force -r "${DEFAULT_ANSIBLE_COLLECTIONS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 
         # Ensure required modules are downloaded
