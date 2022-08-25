@@ -230,7 +230,7 @@ function test_gozones(){
 }
 
 function qubinode_setup_gozones() {
-    if [ $( sudo podman ps -a -f name='dns-go-zones' -f status=running | wc -l) -eq 0 ]; then
+    if [ $( sudo podman ps -a -f name='dns-go-zones'| wc -l) -eq 0 ]; then
         gozones_variables 
         configure_libvirt_networks ${ZTPFW_NETWORK_CIDR}  ${ISOLATED_NETWORK_CIDR} 
         disable_ivp6
@@ -247,7 +247,7 @@ function qubinode_setup_gozones() {
         start_service
         test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
         update_resolv_conf  ${KVM_HOST_IP}
-    elif [ $( sudo podman ps -qa -f name='dns-go-zones' -f status=running | wc -l ) -gt 0 ]; then
+    elif [ $( sudo podman ps -qa -f name='dns-go-zones'| wc -l ) -gt 0 ]; then
       echo "gozones is installed"
       gozones_variables
       test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
