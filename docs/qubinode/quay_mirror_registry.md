@@ -29,7 +29,7 @@ sudo kcli info vm mirror_vm
 ```
 ### Optional update dns 
 ```
-sudo vim /opt/disconnected-mirror/dns/volumes/go-zones/zones.yml
+sudo vim  /opt/service-containers/config/server.yml
 ```
 
 **Example**
