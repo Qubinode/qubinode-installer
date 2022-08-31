@@ -19,7 +19,7 @@ cd ~/qubinode-installer
 
 ### Install Mirror Registry
 ```
-sudo kcli create vm -p rhel8_mirror_vm mirror_vm --wait
+sudo kcli create vm -p mirror_vm mirror_vm --wait
 sudo kcli ssh mirror_vm
 ```
 
