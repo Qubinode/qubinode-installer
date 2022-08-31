@@ -179,3 +179,25 @@ ztpfwjumpbox:
   - systemctl enable xrdp --now
   - firewall-cmd --permanent --add-port=3389/tcp 
   - firewall-cmd --reload
+
+
+cvadjumpbox:
+ image: 'CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - name: qubinet
+  - name: VLAN500
+  - name: FLOATING_IP
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
