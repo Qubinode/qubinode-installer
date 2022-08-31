@@ -35,7 +35,7 @@ mirror_vm:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
   - hostnamectl set-hostname mirror-vm.lab.qubinode.io
   - dnf update -y
-  - dnf install curl wget tar jq podman skopeo httpd-tools openssl nano nfs-utils bash-completion bind-utils ansible vim libvirt firewalld acl -y
+  - dnf install curl wget tar jq podman skopeo httpd-tools openssl nano nfs-utils bash-completion bind-utils ansible vim libvirt firewalld acl policycoreutils-python-utils -y
   - echo 0 > /proc/sys/net/ipv4/ip_unprivileged_port_start
   - VERSION=1.2.5;curl -OL https://github.com/quay/mirror-registry/releases/download/${VERSION}/mirror-registry-offline.tar.gz
   - tar -zxvf mirror-registry-offline.tar.gz
