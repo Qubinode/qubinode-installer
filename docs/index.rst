@@ -104,13 +104,13 @@ Getting the RHEL 7 or 8 Qcow Image
 
 Follow the same steps to get the RHEL 8 qcow image.
 
-If you are using tokens it should be:
-* $HOME/qubinode-installer/rhsm_token
+If you are using tokens it should be:: 
+    * $HOME/qubinode-installer/rhsm_token
 
 
-If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions:
-* $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
-* $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
+If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions::
+    * $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
+    * $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
 
 
 Install DNS server 
