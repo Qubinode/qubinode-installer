@@ -12,11 +12,11 @@ The first step is to get RHEL installed on your hardware
 Get Subscriptions
 -----------------
 -  Get your `No-cost developer subscription <https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux>`_ for RHEL.
--  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
+-  Get a Red Hat OpenShift Container Platform (OCP) `60-day evalution subscription <https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG>`_.
 
 Install Red Hat Enterprise Linux
 --------------------------------
-A bare metal system running Red Hat Enterprise Linux 8. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
+A bare metal system running Red Hat Enterprise Linux 8. Follow the `RHEL Installation Walkthrough <https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel>`_ to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
 
 1. Virtualization Host
 2. Server with GUI
@@ -57,26 +57,23 @@ The qubinode-installer needs to run as a regular user.
 
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
-Validate sudo user for admin
-```
+Validate sudo user for admin::
 $ sudo cat /etc/sudoers | grep admin
 admin ALL=(ALL) NOPASSWD: ALL 
 
 echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
-```
 
-```shell
+Start The Qubinode Installer::
 cd ~/qubinode-installer
 ./qubinode-installer -m setup
 ./qubinode-installer -m rhsm
 ./qubinode-installer -m ansible
 ./qubinode-installer -m host
-```
 
-At this point you should be able to acces the RHEL system via the cockpit web interface on:
-```
-https://SERVER_IP:9090
-```
+
+At this point you should be able to acces the RHEL system via the cockpit web interface on
+* https://SERVER_IP:9090
+
 ## Deploy a Red Hat Product
 
 Most products depends on the latest rhel 7 or 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
@@ -135,8 +132,8 @@ Products in Development
 
 Workflows
 =========
-* [ZTP for Factory Workflow qubinode dev box](https://gist.github.com/tosin2013/3b99a883078025de1a5327d532bf2cae)
-* [RHEL for Edge Automation Architecture Qubinode dev box](https://gist.github.com/tosin2013/72eb9a095d0f5ca5082c3a9597d2ae4f)
-* [Assisted Installer Hack-y scripts](https://github.com/tosin2013/openshift-4-deployment-notes/blob/master/assisted-installer/hack/README.md)
-* [Assisted Installer Qubinode Deployments Ansible](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
-* [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/tosin2013/ocp4-ai-svc-universal/tree/main)
+* `ZTP for Factory Workflow qubinode dev box <https://gist.github.com/tosin2013/3b99a883078025de1a5327d532bf2cae>`_
+* `RHEL for Edge Automation Architecture Qubinode dev box <https://gist.github.com/tosin2013/72eb9a095d0f5ca5082c3a9597d2ae4f>`_
+* `Assisted Installer Hack-y scripts <https://github.com/tosin2013/openshift-4-deployment-notes/blob/master/assisted-installer/hack/README.md>`_
+* `Assisted Installer Qubinode Deployments Ansible <https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts>`_
+* `OpenShift Assisted Installer Service, Universal Deployer <https://github.com/tosin2013/ocp4-ai-svc-universal/tree/main>`_
