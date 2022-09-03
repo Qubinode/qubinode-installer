@@ -4,6 +4,10 @@ Qubinode Overview
 
 A Qubinode is a bare metal node that uses the qubinode-installer to configure RHEL to function as a KVM host. The qubinode-installer can then be used to deploy additional Red Hat products as VMs running atop the Qubinode. 
 
+.. toctree::
+   kcli_deployment_guide
+
+
 Getting Started
 -----------------
 
