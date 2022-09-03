@@ -6,8 +6,8 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
 
 .. toctree::
     :maxdepth: 2
-    
-   kcli_deployment_guide
+
+    test
 
 
 Getting Started
