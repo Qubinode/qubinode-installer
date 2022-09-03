@@ -34,15 +34,13 @@ If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evi
 The qubinode-installer
 ----------------------
 
-Downlaod and extract the qubinode-installer as a non root user.
+Downlaod and extract the qubinode-installer as a non root user.::
+  cd $HOME
+  wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
+  unzip master.zip
+  rm master.zip
+  mv qubinode-installer-master qubinode-installer
 
-```shell=
-cd $HOME
-wget https://github.com/Qubinode/qubinode-installer/archive/master.zip
-unzip master.zip
-rm master.zip
-mv qubinode-installer-master qubinode-installer
-```
 
 Qubinode Setup
 --------------
@@ -58,8 +56,8 @@ The qubinode-installer needs to run as a regular user.
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
 Validate sudo user for admin::
-$ sudo cat /etc/sudoers | grep admin
-admin ALL=(ALL) NOPASSWD: ALL 
+  $ sudo cat /etc/sudoers | grep admin
+  admin ALL=(ALL) NOPASSWD: ALL 
 
 echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
 
