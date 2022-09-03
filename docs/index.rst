@@ -5,6 +5,8 @@ Qubinode Overview
 A Qubinode is a bare metal node that uses the qubinode-installer to configure RHEL to function as a KVM host. The qubinode-installer can then be used to deploy additional Red Hat products as VMs running atop the Qubinode. 
 
 .. toctree::
+    :maxdepth: 2
+    
    kcli_deployment_guide
 
 
@@ -62,12 +64,14 @@ The qubinode-installer needs to run as a regular user.
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
 Validate sudo user for admin::
+
     $ sudo cat /etc/sudoers | grep admin
     $ admin ALL=(ALL) NOPASSWD: ALL 
     $ echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
 
 
 Start The Qubinode Installer::
+
     cd ~/qubinode-installer
     ./qubinode-installer -m setup
     ./qubinode-installer -m rhsm
