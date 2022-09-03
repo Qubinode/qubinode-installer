@@ -38,13 +38,13 @@ function qubinode_kcli_maintenance () {
 function kcli_configure_images(){
     echo "Configuring images"
     echo "Downloading Fedora"
-    sudo kcli download image fedora35
+    sudo kcli download image fedora36
     echo "Downloading Centos Streams"
     sudo kcli download image centos8stream
-    echo "Downloading Red Hat Enterprise Linux 8"
+    sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
+    #echo "Downloading Red Hat Enterprise Linux 8"
     sudo kcli download image rhel8
-    echo "Downloading Red Hat Enterprise Linux 7"
-    sudo kcli download image rhel7
+
 }
 
 function update_default_settings(){

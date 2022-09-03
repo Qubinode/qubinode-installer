@@ -1,5 +1,5 @@
 ---
-mirror_base_path: "/opt/disconnected-mirror"
+mirror_base_path: "/opt/service-containers/"
 mirror_vm_hostname: "dns"
 mirror_vm_isolated_bridge_iface_ip: "192.168.150.1"
 isolated_network_cidr: "192.168.150.0/24"

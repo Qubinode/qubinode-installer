@@ -12,7 +12,21 @@ cd ~/qubinode-installer
 ./qubinode-installer -m host
 ./qubinode-installer -p kcli
 ./qubinode-installer -p gozones
+```
+## ZTP JUMPBOX
+> https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable
+```
 sudo kcli create vm -p ztpfwjumpbox jumpbox --wait
+```
+
+## Centos Jumpbox
+```
+sudo kcli create vm -p centos8jumpbox jumpbox --wait
+```
+
+## RHEL Jumpbox
+```
+sudo kcli create vm -p rhel8_jumpbox jumpbox --wait
 ```
 
 ## ScreenShots
@@ -27,7 +41,11 @@ sudo kcli info vm jumpbox
 ```
 
 ```
+<<<<<<< HEAD
 sudo kcli ssh jumpbox 
+=======
+sudo kcli ssh jumpbox
+>>>>>>> rhel-8.6
 ```
 
 ### Delete Jumpbox

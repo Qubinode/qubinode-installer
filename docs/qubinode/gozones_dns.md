@@ -28,7 +28,7 @@ Remove Gozones DNS
 
 ### To update DNS
 > Modify the script below and restart the gozones container 
-> script comming soon to modify gozones
+> script coming soon to modify gozones
 ```
 sudo vim /opt/disconnected-mirror/dns/volumes/go-zones/zones.yml
 ./qubinode-installer -p gozones -m restartcontainer

@@ -19,7 +19,7 @@ cd ~/qubinode-installer
 
 ### Install Mirror Registry
 ```
-sudo kcli create vm -p rhel8_mirror_vm mirror_vm --wait
+sudo kcli create vm -p mirror_vm mirror_vm --wait
 sudo kcli ssh mirror_vm
 ```
 
@@ -29,7 +29,7 @@ sudo kcli info vm mirror_vm
 ```
 ### Optional update dns 
 ```
-sudo vim /opt/disconnected-mirror/dns/volumes/go-zones/zones.yml
+sudo vim  /opt/service-containers/config/server.yml
 ```
 
 **Example**
