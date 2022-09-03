@@ -61,23 +61,19 @@ The qubinode-installer needs to run as a regular user.
 
 > Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
 
-Validate sudo user for admin
+Validate sudo user for admin::
+    $ sudo cat /etc/sudoers | grep admin
+    $ admin ALL=(ALL) NOPASSWD: ALL 
+    $ echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
 
-``
-$ sudo cat /etc/sudoers | grep admin
-$ admin ALL=(ALL) NOPASSWD: ALL 
-$ echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
-``
 
-Start The Qubinode Installer
+Start The Qubinode Installer::
+    cd ~/qubinode-installer
+    ./qubinode-installer -m setup
+    ./qubinode-installer -m rhsm
+    ./qubinode-installer -m ansible
+    ./qubinode-installer -m host
 
-``
-cd ~/qubinode-installer
-./qubinode-installer -m setup
-./qubinode-installer -m rhsm
-./qubinode-installer -m ansible
-./qubinode-installer -m host
-``
 
 At this point you should be able to acces the RHEL system via the cockpit web interface on
 * https://SERVER_IP:9090
