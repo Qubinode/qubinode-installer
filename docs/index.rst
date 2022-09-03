@@ -1,17 +1,21 @@
-#  Qubinode Overview
+=================
+Qubinode Overview
+=================
 
 A Qubinode is a bare metal node that uses the qubinode-installer to configure RHEL to function as a KVM host. The qubinode-installer can then be used to deploy additional Red Hat products as VMs running atop the Qubinode. 
 
-# Getting Started
+Getting Started
+-----------------
 
 The first step is to get RHEL installed on your hardware
 
-## Get Subscriptions
-
+Get Subscriptions
+-----------------
 -  Get your [No-cost developer subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux/) for RHEL.
 -  Get a Red Hat OpenShift Container Platform (OCP) [60-day evalution subscription](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG).
 
-## Install Red Hat Enterprise Linux
+Install Red Hat Enterprise Linux
+--------------------------------
 A bare metal system running Red Hat Enterprise Linux 8. Follow the [RHEL Installation Walkthrough](https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel) to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
 
 1. Virtualization Host
@@ -27,7 +31,8 @@ If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evi
 >  * The RHEL installer will delicate the majority of your storage to /home,  you can choose **"I will configure partitioning"** to have control over this.
 >  * Set root password and create admin user with sudo privilege
 
-### The qubinode-installer
+The qubinode-installer
+----------------------
 
 Downlaod and extract the qubinode-installer as a non root user.
 
@@ -39,7 +44,8 @@ rm master.zip
 mv qubinode-installer-master qubinode-installer
 ```
 
-### Qubinode Setup
+Qubinode Setup
+--------------
 
 The below commands ensure your system is setup as a KVM host.
 The qubinode-installer needs to run as a regular user.
@@ -75,7 +81,8 @@ https://SERVER_IP:9090
 
 Most products depends on the latest rhel 7 or 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
-#### Getting the RHEL 7 or 8 Qcow Image
+Getting the RHEL 7 or 8 Qcow Image
+----------------------------------
 <table>
   <tr>
    <td>Using Token
@@ -104,25 +111,30 @@ If you downloaded the files instead, confirm that the project directory list the
 * $HOME/qubinode-installer/rhel-8.5-update-2-x86_64-kvm.qcow2
 ```
 
-## Install DNS server 
+Install DNS server 
+===============
 * [GoZones DNS](qubinode/gozones_dns.md)
 * [Red Hat Identity Managment](qubinode/idm.md)
 At this point you refer to the [documentation](#Currently-Supported-Products) for the product you want to install.
 
 
-## Setup RDP Enabled jumpbox
+Setup RDP Enabled jumpbox
+=========================
 * [Centos 8 Streams Jumpbox](qubinode/rdpjumpbox.md)
 
-## Currently Supported Products
+Currently Supported Products
+============================
 * [Red Hat Identity Managment](qubinode/idm.md)
 * [Red Hat Enterprise Linux](qubinode/rhel_vms.md)
 
-## Products in Development
+Products in Development
+=======================
 * [Ansible Automation Platform](qubinode/ansible_platform.md)
 * [Red Hat Satellite](qubinode/qubinode_satellite_install.md)
 * [Quay Mirror Registry](qubinode/quay_mirror_registry.md)
 
-## Workflows
+Workflows
+=========
 * [ZTP for Factory Workflow qubinode dev box](https://gist.github.com/tosin2013/3b99a883078025de1a5327d532bf2cae)
 * [RHEL for Edge Automation Architecture Qubinode dev box](https://gist.github.com/tosin2013/72eb9a095d0f5ca5082c3a9597d2ae4f)
 * [Assisted Installer Hack-y scripts](https://github.com/tosin2013/openshift-4-deployment-notes/blob/master/assisted-installer/hack/README.md)
