@@ -74,8 +74,8 @@ cd ~/qubinode-installer
 At this point you should be able to acces the RHEL system via the cockpit web interface on
 * https://SERVER_IP:9090
 
-## Deploy a Red Hat Product
-
+Deploy a Red Hat Product
+------------------------
 Most products depends on the latest rhel 7 or 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
 Getting the RHEL 7 or 8 Qcow Image
