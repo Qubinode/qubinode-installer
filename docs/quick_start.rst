@@ -76,7 +76,7 @@ At this point you should be able to acces the RHEL system via the cockpit web in
 
 Deploy a Red Hat Product
 =====
-Most products depends on the latest rhel 7 or 8 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
+Most products depends on the latest rhel 8 or 9 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
 Getting the RHEL 7 or 8 Qcow Image
 ----------------------------------
