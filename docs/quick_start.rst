@@ -25,10 +25,10 @@ If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evi
 - Virtualization Hypervisor 
 - Virtualization Tools
 
-**_TIPS_**
-> * If using the recommend storage of one ssd and one NVME, install RHEL on the ssd, not the NVME. 
->  * The RHEL installer will delicate the majority of your storage to /home,  you can choose **"I will configure partitioning"** to have control over this.
->  * Set root password and create admin user with sudo privilege
+.. note::
+    * If using the recommend storage of one ssd and one NVME, install RHEL on the ssd, not the NVME. 
+    * The RHEL installer will delicate the majority of your storage to /home,  you can choose **"I will configure partitioning"** to have control over this.
+    * Set root password and create admin user with sudo privilege
 
 The qubinode-installer
 =====
