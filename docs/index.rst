@@ -87,20 +87,13 @@ Most products depends on the latest rhel 7 or 8 qcow image. You can either manua
 
 Getting the RHEL 7 or 8 Qcow Image
 ----------------------------------
-<table>
-  <tr>
-   <td>Using Token
-   </td>
-   <td>Downloading
-   </td>
-  </tr>
-  <tr>
-   <td>Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image. 
-   </td>
-   <td>From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.
-   </td>
-  </tr>
-</table>
+
+=================  ===================
+Using Token         Download
+=================  ===================
+Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image.              From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.
+=================  ===================
+
 
 Follow the same steps to get the RHEL 8 qcow image.
 
