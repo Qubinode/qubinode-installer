@@ -9,7 +9,7 @@ You can also interact with those VMs (list, info, ssh, start, stop, delete, cons
 
 
 Kcli deployment on Qubinode
-=====
+------------------------------
 
 For Quick install::
 
@@ -22,7 +22,7 @@ For Quick install::
 
 
 Qubinode Maintance commands
-=====
+------------------------------
 Update default settings for qubinode deployments::
 
     ./qubinode-installer -p kcli -m updatedefaults
@@ -32,7 +32,7 @@ Download default profile images::
     ./qubinode-installer -p kcli -m configureimages
 
 Create VM using the kcli
-=====
+------------------------------
 Create vm with rhel8 profile::
 
     sudo kcli create vm -p rhel8 testvm
@@ -48,7 +48,7 @@ Delete vm::
 
 
 Typical commands
-=====
+------------------------------
 * List vms
   * `kcli list vm`
 * List cloud images
@@ -103,5 +103,5 @@ Typical commands
   * `kcli export vm vm1`
 
 Issues 
-=====
+------------------------------
 `Submit isues <https://github.com/karmab/kcli/issue>`_

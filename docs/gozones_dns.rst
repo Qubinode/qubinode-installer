@@ -7,7 +7,7 @@ GoZones can operate in single-file input/output batches, or via an HTTP server.
 * `Github Page <https://github.com/kenmoini/go-zones>`_
 
 Kcli deployment on Qubinode
-=====
+------------------------------
 For Quick install::
 
     cd ~/qubinode-installer
@@ -20,7 +20,7 @@ For Quick install::
 
 
 Qubinode Maintance commands
-=====
+------------------------------
 Remove Gozones DNS::
     
     ./qubinode-installer -p gozones -m removegozones
@@ -28,7 +28,7 @@ Remove Gozones DNS::
 
 
 To update DNS
-=====
+------------------------------
 1. Modify the script below and restart the gozones container 
 2. script coming soon to modify gozones::
 
@@ -37,5 +37,5 @@ To update DNS
 
 
 Issues 
-=====
+-------
 `Submit isues <https://github.com/kenmoini/go-zones/issues>`_
