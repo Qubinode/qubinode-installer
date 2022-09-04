@@ -5,7 +5,7 @@ This tool is meant to interact with existing virtualization providers (libvirt, 
 You can also interact with those VMs (list, info, ssh, start, stop, delete, console, serialconsole, add/delete disk, add/delete nic, ...).
 
 * `Kcli documentation <https://kcli.readthedocs.io/en/latest/>`_
-* `Github Page <https://github.com/karmab/kcli>`
+* `Github Page <https://github.com/karmab/kcli>`_
 
 
 Kcli deployment on Qubinode
