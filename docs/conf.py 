@@ -48,9 +48,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = "Qubinode"
-copyright = "2022, Qubinode"
-author = "Qubinode"
+project = u'RST | Sphinx | Sublime | GitHub'
+copyright = u'2017, Mark Hoeber'
+author = u'Mark Hoeber'
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
