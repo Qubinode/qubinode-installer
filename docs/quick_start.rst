@@ -93,12 +93,12 @@ Heading Using Token to download images
     Download the qcow image matching this checksum the below checksum.  
 
     * Download Red Hat Enterprise Linux 9
-      * Last modified: 2022-05-11 SHA-256 
-      * Checksum: 92862e085e4d5690cfa57de7155aa29bfdf21feec3d46dd4b61ca63293312af7
+        * Last modified: 2022-05-11 SHA-256 
+        * Checksum: 92862e085e4d5690cfa57de7155aa29bfdf21feec3d46dd4b61ca63293312af7
   
     * Download Red Hat Enterprise Linux 8
-      * Last modified: 2022-05-11 SHA-256 
-      * Checksum: c9b32bef88d605d754b932aad0140e1955ab9446818c70c4c36ca75d6f442fe9
+        * Last modified: 2022-05-11 SHA-256 
+        * Checksum: c9b32bef88d605d754b932aad0140e1955ab9446818c70c4c36ca75d6f442fe9
 
 
 Follow the same steps to get the RHEL 8 qcow image.
