@@ -11,6 +11,7 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
     gitops_deployment
     kcli_deployment_guide
     gozones_dns
+    rdpjumpbox
 
 
 Workflows
