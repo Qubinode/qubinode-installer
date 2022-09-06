@@ -4,17 +4,17 @@ Quick Start
 =============
 
 Getting Started
-=====
+===============
 
 The first step is to get RHEL installed on your hardware
 
 Get Subscriptions
-=====
+====================
 -  Get your `No-cost developer subscription <https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux>`_ for RHEL.
 -  Get a Red Hat OpenShift Container Platform (OCP) `60-day evalution subscription <https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG>`_.
 
 Install Red Hat Enterprise Linux
-=====
+==================================
 A bare metal system running Red Hat Enterprise Linux 8. Follow the `RHEL Installation Walkthrough <https://developers.redhat.com/products/rhel/hello-world#fndtn-rhel>`_ to get RHEL installed on your hardware. When installing RHEL, for the software selection, **Base Environment** choose one of the following:
 
 1. Virtualization Host
@@ -31,7 +31,7 @@ If you choose **Server with GUI**, make sure from the **Add-ons for Selected Evi
     * Set root password and create admin user with sudo privilege
 
 The qubinode-installer
-=====
+=========================
 
 Download and extract the qubinode-installer as a non root user::
 
@@ -43,7 +43,7 @@ Download and extract the qubinode-installer as a non root user::
 
 
 Qubinode Setup
-=====
+===============
 
 The below commands ensure your system is setup as a KVM host.
 The qubinode-installer needs to run as a regular user.
@@ -75,7 +75,7 @@ At this point you should be able to acces the RHEL system via the cockpit web in
 * https://SERVER_IP:9090
 
 Deploy a Red Hat Product
-=====
+=========================
 Most products depends on the latest rhel 8 or 9 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
 Getting the RHEL 7 or 8 Qcow Image
@@ -85,8 +85,8 @@ Getting the RHEL 7 or 8 Qcow Image
    :widths: 50 50 
    :header-rows: 1
 
-   * - Heading Using Token , Download
-     - Row Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image. , From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.   
+   * - Heading Using Token, Download
+     - Row Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image., From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.   
 
 
 Follow the same steps to get the RHEL 8 qcow image.
