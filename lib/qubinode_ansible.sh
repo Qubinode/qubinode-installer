@@ -12,6 +12,7 @@ function ensure_supported_ansible_version () {
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
     RHEL_VERSION=$(get_rhel_version)
+    vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 
     if [[ $RHEL_VERSION == "RHEL9" ]]; then
         AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
@@ -224,7 +225,7 @@ function qubinode_setup_ansible () {
 }
 
 function decrypt_ansible_vault () {
-    vaultfile="${project_dir}/host_vars/vault.yml"
+    vaultfile="${project_dir}/playbooks/vars/vault.yml"
     grep -q VAULT "${vault_vars_file}"
     if [ "A$?" == "A0" ]
     then
@@ -235,7 +236,7 @@ function decrypt_ansible_vault () {
 }
 
 function encrypt_ansible_vault () {
-    vaultfile="${project_dir}/host_vars/vault.yml"
+    vaultfile="${project_dir}/playbooks/vars/vault.yml"
     grep -q VAULT "${vaultfile}"
     if [ "A$?" != "A0" ]
     then

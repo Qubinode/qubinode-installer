@@ -15,6 +15,7 @@ fi
 
 kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
+vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
 requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
 
