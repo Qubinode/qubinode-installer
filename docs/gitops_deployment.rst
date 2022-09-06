@@ -31,14 +31,14 @@ Configure GitOps::
     cat  >/root/.fetchit/config.yaml<<EOF
     targetConfigs:
     - url: ${GITURL}
-    username: svc-gitea
-    password: password
-    filetransfer:
-    - name: copy-vars
+      username: svc-gitea
+      password: password
+      filetransfer:
+      - name: copy-vars
         targetPath: inventories/virtual-lab/host_vars
         destinationDirectory: /home/admin/qubinode-installer/playbooks/vars
         schedule: "*/1 * * * *"
-    branch: main
+      branch: main
     EOF
 
     cp /home/admin/openshift-virtualization-gitops/scripts/fetchit/fetchit-root.service /etc/systemd/system/fetchit.service
