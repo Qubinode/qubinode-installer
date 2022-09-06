@@ -83,6 +83,6 @@ Deploy Qubinode Installer with godns::
 
 Save Succcessful Deployment Files 
 ---------------------------------
-1. if openshift-virtualization-gitops not in come `git clone http://yourrepo:3000/tosin/openshift-virtualization-gitops.git`
+1. if openshift-virtualization-gitops not in come ``git clone http://yourrepo:3000/tosin/openshift-virtualization-gitops.git``.
 2. On Successful deployment cp vars from /home/admin/qubinode-installer/playbooks/vars/ to  openshift-virtualization-gitops/inventories/supermicro/host_vars/
 3. Push to openshift-virtualization-gitops repo
