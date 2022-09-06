@@ -113,3 +113,8 @@ Converged Hub Deployment::
 
     OC_VERSION=$(oc version | awk '{print $3}' | head -1)
     ./build-hub.sh ${HOME}/openshift_pull.json ${OC_VERSION} 2.5 4.11 installer
+
+
+Create ZTP Jumpbox::
+
+    sudo kcli create vm -p ztpfwjumpbox jumpbox --wait
