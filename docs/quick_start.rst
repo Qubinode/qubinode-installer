@@ -83,16 +83,22 @@ Getting the RHEL 8 or 9 Qcow Image using tocket
 
 Heading Using Token to download images 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Navigate to `RHSM API <https://access.redhat.com/management/api>`_ to generate a token and save it as *rhsm_token* This token will be used to download the rhel qcow image.
-  * From your web browser, navigate to `Download Red Hat Enterprise Linux 9 <https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.0/x86_64/product-software>`_.
-  * From your web browser, navigate to `Download Red Hat Enterprise Linux 8 <https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.6/x86_64/product-software>`_.
+#. Navigate to `RHSM API <https://access.redhat.com/management/api>`_ to generate a token and save it as *rhsm_token* This token will be used to download the rhel qcow image.
+
+    #. From your web browser, navigate to `Download Red Hat Enterprise Linux 9 <https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.0/x86_64/product-software>`_.
+
+    #. From your web browser, navigate to `Download Red Hat Enterprise Linux 8 <https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.6/x86_64/product-software>`_.
 
 .. note::
-    Download the qcow image matching this checksum the below checksum.   
+    Download the qcow image matching this checksum the below checksum.  
+
     * Download Red Hat Enterprise Linux 9
-      * Last modified: 2022-05-11 SHA-256 Checksum: 92862e085e4d5690cfa57de7155aa29bfdf21feec3d46dd4b61ca63293312af7
+      * Last modified: 2022-05-11 SHA-256 
+      * Checksum: 92862e085e4d5690cfa57de7155aa29bfdf21feec3d46dd4b61ca63293312af7
+  
     * Download Red Hat Enterprise Linux 8
-      * Last modified: 2022-05-11 SHA-256 Checksum: c9b32bef88d605d754b932aad0140e1955ab9446818c70c4c36ca75d6f442fe9
+      * Last modified: 2022-05-11 SHA-256 
+      * Checksum: c9b32bef88d605d754b932aad0140e1955ab9446818c70c4c36ca75d6f442fe9
 
 
 Follow the same steps to get the RHEL 8 qcow image.
