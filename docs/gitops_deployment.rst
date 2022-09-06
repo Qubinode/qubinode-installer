@@ -2,10 +2,15 @@
 GitOps Deployment
 =====================
 
+
+.. note::
+    * Changes to deployments are made in the target Git repository. Then synced down to machine using fetchit. The commands will reference the synced repo configs down to the machine.
+
+
 Configure Repo
 --------------
 To use locally follow the link below 
-`OpenShift Virtualization GitOps Repository <https://openshift-virtualization-gitops-repository.readthedocs.io/en/latest/#openshift-virtualization-gitops-repository>`_
+* `OpenShift Virtualization GitOps Repository <https://openshift-virtualization-gitops-repository.readthedocs.io/en/latest/#openshift-virtualization-gitops-repository>`_
 
 To use external Git repo use the following steps::
     
@@ -51,6 +56,7 @@ Configure GitOps::
 Deploy Qubinode Installer
 -------------------------
 Confirm Qubinode vars have been copied to vars directory::
+
         sudo su - admin 
         ls -l /home/admin/qubinode-installer/playbooks/vars
 
@@ -63,7 +69,7 @@ Decrypt ansible vault file password if it exisits in git repo::
     echo "YourPassword" > "${vault_key_file}"
     ansible-vault decrypt "${vaultfile}"
 
-Deploy Qubinode Installer::
+Deploy Qubinode Installer with godns::
     
     sudo su - admin
     cd /home/admin/qubinode-installer
