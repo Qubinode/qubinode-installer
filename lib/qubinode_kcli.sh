@@ -49,8 +49,8 @@ function kcli_configure_images(){
 }
 
 function update_default_settings(){
-     echo "Configuring default settings"
-     if  [[ -f  ${defaults_file} ]];
+    echo "Configuring default settings"
+    if  [[ -f  ${defaults_file} ]];
     then
       decrypt_ansible_vault "${vault_vars_file}" > /dev/null
       rhsm_username=$(awk '/rhsm_username:/ {print $2}' "${vault_vars_file}")
@@ -63,7 +63,13 @@ function update_default_settings(){
       exit 1
     fi  
 
-    cp "${project_dir}/samples/kcli-profiles.yml" $HOME/qubinode-installer
+    if [ -f ${project_dir}/playbooks/vars/kcli-profiles.yml ];
+    then
+      cp "${project_dir}/playbooks/vars/kcli-profiles.yml" $HOME/qubinode-installer
+    else 
+      cp "${project_dir}/samples/kcli-profiles.yml" $HOME/qubinode-installer
+    fi
+    
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
     admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
