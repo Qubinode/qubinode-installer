@@ -11,13 +11,14 @@ Recommened install
 
 
 
-**Create root sshkey**
-```
-sudo su - root
-ssh-keygen
-```
+Create root sshkey::
+
+    sudo su - root
+    ssh-keygen
+
 
 Create pull secret
+
 `Install OpenShift on Bare Metal <https://console.redhat.com/openshift/install/metal/installer-provisioned>`_
  
 Pull Secret File::
@@ -53,7 +54,8 @@ Create hub install file::
 
 Create NFS file::
 
-    cat >nfs.yml<<EOF
+    $ vim  nfs.yml
+    ---
     apiVersion: v1
     kind: PersistentVolume
     metadata:
@@ -67,7 +69,7 @@ Create NFS file::
       path: /var/lib/libvirt/images/${PV}
       server: ${PRIMARY_IP}
     persistentVolumeReclaimPolicy: Recycle
-    EOF
+
 
 SNO HUB Deployment::
 
@@ -78,7 +80,7 @@ SNO HUB Deployment::
 
 
 
-Converged Hub Deployment 
+Converged Hub Deployment:: 
 
     vim build-hub.sh
     sed -i  's/test-ci/ocp4/' build-hub.sh
