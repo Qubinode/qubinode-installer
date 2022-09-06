@@ -32,26 +32,6 @@ Clone ztp-pipeline-relocatable repo::
     git clone https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable.git
     cd /root/ztp-pipeline-relocatable/hack/deploy-hub-local
 
-Create hub install file:: 
-
-    cat >hub-install.yml<<EOF
-    version: stable
-    network_type: OVNKubernetes
-    kvm_openstack: true
-    cluster: ocp4
-    domain: labs.qubinode.io
-    numcpus: 16
-    disk_size: 100
-    network: bare-net
-    metal3: true
-    api_ip: 192.168.150.253
-    ingress_ip: 192.168.150.252
-    extra_disks:
-    - size: 300
-    - size: 300
-    - size: 300
-    EOF
-
 Create NFS file::
 
     $ vim  nfs.yml
@@ -70,6 +50,27 @@ Create NFS file::
       server: ${PRIMARY_IP}
     persistentVolumeReclaimPolicy: Recycle
 
+SNO Deployment 
+--------------
+Create sno install file:: 
+
+    cat >hub-install.yml<<EOF
+    version: stable
+    network_type: OVNKubernetes
+    kvm_openstack: true
+    cluster: ocp4
+    domain: labs.qubinode.io
+    numcpus: 16
+    disk_size: 100
+    network: bare-net
+    metal3: true
+    api_ip: 192.168.150.252
+    ingress_ip: 192.168.150.252
+    extra_disks:
+    - size: 300
+    - size: 300
+    - size: 300
+    EOF
 
 SNO HUB Deployment::
 
@@ -83,6 +84,27 @@ SNO HUB Deployment::
     ./build-hub.sh ${HOME}/openshift_pull.json ${OC_VERSION} 2.5 4.11 sno 
 
 
+Converged Deployment 
+--------------------
+Create convered hub install file:: 
+
+    cat >hub-install.yml<<EOF
+    version: stable
+    network_type: OVNKubernetes
+    kvm_openstack: true
+    cluster: ocp4
+    domain: labs.qubinode.io
+    numcpus: 16
+    disk_size: 100
+    network: bare-net
+    metal3: true
+    api_ip: 192.168.150.253
+    ingress_ip: 192.168.150.252
+    extra_disks:
+    - size: 300
+    - size: 300
+    - size: 300
+    EOF
 
 Converged Hub Deployment:: 
 
