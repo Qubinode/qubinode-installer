@@ -19,6 +19,14 @@ For Quick install::
   ./qubinode-installer -p gozones
 
 
+Create pull secret
+
+`Install OpenShift on Bare Metal <https://console.redhat.com/openshift/install/metal/installer-provisioned>`_
+ 
+Pull Secret File::
+
+  vi /home/admin/qubinode-installer/pull_secret.json
+
 Install Mirror Registry::
 
   sudo kcli create vm -p mirror_vm mirror_vm --wait
