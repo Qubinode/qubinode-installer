@@ -79,6 +79,7 @@ Deploy Qubinode Installer with godns::
     ./qubinode-installer -m host
     ./qubinode-installer -p kcli
     ./qubinode-installer -p gozones
+    sudo ssh-keygen # for root user login when creating VMs
 
 
 Save Succcessful Deployment Files 
