@@ -17,28 +17,36 @@ For Quick install::
 
 ZTP JUMPBOX
 ----------------------------
-> https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable
-```
-sudo kcli create vm -p ztpfwjumpbox jumpbox --wait
-```
+.. note::
+    
+    https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable
+
+Create ZTP Jumpbox::
+
+    sudo kcli create vm -p ztpfwjumpbox jumpbox --wait
+
 
 Centos Jumpbox
 ----------------------------
-```
-sudo kcli create vm -p centos8jumpbox jumpbox --wait
-```
+Create Centos Jumpbox::
+
+    sudo kcli create vm -p centosjumpbox jumpbox --wait
 
 RHEL Jumpbox
 ----------------------------
-```
-sudo kcli create vm -p rhel8_jumpbox jumpbox --wait
-```
+RHEL Jumpbox::
+
+    sudo kcli create vm -p rhel8_jumpbox jumpbox --wait
+
 
 ScreenShots
 ----------------------------
-![20220509192238](https://i.imgur.com/qc7r6Eu.png)
+.. image:: https://i.imgur.com/qc7r6Eu.png
+   :width: 600
 
-![20220509192553](https://i.imgur.com/MeHNdGE.png)
+.. image:: https://i.imgur.com/MeHNdGE.png
+   :width: 600
+
 
 Collect Ip address of jumpbox
 ----------------------------
