@@ -1,9 +1,9 @@
 Jumpbox Deployments
-=============
+=====================
 This doc will show how to deploy a CentOS jumpbox.
 
 Centos deployment on Qubinode
-----------------------------
+------------------------------
 For Quick install::
 
     cd ~/qubinode-installer
@@ -49,7 +49,7 @@ ScreenShots
 
 
 Collect Ip address of jumpbox
-----------------------------
+-------------------------------
 use RDP or Remmina to access Desktop::
 
     sudo kcli info vm jumpbox
