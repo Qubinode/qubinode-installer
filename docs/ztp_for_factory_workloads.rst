@@ -74,9 +74,13 @@ Create NFS file::
 SNO HUB Deployment::
 
     vim build-hub.sh
+    sed -i  's/test-ci/ocp4/' build-hub.sh
 
     # Change the following variables
     Cluster name  OC_CLUSTER_NAME="ocp4"
+
+    OC_VERSION=$(oc version | awk '{print $3}')
+    ./build-hub.sh ${HOME}/openshift_pull.json ${OC_VERSION} 2.5 4.11 sno 
 
 
 
@@ -84,3 +88,6 @@ Converged Hub Deployment::
 
     vim build-hub.sh
     sed -i  's/test-ci/ocp4/' build-hub.sh
+
+    OC_VERSION=$(oc version | awk '{print $3}')
+    ./build-hub.sh ${HOME}/openshift_pull.json ${OC_VERSION} 2.5 4.11 installer
