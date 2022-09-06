@@ -81,10 +81,11 @@ Most products depends on the latest rhel 8 or 9 qcow image. You can either manua
 Getting the RHEL 8 or 9 Qcow Image using tocket 
 ----------------------------------
 
-Heading Using Token, Download
-Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image., 
-From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.0/x86_64/product-software">Download Red Hat Enterprise Linux 9</a>.
-From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.6/x86_64/product-software">Download Red Hat Enterprise Linux 8</a>.
+Heading Using Token to download images 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Navigate to `RHSM API <https://access.redhat.com/management/api>`_ to generate a token and save it as *rhsm_token* This token will be used to download the rhel qcow image.
+From your web browser, navigate to `Download Red Hat Enterprise Linux 9 <https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.0/x86_64/product-software>`_.
+From your web browser, navigate to `Download Red Hat Enterprise Linux 8 <https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.6/x86_64/product-software>`_.
 Download the qcow image matching this checksum the below checksum.   
 
 
