@@ -37,7 +37,7 @@ Create hub install file::
     version: stable
     network_type: OVNKubernetes
     kvm_openstack: true
-    cluster: test-ci
+    cluster: ocp4
     domain: labs.qubinode.io
     numcpus: 16
     disk_size: 100
@@ -64,8 +64,8 @@ Create NFS file::
     accessModes:
     - ${MODE}
     nfs:
-        path: /var/lib/libvirt/images/${PV}
-        server: ${PRIMARY_IP}
+      path: /var/lib/libvirt/images/${PV}
+      server: ${PRIMARY_IP}
     persistentVolumeReclaimPolicy: Recycle
     EOF
 
