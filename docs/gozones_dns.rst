@@ -32,9 +32,13 @@ To update DNS
 1. Modify the script below and restart the gozones container 
 2. script coming soon to modify gozones::
 
-    sudo vim /opt/disconnected-mirror/dns/volumes/go-zones/zones.yml
+    sudo vim /opt/service-containers/config/server.yml
     ./qubinode-installer -p gozones -m restartcontainer
 
+3. You can also update inventories/your-server/host_vars/dns-server.yml in git then::
+
+    # Check playbooks/vars/dns-server.yml
+    ./qubinode-installer -p gozones -m restartcontainer
 
 Issues 
 -------
