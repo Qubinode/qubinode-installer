@@ -78,15 +78,14 @@ Deploy a Red Hat Product
 =========================
 Most products depends on the latest rhel 8 or 9 qcow image. You can either manually download them or provide your RHSM api token and the installer will download these files for you.
 
-Getting the RHEL 7 or 8 Qcow Image
+Getting the RHEL 8 or 9 Qcow Image using tocket 
 ----------------------------------
 
-.. list-table:: Title
-   :widths: 50 50 
-   :header-rows: 1
-
-   * - Heading Using Token, Download
-     - Row Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image., From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/69/ver=/rhel---7/7.8/x86_64/product-software">Download Red Hat Enterprise Linux</a>. Download the qcow image matching this checksum the below checksum.   
+Heading Using Token, Download
+Navigate to <a href="https://access.redhat.com/management/api">RHSM API</a> to generate a token and save it as <strong>rhsm_token</strong>. This token will be used to download the rhel qcow image., 
+From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.0/x86_64/product-software">Download Red Hat Enterprise Linux 9</a>.
+From your web browser, navigate to <a href="https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.6/x86_64/product-software">Download Red Hat Enterprise Linux 8</a>.
+Download the qcow image matching this checksum the below checksum.   
 
 
 Follow the same steps to get the RHEL 8 qcow image.
