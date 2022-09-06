@@ -14,7 +14,7 @@ To use external Git repo use the following steps::
     export CONFIGURE_GITEA=false
     ./install.sh
     sudo su - admin 
-    git clone http://gitea.example.com:3000/tosin/openshift-virtualization-gitops.git
+    git clone https://github.com/tosin2013/qubinode-installer.git
     exit
 
 
@@ -47,3 +47,29 @@ Configure GitOps::
     podman ps 
 
     exit
+
+Deploy Qubinode Installer
+-------------------------
+Confirm Qubinode vars have been copied to vars directory::
+        sudo su - admin 
+        ls -l /home/admin/qubinode-installer/playbooks/vars
+
+
+Decrypt ansible vault file password if it exisits in git repo::
+
+    sudo su - admin 
+    export vault_key_file="/home/admin/.vaultkey"
+    export vaultfile="/home/admin/qubinode-installer/playbooks/vars/vault.yml"
+    echo "YourPassword" > "${vault_key_file}"
+    ansible-vault decrypt "${vaultfile}"
+
+Deploy Qubinode Installer::
+    
+    sudo su - admin
+    cd /home/admin/qubinode-installer
+    ./qubinode-installer -m setup
+    ./qubinode-installer -m rhsm
+    ./qubinode-installer -m ansible
+    ./qubinode-installer -m host
+    ./qubinode-installer -p kcli
+    ./qubinode-installer -p gozones
