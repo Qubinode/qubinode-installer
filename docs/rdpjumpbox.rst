@@ -30,7 +30,7 @@ Centos Jumpbox
 ----------------------------
 Create Centos Jumpbox::
 
-    sudo kcli create vm -p centosjumpbox jumpbox --wait
+    sudo kcli create vm -p centos8jumpbox jumpbox --wait
 
 RHEL Jumpbox
 ----------------------------
