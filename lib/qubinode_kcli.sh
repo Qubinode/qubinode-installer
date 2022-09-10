@@ -116,6 +116,8 @@ rhel8_static:
 function qubinode_setup_kcli() {
     if [[ ! -f /usr/bin/kcli ]];
     then 
+        sudo dnf -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
+        sudo systemctl enable --now libvirtd
         sudo usermod -aG qemu,libvirt $USER
         curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
         echo "eval '$(register-python-argcomplete kcli)'" >> ~/.bashrc
