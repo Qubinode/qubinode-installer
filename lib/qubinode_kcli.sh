@@ -91,7 +91,7 @@ function create_static_profile_ip() {
 
 
 rhel8_static:
- image: rhel-8.5-update-2-x86_64-kvm.qcow2
+ image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
