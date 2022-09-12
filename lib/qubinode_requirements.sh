@@ -172,10 +172,14 @@ function setup_variables () {
 }
 
 function get_rhel_version() {
+  if cat /etc/redhat-release  | grep 9.[0-9] > /dev/null 2>&1; then
+    export BASE_OS="RHEL9"
   if cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL8"
   elif cat /etc/redhat-release  | grep 7.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL7"
+  elif cat /etc/redhat-release  | grep "CentOS Stream release 9" > /dev/null 2>&1; then
+    export BASE_OS="CENTOS9"
   elif cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
     export BASE_OS="CENTOS8"
   elif cat /etc/redhat-release  | grep "Fedora" > /dev/null 2>&1; then
