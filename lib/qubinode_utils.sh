@@ -517,14 +517,13 @@ function qubinode_setup () {
 function push_to_repo(){
     echo "Pushing to repo $1"
     directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
-    cp "${project_dir}/playbooks/vars/${1}" "$HOME/openshift-virtualization-gitops/inventories/quick-dev/host_vars/"
+    cp "${project_dir}/playbooks/vars/${1}" "$HOME/openshift-virtualization-gitops/inventories/${directory_name}/host_vars/"
     cd $HOME/openshift-virtualization-gitops/
     git pull 
-    git add inventories/quick-dev/host_vars/${1}
+    git add inventories/${directory_name}/host_vars/${1}
     git commit -m "Added ${1} to inventory"
     git push 
     cd $HOME/qubinode-installer/
-    #cp playbooks/vars/all.yml $HOME/openshift-virtualization-gitops/inventories/quick-dev/host_vars/  
 }
 
 function qubinode_base_requirements () {

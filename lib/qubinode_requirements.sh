@@ -79,6 +79,8 @@ function check_for_gitops(){
          cd $HOME/openshift-virtualization-gitops/
          OLD=$(git remote -v | grep tosin2013 | head -1 | awk '{print $2}' )
          CURRENT=$(git remote -v | grep origin | head -1 | awk '{print $2}' )
+         echo "Old: $OLD"
+         echp "Current: $CURRENT"
          if [ $enable_gitops == "true" ];
          then
             if [ ! -z "$OLD" ];
@@ -104,6 +106,10 @@ function check_for_gitops(){
              echo "gitops not enabled"
          fi
          cd $HOME/qubinode-installer/
+    else 
+        default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
+        echo "$HOME/openshift-virtualization-gitops/ does not exisit please clone ${default_gitops_repo} to $HOME"
+        exit 1
     fi 
 }
 
@@ -408,7 +414,7 @@ function installer_artifacts_msg () {
         fi
 
         printf "%s\n" "    You can download the this qcow image from:" 
-	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---8/${rhel_release}/x86_64/product-software${end}."
+	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---9/${rhel_release}/x86_64/product-software${end}."
         printf "%s\n" "    The current tested checksum is:"
         printf "%s\n" "    ${mag}${rhel_qcow_checksum}${end}"
         printf "%s\n" "    Copy the url from the download page and download with:"
