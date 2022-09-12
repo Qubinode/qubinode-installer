@@ -221,6 +221,12 @@ function qubinode_setup_ansible () {
 
     sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
     printf "${yel}    Ansible Setup Complete ${end}\n"
+    # Push changes to repo
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ "A${enable_gitops}" == "Atrue" ]
+    then
+        push_to_repo all.yml
+    fi
 
 }
 

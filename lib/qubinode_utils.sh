@@ -97,6 +97,7 @@ function get_admin_user_password () {
     fi
 }
 
+
 function exit_status () {
     RESULT=$?
     FAIL_MSG=$1
@@ -512,6 +513,20 @@ function qubinode_setup () {
 
 }
 
+
+function push_to_repo(){
+    echo "Pushing to repo $1"
+    directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
+    cp "${project_dir}/playbooks/vars/${1}" "$HOME/openshift-virtualization-gitops/inventories/quick-dev/host_vars/"
+    cd $HOME/openshift-virtualization-gitops/
+    git pull 
+    git add inventories/quick-dev/host_vars/${1}
+    git commit -m "Added ${1} to inventory"
+    git push 
+    cd $HOME/qubinode-installer/
+    #cp playbooks/vars/all.yml $HOME/openshift-virtualization-gitops/inventories/quick-dev/host_vars/  
+}
+
 function qubinode_base_requirements () {
     ## 9/9/2020 this function should be replaced with qubinode_setup
     # This function ensures all the minimal base requirements are met.
@@ -544,10 +559,17 @@ function qubinode_base_requirements () {
 	# Ensure RHEL qcow image exist
 	setup_download_options
 
-        if [ "A${BASE_REQS}" == "Ayes" ]
-	then
-            printf "%s\n" " ${yel}Setup completed${end}"
-        fi
+    if [ "A${BASE_REQS}" == "Ayes" ]
+    then
+        printf "%s\n" " ${yel}Setup completed${end}"
+    fi
+    # Push changes to repo
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ "A${enable_gitops}" == "Atrue" ]
+    then
+        push_to_repo all.yml
+        push_to_repo kvm_host.yml
+    fi
 fi
 }
 
