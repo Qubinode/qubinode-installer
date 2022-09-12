@@ -4,17 +4,20 @@ setup_variables
 product_in_use=kcli
 source "${project_dir}/lib/qubinode_utils.sh"
 
-RHEL_VERSION=$(get_rhel_version)
-if [[ $RHEL_VERSION == "FEDORA" ]]; then
-  defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.10)/site-packages/kvirt/defaults.py"
-else 
-  defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.6)/site-packages/kvirt/defaults.py"
-fi 
+  RHEL_VERSION=$(get_rhel_version)
+  if [[ $RHEL_VERSION == "FEDORA" ]]; then
+    defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.10)/site-packages/kvirt/defaults.py"
+  elif [[ $(get_distro) == "centos" ]]; then
+    defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.9)/site-packages/kvirt/defaults.py"
+  else 
+    defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.9)/site-packages/kvirt/defaults.py"
+  fi 
 
 
 
 kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
+vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
 requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
 
@@ -38,18 +41,21 @@ function qubinode_kcli_maintenance () {
 function kcli_configure_images(){
     echo "Configuring images"
     echo "Downloading Fedora"
-    sudo kcli download image fedora35
+    sudo kcli download image fedora36
     echo "Downloading Centos Streams"
-    sudo kcli download image centos8stream
-    echo "Downloading Red Hat Enterprise Linux 8"
-    sudo kcli download image rhel8
-    echo "Downloading Red Hat Enterprise Linux 7"
-    sudo kcli download image rhel7
+    sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220718.0.x86_64.qcow2
+    sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220718.0.x86_64.qcow2 
+    #echo "Downloading Red Hat Enterprise Linux 8"
+    if [ $(get_distro) == "rhel" ]; then
+      echo "Downloading Red Hat Enterprise Linux 9"
+      sudo kcli download image rhel9
+    fi
+
 }
 
 function update_default_settings(){
-     echo "Configuring default settings"
-     if  [[ -f  ${defaults_file} ]];
+    echo "Configuring default settings"
+    if  [[ -f  ${defaults_file} ]];
     then
       decrypt_ansible_vault "${vault_vars_file}" > /dev/null
       rhsm_username=$(awk '/rhsm_username:/ {print $2}' "${vault_vars_file}")
@@ -62,7 +68,13 @@ function update_default_settings(){
       exit 1
     fi  
 
-    cp "${project_dir}/samples/kcli-profiles.yml" $HOME/qubinode-installer
+    if [ -f ${project_dir}/playbooks/vars/kcli-profiles.yml ];
+    then
+      cp "${project_dir}/playbooks/vars/kcli-profiles.yml" $HOME/qubinode-installer
+    else 
+      cp "${project_dir}/samples/kcli-profiles.yml" $HOME/qubinode-installer
+    fi
+    
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
     admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
@@ -84,7 +96,7 @@ function create_static_profile_ip() {
 
 
 rhel8_static:
- image: rhel-8.5-update-2-x86_64-kvm.qcow2
+ image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -109,7 +121,12 @@ rhel8_static:
 function qubinode_setup_kcli() {
     if [[ ! -f /usr/bin/kcli ]];
     then 
+        sudo dnf -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
+        sudo systemctl enable --now libvirtd
         sudo usermod -aG qemu,libvirt $USER
+        if [[ $RHEL_VERSION == "CENTOS9" ]]; then
+          sudo dnf copr enable karmab/kcli  epel-9-x86_64
+        fi
         curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
         echo "eval '$(register-python-argcomplete kcli)'" >> ~/.bashrc
         update_default_settings

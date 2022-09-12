@@ -1,5 +1,6 @@
 ## What is Qubinode Installer?
 Qubinode-installer is an utility tool that facilates the quick deployment of an array of Red Hat products like [Red Hat Openshift Container Platform](https://www.openshift.com/), [Red Hat Identity Manager](https://access.redhat.com/products/identity-management#getstarted), [Red Hat Satellite](https://www.redhat.com/en/technologies/management/satellite), etc.. on a single piece of [hardware](https://mitxpc.com/products/gn-e300-9d-8tp) by leveraging the [KVM](https://www.linux-kvm.org/page/Main_Page) hypervisor.
+[![Documentation Status](https://readthedocs.org/projects/qubinode-installer/badge/?version=latest)](https://qubinode-installer.readthedocs.io/en/latest/?badge=latest)
 
 ## The benefits of using qubinode
 [The Qubinode Project](https://qubinode.io/) provides a very cost effective way to quickly stand up a lab environment on a single piece of [hardware](https://mitxpc.com/products/gn-e300-9d-8tp). Your most expensive investment would be the procurement of the [hardware](https://mitxpc.com/products/gn-e300-9d-8tp) itself. This is a cheaper approach than having to pay a license fee to use a type 1 [hypervisor](https://www.vmware.com/topics/glossary/content/hypervisor) like VMWare/VSphere or having to pay a fee to use AWS EC2 instances.
@@ -22,8 +23,13 @@ for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
 * Red Hat Enteprise Linux 9.0
+<<<<<<< HEAD
 Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md)_.
 One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](docs/README.md)
+=======
+Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md).
+One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
+>>>>>>> 21b343912ee4fafc6b5802f27cac9b6669ba8732
 * Centos 8 Streams is supported base OS.
 * Or Fedora 36 (Testing) is a supported base OS.
 
@@ -31,13 +37,13 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.5     | 2.9               | 2.5.0 |
+|     Release 3.0     | 2.10               | 2.8.0 |
 
 
-### Features in v2.5.0 Version
+### Features in v3.0 Version
 New Features |
 --|
-OpenShift 4.10 |
+OpenShift 4.11 |
 Gozones DNS |
 Compitability with Centos 8 Streams|
 Compitability with Fedora Server |
@@ -53,8 +59,12 @@ See [Release Document](docs/qubinode/releases.md) for features history.
 
 ## Deploying a OpenShift cluster
 
-- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
+- [Manual Assisted Installer](docs/qubinode/openshift4_installation_steps.md)
 - [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
+- [kcli-openshift4-baremetal]
+- [openshift-aio]
+- [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
+- [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
@@ -64,7 +74,7 @@ See [Release Document](docs/qubinode/releases.md) for features history.
 - [Qubinode Overview](docs/README.md)
 
 ## Training
-* [Qubinode for Beginners](docs/beginners.md)
+* [Qubinode for Beginners](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
@@ -94,20 +104,6 @@ We kindly ask you to open an issue if you find anything wrong and or something t
 If you have any direct questions, reach out to us [using the guide](docs/communication.md).
 
 ## Known issues
-
-## Qubinode Dev Branch for next release
-Feature  |  Status
---|---
-Red Hat Satellite Server  | In progress
-CNV Support | Dev
-Cockpit Integration | In progress
-Disconnected Installation | In progress
-
-## Roadmap
-* CNV Installation 
-* Multinode Depolyment
-* Libvirt with KVM  OCP - (Experimental)
-* OpenWrt Router Support - (Experimental
 
 ## Acknowledgments
 * [bertvv](https://github.com/bertvv)

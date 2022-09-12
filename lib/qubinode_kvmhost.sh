@@ -601,6 +601,13 @@ function qubinode_setup_kvm_host () {
         printf "\n\n${yel}    ******************************${end}\n"
         printf "${yel}    * KVM Host Setup Complete   *${end}\n"
         printf "${yel}    *****************************${end}\n\n"
+            # Push changes to repo
+        enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+        if [ "A${enable_gitops}" == "Atrue" ]
+        then
+            push_to_repo all.yml
+            push_to_repo kvm_host.yml
+        fi
     else
         sed -i "s/qubinode_installer_host_completed:.*/qubinode_installer_host_completed: no/g" "${kvm_host_vars_file}"
         printf "\n\n${yel}    ******************************${end}\n"

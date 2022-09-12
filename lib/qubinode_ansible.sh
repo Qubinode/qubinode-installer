@@ -12,6 +12,7 @@ function ensure_supported_ansible_version () {
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
     RHEL_VERSION=$(get_rhel_version)
+    vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 
     if [[ $RHEL_VERSION == "RHEL9" ]]; then
         AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
@@ -127,23 +128,27 @@ function qubinode_setup_ansible () {
 
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete
+            ansible-galaxy collection install community.general
+            ansible-galaxy collection install ansible.posix
+            ansible-galaxy collection install community.libvirt
+            ansible-galaxy collection install fedora.linux_system_roles
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete
             install_podman_dependainces
-        elif [[ $RHEL_VERSION == "CENTOS8" ]]; then
+        elif [ $(get_distro) == "centos" ]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils 
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python-argcomplete
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
@@ -173,10 +178,14 @@ function qubinode_setup_ansible () {
 
 	# use the ansible requirements file that matches the current branch
 	branch=$(git symbolic-ref HEAD 2>/dev/null| sed -e 's,.*/\(.*\),\1,')
+
 	DEFAULT_ANSIBLE_REQUIREMENTS_FILE="${project_dir}/playbooks/requirements.yml"
+    echo $DEFAULT_ANSIBLE_REQUIREMENTS_FILE
+
+
 	if [ "A${branch}" != "A" ]
 	then
-	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements-${branch}.yml"
+	    ANSIBLE_REQUIREMENTS_BRANCH_FILE="${project_dir}/playbooks/requirements.yml"
 	    ANSIBLE_REQUIREMENTS_FILE="${ANSIBLE_REQUIREMENTS_BRANCH_FILE}"
 
 	    # create a matching branch requirements file if one does not exist
@@ -197,16 +206,16 @@ function qubinode_setup_ansible () {
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " ${mag}Downloading required roles${end}"
-            ansible-galaxy install -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
         fi
 
         # Ensure required modules are downloaded
-        if [ ! -f "${project_dir}/playbooks/modules/redhat_repositories.py" ]
+        if [ ! -f "${project_dir}/module_utils/redhat_repositories.py" ]
         then
-            test -d "${project_dir}/playbooks/modules" || mkdir "${project_dir}/playbooks/modules"
+            test -d "${project_dir}/module_utils" || mkdir "${project_dir}/module_utils"
             CURRENT_DIR=$(pwd)
-            cd "${project_dir}/playbooks/modules/"
-            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/ctrlplane/packaging/os/redhat_repositories.py
+            cd "${project_dir}/module_utils/"
+            wget https://raw.githubusercontent.com/jfenal/ansible-modules-jfenal/master/packaging/os/redhat_repositories.py
             cd "${CURRENT_DIR}"
         fi
     else
@@ -216,6 +225,12 @@ function qubinode_setup_ansible () {
 
     sed -i "s/qubinode_installer_ansible_completed:.*/qubinode_installer_ansible_completed: yes/g" "${vars_file}"
     printf "${yel}    Ansible Setup Complete ${end}\n"
+    # Push changes to repo
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ "A${enable_gitops}" == "Atrue" ]
+    then
+        push_to_repo all.yml
+    fi
 
 }
 

@@ -217,6 +217,12 @@ function qubinode_rhsm_register () {
         sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"
         printf "%s\n" " ${yel}RHSM setup completed${end}"
     fi 
+    # Push changes to repo
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ "A${enable_gitops}" == "Atrue" ]
+    then
+        push_to_repo all.yml
+    fi
 
 }
     

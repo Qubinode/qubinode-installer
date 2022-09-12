@@ -69,8 +69,53 @@ function qubinode_required_prereqs () {
     domain=$(awk '/^domain:/ {print $2}' "${vars_file}")
 }
 
+function check_for_gitops(){
+    if [ -d $HOME/openshift-virtualization-gitops/ ];
+    then
+         enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+         default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
+         directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
+         echo "enable gitops: $enable_gitops"
+         cd $HOME/openshift-virtualization-gitops/
+         OLD=$(git remote -v | grep tosin2013 | head -1 | awk '{print $2}' )
+         CURRENT=$(git remote -v | grep origin | head -1 | awk '{print $2}' )
+         echo "Old: $OLD"
+         echo "Current: $CURRENT"
+         if [ $enable_gitops == "true" ];
+         then
+            if [ ! -z "$OLD" ];
+            then
+                if [ "$OLD" == "${default_gitops_repo}" ];
+                then
+                    echo "default git repo is incorectly set please see default_gitops_repo variable in vars/all.yml"
+                    exit 1
+                fi
+            elif [ ! -z "$CURRENT" ];
+            then
+                echo "default git repo is correct"
+                git config --global user.name "$USER"
+                git config --global user.email $USER@localhost.localdomain
+                git pull
+                echo "deployment in progress " > $HOME/openshift-virtualization-gitops/inventories/${directory_name}/deployment_status
+                git add $HOME/openshift-virtualization-gitops/inventories/${directory_name}/deployment_status
+                git commit -m "adding deployment status"
+                git push 
+                git config --global credential.helper store
+            fi 
+         else
+             echo "gitops not enabled"
+         fi
+         cd $HOME/qubinode-installer/
+    else 
+        default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
+        echo "$HOME/openshift-virtualization-gitops/ does not exisit please clone ${default_gitops_repo} to $HOME"
+        exit 1
+    fi 
+}
+
 function setup_variables () {
     qubinode_required_prereqs
+    check_for_gitops
 
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
@@ -127,10 +172,14 @@ function setup_variables () {
 }
 
 function get_rhel_version() {
+  if cat /etc/redhat-release  | grep 9.[0-9] > /dev/null 2>&1; then
+    export BASE_OS="RHEL9"
   if cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL8"
   elif cat /etc/redhat-release  | grep 7.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL7"
+  elif cat /etc/redhat-release  | grep "CentOS Stream release 9" > /dev/null 2>&1; then
+    export BASE_OS="CENTOS9"
   elif cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
     export BASE_OS="CENTOS8"
   elif cat /etc/redhat-release  | grep "Fedora" > /dev/null 2>&1; then
@@ -369,7 +418,7 @@ function installer_artifacts_msg () {
         fi
 
         printf "%s\n" "    You can download the this qcow image from:" 
-	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---8/${rhel_release}/x86_64/product-software${end}."
+	    printf "%s\n\n" "    ${mag}https://access.redhat.com/downloads/content/479/ver=/rhel---9/${rhel_release}/x86_64/product-software${end}."
         printf "%s\n" "    The current tested checksum is:"
         printf "%s\n" "    ${mag}${rhel_qcow_checksum}${end}"
         printf "%s\n" "    Copy the url from the download page and download with:"
@@ -428,3 +477,5 @@ download_files () {
         fi
     fi
 }
+
+
