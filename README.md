@@ -56,8 +56,8 @@ See [Release Document](docs/qubinode/releases.md) for features history.
 
 - [Manual Assisted Installer](docs/qubinode/openshift4_installation_steps.md)
 - [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
-- [kcli-openshift4-baremetal]
-- [openshift-aio]
+- [kcli-openshift4-baremetal](https://github.com/karmab/kcli-openshift4-baremetal)
+- [openshift-aio](https://github.com/RHFieldProductManagement/openshift-aio)
 - [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
 - [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
 
