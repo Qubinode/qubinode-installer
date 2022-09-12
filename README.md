@@ -32,13 +32,13 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.5     | 2.10               | 2.8.0 |
+|     Release 3.0     | 2.10               | 2.8.0 |
 
 
-### Features in v2.5.0 Version
+### Features in v3.0 Version
 New Features |
 --|
-OpenShift 4.10 |
+OpenShift 4.11 |
 Gozones DNS |
 Compitability with Centos 8 Streams|
 Compitability with Fedora Server |
@@ -54,8 +54,12 @@ See [Release Document](docs/qubinode/releases.md) for features history.
 
 ## Deploying a OpenShift cluster
 
-- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
+- [Manual Assisted Installer](docs/qubinode/openshift4_installation_steps.md)
 - [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
+- [kcli-openshift4-baremetal]
+- [openshift-aio]
+- [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
+- [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
@@ -65,7 +69,7 @@ See [Release Document](docs/qubinode/releases.md) for features history.
 - [Qubinode Overview](docs/README.md)
 
 ## Training
-* [Qubinode for Beginners](docs/beginners.md)
+* [Qubinode for Beginners](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
