@@ -129,6 +129,10 @@ function qubinode_setup_ansible () {
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete
+            ansible-galaxy collection install community.general
+            ansible-galaxy collection install ansible.posix
+            ansible-galaxy collection install community.libvirt
+            ansible-galaxy collection install fedora.linux_system_roles
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1

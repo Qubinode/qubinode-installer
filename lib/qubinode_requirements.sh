@@ -80,7 +80,7 @@ function check_for_gitops(){
          OLD=$(git remote -v | grep tosin2013 | head -1 | awk '{print $2}' )
          CURRENT=$(git remote -v | grep origin | head -1 | awk '{print $2}' )
          echo "Old: $OLD"
-         echp "Current: $CURRENT"
+         echo "Current: $CURRENT"
          if [ $enable_gitops == "true" ];
          then
             if [ ! -z "$OLD" ];
