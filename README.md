@@ -23,13 +23,8 @@ for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
 * Red Hat Enteprise Linux 9.0
-<<<<<<< HEAD
-Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md)_.
-One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](docs/README.md)
-=======
 Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md).
 One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
->>>>>>> 21b343912ee4fafc6b5802f27cac9b6669ba8732
 * Centos 8 Streams is supported base OS.
 * Or Fedora 36 (Testing) is a supported base OS.
 
