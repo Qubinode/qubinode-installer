@@ -7,6 +7,8 @@ source "${project_dir}/lib/qubinode_utils.sh"
   RHEL_VERSION=$(get_rhel_version)
   if [[ $RHEL_VERSION == "FEDORA" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.10)/site-packages/kvirt/defaults.py"
+  elif [[ $RHEL_VERSION == "RHEL8" ]]; then
+    defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.10)/site-packages/kvirt/defaults.py"
   elif [[ $(get_distro) == "centos" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.9)/site-packages/kvirt/defaults.py"
   else 
