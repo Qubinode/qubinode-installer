@@ -13,7 +13,7 @@ domain: ""
 # Enable Gitops 
 enable_gitops: false 
 default_gitops_repo: https://github.com/tosin2013/openshift-virtualization-gitops.git
-directory_name: "quick-dev"
+directory_name: "qubinode-lab"
 
 # RHEL Version
 rhel_version: ""
