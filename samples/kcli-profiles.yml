@@ -125,7 +125,7 @@ fedora36:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 fedora36jumpbox:
- image: 'CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
+ image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
  numcpus: 4
  memory: 4096
  disks:
