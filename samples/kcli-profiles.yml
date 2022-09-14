@@ -16,6 +16,23 @@ rhel8:
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
+rhel9:
+ image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 2
+ memory: 4096
+ disks:
+  - size: 20
+ reservedns: true
+ nets:
+  - name: qubinet
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
 mirror_vm:
  image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
  rhnregister: true
