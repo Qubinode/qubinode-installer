@@ -47,6 +47,7 @@ function kcli_configure_images(){
     echo "Downloading Centos Streams"
     sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220718.0.x86_64.qcow2
     sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220718.0.x86_64.qcow2 
+    sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
     #echo "Downloading Red Hat Enterprise Linux 8"
     if [ $(get_distro) == "rhel" ]; then
       echo "Downloading Red Hat Enterprise Linux 9"
