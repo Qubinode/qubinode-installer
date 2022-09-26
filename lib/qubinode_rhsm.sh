@@ -5,7 +5,7 @@ RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
+    if grep Fedora /etc/redhat-release || [[ $(get_distro) == "centos" ]]; 
     then
         echo "Skipping checking RHSM status"
     else 
