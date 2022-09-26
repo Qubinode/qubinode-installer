@@ -69,7 +69,7 @@ Decrypt ansible vault file password if it exisits in git repo::
     echo "YourPassword" > "${vault_key_file}"
     ansible-vault decrypt "${vaultfile}"
 
-Deploy Qubinode Installer with godns::
+Deploy Qubinode Installer with gozones::
     
     sudo su - admin
     cd /home/admin/qubinode-installer

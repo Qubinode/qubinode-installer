@@ -324,8 +324,20 @@ setup_download_options () {
             fi
             sudo cp "${project_dir}/${artifact_centos_qcow_image}"  "${libvirt_dir}/${artifact_centos_qcow_image}"
             QCOW_STATUS=exists
+        elif cat /etc/redhat-release  | grep "CentOS Stream release 9" > /dev/null 2>&1; then
+            cd ${project_dir}
+            curl -OL https://cloud.centos.org/centos/9-stream/x86_64/images/${artifact_centos_qcow_image}
+            qcow_image_checksum=$(grep "qcow_centos_checksum" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
+            DWLD_CHECKSUM=$(sha256sum ${project_dir}/${artifact_centos_qcow_image}|awk '{print $1}')
+            if [ $DWLD_CHECKSUM != $qcow_image_checksum ];
+            then
+                echo "The downloaded $qcow_image_name validation fail"
+                exit 1
+            fi
+            sudo cp "${project_dir}/${artifact_centos_qcow_image}"  "${libvirt_dir}/${artifact_centos_qcow_image}"
+            QCOW_STATUS=exists
         else
-          echo "Release is not CentOS Stream release 8"
+          echo "Release is not CentOS Stream release"
           exit 1
         fi 
     elif  sudo test ! -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]

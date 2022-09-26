@@ -166,7 +166,7 @@ centos8jumpbox:
 
 
 centos9jumpbox:
- image: 'CentOS-Stream-GenericCloud-9-20220718.0.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
@@ -185,7 +185,7 @@ centos9jumpbox:
   - firewall-cmd --reload
 
 ztpfwjumpbox:
- image: 'CentOS-Stream-GenericCloud-9-20220718.0.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
@@ -206,7 +206,7 @@ ztpfwjumpbox:
 
 
 cvadjumpbox:
- image: 'CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
