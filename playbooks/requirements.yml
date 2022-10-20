@@ -3,7 +3,7 @@
   version: v2.4.6
 
 - src: https://github.com/Qubinode/qubinode_kvmhost_setup.git
-  version: v2.4.5
+  version: master
 
 - src: https://github.com/flyemsafe/ansible-idm.git
   version: v1.0.0
