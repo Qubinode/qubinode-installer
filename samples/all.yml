@@ -12,7 +12,7 @@ domain: ""
 ####
 # Enable Gitops 
 enable_gitops: false 
-default_gitops_repo: https://github.com/tosin2013/openshift-virtualization-gitops.git
+default_gitops_repo: https://github.com/tosin2013/kvm-gitops.git
 directory_name: "quick-dev"
 
 # RHEL Version

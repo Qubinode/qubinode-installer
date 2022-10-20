@@ -517,8 +517,8 @@ function qubinode_setup () {
 function push_to_repo(){
     echo "Pushing to repo $1"
     directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
-    cp "${project_dir}/playbooks/vars/${1}" "$HOME/openshift-virtualization-gitops/inventories/${directory_name}/host_vars/"
-    cd $HOME/openshift-virtualization-gitops/
+    cp "${project_dir}/playbooks/vars/${1}" "$HOME/kvm-gitops/inventories/${directory_name}/host_vars/"
+    cd $HOME/kvm-gitops/
     git pull 
     git add inventories/${directory_name}/host_vars/${1}
     git commit -m "Added ${1} to inventory"
