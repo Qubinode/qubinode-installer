@@ -70,13 +70,13 @@ function qubinode_required_prereqs () {
 }
 
 function check_for_gitops(){
-    if [ -d $HOME/openshift-virtualization-gitops/ ];
+    if [ -d $HOME/kvm-gitops/ ];
     then
          enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
          default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
          directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
          echo "enable gitops: $enable_gitops"
-         cd $HOME/openshift-virtualization-gitops/
+         cd $HOME/kvm-gitops/
          OLD=$(git remote -v | grep tosin2013 | head -1 | awk '{print $2}' )
          CURRENT=$(git remote -v | grep origin | head -1 | awk '{print $2}' )
          echo "Old: $OLD"
@@ -96,8 +96,8 @@ function check_for_gitops(){
                 git config --global user.name "$USER"
                 git config --global user.email $USER@localhost.localdomain
                 git pull
-                echo "deployment in progress " > $HOME/openshift-virtualization-gitops/inventories/${directory_name}/deployment_status
-                git add $HOME/openshift-virtualization-gitops/inventories/${directory_name}/deployment_status
+                echo "deployment in progress " > $HOME/kvm-gitops/inventories/${directory_name}/deployment_status
+                git add $HOME/kvm-gitops/inventories/${directory_name}/deployment_status
                 git commit -m "adding deployment status"
                 git push 
                 git config --global credential.helper store
@@ -108,7 +108,7 @@ function check_for_gitops(){
          cd $HOME/qubinode-installer/
     else 
         default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
-        echo "$HOME/openshift-virtualization-gitops/ does not exisit please clone ${default_gitops_repo} to $HOME"
+        echo "$HOME/kvm-gitops/ does not exisit please clone ${default_gitops_repo} to $HOME"
         exit 1
     fi 
 }

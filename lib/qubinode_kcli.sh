@@ -59,6 +59,12 @@ function kcli_configure_images(){
 }
 
 function update_default_settings(){
+    if [ ! -f "${vault_key_file}" ]
+      then
+          printf "%s\n" " ${vault_key_file} does not exist"
+          exit 1
+      fi
+
     echo "Configuring default settings"
     if  [[ -f  ${defaults_file} ]];
     then
@@ -87,7 +93,10 @@ function update_default_settings(){
     sed -i "s/CHANGEUSER/${admin_username}/g" "${project_dir}/kcli-profiles.yml"
     sed -i "s/CHANGEPASSWORD/${admin_password}/g" "${project_dir}/kcli-profiles.yml"
     sudo mkdir -p /root/.kcli
-    sudo mv "${project_dir}/kcli-profiles.yml" /root/.kcli/profiles.yml
+    sudo cp "${project_dir}/kcli-profiles.yml" /root/.kcli/profiles.yml
+    sudo mkdir -p ${HOME}/.kcli
+    sudo cp "${project_dir}/kcli-profiles.yml" ${HOME}/.kcli/profiles.yml
+    sudo rm -rf "${project_dir}/kcli-profiles.yml"
 }
 
 function create_static_profile_ip() {

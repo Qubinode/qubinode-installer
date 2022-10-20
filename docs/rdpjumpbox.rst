@@ -46,6 +46,13 @@ FEDORA Jumpbox::
 
     sudo kcli create vm -p fedora36jumpbox jumpbox --wait
 
+
+RHEL 8.6 CVAD Deployments
+----------------------------
+CVAD Jumpbox::
+
+    sudo kcli create vm -p cvadjumpbox jumpbox --wait
+
 ScreenShots
 ----------------------------
 .. image:: https://i.imgur.com/qc7r6Eu.png
