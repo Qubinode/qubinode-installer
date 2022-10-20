@@ -5,7 +5,7 @@ RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-    if grep Fedora /etc/redhat-release || [[ $(get_distro) == "centos" ]]; 
+    if grep Fedora /etc/redhat-release || [[ $(get_distro) == "centos"|| [[ $(get_distro) == "rocky"  ]]; 
     then
         echo "Skipping checking RHSM status"
     else 
@@ -44,7 +44,7 @@ function check_rhsm_status () {
 function ask_user_for_rhsm_credentials () {
     # decrypt ansible vault file
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
-    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]]
+    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" || [[ $(get_distro) == "rocky" ]]
     then
         echo "Skipping checking RHSM status"
     elif grep '""' "${vars_file}"|grep -q rhsm_reg_method
@@ -111,7 +111,7 @@ function ask_user_for_rhsm_credentials () {
 # validate the registration or register the system
 # if it's not registered
 function qubinode_rhsm_register () {
-    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]]
+    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos"|| [[ $(get_distro) == "rocky"  ]]
     then
         printf "%s\n" " Skipping registering to RHSM"
     else
