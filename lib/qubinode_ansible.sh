@@ -138,6 +138,14 @@ function qubinode_setup_ansible () {
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc
             install_podman_dependainces
+            elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
+            sudo dnf clean all > /dev/null 2>&1
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc
+            ansible-galaxy collection install community.general
+            ansible-galaxy collection install ansible.posix
+            ansible-galaxy collection install community.libvirt
+            ansible-galaxy collection install fedora.linux_system_roles
+            install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
             sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc
