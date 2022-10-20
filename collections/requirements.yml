@@ -1,0 +1,7 @@
+---
+collections:
+  - ansible.posix
+  - containers.podman
+  - community.general
+  - community.libvirt
+  - fedora.linux_system_roles

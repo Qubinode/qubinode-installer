@@ -212,9 +212,11 @@ function qubinode_setup_ansible () {
         then
 	    printf "%s\n" "   ${mag}Downloading required roles overwriting existing${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy install --force -r "collections/requirements.yml" > /dev/null 2>&1 || exit $?
         else
             printf "%s\n" " ${mag}Downloading required roles${end}"
             ansible-galaxy install --force -r "${ANSIBLE_REQUIREMENTS_FILE}" > /dev/null 2>&1 || exit $?
+            ansible-galaxy install --force -r "collections/requirements.yml" > /dev/null 2>&1 || exit $?
         fi
 
         # Ensure required modules are downloaded
