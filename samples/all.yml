@@ -15,6 +15,10 @@ enable_gitops: false
 default_gitops_repo: https://github.com/tosin2013/kvm-gitops.git
 directory_name: "quick-dev"
 
+#####
+# RHPDS Settings
+run_on_rhpds: no 
+
 # RHEL Version
 rhel_version: ""
 

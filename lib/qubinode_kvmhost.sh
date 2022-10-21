@@ -9,6 +9,7 @@ function kvm_host_variables () {
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
     RHEL_VERSION=$(get_rhel_version)
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
 
     echo  "Base Operating System ${RHEL_VERSION}"
     if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
@@ -332,7 +333,7 @@ function qubinode_networking () {
         PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
         test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
         test -f "${project_dir}/playbooks/vars/all.yml" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${project_dir}/playbooks/vars/all.yml"
-        if [ $ENABLE_IDM] == true ];
+        if [ $ENABLE_IDM == true ];
         then 
             test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
         fi 
@@ -610,14 +611,21 @@ function qubinode_setup_kvm_host () {
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-        qcow_check
-        network_check
+        #qcow_check
+        if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+        then
+            network_check
+        fi
+        rhpds_equnix
       else
-          printf "%s\n" " ${blu}not a qubinode system${end}"
-          printf "%s\n" "   Installing required packages"
-          sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
-          qcow_check
-          network_check
+        printf "%s\n" " ${blu}not a qubinode system${end}"
+        printf "%s\n" "   Installing required packages"
+        sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
+        #qcow_check
+        if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+        then
+            network_check
+        fi
       fi
     fi
 
@@ -740,4 +748,24 @@ function qubinode_check_kvmhost () {
     fi
 
     echo $KVM_HOST_MSG
+}
+
+
+function rhpds_equnix(){
+    kvm_host_variables
+    if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+    then
+        sudo dnf install epel-release -y 
+        sudo groupinstall "Server with GUI" -y
+        sudo dnf install xrdp  -y
+        sudo systemctl enable xrdp --now
+        sudo systemctl enable firewalld
+        sudo systemctl start firewalld
+        sudo firewall-cmd --permanent --add-port=3389/tcp 
+        sudo firewall-cmd --reload
+        curl -OL https://gist.githubusercontent.com/tosin2013/385054f345ff7129df6167631156fa2a/raw/b67866c8d0ec220c393ea83d2c7056f33c472e65/configure-sudo-user.sh
+        chmod +x configure-sudo-user.sh
+        echo "Create user for xrdp access"
+        sudo ./configure-sudo-user.sh remoteuser
+    fi
 }
