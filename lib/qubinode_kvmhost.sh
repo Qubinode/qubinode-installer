@@ -368,7 +368,16 @@ function qubinode_networking () {
     if sudo ip addr show "${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" > /dev/null 2>&1
     then
         KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
-        mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+        
+        if [ ${RUN_ON_RHPDS} == "yes" ];
+        then
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}' | head -1)
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2| head -1)
+        else 
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+        fi
+        
 
         #
 
@@ -430,6 +439,15 @@ function qubinode_networking () {
         fi
     elif [ -z $KVM_HOST_NETMASK ];
     then
+        if [ ${RUN_ON_RHPDS} == "yes" ];
+        then
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}' | head -1)
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2| head -1)
+        else 
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+        fi
+
         if ! ipcalc -v  &> /dev/null
         then
             sudo yum install net-tools -y
@@ -598,6 +616,7 @@ function qubinode_setup_kvm_host () {
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
            printf "%s\n" " ${blu}Setting up qubinode system${end}"
+           qubinode_networking
            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
            qcow_check
            network_check
@@ -610,6 +629,7 @@ function qubinode_setup_kvm_host () {
       if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
+        qubinode_networking
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
         #qcow_check
         if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
