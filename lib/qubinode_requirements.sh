@@ -100,7 +100,9 @@ function check_for_gitops(){
                 git add $HOME/kvm-gitops/inventories/${directory_name}/deployment_status
                 git commit -m "adding deployment status"
                 git push 
+                git pull 
                 git config --global credential.helper store
+                git pull 
             fi 
          else
              echo "gitops not enabled"
