@@ -11,6 +11,7 @@ source "${project_dir}/lib/qubinode_utils.sh"
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.6)/site-packages/kvirt/defaults.py"
   elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.6)/site-packages/kvirt/defaults.py"
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
   elif [[ $(get_distro) == "centos" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.9)/site-packages/kvirt/defaults.py"
   else 
@@ -50,8 +51,7 @@ function kcli_configure_images(){
     sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2
     sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2 
     sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
-    #echo "Downloading Red Hat Enterprise Linux 8"
-    if [ $(get_distro) == "rhel" ]; then
+    if [ $(get_distro) == "rhel"  || ${RUN_ON_RHPDS} == "yes" ]; then
       echo "Downloading Red Hat Enterprise Linux 8"
       sudo kcli download image rhel8
       echo "Downloading Red Hat Enterprise Linux 9"
@@ -80,25 +80,32 @@ function update_default_settings(){
       echo "${defaults_file} not found exiting"
       exit 1
     fi  
-
-    if [ -f ${project_dir}/playbooks/vars/kcli-profiles.yml ];
+    
+    if [ "A${RUN_ON_RHPDS}" == "Ayes" ];
     then
-      cp "${project_dir}/playbooks/vars/kcli-profiles.yml" $HOME/qubinode-installer
+      KCLI_PROFILE=kcli-profiles-rhpds.yml
+    else
+      KCLI_PROFILE=kcli-profiles.yml
+    fi
+    
+    if [ -f ${project_dir}/playbooks/vars/${KCLI_PROFILE} ];
+    then
+      cp "${project_dir}/playbooks/vars/${KCLI_PROFILE}" $HOME/qubinode-installer
     else 
-      cp "${project_dir}/samples/kcli-profiles.yml" $HOME/qubinode-installer
+      cp "${project_dir}/samples/${KCLI_PROFILE}" $HOME/qubinode-installer
     fi
     
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
     admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
     encrypt_ansible_vault "${vaultfile}" >/dev/null
-    sed -i "s/CHANGEUSER/${admin_username}/g" "${project_dir}/kcli-profiles.yml"
-    sed -i "s/CHANGEPASSWORD/${admin_password}/g" "${project_dir}/kcli-profiles.yml"
+    sed -i "s/CHANGEUSER/${admin_username}/g" "${project_dir}/${KCLI_PROFILE}"
+    sed -i "s/CHANGEPASSWORD/${admin_password}/g" "${project_dir}/${KCLI_PROFILE}"
     sudo mkdir -p /root/.kcli
-    sudo cp "${project_dir}/kcli-profiles.yml" /root/.kcli/profiles.yml
+    sudo cp "${project_dir}/${KCLI_PROFILE}" /root/.kcli/profiles.yml
     sudo mkdir -p ${HOME}/.kcli
-    sudo cp "${project_dir}/kcli-profiles.yml" ${HOME}/.kcli/profiles.yml
-    sudo rm -rf "${project_dir}/kcli-profiles.yml"
+    sudo cp "${project_dir}/${KCLI_PROFILE}" ${HOME}/.kcli/profiles.yml
+    sudo rm -rf "${project_dir}/${KCLI_PROFILE}"
 }
 
 function create_static_profile_ip() {
