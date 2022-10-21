@@ -427,6 +427,24 @@ function qubinode_networking () {
 	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
             sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
         fi
+    elif [ -z $KVM_HOST_NETMASK ];
+    then
+        if ! ipcalc -v  &> /dev/null
+        then
+            sudo yum install net-tools -y
+            KVM_HOST_NETMASK=$(sudo ifconfig | grep -i netmask | grep -v 127.0.0.1 | awk '{print $4}')
+        else 
+            sudo yum install ipcalc -y
+            KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
+        fi 
+
+        # Set KVM host ip info
+        iSkvm_host_netmask=$(awk '/^kvm_host_netmask:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
+        then
+            #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
+            sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${kvm_host_vars_file}"
+        fi
     else
             printf "%s\n\n\n" " "
             printf "%s\n" "    ${red}Could not properly determine your current active network interface${end}"
