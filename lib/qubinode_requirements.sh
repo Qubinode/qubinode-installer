@@ -378,11 +378,11 @@ setup_download_options () {
         artifact_string="the $artifact_qcow_image image"
     fi
 
-    if  [[ "A${PULL_MISSING}" == "Ayes" ]] || [[ "A${QCOW_MISSING}" == "Ayes" ]]
-    then
-        installer_artifacts_msg
-        exit 1
-    fi
+    #if  [[ "A${PULL_MISSING}" == "Ayes" ]] || [[ "A${QCOW_MISSING}" == "Ayes" ]]
+    #then
+    #    installer_artifacts_msg
+    #    exit 1
+    #fi
 
     # Ensure qcow image is copied to the libvirt directory
     if sudo test ! -f "${libvirt_dir}/${artifact_qcow_image}" && [ ${BASE_OS} == "RHEL8" ]
