@@ -1,0 +1,227 @@
+# /usr/lib/python3.6/site-packages/kvirt/defaults.py
+rhel8:
+ image: rhel-8.6-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 2
+ memory: 4096
+ disks:
+  - size: 20
+ reservedns: true
+ nets:
+  - name: default
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
+rhel9:
+ image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 2
+ memory: 4096
+ disks:
+  - size: 20
+ reservedns: true
+ nets:
+  - name: default
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
+mirror_vm:
+ image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 500
+ reservedns: true
+ nets:
+  - default
+  - ztpfw
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - hostnamectl set-hostname mirror-vm.lab.qubinode.io
+  - dnf update -y
+  - dnf install curl wget tar jq podman skopeo httpd-tools openssl nano nfs-utils bash-completion bind-utils ansible vim libvirt firewalld acl policycoreutils-python-utils -y
+  - echo 0 > /proc/sys/net/ipv4/ip_unprivileged_port_start
+  - VERSION=1.2.5;curl -OL https://github.com/quay/mirror-registry/releases/download/${VERSION}/mirror-registry-offline.tar.gz
+  - tar -zxvf mirror-registry-offline.tar.gz
+  - mkdir -p /registry/
+  - sudo ./mirror-registry install --quayHostname $(hostname) --quayRoot /registry/  | tee /tmp/mirror-registry-offline.log
+  - sudo firewall-cmd --add-port=8443/tcp --permanent
+  - sudo firewall-cmd --reload
+  - sudo semanage port  -a 8443 -t http_port_t -p tcp
+  - sudo semanage port  -l  | grep -w http_port_t
+  - cp /home/admin/qubinode-installer/pull_secret.json /home/cloud-user/pull_secret.json
+
+rhel8_static:
+ image: rhel-8.6-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 2
+ memory: 4096
+ disks:
+  - size: 20
+ reservedns: true
+ nets:
+  - name: default
+    nic: eth0
+    ip: 192.168.1.10
+    mask: 255.255.255.0
+    gateway: 192.168.1.1
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
+rhel8_jumpbox:
+ image: rhel-8.6-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - default
+  - ztpfw
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - systemctl enable firewalld
+  - systemctl start firewalld
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
+
+fedora36:
+ image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+ numcpus: 2
+ memory: 4096
+ nets:
+  - name: default
+ reservedns: true
+ disks:
+  - size: 20
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
+fedora36jumpbox:
+ image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+ numcpus: 4
+ memory: 4096
+ disks:
+  - size: 49
+ reservedns: true
+ nets:
+  - name: default
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
+
+
+
+centos8jumpbox:
+ image: 'CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - name: default
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
+
+
+centos9jumpbox:
+ image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - name: default
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
+
+ztpfwjumpbox:
+ image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - name: default
+  - name: bare-net
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
+
+
+cvadjumpbox:
+ image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - name: default
+  - name: VLAN500
+  - name: FLOATING_IP
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf groupinstall "Server with GUI" -y
+  - dnf install epel-release -y
+  - dnf install xrdp  -y
+  - systemctl enable xrdp --now
+  - firewall-cmd --permanent --add-port=3389/tcp 
+  - firewall-cmd --reload
