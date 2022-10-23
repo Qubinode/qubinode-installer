@@ -794,6 +794,8 @@ function rhpds_equnix(){
     if [ "${RUN_ON_RHPDS}" == "yes" ]
     then
         sudo dnf install epel-release -y 
+        sudo dnf update -y 
+        sudo dnf upgrade -y 
         curl -OL https://gist.githubusercontent.com/tosin2013/385054f345ff7129df6167631156fa2a/raw/b67866c8d0ec220c393ea83d2c7056f33c472e65/configure-sudo-user.sh
         chmod +x configure-sudo-user.sh
         echo "Create user for xrdp access"
