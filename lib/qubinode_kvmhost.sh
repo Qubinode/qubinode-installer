@@ -325,6 +325,7 @@ function qubinode_networking () {
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$KVM_HOST_IPADDR/ {print \$1}")
     PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g')
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
 
     # ask user for their IP network and use the default
     if egrep -R changeme.in-addr.arpa "${project_dir}/playbooks/vars/" >/dev/null 2>&1
@@ -536,15 +537,22 @@ kvm_host_health_check () {
     requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
 
-    bash -c "sudo virsh net-list | grep -q $requested_brigde"
-    RESULT=$?
-    if [ $RESULT -ne 0 ]
+    if [ ${RUN_ON_RHPDS} == "yes" ];
     then
-    #if ! sudo virsh net-list | grep -q $requested_brigde; then
-      KVM_STATUS="notready"
-      kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
-    fi
+        echo "Skipping Libvirt network health check"
+    else
+        bash -c "sudo virsh net-list | grep -q $requested_brigde"
+        RESULT=$?
+        if [ $RESULT -ne 0 ]
+        then
+        #if ! sudo virsh net-list | grep -q $requested_brigde; then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
+        fi
+    fi 
+    
 
     #if ! sudo virsh net-list | grep -q $requested_nat; then
     #  KVM_IN_GOOD_HEALTH="notready"
@@ -615,11 +623,14 @@ function qubinode_setup_kvm_host () {
 
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
-           printf "%s\n" " ${blu}Setting up qubinode system${end}"
-           qubinode_networking
-           ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           qcow_check
-           network_check
+            printf "%s\n" " ${blu}Setting up qubinode system${end}"
+            qubinode_networking
+            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+            qcow_check
+            if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+            then
+                network_check
+            fi
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
        fi
@@ -690,6 +701,13 @@ function network_check(){
     then 
         sudo  nmcli connection down ${SECONDARY_INTERFACE_NAME} && sudo nmcli connection up ${SECONDARY_INTERFACE_NAME}
     fi 
+
+    if [ -f $HOME/gitea-password.txt ];
+    then 
+        sudo podman stop $(sudo podman ps | grep gitea|awk '{print $1}')
+        sudo podman start $(sudo podman ps -a | grep gitea|awk '{print $1}')
+    fi 
+    rhpds_equnix
 }
 
 function qubinode_check_kvmhost () {
@@ -772,20 +790,21 @@ function qubinode_check_kvmhost () {
 
 
 function rhpds_equnix(){
-    kvm_host_variables
-    if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    if [ "${RUN_ON_RHPDS}" == "yes" ]
     then
         sudo dnf install epel-release -y 
-        sudo groupinstall "Server with GUI" -y
+        curl -OL https://gist.githubusercontent.com/tosin2013/385054f345ff7129df6167631156fa2a/raw/b67866c8d0ec220c393ea83d2c7056f33c472e65/configure-sudo-user.sh
+        chmod +x configure-sudo-user.sh
+        echo "Create user for xrdp access"
+        sudo ./configure-sudo-user.sh remoteuser
+        sudo dnf groupinstall "Server with GUI" -y
+        sudo systemctl set-default graphical
         sudo dnf install xrdp  -y
         sudo systemctl enable xrdp --now
         sudo systemctl enable firewalld
         sudo systemctl start firewalld
         sudo firewall-cmd --permanent --add-port=3389/tcp 
         sudo firewall-cmd --reload
-        curl -OL https://gist.githubusercontent.com/tosin2013/385054f345ff7129df6167631156fa2a/raw/b67866c8d0ec220c393ea83d2c7056f33c472e65/configure-sudo-user.sh
-        chmod +x configure-sudo-user.sh
-        echo "Create user for xrdp access"
-        sudo ./configure-sudo-user.sh remoteuser
     fi
 }
