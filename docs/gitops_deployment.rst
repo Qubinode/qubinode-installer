@@ -10,6 +10,7 @@ GitOps Deployment
 Configure Repo
 --------------
 To use locally follow the link below 
+
 * `OpenShift Virtualization GitOps Repository <https://openshift-virtualization-gitops-repository.readthedocs.io/en/latest/#openshift-virtualization-gitops-repository>`_
 
 To use external Git repo use the following steps::
