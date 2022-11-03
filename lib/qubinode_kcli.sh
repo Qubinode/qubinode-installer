@@ -4,6 +4,7 @@ setup_variables
 product_in_use=kcli
 source "${project_dir}/lib/qubinode_utils.sh"
 
+
   RHEL_VERSION=$(get_rhel_version)
   if [[ $RHEL_VERSION == "FEDORA" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.10)/site-packages/kvirt/defaults.py"
@@ -11,7 +12,7 @@ source "${project_dir}/lib/qubinode_utils.sh"
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.6)/site-packages/kvirt/defaults.py"
   elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.6)/site-packages/kvirt/defaults.py"
-    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+
   elif [[ $(get_distro) == "centos" ]]; then
     defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.9)/site-packages/kvirt/defaults.py"
   else 
@@ -51,7 +52,8 @@ function kcli_configure_images(){
     sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2
     sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2 
     sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
-    if [ $(get_distro) == "rhel"  || ${RUN_ON_RHPDS} == "yes" ]; then
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    if [[ $(get_distro) == "rhel"  || "A${RUN_ON_RHPDS}" == "Ayes"  ]]; then
       echo "Downloading Red Hat Enterprise Linux 8"
       sudo kcli download image rhel8
       echo "Downloading Red Hat Enterprise Linux 9"
@@ -80,7 +82,8 @@ function update_default_settings(){
       echo "${defaults_file} not found exiting"
       exit 1
     fi  
-    
+
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     if [ "A${RUN_ON_RHPDS}" == "Ayes" ];
     then
       KCLI_PROFILE=kcli-profiles-rhpds.yml

@@ -33,6 +33,23 @@ rhel9:
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
+rhel9_ansible:
+ image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 80
+ reservedns: true
+ nets:
+  - name: default
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
 mirror_vm:
  image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
  rhnregister: true
@@ -78,6 +95,24 @@ rhel8_static:
     ip: 192.168.1.10
     mask: 255.255.255.0
     gateway: 192.168.1.1
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+
+
+rhel8_ansible:
+ image: rhel-8.6-x86_64-kvm.qcow2
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 80
+ reservedns: true
+ nets:
+  - default
  cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
