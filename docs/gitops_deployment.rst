@@ -15,44 +15,46 @@ To use locally follow the link below
 
 To use external Git repo use the following steps::
     
-    curl -OL https://raw.githubusercontent.com/tosin2013/openshift-virtualization-gitops/main/scripts/install.sh
+    curl -OL https://raw.githubusercontent.com/tosin2013/kvm-gitops/main/scripts/install.sh
     chmod +x install.sh
     export CONFIGURE_GITEA=false
     ./install.sh
     sudo su - admin 
     git clone https://github.com/tosin2013/qubinode-installer.git
-    exit
+    
 
-
-Configure GitOps for Qubinode Installer
+Optional: Configure GitOps for Qubinode Installer
 ---------------------------------------
 Configure GitOps::
-    
+
     sudo su - root
     systemctl enable podman.socket --now
     mkdir -p /opt/fetchit
     mkdir -p ~/.fetchit
-    GITURL="http://yourrepo:3000/tosin/openshift-virtualization-gitops.git"
+    GITURL="https://github.com/tosin2013/kvm-gitops.git"
+    DIR_LOC=qubinode-lab
+    TARGET_USER=admin
+    GIT_USER=svc-gitea
+    GIT_PASS=password
     # Change Git URL to your Git Repo
     cat  >/root/.fetchit/config.yaml<<EOF
     targetConfigs:
     - url: ${GITURL}
-      username: svc-gitea
-      password: password
-      filetransfer:
-      - name: copy-vars
-        targetPath: inventories/virtual-lab/host_vars
-        destinationDirectory: /home/admin/qubinode-installer/playbooks/vars
+    username: ${GIT_USER}
+    password: ${GIT_PASS}
+    filetransfer:
+    - name: copy-vars
+        targetPath: inventories/${DIR_LOC}/host_vars
+        destinationDirectory: /home/${TARGET_USER}/qubinode-installer/playbooks/vars
         schedule: "*/1 * * * *"
-      branch: main
+    branch: main
     EOF
 
-    cp /home/admin/openshift-virtualization-gitops/scripts/fetchit/fetchit-root.service /etc/systemd/system/fetchit.service
+    cp /home/${TARGET_USER}/kvm-gitops/scripts/fetchit/fetchit-root.service /etc/systemd/system/fetchit.service
     systemctl enable fetchit --now
 
-    podman ps 
+    podman ps
 
-    exit
 
 Deploy Qubinode Installer
 -------------------------
