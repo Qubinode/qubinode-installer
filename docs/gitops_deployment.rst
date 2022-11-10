@@ -28,36 +28,10 @@ Optional: Configure GitOps for Qubinode Installer
 Configure GitOps::
 
     sudo su - root
-    systemctl enable podman.socket --now
-    mkdir -p /opt/fetchit
-    mkdir -p ~/.fetchit
-    GITURL="https://github.com/tosin2013/kvm-gitops.git"
-    DIR_LOC=qubinode-lab
-    TARGET_USER=admin
-    GIT_USER=svc-gitea
-    GIT_PASS=password
-    # Change Git URL to your Git Repo
-    cat  >/root/.fetchit/config.yaml<<EOF
-    targetConfigs:
-    - url: ${GITURL}
-    username: ${GIT_USER}
-    password: ${GIT_PASS}
-    filetransfer:
-    - name: copy-vars
-        targetPath: inventories/${DIR_LOC}/host_vars
-        destinationDirectory: /home/${TARGET_USER}/qubinode-installer/playbooks/vars
-        schedule: "*/1 * * * *"
-    branch: main
-    EOF
+    curl -OL https://raw.githubusercontent.com/tosin2013/kvm-gitops/main/scripts/example_script.sh
+    chmod +x example_script.sh
+    ./example_script.sh qubinode-installer <directory_path>  http://gitea.example.com:3000/myrepo/kvm-gitops.git gituser password
 
-    cp /home/${TARGET_USER}/kvm-gitops/scripts/fetchit/fetchit-root.service /etc/systemd/system/fetchit.service
-    systemctl enable fetchit --now
-
-    podman ps
-
-
-Deploy Qubinode Installer
--------------------------
 Confirm Qubinode vars have been copied to vars directory::
 
         sudo su - admin 
@@ -72,7 +46,9 @@ Decrypt ansible vault file password if it exisits in git repo::
     echo "YourPassword" > "${vault_key_file}"
     ansible-vault decrypt "${vaultfile}"
 
-Deploy Qubinode Installer with gozones::
+Deploy Qubinode Installer with gozones
+-------------------------------------
+Start Deployment:: 
     
     sudo su - admin
     cd /home/admin/qubinode-installer

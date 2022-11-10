@@ -17,7 +17,7 @@ rhel8:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel9:
- image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ image: rhel-baseos-9.0-update-4-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -34,7 +34,7 @@ rhel9:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel9_ansible:
- image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ image: rhel-baseos-9.0-update-4-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 4
  memory: 8192
