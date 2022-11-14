@@ -10,7 +10,7 @@ function step03(){
   printf "%s\n" "Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/03-configure-local-registry-cache.md"
 }
 
-function qubinode_setup_ipi_lab() {
+function qubinode_setup_ipilab() {
   printf "%s\n" "   ${blu}Configuring ipilab${end}"
   printf "%s\n" "   ${blu}Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab${end}"
 }
