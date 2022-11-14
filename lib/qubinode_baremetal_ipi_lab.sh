@@ -38,7 +38,7 @@ function configure_disconnected_repo(){
   sudo mkdir -p /nfs/registry/{auth,certs,data}
   sudo openssl req -newkey rsa:4096 -nodes -sha256 \
     -keyout /nfs/registry/certs/domain.key -x509 -days 365 -out /nfs/registry/certs/domain.crt \
-    -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=provision.$GUID.dynamic.opentlc.com" -addext "subjectAltName = provision.$GUID.dynamic.opentlc.com"
+    -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=provision.$GUID.dynamic.opentlc.com" -addext "subjectAltName =  DNS:provision.$GUID.dynamic.opentlc.com"
 
   sudo cp /nfs/registry/certs/domain.crt $HOME/scripts/domain.crt
   sudo chown lab-user $HOME/scripts/domain.crt
