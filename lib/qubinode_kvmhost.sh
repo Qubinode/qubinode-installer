@@ -10,7 +10,7 @@ function kvm_host_variables () {
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
     RHEL_VERSION=$(get_rhel_version)
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
-    RUN_KNI_ON_RHPDS=$(awk '/run_kni_on_rhpds/ {print $2}' "${vars_file}")
+    RUN_KNI_ON_RHPDS=$(awk '/run_kni_lab_on_rhpds/ {print $2}' "${vars_file}")
 
     echo  "Base Operating System ${RHEL_VERSION}"
     if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
