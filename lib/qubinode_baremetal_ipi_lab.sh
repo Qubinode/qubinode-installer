@@ -26,6 +26,7 @@ function install_packages(){
   sudo dnf -y install podman httpd httpd-tools
 }
 function configure_disconnected_repo(){
+  sudo mkdir -p /nfs/registry/{auth,certs,data}
   sudo openssl req -newkey rsa:4096 -nodes -sha256 \
     -keyout /nfs/registry/certs/domain.key -x509 -days 365 -out /nfs/registry/certs/domain.crt \
     -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=provision.$GUID.dynamic.opentlc.com"
