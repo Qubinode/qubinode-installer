@@ -6,7 +6,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones ipilab"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -115,14 +115,14 @@ function qubinode_product_deployment () {
               fi
               ;;
 
-          ipi-lab)
+          ipilab)
               if [ "A${qubinode_maintenance}" == "Atrue" ]
               then
                   echo "Add Option 1"
               else
-		    printf "%s\n" "   ${blu}Configuring ipi-lab${end}"
+		    printf "%s\n" "   ${blu}Configuring ipilab${end}"
             printf "%s\n" "   ${blu}Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab${end}"
-                    qubinode_setup_ipi_lab
+                    qubinode_setup_ipilab
               fi
               ;;
           *)
