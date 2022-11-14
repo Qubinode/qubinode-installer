@@ -16,6 +16,9 @@ function qubinode_ipi_lab_maintenance () {
        install_packages)
 	        install_packages
             ;;
+       configure_ironic_pod)
+	        configure_ironic_pod
+            ;;
        *)
            echo "No arguement was passed"
            ;;
@@ -47,9 +50,23 @@ function configure_disconnected_repo(){
   sudo podman ps
   curl -u dummy:dummy -k \
       https://provision.$GUID.dynamic.opentlc.com:5000/v2/_catalog
-  echo "Configure a Disconnected Registry and Red Hat Enterprise Linux CoreOS Cache"
-  printf "%s\n" " ${red}Configure a Disconnected Registry and Red Hat Enterprise Linux CoreOS Cache${end}"
+  printf "%s\n" "${red}Configure a Disconnected Registry and Red Hat Enterprise Linux CoreOS Cache${end}"
   printf "%s\n" "Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/03-configure-local-registry-cache.md"
+}
+
+function configure_ironic_pod(){
+  export IRONIC_DATA_DIR=/nfs/ocp/ironic
+  export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
+  export IRONIC_IMAGE=quay.io/metal3-io/ironic:main
+  sudo mkdir -p $IRONIC_IMAGES_DIR
+  sudo chown -R "${USER}:users" "$IRONIC_DATA_DIR"
+  sudo find $IRONIC_DATA_DIR -type d -print0 | xargs -0 chmod 755
+  sudo chmod -R +r $IRONIC_DATA_DIR
+  sudo podman pod create -n ironic-pod
+  sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
+      -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
+  sudo podman ps
+  curl http://provision.$GUID.dynamic.opentlc.com/images
 }
 
 function configure_latest_ocp(){
