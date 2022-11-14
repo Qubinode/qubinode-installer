@@ -114,6 +114,17 @@ function qubinode_product_deployment () {
                     qubinode_setup_gozones
               fi
               ;;
+
+          ipi-lab)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  echo "Add Option 1"
+              else
+		    printf "%s\n" "   ${blu}Configuring ipi-lab${end}"
+            printf "%s\n" "   ${blu}Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab${end}"
+                    qubinode_setup_ipi_lab
+              fi
+              ;;
           *)
 	      printf "%s\n" "   Product ${mag}${PRODUCT_OPTION}${end} is not supported"
 	      printf "%s\n" "   Supported products are: ${mag}${AVAIL_PRODUCTS}${end}"
