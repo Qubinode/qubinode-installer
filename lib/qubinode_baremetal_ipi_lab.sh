@@ -96,6 +96,7 @@ EOF
   sed -i "s/pullSecret:.*/pullSecret: \'$(cat $PULLSECRET)\'/g" \
       $HOME/scripts/install-config.yaml
   grep pullSecret install-config.yaml | sed 's/^pullSecret: //' | tr -d \' | jq .
+  cat install-config.yaml
 }
 
 function mirror_registry(){
