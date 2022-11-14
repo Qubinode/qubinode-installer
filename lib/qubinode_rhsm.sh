@@ -6,7 +6,7 @@ RUN_KNI_ON_RHPDS=$(awk '/run_kni_on_rhpds/ {print $2}' "${vars_file}")
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-    if grep Fedora /etc/redhat-release || [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]]; 
+    if grep Fedora /etc/redhat-release || [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         echo "Skipping checking RHSM status"
     else 
