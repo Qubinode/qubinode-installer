@@ -77,6 +77,7 @@ function configure_ironic_pod(){
 }
 
 function configure_pull_secret_and_certs(){
+  cd /home/lab-user/scripts
   cat <<EOF > ~/reg-secret.txt
 "provision.$GUID.dynamic.opentlc.com:5000": {
     "email": "dummy@redhat.com",
