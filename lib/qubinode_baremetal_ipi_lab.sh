@@ -13,12 +13,18 @@ function qubinode_ipi_lab_maintenance () {
        configure_disconnected_repo)
 	        update_default_settings
             ;;
+       install_packages)
+	        install_packages
+            ;;
        *)
            echo "No arguement was passed"
            ;;
     esac
 }
 
+function install_packages(){
+  sudo dnf -y install podman httpd httpd-tools
+}
 function configure_disconnected_repo(){
   echo "Configure a Disconnected Registry and Red Hat Enterprise Linux CoreOS Cache"
   printf "%s\n" " ${red}Configure a Disconnected Registry and Red Hat Enterprise Linux CoreOS Cache${end}"
