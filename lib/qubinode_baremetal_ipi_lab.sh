@@ -38,7 +38,7 @@ function configure_disconnected_repo(){
   sudo mkdir -p /nfs/registry/{auth,certs,data}
   sudo openssl req -newkey rsa:4096 -nodes -sha256 \
     -keyout /nfs/registry/certs/domain.key -x509 -days 365 -out /nfs/registry/certs/domain.crt \
-    -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=provision.$GUID.dynamic.opentlc.com"
+    -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=provision.$GUID.dynamic.opentlc.com" -addext "subjectAltName = provision.$GUID.dynamic.opentlc.com"
 
   sudo cp /nfs/registry/certs/domain.crt $HOME/scripts/domain.crt
   sudo chown lab-user $HOME/scripts/domain.crt
@@ -96,7 +96,7 @@ EOF
   sed -i "s/pullSecret:.*/pullSecret: \'$(cat $PULLSECRET)\'/g" \
       $HOME/scripts/install-config.yaml
   grep pullSecret install-config.yaml | sed 's/^pullSecret: //' | tr -d \' | jq .
-  cat install-config.yaml
+  cat install-config.yaml | less
 }
 
 function mirror_registry(){
