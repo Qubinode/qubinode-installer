@@ -18,7 +18,10 @@ function ensure_supported_ansible_version () {
     if [[ $RHEL_VERSION == "RHEL9" ]]; then
         AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
     elif [[ $RHEL_VERSION == "RHEL8" ]]; then
-        AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+        if [ ${RUN_KNI_ON_RHPDS} == "yes" ]
+        then
+            AVAILABLE_VERSION=$(sudo dnf --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
+        fi
     elif [[ $RHEL_VERSION == "RHEL7" ]]; then
         AVAILABLE_VERSION=$(sudo yum --showduplicates list ansible | awk -v r1=$ANSIBLE_RELEASE '$0 ~ r1 {print $2}' | tail -1)
     fi
