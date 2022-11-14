@@ -12,6 +12,7 @@ function ensure_supported_ansible_version () {
     ANSIBLE_VERSION_GOOD=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 >= v1) ? "YES" : "NO" }')
     ANSIBLE_VERSION_GREATER=$(awk -vv1="$ANSIBLE_VERSION" -vv2="$CURRENT_ANSIBLE_VERSION" 'BEGIN { print (v2 > v1) ? "YES" : "NO" }')
     RHEL_VERSION=$(get_rhel_version)
+    RUN_KNI_ON_RHPDS=$(awk '/run_kni_lab_on_rhpds/ {print $2}' "${vars_file}")
     vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 
     if [[ $RHEL_VERSION == "RHEL9" ]]; then
@@ -83,8 +84,11 @@ function qubinode_setup_ansible () {
     then
         if [ ! -f /usr/bin/python3 ]
         then
-            sudo subscription-manager repos --enable="rhel-8-for-x86_64-baseos-rpms" > /dev/null 2>&1
-            sudo subscription-manager repos --enable="rhel-8-for-x86_64-appstream-rpms" > /dev/null 2>&1
+            if [ ${RUN_KNI_ON_RHPDS} == "no" ]
+            then
+                sudo subscription-manager repos --enable="rhel-8-for-x86_64-baseos-rpms" > /dev/null 2>&1
+                sudo subscription-manager repos --enable="rhel-8-for-x86_64-appstream-rpms" > /dev/null 2>&1
+            fi
             printf "%s\n" "   ${yel}Installing required python rpms..${end}"
             sudo dnf clean all > /dev/null 2>&1
             sudo rm -r /var/cache/dnf
@@ -136,7 +140,13 @@ function qubinode_setup_ansible () {
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc
+            if [ ${RUN_KNI_ON_RHPDS} == "yes" ]
+            then
+                sudo pip3 install ansible
+                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc
+            else
+                sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc   
+            fi
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
