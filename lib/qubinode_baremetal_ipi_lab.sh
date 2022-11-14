@@ -11,5 +11,6 @@ function step03(){
 }
 
 function qubinode_setup_ipi_lab() {
-  echo "Configuring ipi lab"
+  printf "%s\n" "   ${blu}Configuring ipilab${end}"
+  printf "%s\n" "   ${blu}Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab${end}"
 }

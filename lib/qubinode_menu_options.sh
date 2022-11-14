@@ -120,8 +120,6 @@ function qubinode_product_deployment () {
               then
                   echo "Add Option 1"
               else
-		    printf "%s\n" "   ${blu}Configuring ipilab${end}"
-            printf "%s\n" "   ${blu}Link: https://github.com/RHFieldProductManagement/baremetal-ipi-lab${end}"
                     qubinode_setup_ipilab
               fi
               ;;
