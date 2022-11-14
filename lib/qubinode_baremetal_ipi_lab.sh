@@ -28,6 +28,11 @@ function configure_disconnected_repo(){
 function configure_latest_ocp(){
   echo "Configure Latest OCP"
   printf "%s\n" " ${red}Configure Latest OCP${end}"
+  sudo rm -rf /usr/local/bin/oc
+  curl -OL https://raw.githubusercontent.com/tosin2013/openshift-4-deployment-notes/master/pre-steps/configure-openshift-packages.sh
+  chmod +x configure-openshift-packages.sh
+  sudo ./configure-openshift-packages.sh -i
+  sudo ln /usr/bin/oc /usr/local/bin/oc
   cd /home/lab-user/scripts
   export extract_dir=$(pwd)
   export VERSION=$(oc version  | grep Client | awk '{print $3}')
