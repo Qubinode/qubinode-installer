@@ -10,6 +10,7 @@ function kvm_host_variables () {
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
     RHEL_VERSION=$(get_rhel_version)
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    RUN_KNI_ON_RHPDS=$(awk '/run_kni_on_rhpds/ {print $2}' "${vars_file}")
 
     echo  "Base Operating System ${RHEL_VERSION}"
     if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
@@ -791,7 +792,7 @@ function qubinode_check_kvmhost () {
 
 function rhpds_equnix(){
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
-    if [ "${RUN_ON_RHPDS}" == "yes" ]
+    if [ "${RUN_ON_RHPDS}" == "yes" ]  && [ $RHEL_VERSION == "ROCKY8" ]
     then
         sudo dnf install epel-release -y 
         sudo dnf update -y 

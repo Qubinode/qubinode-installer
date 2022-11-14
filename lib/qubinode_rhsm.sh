@@ -2,6 +2,7 @@
 kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
 RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
+RUN_KNI_ON_RHPDS=$(awk '/run_kni_on_rhpds/ {print $2}' "${vars_file}")
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {

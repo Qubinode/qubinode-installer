@@ -18,6 +18,7 @@ directory_name: "quick-dev"
 #####
 # RHPDS Settings
 run_on_rhpds: no 
+run_kni_lab_on_rhpds: no 
 
 # RHEL Version
 rhel_version: ""
