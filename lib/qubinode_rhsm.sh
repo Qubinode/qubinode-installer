@@ -45,7 +45,7 @@ function check_rhsm_status () {
 function ask_user_for_rhsm_credentials () {
     # decrypt ansible vault file
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
-    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]] || [[ $(get_distro) == "rocky" ]]
+    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]] || [[ $(get_distro) == "rocky" ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         echo "Skipping checking RHSM status"
     elif grep '""' "${vars_file}"|grep -q rhsm_reg_method
@@ -112,7 +112,7 @@ function ask_user_for_rhsm_credentials () {
 # validate the registration or register the system
 # if it's not registered
 function qubinode_rhsm_register () {
-    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]]
+    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         printf "%s\n" " Skipping registering to RHSM"
     else
