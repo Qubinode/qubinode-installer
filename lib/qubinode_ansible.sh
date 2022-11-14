@@ -150,6 +150,7 @@ function qubinode_setup_ansible () {
             then
                 sudo pip3 install ansible
                 sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc
+                ln -s /usr/local/bin/ansible /usr/bin/ansible
             else
                 sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc   
             fi
