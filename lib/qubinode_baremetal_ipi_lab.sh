@@ -7,8 +7,8 @@ source "${project_dir}/lib/qubinode_utils.sh"
 
 function qubinode_ipi_lab_maintenance () {
     case ${product_maintenance} in
-       configure_latest_ocp)
-	        configure_latest_ocp
+       configure_latest_ocp_client)
+	        configure_latest_ocp_client
             ;;
        configure_disconnected_repo)
 	        configure_disconnected_repo
@@ -24,6 +24,9 @@ function qubinode_ipi_lab_maintenance () {
             ;;
        mirror_registry)
 	        mirror_registry
+            ;;
+       download_ocp_images)
+	        download_ocp_images
             ;;
        *)
            echo "No arguement was passed"
@@ -109,7 +112,39 @@ function mirror_registry(){
     --to-release-image=$LOCAL_REG/$LOCAL_REPO:$VERSION --to=$LOCAL_REG/$LOCAL_REPO
 }
 
-function configure_latest_ocp(){
+function download_ocp_images(){
+  INSTALL_COMMIT=$(openshift-baremetal-install version | grep commit | cut -d' ' -f4)
+  IMAGE_JSON=$(curl -s \
+	https://raw.githubusercontent.com/openshift/installer/${INSTALL_COMMIT}/data/data/rhcos.json)
+  echo $IMAGE_JSON | jq .baseURI
+  sleep 3s
+  echo $IMAGE_JSON | jq .images.qemu
+  sleep 3s
+  echo $IMAGE_JSON | jq .images.openstack
+  sleep 3s
+  URL_BASE=$(echo $IMAGE_JSON | jq -r .baseURI)
+  QEMU_IMAGE_NAME=$(echo $IMAGE_JSON | jq -r .images.qemu.path)
+  QEMU_IMAGE_SHA256=$(echo $IMAGE_JSON | jq -r .images.qemu.sha256)
+  QEMU_IMAGE_UNCOMPRESSED_SHA256=$(echo $IMAGE_JSON | jq -r '.images.qemu."uncompressed-sha256"')
+  OPENSTACK_IMAGE_NAME=$(echo $IMAGE_JSON | jq -r .images.openstack.path)
+  OPENSTACK_IMAGE_SHA256=$(echo $IMAGE_JSON | jq -r .images.openstack.sha256)
+  curl -L -o ${IRONIC_DATA_DIR}/html/images/${QEMU_IMAGE_NAME} \
+	${URL_BASE}/${QEMU_IMAGE_NAME}
+  curl -L -o ${IRONIC_DATA_DIR}/html/images/${OPENSTACK_IMAGE_NAME} \
+	${URL_BASE}/${OPENSTACK_IMAGE_NAME}
+  echo "$QEMU_IMAGE_SHA256 ${IRONIC_DATA_DIR}/html/images/${QEMU_IMAGE_NAME}" \
+	| sha256sum -c
+  echo "$OPENSTACK_IMAGE_SHA256 ${IRONIC_DATA_DIR}/html/images/${OPENSTACK_IMAGE_NAME}" \
+	| sha256sum -c
+  RHCOS_QEMU_IMAGE=${QEMU_IMAGE_NAME}?sha256=${QEMU_IMAGE_UNCOMPRESSED_SHA256}
+  RHCOS_OPENSTACK_IMAGE=${OPENSTACK_IMAGE_NAME}?sha256=${OPENSTACK_IMAGE_SHA256}
+  sed -i "s/RHCOS_QEMU_IMAGE/$RHCOS_QEMU_IMAGE/g" \
+	$HOME/scripts/install-config.yaml
+  sed -i "s/RHCOS_OPENSTACK_IMAGE/$RHCOS_OPENSTACK_IMAGE/g" \
+	$HOME/scripts/install-config.yaml
+}
+
+function configure_latest_ocp_client(){
   echo "Configure Latest OCP"
   printf "%s\n" " ${red}Configure Latest OCP${end}"
   sudo rm -rf /usr/local/bin/oc
