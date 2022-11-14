@@ -118,9 +118,9 @@ function qubinode_product_deployment () {
           ipilab)
               if [ "A${qubinode_maintenance}" == "Atrue" ]
               then
-                  echo "Add Option 1"
+                  qubinode_ipi_lab_maintenance
               else
-                    qubinode_setup_ipilab
+                  qubinode_setup_ipilab
               fi
               ;;
           *)
