@@ -117,7 +117,10 @@ function check_for_gitops(){
 
 function setup_variables () {
     qubinode_required_prereqs
-    check_for_gitops
+    if [ $enable_gitops == "true" ];
+    then
+        check_for_gitops
+    fi
 
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
