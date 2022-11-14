@@ -19,6 +19,12 @@ function qubinode_ipi_lab_maintenance () {
        configure_ironic_pod)
 	        configure_ironic_pod
             ;;
+       configure_pull_secret_and_certs)
+	        configure_pull_secret_and_certs
+            ;;
+       mirror_registry)
+	        mirror_registry
+            ;;
        *)
            echo "No arguement was passed"
            ;;
@@ -66,7 +72,39 @@ function configure_ironic_pod(){
   sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
       -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
   sudo podman ps
+  sleep 30s
   curl http://provision.$GUID.dynamic.opentlc.com/images
+}
+
+function configure_pull_secret_and_certs(){
+  cat <<EOF > ~/reg-secret.txt
+"provision.$GUID.dynamic.opentlc.com:5000": {
+    "email": "dummy@redhat.com",
+    "auth": "$(echo -n 'dummy:dummy' | base64 -w0)"
+}
+EOF
+  export PULLSECRET=$HOME/pull-secret.json
+  cp $PULLSECRET $PULLSECRET.orig
+  cat $PULLSECRET | jq ".auths += {`cat ~/reg-secret.txt`}" > $PULLSECRET
+  cat $PULLSECRET | tr -d '[:space:]' > tmp-secret
+  mv -f tmp-secret $PULLSECRET
+  rm -f ~/reg-secret.txt
+  sed -i -e 's/^/  /' $(pwd)/domain.crt
+  echo "additionalTrustBundle: |" >> $HOME/scripts/install-config.yaml
+  cat $HOME/scripts/domain.crt >> $HOME/scripts/install-config.yaml
+  sed -i "s/pullSecret:.*/pullSecret: \'$(cat $PULLSECRET)\'/g" \
+      $HOME/scripts/install-config.yaml
+  grep pullSecret install-config.yaml | sed 's/^pullSecret: //' | tr -d \' | jq .
+}
+
+function mirror_registry(){
+  export VERSION=$(oc version  | grep Client | awk '{print $3}')
+  export UPSTREAM_REPO="quay.io/openshift-release-dev/ocp-release:$VERSION-x86_64"
+  export PULLSECRET=$HOME/pull-secret.json
+  export LOCAL_REG="provision.$GUID.dynamic.opentlc.com:5000"
+  export LOCAL_REPO='ocp4/openshift4'
+  oc adm release mirror -a $PULLSECRET --from=$UPSTREAM_REPO \
+    --to-release-image=$LOCAL_REG/$LOCAL_REPO:$VERSION --to=$LOCAL_REG/$LOCAL_REPO
 }
 
 function configure_latest_ocp(){
