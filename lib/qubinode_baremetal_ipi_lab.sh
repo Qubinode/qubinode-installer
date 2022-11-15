@@ -203,8 +203,8 @@ function start_openshift_installation(){
   cp $HOME/scripts/install-config.yaml $HOME/ocp/
   sed -i  '/dnsVIP: 10.20.0.11/d' $HOME/ocp/install-config.yaml
   exit 1
-  openshift-baremetal-install --dir=ocp --log-level debug create manifests
-  openshift-baremetal-install --dir=ocp --log-level debug create cluster
+  openshift-baremetal-install --dir=$HOME/ocp  --log-level debug create manifests
+  openshift-baremetal-install --dir=$HOME/ocp  --log-level debug create cluster
 }
 
 function destroy_openshift_installation(){
