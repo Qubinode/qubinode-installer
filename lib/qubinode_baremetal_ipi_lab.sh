@@ -201,7 +201,7 @@ function start_openshift_installation(){
   printf "%s\n" " ${red}Start Openshift Installation${end}"
   mkdir $HOME/ocp
   cp $HOME/scripts/install-config.yaml $HOME/ocp/
-  sed -i  '/dnsVIP: 10.20.0.11/d' $HOME/ocp/install-config.yaml
+  #sed -i  '/dnsVIP: 10.20.0.11/d' $HOME/ocp/install-config.yaml
   openshift-baremetal-install --dir=$HOME/ocp  --log-level debug create manifests
   openshift-baremetal-install --dir=$HOME/ocp  --log-level debug create cluster
 }
