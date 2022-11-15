@@ -149,9 +149,10 @@ function download_ocp_images(){
 	else
 		echo "The folder already exist, so delete it if you want to re-download the RHCOS resources"
 	fi
-
-  RHCOS_QEMU_IMAGE=${RHCOS_QEMU_URI}?sha256=${RHCOS_QEMU_SHA_UNCOMPRESSED}
-  RHCOS_OPENSTACK_IMAGE=${RHCOS_OPENSTACK_URI}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}
+  export QCOW2_IMAGE=$(echo ${RHCOS_QEMU_URI} | tr '/' ' ' | awk '{print $9}')
+  RHCOS_QEMU_IMAGE=${OCP_RELEASE}/${QCOW2_IMAGE}?sha256=${RHCOS_QEMU_SHA_UNCOMPRESSED}
+  export OPENSTACK_QCOW2_IMAGE=$(echo ${RHCOS_OPENSTACK_URI} | tr '/' ' ' | awk '{print $9}')
+  RHCOS_OPENSTACK_IMAGE=${OCP_RELEASE}/${OPENSTACK_QCOW2_IMAGE}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}
   cd /home/lab-user/scripts
   sed -i "s/RHCOS_QEMU_IMAGE/$RHCOS_QEMU_IMAGE/g" \
 	$HOME/scripts/install-config.yaml
