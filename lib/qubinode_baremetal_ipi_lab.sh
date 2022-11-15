@@ -152,6 +152,7 @@ function download_ocp_images(){
 
   RHCOS_QEMU_IMAGE=${RHCOS_QEMU_URI}?sha256=${RHCOS_QEMU_SHA_UNCOMPRESSED}
   RHCOS_OPENSTACK_IMAGE=${RHCOS_OPENSTACK_URI}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}
+  cd /home/lab-user/scripts
   sed -i "s/RHCOS_QEMU_IMAGE/$RHCOS_QEMU_IMAGE/g" \
 	$HOME/scripts/install-config.yaml
   sed -i "s/RHCOS_OPENSTACK_IMAGE/$RHCOS_OPENSTACK_IMAGE/g" \
