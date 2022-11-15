@@ -28,6 +28,15 @@ function qubinode_ipi_lab_maintenance () {
        download_ocp_images)
 	        download_ocp_images
             ;;
+       shutdown_hosts)
+          shutdown_hosts
+            ;;
+        start_openshift_installation)
+          start_openshift_installation
+            ;;
+        destroy_openshift_installation)
+          destroy_openshift_installation
+            ;;
        *)
            echo "No arguement was passed"
            ;;
@@ -177,6 +186,32 @@ function configure_latest_ocp_client(){
   echo $VERSION
   oc adm release extract --registry-config "$HOME/pull-secret.json" --command=openshift-baremetal-install --to "${extract_dir}" ${VERSION}
   sudo cp openshift-baremetal-install /usr/local/bin
+}
+
+
+function shutdown_hosts(){
+  for i in 0 1 2 3 4 5
+  do
+    /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p620$i -Uadmin -Predhat chassis power off
+  done
+}
+
+function start_openshift_installation(){
+  echo "Start Openshift Installation"
+  printf "%s\n" " ${red}Start Openshift Installation${end}"
+  mkdir $HOME/ocp
+  cp $HOME/scripts/install-config.yaml $HOME/ocp/
+  sed -i  '/dnsVIP: 10.20.0.11/d' $HOME/ocp/install-config.yaml
+  exit 1
+  openshift-baremetal-install --dir=ocp --log-level debug create manifests
+  openshift-baremetal-install --dir=ocp --log-level debug create cluster
+}
+
+function destroy_openshift_installation(){
+  echo "Destroy Openshift Installation"
+  printf "%s\n" " ${red}Destroy Openshift Installation${end}"
+  openshift-baremetal-install --dir=ocp --log-level debug destroy cluster
+  rm -rf $HOME/ocp
 }
 
 function qubinode_setup_ipilab() {
