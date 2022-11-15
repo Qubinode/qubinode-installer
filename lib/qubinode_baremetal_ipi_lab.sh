@@ -123,7 +123,7 @@ function download_ocp_images(){
 	export RHCOS_OPENSTACK_URI=$(openshift-baremetal-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["openstack"]["formats"]["qcow2.gz"]["disk"]["location"]')
 	export RHCOS_OPENSTACK_SHA_COMPRESSED=$(openshift-baremetal-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["openstack"]["formats"]["qcow2.gz"]["disk"]["sha256"]')
   export OCP_RELEASE=$(oc version | awk '{print $3}' | head -1)-x86_64
-  export OCP_RELEASE_DOWN_PATH=/var/www/html/$OCP_RELEASE
+  export OCP_RELEASE_DOWN_PATH=${IRONIC_IMAGES_DIR}/$OCP_RELEASE
 
   echo "RHCOS_VERSION: $RHCOS_VERSION"
 	echo "RHCOS_OPENSTACK_URI: $RHCOS_OPENSTACK_URI"
