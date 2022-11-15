@@ -154,9 +154,9 @@ function download_ocp_images(){
   export OPENSTACK_QCOW2_IMAGE=$(echo ${RHCOS_OPENSTACK_URI} | tr '/' ' ' | awk '{print $9}')
   RHCOS_OPENSTACK_IMAGE=${OCP_RELEASE}/${OPENSTACK_QCOW2_IMAGE}?sha256=${RHCOS_OPENSTACK_SHA_COMPRESSED}
   cd /home/lab-user/scripts
-  sed -i "s/RHCOS_QEMU_IMAGE/$RHCOS_QEMU_IMAGE/g" \
+  sed -i "s|RHCOS_QEMU_IMAGE|$RHCOS_QEMU_IMAGE|g" \
 	$HOME/scripts/install-config.yaml
-  sed -i "s/RHCOS_OPENSTACK_IMAGE/$RHCOS_OPENSTACK_IMAGE/g" \
+  sed -i "s|RHCOS_OPENSTACK_IMAGE|$RHCOS_OPENSTACK_IMAGE|g" \
 	$HOME/scripts/install-config.yaml
   echo "Review Output of install-config.yaml"
   read
