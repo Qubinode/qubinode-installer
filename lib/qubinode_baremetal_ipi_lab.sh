@@ -210,7 +210,7 @@ function start_openshift_installation(){
 function destroy_openshift_installation(){
   echo "Destroy Openshift Installation"
   printf "%s\n" " ${red}Destroy Openshift Installation${end}"
-  openshift-baremetal-install --dir=ocp --log-level debug destroy cluster
+  openshift-baremetal-install --dir=$HOME/ocp destroy cluster
   rm -rf $HOME/ocp
 }
 
