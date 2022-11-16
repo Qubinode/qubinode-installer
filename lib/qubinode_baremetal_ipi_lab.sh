@@ -194,6 +194,7 @@ function shutdown_hosts(){
   do
     /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p620$i -Uadmin -Predhat chassis power off
   done
+  $HOME/scripts/10_volume-attach.sh detach
 }
 
 function start_openshift_installation(){
