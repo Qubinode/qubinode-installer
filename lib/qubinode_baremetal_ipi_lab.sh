@@ -37,6 +37,9 @@ function qubinode_ipi_lab_maintenance () {
         destroy_openshift_installation)
           destroy_openshift_installation
             ;;
+        cleanup_deploy)
+          cleanup_deploy
+            ;;
        *)
            echo "No arguement was passed"
            ;;
@@ -194,7 +197,6 @@ function shutdown_hosts(){
   do
     /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p620$i -Uadmin -Predhat chassis power off
   done
-  $HOME/scripts/10_volume-attach.sh detach
 }
 
 function start_openshift_installation(){
@@ -212,7 +214,34 @@ function destroy_openshift_installation(){
   printf "%s\n" " ${red}Destroy Openshift Installation${end}"
   openshift-baremetal-install --dir=$HOME/ocp destroy cluster
   rm -rf $HOME/ocp
+  cleanup_deploy
 }
+
+
+function cleanup_deploy() {
+#################################################################
+# Cleanup previous deploy whether success or failure            #
+#################################################################
+  echo "cleanup-refresh : Begin cleanup of previous deployment..."
+  export VM=`sudo virsh list|grep running|awk {'print \$2'}`
+  if [[ $VM = *bootstrap* ]]; then
+    echo "cleanup-refresh : Cleaning up left over bootstrap..."
+    sudo virsh destroy $VM
+    sudo virsh undefine $VM
+    sudo rm -r -f /var/lib/libvirt/images/$VM
+    sudo rm -r -f /var/lib/libvirt/images/$VM.ign
+    sudo ls -l /var/lib/libvirt/images/
+  fi
+  echo "cleanup-refresh : Cleaning up left over cache from previous deployment..."
+  rm -r -f `pwd`/.kube
+  rm -r -f `pwd`/.cache
+  rm -r -f `pwd`/ocp
+  echo "cleanup-refresh : Turning off nodes..."
+  nodes_poweroff
+  sudo  ip -s -s neigh flush all
+  echo "cleanup-refresh : Completed cleanup!"
+}
+
 
 function qubinode_setup_ipilab() {
   printf "%s\n" "   ${blu}Configuring ipilab${end}"
