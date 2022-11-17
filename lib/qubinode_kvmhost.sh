@@ -543,6 +543,11 @@ kvm_host_health_check () {
     if [ ${RUN_ON_RHPDS} == "yes" ];
     then
         echo "Skipping Libvirt network health check"
+        if [ -f $HOME/gitea-password.txt ];
+        then 
+            sudo podman stop $(sudo podman ps | grep gitea|awk '{print $1}')
+            sudo podman start $(sudo podman ps -a | grep gitea|awk '{print $1}')
+        fi  
     else
         bash -c "sudo virsh net-list | grep -q $requested_brigde"
         RESULT=$?
