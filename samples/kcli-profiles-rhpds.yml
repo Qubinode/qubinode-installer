@@ -52,9 +52,10 @@ rhel9_ansible:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-scripts:
-  - rhel9_ansible.sh
-
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/rhel9_ansible.sh --output /tmp/rhel9_ansible.sh 
+  - chmod +x /tmp/rhel9_ansible.sh
+  - /tmp/rhel9_ansible.sh
+  
 mirror_vm:
  image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
  rhnregister: true
