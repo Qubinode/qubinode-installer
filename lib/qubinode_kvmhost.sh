@@ -12,7 +12,7 @@ function kvm_host_variables () {
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     RUN_KNI_ON_RHPDS=$(awk '/run_kni_lab_on_rhpds/ {print $2}' "${vars_file}")
 
-    echo  "Base Operating System ${RHEL_VERSION}"
+    #echo  "Base Operating System ${RHEL_VERSION}"
     if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
     then 
         RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
