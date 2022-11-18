@@ -146,6 +146,11 @@ function qubinode_rhsm_register () {
     if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         printf "%s\n" " Skipping registering to RHSM"
+        COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
+        if [ "A${COLLECT_AAP_CREDS}" == "Ayes" ]
+        then
+            configure_ansible_aap_creds
+        fi
     else
         ask_user_for_rhsm_credentials
         COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
