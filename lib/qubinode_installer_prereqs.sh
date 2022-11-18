@@ -125,7 +125,7 @@ function setup_application_type(){
    read -p "   Would you like to install Ansible Automation Platform ${blu}yes|no: ${end}" action
    if [ "$action" == "yes" ]
    then
-       sed 's/ansible_automation_platform:.*/ansible_automation_platform: true/g' $project_dir/playbooks/vars/all.yml
+       sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: true/g' $project_dir/playbooks/vars/all.yml
    else
        echo "Skipping Ansible Automation Platform Configuration"
    fi
