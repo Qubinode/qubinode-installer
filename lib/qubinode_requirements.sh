@@ -117,6 +117,7 @@ function check_for_gitops(){
 
 function setup_variables () {
     qubinode_required_prereqs
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
     if [ $enable_gitops == "true" ];
     then
         check_for_gitops
