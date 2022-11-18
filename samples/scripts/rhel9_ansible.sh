@@ -1,4 +1,11 @@
 #!/bin/bash 
+set -e
+
+if [ $# -ne 2 ]; then 
+    echo "No arguments provided"
+    echo "Usage: $0 <rhel_version> <rhel_username>"
+    exit 1
+fi
 
 sudo dnf install git vim unzip wget bind-utils tar ansible-core python3 python3-pip util-linux-user -y 
 sudo dnf install ncurses-devel curl -y
