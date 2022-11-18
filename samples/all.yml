@@ -20,6 +20,10 @@ directory_name: "quick-dev"
 run_on_rhpds: no 
 run_kni_lab_on_rhpds: no 
 
+#####
+# Application Dependancies
+ansible_automation_platform: false
+
 # RHEL Version
 rhel_version: ""
 

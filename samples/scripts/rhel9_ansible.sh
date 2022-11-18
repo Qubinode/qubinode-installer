@@ -72,6 +72,8 @@ EOF
 
 sudo ./setup.sh
 
-echo "https://$VM_IP_ADDRESS" | tee -a /root/aap_info.txt
-echo "Username: admin" | tee -a /root/aap_info.txt
-echo "Password: $(cat inventory | grep admin_password | awk -F"'" '{print $2}')" | tee -a /root/aap_info.txt
+echo "https://$VM_IP_ADDRESS" | tee -a /cloud-user/aap_info.txt
+echo "Username: admin" | tee -a /cloud-user/aap_info.txt
+echo "Password: $(cat inventory | grep admin_password | awk -F"'" '{print $2}')" | tee -a /cloud-user/aap_info.txt
+
+cat /cloud-user/aap_info.txt
