@@ -57,6 +57,7 @@ function kcli_configure_images(){
       echo "Downloading Red Hat Enterprise Linux 8"
       sudo kcli download image rhel8
       echo "Downloading Red Hat Enterprise Linux 9"
+      echo "For AAP Deployments use: Red Hat Enterprise Linux 9.1 KVM Guest Image"
       sudo kcli download image rhel9
     fi
 

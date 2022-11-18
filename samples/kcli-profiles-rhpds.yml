@@ -35,7 +35,7 @@ rhel9:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel9_ansible:
- image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ image: rhel-baseos-9.1-x86_64-kvm.qcow2
  rhnregister: true
  rhnorg: RHELORG
  rhnactivationkey: ACTIVATIONKEY

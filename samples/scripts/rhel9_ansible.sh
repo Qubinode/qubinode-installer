@@ -7,6 +7,7 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
+sudo dnf update -y 
 sudo dnf install git vim unzip wget bind-utils tar ansible-core python3 python3-pip util-linux-user -y 
 sudo dnf install ncurses-devel curl -y
 curl 'https://vim-bootstrap.com/generate.vim' --data 'editor=vim&langs=javascript&langs=go&langs=html&langs=ruby&langs=python' > ~/.vimrc
