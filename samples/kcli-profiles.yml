@@ -1,4 +1,5 @@
 # /usr/lib/python3.6/site-packages/kvirt/defaults.py
+# https://kcli.readthedocs.io/en/latest/#available-parameters-for-client-profile-plan-files
 rhel8:
  image: rhel-8.6-x86_64-kvm.qcow2
  rhnregister: true
