@@ -545,6 +545,7 @@ function qubinode_base_requirements () {
 
         # Start user input session
         ask_user_input
+        setup_application_type
         setup_variables
         setup_user_ssh_key
         setup_application_type
