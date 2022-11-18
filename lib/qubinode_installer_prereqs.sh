@@ -123,7 +123,7 @@ function setup_user_ssh_key () {
 
 function setup_application_type(){
     printf "%s\n" "  ${yel}****************************************************************************${end}"
-    printf "%s\n\n" "    ${cyn}        Application Deployment Types{end}"
+    printf "%s\n\n" "    ${cyn}        Application Deployment Types${end}"
    read -p "   Would you like to install Ansible Automation Platform ${blu}yes|no: ${end}" action
    if [ "$action" == "yes" ]
    then
