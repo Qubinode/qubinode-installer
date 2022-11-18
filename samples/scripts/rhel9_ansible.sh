@@ -25,4 +25,45 @@ cat >run_me.yaml<<EOF
 EOF
 
 
+offline_token=$(cat /root/offline_token)
+cat >dev.yml<<EOF
+---
+offline_token: '$(cat /root/offline_token)'
+provided_sha_value: 9a90a8db350b2852471aa987f8487ace7bba85d64219221b5a613647a202e6c1
+EOF
 
+ansible-playbook -i hosts run_me.yaml --extra-vars @dev.yml
+
+tar -zxvf aap.tar.gz 
+cd ansible-automation-platform-setup-bundle-*/
+
+export REGISTRY_USERNAME="$1"
+export REGISTRY_PASSWORD="$2"
+VM_IP_ADDRESS=$(hostname -I | awk '{print $1}')
+
+cat >inventory<<EOF
+[automationcontroller]
+${VM_IP_ADDRESS} ansible_connection=local
+
+[database]
+
+[all:vars]
+admin_password='$(openssl rand -base64 12)'
+
+pg_host=''
+pg_port=''
+
+pg_database='awx'
+pg_username='awx'
+pg_password='$(openssl rand -base64 12)'
+
+registry_url='registry.redhat.io'
+registry_username='${REGISTRY_USERNAME}'
+registry_password='${REGISTRY_PASSWORD}'
+EOF
+
+sudo ./setup.sh
+
+echo "https://$VM_IP_ADDRESS" | tee -a /root/aap_info.txt
+echo "Username: admin" | tee -a /root/aap_info.txt
+echo "Password: $(cat inventory | grep admin_password | awk -F"'" '{print $2}')" | tee -a /root/aap_info.txt
