@@ -101,7 +101,7 @@ function update_default_settings(){
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
     admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
-    rhsm_org=$(awk '/rhsm_org:/ {print $2}' "${vars_file}")
+    rhsm_org=$(awk '/rhsm_org:/ {print $2}' "${vault_vars_file}")
     rhsm_activationkey=$(awk '/rhsm_activationkey:/ {print $2}' "${vault_vars_file}")
     encrypt_ansible_vault "${vaultfile}" >/dev/null
     sed -i "s/CHANGEUSER/${admin_username}/g" "${project_dir}/${KCLI_PROFILE}"
