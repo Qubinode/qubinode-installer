@@ -42,6 +42,37 @@ function check_rhsm_status () {
     fi
 }
 
+function configure_ansible_aap_creds(){
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
+    printf "%s\n\n" "    ${cyn}        Enter Credentials for Ansible Automation Platform${end}"
+    decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
+        decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+        get_rhsm_user_and_pass
+        encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+    fi 
+
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_activationkey
+    then
+        echo -n "   ${blu}Enter your RHSM activation key and press${end} ${grn}[ENTER]${end}: "
+        read rhsm_activationkey
+        unset rhsm_org
+        sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vault_vars_file}"
+    fi
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_org
+    then
+        echo -n "   ${blu}Enter your RHSM ORG ID and press${end} ${grn}[ENTER]${grn}: "
+        read_sensitive_data
+        rhsm_org="${sensitive_data}"
+        sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vault_vars_file}"
+    fi
+
+    # encrypt ansible vault
+    encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+
+}
+
 function ask_user_for_rhsm_credentials () {
     # decrypt ansible vault file
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
@@ -117,6 +148,11 @@ function qubinode_rhsm_register () {
         printf "%s\n" " Skipping registering to RHSM"
     else
         ask_user_for_rhsm_credentials
+        COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
+        if [ "A${COLLECT_AAP_CREDS}" == "Ayes" ]
+        then
+            configure_ansible_aap_creds
+        fi
         qubinode_required_prereqs
         vault_vars_file="${vault_vars_file}"
         varsfile="${vars_file}"
