@@ -71,6 +71,12 @@ function configure_ansible_aap_creds(){
     # encrypt ansible vault
     encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
 
+    if [ ! -f $HOME/offline_token ];
+    then
+        read -p "   Offline token not found you can find it at https://access.redhat.com/management/api: ${end}" OFFLINE_TOKEN
+        echo $OFFLINE_TOKEN > $HOME/offline_token
+    fi
+
 }
 
 function ask_user_for_rhsm_credentials () {
