@@ -3,7 +3,7 @@ set -e
 
 if [ $# -ne 2 ]; then 
     echo "No arguments provided"
-    echo "Usage: $0 <rhel_version> <rhel_username>"
+    echo "Usage: $0 <rhel_username> <rhel_password>"
     exit 1
 fi
 
@@ -72,8 +72,8 @@ EOF
 
 sudo ./setup.sh
 
-echo "https://$VM_IP_ADDRESS" | tee -a /cloud-user/aap_info.txt
-echo "Username: admin" | tee -a /cloud-user/aap_info.txt
-echo "Password: $(cat inventory | grep admin_password | awk -F"'" '{print $2}')" | tee -a /cloud-user/aap_info.txt
+echo "https://$VM_IP_ADDRESS" | tee -a /home/cloud-user/aap_info.txt
+echo "Username: admin" | tee -a /home/cloud-user/aap_info.txt
+echo "Password: $(cat inventory | grep admin_password | awk -F"'" '{print $2}')" | tee -a /home/cloud-user/aap_info.txt
 
-cat /cloud-user/aap_info.txt
+cat /home/cloud-user/aap_info.txt
