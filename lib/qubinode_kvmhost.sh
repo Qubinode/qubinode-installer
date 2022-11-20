@@ -356,8 +356,14 @@ function qubinode_networking () {
     KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
     if [ "A${DEFINED_BRIDGE_ACTIVE}" == "Ayes" ]
     then
-        CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
-        KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
+        if [ "${RUN_ON_RHPDS}" == "yes" ]  && [ $RHEL_VERSION == "ROCKY8" ]
+        then
+            CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
+             KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
+        else
+            CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
+            KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
+        fi
     else
         if echo ${iSkvm_host_interface} | grep -q [0-9]
         then
@@ -429,12 +435,11 @@ function qubinode_networking () {
         fi
 
         iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr:/ { print $2}' "${kvm_host_vars_file}")
-        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
+        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "${iSkvm_host_macaddr}" == '""' ]]
         then
             foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
             #echo "Updating the kvm_host_macaddr to ${foundmac}"
             sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
-
 	    ## Get the last four of the mac address for use as the suffix for VM names
 	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
             sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
@@ -465,6 +470,17 @@ function qubinode_networking () {
         then
             #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
             sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${kvm_host_vars_file}"
+        fi
+
+         iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == '' ]]
+        then
+            foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
+            #echo "Updating the kvm_host_macaddr to ${foundmac}"
+            sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
+	    ## Get the last four of the mac address for use as the suffix for VM names
+	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
+            sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
         fi
     else
             printf "%s\n\n\n" " "
@@ -657,6 +673,7 @@ function qubinode_setup_kvm_host () {
       else
         printf "%s\n" " ${blu}not a qubinode system${end}"
         printf "%s\n" "   Installing required packages"
+        qubinode_networking
         sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
         #qcow_check
         if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
