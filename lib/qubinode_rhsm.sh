@@ -56,6 +56,7 @@ function configure_ansible_aap_creds(){
     if grep '""' "${vault_vars_file}"|grep -q rhsm_activationkey
     then
         echo -n "   ${blu}Enter your RHSM activation key and press${end} ${grn}[ENTER]${end}: "
+        echo -n "   ${blu}See Creating Red Hat Customer Portal Activation Keys${end} ${grn}https://access.redhat.com/articles/1378093${end}: "
         read rhsm_activationkey
         unset rhsm_org
         sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vault_vars_file}"
