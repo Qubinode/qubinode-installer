@@ -12,8 +12,9 @@ sudo dnf install git vim unzip wget bind-utils tar ansible-core python3 python3-
 sudo dnf install ncurses-devel curl -y
 curl 'https://vim-bootstrap.com/generate.vim' --data 'editor=vim&langs=javascript&langs=go&langs=html&langs=ruby&langs=python' > ~/.vimrc
 
+cd /home/cloud-user/
 git clone https://github.com/redhat-cop/agnosticd.git
-cd $HOME/agnosticd/ansible
+cd /home/cloud-user/agnosticd/ansible
 git checkout development
 
 cat >hosts<<EOF
