@@ -124,13 +124,25 @@ function setup_user_ssh_key () {
 function setup_application_type(){
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "    ${cyn}        Application Deployment Types${end}"
-   read -p "   Would you like to install Ansible Automation Platform ${blu}yes|no: ${end}" action
-   if [ "$action" == "yes" ]
-   then
-       sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: true/g' $project_dir/playbooks/vars/all.yml
-   else
-       echo "Skipping Ansible Automation Platform Configuration"
-   fi
+    read -p "   Would you like to install Ansible Automation Platform ${blu}yes|no: ${end}" action
+    if [ "$action" == "yes" ]
+    then
+        sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: true/g' $project_dir/playbooks/vars/all.yml
+    else
+        echo "Skipping Ansible Automation Platform Configuration"
+    fi
+}
+
+function advanced_networking(){
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
+    printf "%s\n\n" "    ${cyn}        Advanced Networking${end}"
+    read -p "   Would you liket to configure vlan networking ${blu}yes|no: ${end}" action
+    if [ "$action" == "yes" ]
+    then
+        sed -i 's/configure_vlan:.*/configure_vlan: yes/g' $project_dir/playbooks/vars/all.yml
+    else
+        echo "Skipping Advanced Networking Configuration"
+    fi
 }
 
 function confirm () {

@@ -22,9 +22,8 @@ run_kni_lab_on_rhpds: no
 
 
 #####
-# RHPDS Settings
-run_on_dsal: no
-multi_network: no
+# Advanced Network Settings
+configure_vlan: no
 
 #####
 # Application Dependancies
