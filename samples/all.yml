@@ -23,6 +23,7 @@ run_kni_lab_on_rhpds: no
 
 #####
 # Advanced Network Settings
+# /usr/share/ansible/roles/rhel-system-roles.network/README.md
 configure_vlan: no
 vlan_id: 100
 vlan_interface: eno2

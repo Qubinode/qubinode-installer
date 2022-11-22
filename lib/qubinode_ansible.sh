@@ -138,7 +138,7 @@ function qubinode_setup_ansible () {
 
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc
+            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc rhel-system-roles
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt
@@ -149,7 +149,7 @@ function qubinode_setup_ansible () {
             if [ ${RUN_KNI_ON_RHPDS} == "yes" ]
             then
                 sudo pip3 install ansible
-                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc unzip 
+                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc unzip  rhel-system-roles
                 sudo ln -s /usr/local/bin/ansible /usr/bin/ansible
             else
                 sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc   
