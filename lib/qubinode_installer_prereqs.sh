@@ -148,11 +148,11 @@ function advanced_networking(){
 
     if [ "$action" == "yes" ]
     then
-        read -p "  Configure vlan id:  ${blu}Example: 100${end}" vlan_id
+        read -p "  Configure vlan id:  ${blu}Example: 100 ${end} " vlan_id
         sed -i 's/vlan_id:.*/vlan_id: '${vlan_id}'/g' $project_dir/playbooks/vars/all.yml
-        read -p "  Configure vlan interface:  ${blu}Example: eno2${end}" vlan_interface
+        read -p "  Configure vlan interface:  ${blu}Example: eno2 ${end}" vlan_interface
         sed -i 's/vlan_interface:.*/vlan_interface: '${vlan_interface}'/g' $project_dir/playbooks/vars/all.yml
-        read -p "  Configure vlan ip address: ${blu}Example: 192.168.50.10/24${end}" vlan_ip_address
+        read -p "  Configure vlan ip address: ${blu}Example: 192.168.50.10/24 ${end} " vlan_ip_address
         sed -i 's/vlan_ipaddress:.*/vlan_ipaddress: '${vlan_ip_address}'/g' $project_dir/playbooks/vars/all.yml
     fi
 }
