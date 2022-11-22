@@ -136,7 +136,7 @@ function setup_application_type(){
 function advanced_networking(){
     printf "%s\n" "  ${yel}****************************************************************************${end}"
     printf "%s\n\n" "    ${cyn}        Advanced Networking${end}"
-    read -p "   Would you liket to configure vlan networking ${blu}yes|no: ${end}" action
+    read -p "   Would you like to configure vlan networking ${blu}yes|no: ${end}" action
     if [ "$action" == "yes" ]
     then
         sed -i 's/configure_vlan:.*/configure_vlan: yes/g' $project_dir/playbooks/vars/all.yml
