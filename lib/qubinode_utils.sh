@@ -473,8 +473,8 @@ function qubinode_setup () {
     
     setup_variables
     setup_user_ssh_key
-    setup_application_type
-    advanced_networking
+    #setup_application_type
+    #advanced_networking
     if [ $ENABLE_IDM == "true" ];
     then 
       ask_user_for_idm_password
