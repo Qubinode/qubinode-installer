@@ -153,7 +153,7 @@ function advanced_networking(){
         read -p "  Configure vlan interface:  ${blu}Example: eno2 ${end}" vlan_interface
         sed -i 's/vlan_interface:.*/vlan_interface: '${vlan_interface}'/g' $project_dir/playbooks/vars/all.yml
         read -p "  Configure vlan ip address: ${blu}Example: 192.168.50.10/24 ${end} " vlan_ip_address
-        sed -i 's/vlan_ipaddress:.*/vlan_ipaddress: '${vlan_ip_address}'/g' $project_dir/playbooks/vars/all.yml
+        sed -i 's|vlan_ipaddress:.*|vlan_ipaddress: '${vlan_ip_address}'|g' $project_dir/playbooks/vars/all.yml
     fi
 }
 
