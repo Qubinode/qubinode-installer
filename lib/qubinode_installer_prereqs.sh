@@ -129,6 +129,7 @@ function setup_application_type(){
     then
         sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: true/g' $project_dir/playbooks/vars/all.yml
     else
+         sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: false/g' $project_dir/playbooks/vars/all.yml
         echo "Skipping Ansible Automation Platform Configuration"
     fi
 }
@@ -141,6 +142,7 @@ function advanced_networking(){
     then
         sed -i 's/configure_vlan:.*/configure_vlan: yes/g' $project_dir/playbooks/vars/all.yml
     else
+        sed -i 's/configure_vlan:.*/configure_vlan: no/g' $project_dir/playbooks/vars/all.yml
         echo "Skipping Advanced Networking Configuration"
     fi
 }
