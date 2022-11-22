@@ -550,7 +550,7 @@ function qubinode_base_requirements () {
         setup_variables
         setup_user_ssh_key
         setup_application_type
-
+        advanced_networking
         # Tell installer base requires have been met
         sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
 
