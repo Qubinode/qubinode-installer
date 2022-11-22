@@ -24,6 +24,9 @@ run_kni_lab_on_rhpds: no
 #####
 # Advanced Network Settings
 configure_vlan: no
+vlan_id: 100
+vlan_interface: eno2
+vlan_ipaddress: 192.168.50.11/24
 
 #####
 # Application Dependancies
