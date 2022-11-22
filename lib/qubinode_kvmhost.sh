@@ -354,6 +354,21 @@ function qubinode_networking () {
     fi
 
     KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
+    if [ $(echo ${KVM_HOST_PRIMARY_INTERFACE}| wc -w) -gt 1 ]; then
+       echo "KVM_HOST_PRIMARY_INTERFACE: ${KVM_HOST_PRIMARY_INTERFACE}"
+       echo "Multiple interfaces detected, please select the interface to use for the bridge"
+       read -p "   Enter Name of interface you would like to use${blu} $(echo ${KVM_HOST_PRIMARY_INTERFACE}): ${end}" interface
+       echo $interface
+       if [[ "$KVM_HOST_PRIMARY_INTERFACE" == *"$interface"* ]]; then
+            echo "$interface exists continuing with deployment"
+            KVM_HOST_PRIMARY_INTERFACE=$interface
+      else
+            echo "$interface Does not exist please enter the correct interface"
+            exit 1
+       fi
+    else
+       echo "done"
+    fi
     if [ "A${DEFINED_BRIDGE_ACTIVE}" == "Ayes" ]
     then
         if [ "${RUN_ON_RHPDS}" == "yes" ]  && [ $RHEL_VERSION == "ROCKY8" ]
