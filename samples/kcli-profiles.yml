@@ -34,6 +34,30 @@ rhel9:
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
+rhel9_ansible:
+ image: rhel-baseos-9.1-x86_64-kvm.qcow2
+ rhnregister: true
+ rhnorg: RHELORG
+ rhnactivationkey: ACTIVATIONKEY
+ numcpus: 4
+ memory: 16384
+ disks:
+  - size: 80
+ reservedns: true
+ nets:
+  - name: default
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - export OFFLINE_TOKEN=CHANGEOFFLINETOKEN
+  - echo $OFFLINE_TOKEN > /root/offline_token
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/rhel9_ansible.sh --output /tmp/rhel9_ansible.sh 
+  - chmod +x /tmp/rhel9_ansible.sh 
+  - bash -x /tmp/rhel9_ansible.sh RHEL_USERNAME RHEL_PASSWORD
+  
 mirror_vm:
  image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
  rhnregister: true
