@@ -138,7 +138,7 @@ function qubinode_setup_ansible () {
 
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc rhel-system-roles
+            sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc rhel-system-roles nmap
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt
@@ -149,15 +149,15 @@ function qubinode_setup_ansible () {
             if [ ${RUN_KNI_ON_RHPDS} == "yes" ]
             then
                 sudo pip3 install ansible
-                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc unzip  rhel-system-roles
+                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc unzip  rhel-system-roles nmap
                 sudo ln -s /usr/local/bin/ansible /usr/bin/ansible
             else
-                sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc   
+                sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc rhel-system-roles nmap
             fi
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc nmap
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt
@@ -165,7 +165,7 @@ function qubinode_setup_ansible () {
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap
             install_podman_dependainces
         elif [ $(get_distro) == "centos" ]; then
             sudo dnf clean all > /dev/null 2>&1
@@ -173,7 +173,7 @@ function qubinode_setup_ansible () {
             sudo dnf install -y -q -e 0 ansible git  bc bind-utils 
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
