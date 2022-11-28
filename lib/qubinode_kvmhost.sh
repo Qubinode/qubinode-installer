@@ -570,7 +570,7 @@ kvm_host_health_check () {
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
-
+    UNO_RHEL=$(awk '/one_redhat/ {print $2}' "${vars_file}")
     if [ ${RUN_ON_RHPDS} == "yes" ];
     then
         echo "Skipping Libvirt network health check"
@@ -579,6 +579,9 @@ kvm_host_health_check () {
             sudo podman stop $(sudo podman ps | grep gitea|awk '{print $1}')
             sudo podman start $(sudo podman ps -a | grep gitea|awk '{print $1}')
         fi  
+    elif [ ${UNO_RHEL} == "yes" ];
+    then
+        echo "Skipping Libvirt network health check"
     else
         bash -c "sudo virsh net-list | grep -q $requested_brigde"
         RESULT=$?
