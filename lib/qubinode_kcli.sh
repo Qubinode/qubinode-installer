@@ -85,9 +85,13 @@ function update_default_settings(){
     fi  
 
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    ONE_RHEL=$(awk '/one_redhat/ {print $2}' "${vars_file}")
     if [ "A${RUN_ON_RHPDS}" == "Ayes" ];
     then
       KCLI_PROFILE=kcli-profiles-rhpds.yml
+    elif  [ "A${ONE_RHEL}" == "Ayes" ];
+    then
+      KCLI_PROFILE=kcli-profiles-one-lab.yml
     else
       KCLI_PROFILE=kcli-profiles.yml
     fi
