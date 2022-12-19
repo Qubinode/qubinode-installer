@@ -47,11 +47,11 @@ function qubinode_kcli_maintenance () {
 function kcli_configure_images(){
     echo "Configuring images"
     echo "Downloading Fedora"
-    sudo kcli download image fedora36
+    sudo kcli download image fedora37
     echo "Downloading Centos Streams"
-    sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2
-    sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2 
-    sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
+    sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
+    sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
+    sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     if [[ $(get_distro) == "rhel"  || "A${RUN_ON_RHPDS}" == "Ayes"  ]]; then
       echo "Downloading Red Hat Enterprise Linux 8"
@@ -139,7 +139,7 @@ function create_static_profile_ip() {
 
 
 rhel8_static:
- image: rhel-8.6-x86_64-kvm.qcow2
+ image: rhel-8.7-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096

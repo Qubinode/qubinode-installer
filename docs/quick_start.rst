@@ -110,5 +110,5 @@ If you are using tokens it should be::
 
 If you downloaded the files instead, confirm that the project directory list the qcow images below or later versions::
 
-    * $HOME/qubinode-installer/rhel-baseos-9.0-x86_64-kvm.qcow2
-    * $HOME/qubinode-installer/rhel-8.6-x86_64-kvm.qcow2
+    * $HOME/qubinode-installer/rhel-baseos-9.1-x86_64-kvm.qcow2
+    * $HOME/qubinode-installer/rhel-8.7-x86_64-kvm.qcow2

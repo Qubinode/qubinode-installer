@@ -1,7 +1,7 @@
 # /usr/lib/python3.6/site-packages/kvirt/defaults.py
 # https://kcli.readthedocs.io/en/latest/#available-parameters-for-client-profile-plan-files
 rhel8:
- image: rhel-8.6-x86_64-kvm.qcow2
+ image: rhel-8.7-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -18,7 +18,7 @@ rhel8:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel9:
- image: rhel-baseos-9.0-x86_64-kvm.qcow2
+ image: rhel-baseos-9.1-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -59,7 +59,7 @@ rhel9_ansible:
   - bash -x /tmp/rhel9_ansible.sh RHEL_USERNAME RHEL_PASSWORD
   
 mirror_vm:
- image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+ image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
  rhnregister: true
  numcpus: 4
  memory: 8192
@@ -90,7 +90,7 @@ mirror_vm:
   - cp /home/admin/qubinode-installer/pull_secret.json /home/cloud-user/pull_secret.json
 
 rhel8_static:
- image: rhel-8.6-x86_64-kvm.qcow2
+ image: rhel-8.7-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -111,7 +111,7 @@ rhel8_static:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel8_jumpbox:
- image: rhel-8.6-x86_64-kvm.qcow2
+ image: rhel-8.7-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 4
  memory: 8192
@@ -137,7 +137,7 @@ rhel8_jumpbox:
   - firewall-cmd --reload
 
 fedora36:
- image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+ image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
  numcpus: 2
  memory: 4096
  nets:
@@ -150,7 +150,7 @@ fedora36:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 fedora36jumpbox:
- image: Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+ image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
  numcpus: 4
  memory: 4096
  disks:
@@ -171,7 +171,7 @@ fedora36jumpbox:
 
 
 centos8jumpbox:
- image: 'CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
@@ -191,7 +191,7 @@ centos8jumpbox:
 
 
 centos9jumpbox:
- image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
@@ -210,7 +210,7 @@ centos9jumpbox:
   - firewall-cmd --reload
 
 ztpfwjumpbox:
- image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
@@ -231,7 +231,7 @@ ztpfwjumpbox:
 
 
 cvadjumpbox:
- image: 'CentOS-Stream-GenericCloud-9-20220919.0.x86_64.qcow2'
+ image: 'CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
