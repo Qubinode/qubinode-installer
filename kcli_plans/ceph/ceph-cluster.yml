@@ -12,7 +12,14 @@ ceph-mon01:
   pool: default
   image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
-
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-mon01.sh --output /tmp/ceph-mon01.sh
+  - chmod +x /tmp/ceph-mon01.sh
+  - /tmp/ceph-mon01.sh
 ceph-mon02:
   memory: 8192
   numcpus: 4
@@ -32,8 +39,9 @@ ceph-mon02:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-mon01.sh --output /tmp/ceph-mon01.sh
-  - chmod +x /tmp/ceph-mon01.sh
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - chmod +x /tmp/ceph-nodes.sh
+  - /tmp/ceph-nodes.sh
 ceph-mon03:
   memory: 8192
   numcpus: 4
@@ -53,8 +61,9 @@ ceph-mon03:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-nodes.sh --output /tmp/ceph-nodes.sh
   - chmod +x /tmp/ceph-nodes.sh
+  - /tmp/ceph-nodes.sh
 ceph-osd01:
   memory: 8192
   numcpus: 4
@@ -75,8 +84,9 @@ ceph-osd01:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-nodes.sh --output /tmp/ceph-nodes.sh
   - chmod +x /tmp/ceph-nodes.sh
+  - /tmp/ceph-nodes.sh
 ceph-osd02:
   memory: 8192
   numcpus: 4
@@ -97,8 +107,9 @@ ceph-osd02:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-nodes.sh --output /tmp/ceph-nodes.sh
   - chmod +x /tmp/ceph-nodes.sh
+  - /tmp/ceph-nodes.sh
 ceph-osd03:
   memory: 8192
   numcpus: 4
@@ -119,5 +130,6 @@ ceph-osd03:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-nodes.sh --output /tmp/ceph-nodes.sh
   - chmod +x /tmp/ceph-nodes.sh
+  - /tmp/ceph-nodes.sh
