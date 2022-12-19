@@ -7,13 +7,16 @@ ceph-mon01:
   nets: 
    - qubinet
   pool: default
-  image: rhel-8.7-x86_64-kvm.qcow2
+  image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - subscription-manager repos --disable=*
+  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
 ceph-mon02:
   memory: 8192
   numcpus: 4
@@ -23,13 +26,16 @@ ceph-mon02:
   nets: 
    - qubinet
   pool: default
-  image: rhel-8.7-x86_64-kvm.qcow2
+  image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - subscription-manager repos --disable=*
+  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
 ceph-mon03:
   memory: 8192
   numcpus: 4
@@ -39,13 +45,16 @@ ceph-mon03:
   nets: 
    - qubinet
   pool: default
-  image: rhel-8.7-x86_64-kvm.qcow2
+  image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - subscription-manager repos --disable=*
+  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
 ceph-osd01:
   memory: 8192
   numcpus: 4
@@ -56,13 +65,16 @@ ceph-osd01:
   nets: 
    - qubinet
   pool: default
-  image: rhel-8.7-x86_64-kvm.qcow2
+  image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - subscription-manager repos --disable=*
+  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
 ceph-osd02:
   memory: 8192
   numcpus: 4
@@ -73,13 +85,16 @@ ceph-osd02:
   nets: 
    - qubinet
   pool: default
-  image: rhel-8.7-x86_64-kvm.qcow2
+  image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - subscription-manager repos --disable=*
+  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
 ceph-osd03:
   memory: 8192
   numcpus: 4
@@ -90,10 +105,13 @@ ceph-osd03:
   nets: 
    - qubinet
   pool: default
-  image: rhel-8.7-x86_64-kvm.qcow2
+  image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - subscription-manager repos --disable=*
+  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
