@@ -1,0 +1,99 @@
+ceph-mon01:
+  memory: 8192
+  numcpus: 4
+  rhnregister: true
+  disks:
+  - size: 100
+  nets: 
+   - qubinet
+  pool: default
+  image: rhel-8.7-x86_64-kvm.qcow2
+  cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+ceph-mon02:
+  memory: 8192
+  numcpus: 4
+  rhnregister: true
+  disks:
+  - size: 100
+  nets: 
+   - qubinet
+  pool: default
+  image: rhel-8.7-x86_64-kvm.qcow2
+  cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+ceph-mon03:
+  memory: 8192
+  numcpus: 4
+  rhnregister: true
+  disks:
+  - size: 100
+  nets: 
+   - qubinet
+  pool: default
+  image: rhel-8.7-x86_64-kvm.qcow2
+  cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+ceph-osd01:
+  memory: 8192
+  numcpus: 4
+  rhnregister: true
+  disks:
+  - size: 100
+  - size: 250
+  nets: 
+   - qubinet
+  pool: default
+  image: rhel-8.7-x86_64-kvm.qcow2
+  cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+ceph-osd02:
+  memory: 8192
+  numcpus: 4
+  rhnregister: true
+  disks:
+  - size: 100
+  - size: 250
+  nets: 
+   - qubinet
+  pool: default
+  image: rhel-8.7-x86_64-kvm.qcow2
+  cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+ceph-osd03:
+  memory: 8192
+  numcpus: 4
+  rhnregister: true
+  disks:
+  - size: 100
+  - size: 250
+  nets: 
+   - qubinet
+  pool: default
+  image: rhel-8.7-x86_64-kvm.qcow2
+  cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
