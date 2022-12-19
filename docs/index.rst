@@ -13,6 +13,7 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
     gozones_dns
     rdpjumpbox
     quay_mirror_registry
+    ceph_deployment_guide
     ztp_for_factory_workloads
 
 

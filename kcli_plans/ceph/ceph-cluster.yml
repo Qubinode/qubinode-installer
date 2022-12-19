@@ -2,6 +2,8 @@ ceph-mon01:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  rhnorg: RHELORG
+  rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
   nets: 
@@ -17,10 +19,16 @@ ceph-mon01:
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+  - dnf update -y
+  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
+  - subscription-manager repos --enable=ansible-2.9-for-rhel-8-x86_64-rpms
+  - dnf install cephadm-ansible -y
 ceph-mon02:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  rhnorg: RHELORG
+  rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
   nets: 
@@ -36,10 +44,14 @@ ceph-mon02:
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+  - dnf update -y
+  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
 ceph-mon03:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  rhnorg: RHELORG
+  rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
   nets: 
@@ -55,10 +67,14 @@ ceph-mon03:
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+  - dnf update -y
+  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
 ceph-osd01:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  rhnorg: RHELORG
+  rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
   - size: 250
@@ -75,10 +91,14 @@ ceph-osd01:
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+  - dnf update -y
+  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
 ceph-osd02:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  rhnorg: RHELORG
+  rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
   - size: 250
@@ -95,10 +115,14 @@ ceph-osd02:
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+  - dnf update -y
+  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
 ceph-osd03:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  rhnorg: RHELORG
+  rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
   - size: 250
@@ -115,3 +139,5 @@ ceph-osd03:
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+  - dnf update -y
+  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
