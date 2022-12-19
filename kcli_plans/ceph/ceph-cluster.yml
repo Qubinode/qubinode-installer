@@ -2,6 +2,7 @@ ceph-mon01:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  reservedns: true
   rhnorg: RHELORG
   rhnactivationkey: ACTIVATIONKEY
   disks:
@@ -9,26 +10,14 @@ ceph-mon01:
   nets:
     - name: qubinet
   pool: default
-  image: rhel-baseos-9.1-x86_64-kvm.qcow2
+  image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
-  - echo CHANGEPASSWORD | passwd --stdin root
-  - useradd CHANGEUSER
-  - usermod -aG wheel CHANGEUSER
-  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
-  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo subscription-manager refresh
-  - sudo subscription-manager attach --auto
-  - subscription-manager repos --disable=*
-  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
-  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
-  - dnf update -y
-  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
-  - subscription-manager repos --enable=ansible-2.9-for-rhel-8-x86_64-rpms
-  - dnf install cephadm-ansible -y
+
 ceph-mon02:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  reservedns: true
   rhnorg: RHELORG
   rhnactivationkey: ACTIVATIONKEY
   disks:
@@ -36,24 +25,20 @@ ceph-mon02:
   nets:
     - name: qubinet
   pool: default
-  image: rhel-baseos-9.1-x86_64-kvm.qcow2
+  image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo subscription-manager refresh
-  - sudo subscription-manager attach --auto
-  - subscription-manager repos --disable=*
-  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
-  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
-  - dnf update -y
-  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-mon01.sh --output /tmp/ceph-mon01.sh
+  - chmod +x /tmp/ceph-mon01.sh
 ceph-mon03:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  reservedns: true
   rhnorg: RHELORG
   rhnactivationkey: ACTIVATIONKEY
   disks:
@@ -61,24 +46,20 @@ ceph-mon03:
   nets:
     - name: qubinet
   pool: default
-  image: rhel-baseos-9.1-x86_64-kvm.qcow2
+  image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo subscription-manager refresh
-  - sudo subscription-manager attach --auto
-  - subscription-manager repos --disable=*
-  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
-  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
-  - dnf update -y
-  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - chmod +x /tmp/ceph-nodes.sh
 ceph-osd01:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  reservedns: true
   rhnorg: RHELORG
   rhnactivationkey: ACTIVATIONKEY
   disks:
@@ -87,24 +68,20 @@ ceph-osd01:
   nets:
     - name: qubinet
   pool: default
-  image: rhel-baseos-9.1-x86_64-kvm.qcow2
+  image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo subscription-manager refresh
-  - sudo subscription-manager attach --auto
-  - subscription-manager repos --disable=*
-  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
-  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
-  - dnf update -y
-  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - chmod +x /tmp/ceph-nodes.sh
 ceph-osd02:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  reservedns: true
   rhnorg: RHELORG
   rhnactivationkey: ACTIVATIONKEY
   disks:
@@ -113,24 +90,20 @@ ceph-osd02:
   nets:
     - name: qubinet
   pool: default
-  image: rhel-baseos-9.1-x86_64-kvm.qcow2
+  image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo subscription-manager refresh
-  - sudo subscription-manager attach --auto
-  - subscription-manager repos --disable=*
-  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
-  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
-  - dnf update -y
-  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - chmod +x /tmp/ceph-nodes.sh
 ceph-osd03:
   memory: 8192
   numcpus: 4
   rhnregister: true
+  reservedns: true
   rhnorg: RHELORG
   rhnactivationkey: ACTIVATIONKEY
   disks:
@@ -139,17 +112,12 @@ ceph-osd03:
   nets:
     - name: qubinet
   pool: default
-  image: rhel-baseos-9.1-x86_64-kvm.qcow2
+  image: rhel-8.7-x86_64-kvm.qcow2
   cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo subscription-manager refresh
-  - sudo subscription-manager attach --auto
-  - subscription-manager repos --disable=*
-  - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
-  - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
-  - dnf update -y
-  - subscription-manager repos --enable=rhceph-5-tools-for-rhel-9-x86_64-rpms
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/ceph-nodes.sh --output /tmp/ceph-nodes.sh
+  - chmod +x /tmp/ceph-nodes.sh
