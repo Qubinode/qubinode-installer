@@ -51,8 +51,29 @@ cat >bootstrap.yml<<EOF
 
 EOF
 
+
+
+
 ansible-playbook -i hosts bootstrap.yml -vvv
 
+
+cat >bootstrap-nodes.yml<<EOF
+---
+- name: bootstrap the nodes
+  hosts: all,!ceph-mon01
+  become: true
+  gather_facts: false
+  tasks:
+    - name: login to registry
+      cephadm_registry_login:
+        state: login
+        registry_url: registry.redhat.io
+        registry_username: RHEL_USERNAME
+        registry_password: RHEL_PASSWORD
+
+EOF
+
+ansible-playbook -i hosts bootstrap-nodes.yml -vvv
 cat >add-hosts.yml<<EOF
 ---
 - name: add additional hosts to the cluster
@@ -93,3 +114,7 @@ do
 done
 
 ansible-playbook -i hosts add-hosts.yml
+
+ceph -s
+ceph health
+ceph osd tree
