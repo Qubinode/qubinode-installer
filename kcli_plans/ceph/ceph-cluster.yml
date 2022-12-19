@@ -6,8 +6,8 @@ ceph-mon01:
   rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
-  nets: 
-   - qubinet
+  nets:
+    - name: qubinet
   pool: default
   image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
@@ -16,6 +16,8 @@ ceph-mon01:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo subscription-manager refresh
+  - sudo subscription-manager attach --auto
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
@@ -31,8 +33,8 @@ ceph-mon02:
   rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
-  nets: 
-   - qubinet
+  nets:
+    - name: qubinet
   pool: default
   image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
@@ -41,6 +43,8 @@ ceph-mon02:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo subscription-manager refresh
+  - sudo subscription-manager attach --auto
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
@@ -54,8 +58,8 @@ ceph-mon03:
   rhnactivationkey: ACTIVATIONKEY
   disks:
   - size: 100
-  nets: 
-   - qubinet
+  nets:
+    - name: qubinet
   pool: default
   image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
@@ -64,6 +68,8 @@ ceph-mon03:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo subscription-manager refresh
+  - sudo subscription-manager attach --auto
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
@@ -78,8 +84,8 @@ ceph-osd01:
   disks:
   - size: 100
   - size: 250
-  nets: 
-   - qubinet
+  nets:
+    - name: qubinet
   pool: default
   image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
@@ -88,6 +94,8 @@ ceph-osd01:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo subscription-manager refresh
+  - sudo subscription-manager attach --auto
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
@@ -102,8 +110,8 @@ ceph-osd02:
   disks:
   - size: 100
   - size: 250
-  nets: 
-   - qubinet
+  nets:
+    - name: qubinet
   pool: default
   image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
@@ -112,6 +120,8 @@ ceph-osd02:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo subscription-manager refresh
+  - sudo subscription-manager attach --auto
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
@@ -126,8 +136,8 @@ ceph-osd03:
   disks:
   - size: 100
   - size: 250
-  nets: 
-   - qubinet
+  nets:
+    - name: qubinet
   pool: default
   image: rhel-baseos-9.1-x86_64-kvm.qcow2
   cmds:
@@ -136,6 +146,8 @@ ceph-osd03:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo subscription-manager refresh
+  - sudo subscription-manager attach --auto
   - subscription-manager repos --disable=*
   - subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
   - subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms

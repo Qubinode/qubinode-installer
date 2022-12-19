@@ -117,6 +117,8 @@ function update_default_settings(){
     sed -i "s/CHANGEPASSWORD/${admin_password}/g" "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
     sed -i "s/RHELORG/${rhsm_org}/g" "${project_dir}/${KCLI_PROFILE}"
     sed -i "s/ACTIVATIONKEY/${rhsm_activationkey}/g" "${project_dir}/${KCLI_PROFILE}"
+    sed -i "s/RHELORG/${rhsm_org}/g" "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
+    sed -i "s/ACTIVATIONKEY/${rhsm_activationkey}/g" "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
     sed -i "s/RHEL_USERNAME/${rhsm_username}/g" "${project_dir}/${KCLI_PROFILE}"
     sed -i "s/RHEL_PASSWORD/${rhsm_password}/g" "${project_dir}/${KCLI_PROFILE}"
     if [ -f $HOME/offline_token ];
