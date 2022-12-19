@@ -12,3 +12,6 @@ sleep 30s
 nmcli con mod "System eth0" ipv4.dns "192.168.1.39"
 sudo nmcli con mod "System eth0" ipv4.dns-search "lab.tosins-supermicro.io"
 sudo service NetworkManager restart
+
+curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-mon01.sh --output /tmp/ceph-mon01.sh
+chmod +x /tmp/ceph-mon01.sh
