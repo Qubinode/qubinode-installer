@@ -1,4 +1,12 @@
 #!/bin/bash
+
+if [ $# -ne 2 ]; then 
+    echo "No arguments provided"
+    echo "Usage: $0 <rhel_username> <rhel_password>"
+    exit 1
+fi
+rhsm_username=${1}
+rhsm_password=${2}
 sudo subscription-manager refresh
 sudo subscription-manager attach --auto
 subscription-manager repos --disable=*
@@ -14,4 +22,6 @@ sudo nmcli con mod "System eth0" ipv4.dns-search "lab.tosins-supermicro.io"
 sudo service NetworkManager restart
 
 curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/rhel8_ceph.sh --output /tmp/rhel8_ceph.sh
-chmod +x /tmp/rhel8_ceph.sh 
+chmod +x /tmp/rhel8_ceph.sh
+sed -i "s/RHEL_USERNAME/${rhsm_username}/g"  /tmp/rhel8_ceph.sh 
+sed -i "s/RHEL_PASSWORD/${rhsm_password}/g"  /tmp/rhel8_ceph.sh 

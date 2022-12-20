@@ -19,7 +19,7 @@ ceph-mon01:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
   - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/ceph-mon01.sh --output /tmp/ceph-mon01.sh
   - chmod +x /tmp/ceph-mon01.sh
-  - /tmp/ceph-mon01.sh
+  - /tmp/ceph-mon01.sh RHEL_USERNAME RHEL_PASSWORD
 ceph-mon02:
   memory: 8192
   numcpus: 4
