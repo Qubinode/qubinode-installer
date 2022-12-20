@@ -45,8 +45,8 @@ cat >bootstrap.yml<<EOF
     - name: bootstrap initial cluster
       cephadm_bootstrap:
         mon_ip: "{{ monitor_address }}"
-        dashboard_user: mydashboarduser
-        dashboard_password: mydashboardpassword
+        dashboard_user: admin
+        dashboard_password: yourgoingtohavetochangeme
         allow_fqdn_hostname: true
         cluster_network: 10.10.128.0/28
 
@@ -111,6 +111,35 @@ ansible-playbook -i hosts cephadm-distribute-ssh-key.yml -e cephadm_ssh_user=roo
 
 ansible-playbook -i hosts add-hosts.yml
 
+cat >deploy_osd_service.yml<<EOF
+---
+- name: deploy osd service
+  hosts: ceph-mon01
+  become: true
+  gather_facts: true
+  tasks:
+    - name: apply osd spec
+      ceph_orch_apply:
+        spec: |
+          service_type: osd
+          service_id: osd
+          placement:
+            host_pattern: '*'
+            label: osd
+          spec:
+            data_devices:
+              all: true
+EOF
+
+ansible-playbook -i hosts deploy_osd_service.yml
+
 ceph -s
 ceph health
 ceph osd tree
+
+echo "Ceph to consume any available and unused storage device:"
+# https://docs.ceph.com/en/latest/cephadm/services/osd/
+# ceph osd pool delete {pool-name} [{pool-name} --yes-i-really-really-mean-it
+#ceph orch daemon add osd ceph-osd01:/dev/vdb
+#ceph orch daemon add osd ceph-osd02:/dev/vdb
+#ceph orch daemon add osd ceph-osd03:/dev/vdb

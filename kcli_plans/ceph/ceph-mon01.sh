@@ -22,6 +22,8 @@ sudo nmcli con mod "System eth0" ipv4.dns-search "lab.tosins-supermicro.io"
 sudo service NetworkManager restart
 
 curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/kcli_plans/ceph/rhel8_ceph.sh --output /tmp/rhel8_ceph.sh
+
 chmod +x /tmp/rhel8_ceph.sh
+
 sed -i "s/RHEL_USERNAME/${rhsm_username}/g"  /tmp/rhel8_ceph.sh 
 sed -i "s/RHEL_PASSWORD/${rhsm_password}/g"  /tmp/rhel8_ceph.sh 
