@@ -25,7 +25,7 @@ ceph-osd03 labels="['osd']"
 ceph-mon01 monitor_address=$(hostname -I) labels="['_admin', 'mon', 'mgr']"
 EOF
 
-ansible-playbook -i hosts cephadm-preflight.yml --extra-vars "ceph_origin=rhcs"
+ansible-playbook -i hosts cephadm-preflight.yml 
 
 cat >bootstrap.yml<<EOF
 ---
@@ -37,6 +37,7 @@ cat >bootstrap.yml<<EOF
     - name: login to registry
       cephadm_registry_login:
         state: login
+        docker: false
         registry_url: registry.redhat.io
         registry_username: RHEL_USERNAME
         registry_password: RHEL_PASSWORD
@@ -54,8 +55,9 @@ EOF
 
 
 
-ansible-playbook -i hosts bootstrap.yml -vvv
+ansible-playbook -i hosts bootstrap.yml -vvv --extra-vars "ceph_origin=rhcs"
 
+ansible-galaxy collection install containers.podman
 
 cat >bootstrap-nodes.yml<<EOF
 ---
@@ -67,10 +69,15 @@ cat >bootstrap-nodes.yml<<EOF
     - name: login to registry
       cephadm_registry_login:
         state: login
+        docker: false
         registry_url: registry.redhat.io
         registry_username: RHEL_USERNAME
         registry_password: RHEL_PASSWORD
-
+    - name: Login to default registry and create ${XDG_RUNTIME_DIR}/containers/auth.json
+      containers.podman.podman_login:
+        username: RHEL_USERNAME
+        password: RHEL_PASSWORD
+        registry: registry.redhat.io
 EOF
 
 ansible-playbook -i hosts bootstrap-nodes.yml -vvv
@@ -100,18 +107,7 @@ cat >add-hosts.yml<<EOF
         msg: "{{ host_list.stdout }}"
 EOF
 
-ceph cephadm get-ssh-config > ssh_config
-ceph config-key get mgr/cephadm/ssh_identity_key > ~/cephadm_private_key
-chmod 0600 ~/cephadm_private_key
-ceph cephadm get-pub-key > ~/ceph.pub
-
-for i in {1..3}
-do
-    echo ceph-mon0${i}
-    ssh-copy-id -f -i ~/ceph.pub root@ceph-mon0${i}
-    echo ceph-osd0${i}
-    ssh-copy-id -f -i ~/ceph.pub  root@ceph-osd0${i}
-done
+ansible-playbook -i hosts cephadm-distribute-ssh-key.yml -e cephadm_ssh_user=root -e admin_node=ceph-mon01
 
 ansible-playbook -i hosts add-hosts.yml
 
