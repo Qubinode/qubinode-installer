@@ -401,8 +401,13 @@ function qubinode_networking () {
             KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
         fi
         
-
-        #
+        if ! yq -v  &> /dev/null
+        then
+            VERSION=v4.30.6
+            BINARY=yq_linux_amd64
+            wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq &&\
+            chmod +x /usr/bin/yq
+        fi 
 
         if ! ipcalc -v  &> /dev/null
         then

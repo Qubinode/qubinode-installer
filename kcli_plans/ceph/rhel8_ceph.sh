@@ -53,7 +53,7 @@ EOF
 
 
 ansible-playbook -i hosts bootstrap-nodes.yml -vvv
-cephadm bootstrap --mon-ip $(hostname -I) --allow-fqdn-hostname
+cephadm bootstrap --mon-ip $(hostname -I) --allow-fqdn-hostname | tee -a /root/cephadm_bootstrap.log
 cephadm shell ceph -s
 ceph -s
 
@@ -71,6 +71,7 @@ ceph orch host label add ceph-mon03 mon
 ceph orch apply mon ceph-mon01,ceph-mon02,ceph-mon03
 ceph orch host ls
 ceph orch ps
+echo "waiting 120s for mons to be up"
 sleep 120s
 ceph orch host add ceph-osd01 $(dig ceph-osd01.$(hostname -d) +short)
 ceph orch host add ceph-osd02 $(dig ceph-osd02.$(hostname -d) +short)
@@ -78,13 +79,16 @@ ceph orch host add ceph-osd03 $(dig ceph-osd03.$(hostname -d) +short)
 ceph orch host label add ceph-osd01 osd
 ceph orch host label add ceph-osd02 osd
 ceph orch host label add ceph-osd03 osd
+echo "waiting 120s for osds to be up"
 sleep 120s
 ceph orch apply osd --all-available-devices
 #ceph orch daemon add osd ceph-osd01:/dev/vdb
 #ceph orch daemon add osd ceph-osd02:/dev/vdb
 #ceph orch daemon add osd ceph-osd03:/dev/vdb
+echo "waiting 120s for osds to be up"
 sleep 120s 
 ceph osd tree
+echo "configuring ocs pool"
 ceph osd pool create ocs 64 64
 #ceph osd pool application enable ocs rbd
 
