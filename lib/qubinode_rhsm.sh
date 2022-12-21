@@ -154,14 +154,17 @@ function qubinode_rhsm_register () {
     then
         printf "%s\n" " Skipping registering to RHSM"
         COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
-        if [ "A${COLLECT_AAP_CREDS}" == "Atrue" ]
+        COLLECT_CEPH_CREDS=$(awk '/enable_ceph_deployment:/ {print $2}' "${vars_file}")
+        if [ "A${COLLECT_AAP_CREDS}" == "Atrue" ] || [ "A${COLLECT_CEPH_CREDS}" == "Atrue" ]
         then
             configure_ansible_aap_creds
         fi
+
     else
         ask_user_for_rhsm_credentials
         COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
-        if [ "A${COLLECT_AAP_CREDS}" == "Atrue" ]
+        COLLECT_CEPH_CREDS=$(awk '/enable_ceph_deployment:/ {print $2}' "${vars_file}")
+        if [ "A${COLLECT_AAP_CREDS}" == "Atrue" ] || [ "A${COLLECT_CEPH_CREDS}" == "Atrue" ]
         then
             configure_ansible_aap_creds
         fi

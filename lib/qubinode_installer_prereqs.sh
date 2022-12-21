@@ -132,28 +132,14 @@ function setup_application_type(){
          sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: false/g' $project_dir/playbooks/vars/all.yml
         echo "Skipping Ansible Automation Platform Configuration"
     fi
-}
 
-function advanced_networking(){
-    printf "%s\n" "  ${yel}****************************************************************************${end}"
-    printf "%s\n\n" "    ${cyn}        Advanced Networking${end}"
-    read -p "   Would you like to configure vlan networking ${blu}yes|no: ${end}" action
+    read -p "   Would you like to install Ceph ${blu}yes|no: ${end}" action
     if [ "$action" == "yes" ]
     then
-        sed -i 's/configure_vlan:.*/configure_vlan: yes/g' $project_dir/playbooks/vars/all.yml
+        sed -i 's/enable_ceph_deployment:.*/enable_ceph_deployment: true/g' $project_dir/playbooks/vars/all.yml
     else
-        sed -i 's/configure_vlan:.*/configure_vlan: no/g' $project_dir/playbooks/vars/all.yml
-        echo "Skipping Advanced Networking Configuration"
-    fi
-
-    if [ "$action" == "yes" ]
-    then
-        read -p "  Configure vlan id:  ${blu}Example: 100 ${end} " vlan_id
-        sed -i 's/vlan_id:.*/vlan_id: '${vlan_id}'/g' $project_dir/playbooks/vars/all.yml
-        read -p "  Configure vlan interface:  ${blu}Example: eno2 ${end}" vlan_interface
-        sed -i 's/vlan_interface:.*/vlan_interface: '${vlan_interface}'/g' $project_dir/playbooks/vars/all.yml
-        read -p "  Configure vlan ip address: ${blu}Example: 192.168.50.10/24 ${end} " vlan_ip_address
-        sed -i 's|vlan_ipaddress:.*|vlan_ipaddress: '${vlan_ip_address}'|g' $project_dir/playbooks/vars/all.yml
+         sed -i 's/enable_ceph_deployment:.*/enable_ceph_deployment: false/g' $project_dir/playbooks/vars/all.yml
+        echo "Skipping Ceph Deployment"
     fi
 }
 
