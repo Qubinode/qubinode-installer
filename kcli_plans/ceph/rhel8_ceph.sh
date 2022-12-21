@@ -15,14 +15,14 @@ done
 
 
 cat >hosts<<EOF
-ceph-mon02 labels="['mon', 'mgr']"
-ceph-mon03 labels="['mon', 'mgr']"
-ceph-osd01 labels="['osd']"
-ceph-osd02 labels="['osd']"
-ceph-osd03 labels="['osd']"
+ceph-mon02.$(hostname -d) labels="['mon', 'mgr']"
+ceph-mon03.$(hostname -d)  labels="['mon', 'mgr']"
+ceph-osd01.$(hostname -d)  labels="['osd']"
+ceph-osd02.$(hostname -d)  labels="['osd']"
+ceph-osd03.$(hostname -d)  labels="['osd']"
 
 [admin]
-ceph-mon01 monitor_address=$(hostname -I) labels="['_admin', 'mon', 'mgr']"
+ceph-mon01.$(hostname -d)  monitor_address=$(hostname -I) labels="['_admin', 'mon', 'mgr']"
 EOF
 
 ansible-playbook -i hosts cephadm-preflight.yml 
@@ -55,7 +55,7 @@ EOF
 
 
 
-ansible-playbook -i hosts bootstrap.yml -vvv --extra-vars "ceph_origin=rhcs"
+#ansible-playbook -i hosts bootstrap.yml -vvv --extra-vars "ceph_origin=rhcs"
 
 ansible-galaxy collection install containers.podman
 
@@ -81,6 +81,13 @@ cat >bootstrap-nodes.yml<<EOF
 EOF
 
 ansible-playbook -i hosts bootstrap-nodes.yml -vvv
+cephadm bootstrap --mon-ip $(hostname -I) --allow-fqdn-hostname
+cephadm shell ceph -s
+ceph -s
+
+#ceph orch host add ceph-mon02.example.com 192.168.56.65
+#ceph orch host add ceph-mon03.example.com 192.168.56.65
+
 cat >add-hosts.yml<<EOF
 ---
 - name: add additional hosts to the cluster
@@ -107,9 +114,9 @@ cat >add-hosts.yml<<EOF
         msg: "{{ host_list.stdout }}"
 EOF
 
-ansible-playbook -i hosts cephadm-distribute-ssh-key.yml -e cephadm_ssh_user=root -e admin_node=ceph-mon01
+#ansible-playbook -i hosts cephadm-distribute-ssh-key.yml -e cephadm_ssh_user=root -e admin_node=ceph-mon01
 
-ansible-playbook -i hosts add-hosts.yml
+#ansible-playbook -i hosts add-hosts.yml
 
 cat >deploy_osd_service.yml<<EOF
 ---
@@ -131,11 +138,11 @@ cat >deploy_osd_service.yml<<EOF
               all: true
 EOF
 
-ansible-playbook -i hosts deploy_osd_service.yml
+#ansible-playbook -i hosts deploy_osd_service.yml
 
-ceph -s
-ceph health
-ceph osd tree
+#ceph -s
+#ceph health
+#ceph osd tree
 
 echo "Ceph to consume any available and unused storage device:"
 # https://docs.ceph.com/en/latest/cephadm/services/osd/
