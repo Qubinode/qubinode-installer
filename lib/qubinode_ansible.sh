@@ -263,8 +263,6 @@ function qubinode_setup_ansible () {
 
 function decrypt_ansible_vault () {
     vaultfile="${project_dir}/playbooks/vars/vault.yml"
-    #grep -q VAULT "${vault_vars_file}"
-    #if [ "A$?" == "A0" ]
     if fgrep -q "VAULT" "${vars_file}"
     then
         cd "${project_dir}/"
@@ -275,8 +273,6 @@ function decrypt_ansible_vault () {
 
 function encrypt_ansible_vault () {
     vaultfile="${project_dir}/playbooks/vars/vault.yml"
-    #grep -q VAULT "${vaultfile}"
-    #if [ "A$?" != "A0" ]
     if fgrep -q "VAULT" "${vars_file}"
     then
         cd "${project_dir}/"
