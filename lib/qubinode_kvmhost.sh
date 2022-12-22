@@ -405,8 +405,8 @@ function qubinode_networking () {
         then
             VERSION=v4.30.6
             BINARY=yq_linux_amd64
-            wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq &&\
-            chmod +x /usr/bin/yq
+            sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq &&\
+            sudo chmod +x /usr/bin/yq
         fi 
 
         if ! ipcalc -v  &> /dev/null

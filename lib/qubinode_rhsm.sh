@@ -44,7 +44,7 @@ function check_rhsm_status () {
 
 function configure_ansible_aap_creds(){
     printf "%s\n" "  ${yel}****************************************************************************${end}"
-    printf "%s\n\n" "    ${cyn}        Enter Credentials for Ansible Automation Platform${end}"
+    printf "%s\n\n" "    ${cyn}        Enter Credentials for Application Deployments${end}"
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
     if grep '""' "${vault_vars_file}"|grep -q rhsm_username
     then
