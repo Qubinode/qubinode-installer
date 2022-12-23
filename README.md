@@ -22,11 +22,12 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 9.0
+* Red Hat Enteprise Linux 9.1
 Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md).
 One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
-* Centos 8 Streams is supported base OS.
-* Or Fedora 36 (Testing) is a supported base OS.
+* Centos 9 Streams is supported base OS.
+* Fedora 37 (Testing) is a supported base OS.
+
 
 ## Qubinode Release Information
 
@@ -53,13 +54,9 @@ Compitability with Fedora Server |
 See [Release Document](docs/qubinode/releases.md) for features history.
 
 ## Deploying a OpenShift cluster
-
-- [Manual Assisted Installer](docs/qubinode/openshift4_installation_steps.md)
-- [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
-- [kcli-openshift4-baremetal]
-- [openshift-aio]
 - [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
 - [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
+- [Ansible Automation Platform](https://github.com/Red-Hat-SE-RTO/rhel-fleet-management/blob/main/docs/install-ansible-automation-platform.md)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)

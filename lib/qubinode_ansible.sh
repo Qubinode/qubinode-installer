@@ -170,7 +170,12 @@ function qubinode_setup_ansible () {
         elif [ $(get_distro) == "centos" ]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils unzip
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
+            ansible-galaxy collection install community.general
+            ansible-galaxy collection install ansible.posix
+            ansible-galaxy collection install community.libvirt
+            ansible-galaxy collection install fedora.linux_system_roles
+            ansible-galaxy install linux-system-roles.network
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
