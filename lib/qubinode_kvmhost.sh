@@ -325,14 +325,14 @@ function qubinode_networking () {
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$KVM_HOST_IPADDR/ {print \$1}")
-    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g')
+    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g'| grep -v default)
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
 
     # ask user for their IP network and use the default
     if egrep -R changeme.in-addr.arpa "${project_dir}/playbooks/vars/" >/dev/null 2>&1
     then
         network="${NETWORK}"
-        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
+        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g'| grep -v default)
         test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
         test -f "${project_dir}/playbooks/vars/all.yml" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${project_dir}/playbooks/vars/all.yml"
         if [ $ENABLE_IDM == true ];

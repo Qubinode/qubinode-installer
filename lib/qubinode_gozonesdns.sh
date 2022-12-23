@@ -90,9 +90,9 @@ function configure_libvirt_networks(){
     ### libvirt networks 
    
     echo "kcli create network --nodhcp -c ${1} ztpfw"
-    kcli create network --nodhcp -c ${1} ztpfw
+    sudo kcli create network --nodhcp -c ${1} ztpfw
     echo "kcli create network -c ${2} bare-net"
-    kcli create network -c ${2} bare-net
+    sudo kcli create network -c ${2} bare-net
 }
 
 function disable_ivp6(){

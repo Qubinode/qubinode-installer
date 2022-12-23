@@ -102,14 +102,16 @@ function update_default_settings(){
     else 
       cp "${project_dir}/samples/${KCLI_PROFILE}" $HOME/qubinode-installer
     fi
-    
+
+    cp "${project_dir}/samples/files/ceph-cluster.yml" "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
+
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
     admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
     rhsm_org=$(awk '/rhsm_org:/ {print $2}' "${vault_vars_file}")
     rhsm_activationkey=$(awk '/rhsm_activationkey:/ {print $2}' "${vault_vars_file}")
     rhsm_username=$(awk '/rhsm_username:/ {print $2}' "${vault_vars_file}")
-    rhsm_password$(awk '/rhsm_password:/ {print $2}' "${vault_vars_file}")
+    rhsm_password=$(awk '/rhsm_password:/ {print $2}' "${vault_vars_file}")
     encrypt_ansible_vault "${vaultfile}" >/dev/null
     sed -i "s/CHANGEUSER/${admin_username}/g" "${project_dir}/${KCLI_PROFILE}"
     sed -i "s/CHANGEPASSWORD/${admin_password}/g" "${project_dir}/${KCLI_PROFILE}"
@@ -178,6 +180,7 @@ function qubinode_setup_kcli() {
         fi
         curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
         echo "eval '$(register-python-argcomplete kcli)'" >> ~/.bashrc
+        kcli create host kvm -H 127.0.0.1 local
         update_default_settings
         kcli_configure_images
     else 

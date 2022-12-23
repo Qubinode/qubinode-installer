@@ -157,7 +157,7 @@ function qubinode_setup_ansible () {
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc nmap
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc nmap unzip
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt
@@ -165,15 +165,20 @@ function qubinode_setup_ansible () {
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
             install_podman_dependainces
         elif [ $(get_distro) == "centos" ]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils 
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils unzip
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
+            ansible-galaxy collection install community.general
+            ansible-galaxy collection install ansible.posix
+            ansible-galaxy collection install community.libvirt
+            ansible-galaxy collection install fedora.linux_system_roles
+            ansible-galaxy install linux-system-roles.network
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
@@ -263,7 +268,7 @@ function qubinode_setup_ansible () {
 
 function decrypt_ansible_vault () {
     vaultfile="${project_dir}/playbooks/vars/vault.yml"
-    if fgrep -q "VAULT" "${vars_file}"
+    if fgrep -q "VAULT" "${vaultfile}"
     then
         cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault decrypt "${vaultfile}"
@@ -273,7 +278,7 @@ function decrypt_ansible_vault () {
 
 function encrypt_ansible_vault () {
     vaultfile="${project_dir}/playbooks/vars/vault.yml"
-    if fgrep -q "VAULT" "${vars_file}"
+    if fgrep -q "VAULT" "${vaultfile}"
     then
         cd "${project_dir}/"
         test -f /usr/bin/ansible-vault && ansible-vault encrypt "${vaultfile}"
