@@ -250,3 +250,17 @@ cvadjumpbox:
   - systemctl enable xrdp --now
   - firewall-cmd --permanent --add-port=3389/tcp 
   - firewall-cmd --reload
+
+
+vyos-builder:
+ image: 'debian-11-nocloud-amd64.qcow2'
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 50
+ reservedns: true
+ nets:
+  - name: qubinet
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
