@@ -149,15 +149,15 @@ function qubinode_setup_ansible () {
             if [ ${RUN_KNI_ON_RHPDS} == "yes" ]
             then
                 sudo pip3 install ansible
-                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc unzip  rhel-system-roles nmap
+                sudo dnf install -y -q -e 0  git bc bind-utils python3-argcomplete ipcalc unzip  rhel-system-roles nmap  libvirt-nss
                 sudo ln -s /usr/local/bin/ansible /usr/bin/ansible
             else
-                sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc rhel-system-roles nmap
+                sudo dnf install -y -q -e 0 ansible-core git bc bind-utils python3-argcomplete ipcalc rhel-system-roles nmap libvirt-nss
             fi
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "ROCKY8" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc nmap unzip
+            sudo dnf install -y -q -e 0 ansible git bc bind-utils python3-argcomplete ipcalc nmap unzip libvirt-nss
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt
@@ -165,12 +165,12 @@ function qubinode_setup_ansible () {
             install_podman_dependainces
         elif [[ $RHEL_VERSION == "RHEL7" ]]; then
             sudo yum clean all > /dev/null 2>&1
-            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
+            sudo yum install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip libvirt-nss
             install_podman_dependainces
         elif [ $(get_distro) == "centos" ]; then
             sudo dnf clean all > /dev/null 2>&1
             sudo dnf install -y -q -e 0 epel-release
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip libvirt-nss
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt
@@ -178,7 +178,7 @@ function qubinode_setup_ansible () {
             ansible-galaxy install linux-system-roles.network
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             sudo dnf clean all > /dev/null 2>&1
-            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip
+            sudo dnf install -y -q -e 0 ansible git  bc bind-utils python3-argcomplete ipcalc nmap unzip libvirt-nss openssl
             ansible-galaxy collection install community.general
             ansible-galaxy collection install ansible.posix
             ansible-galaxy collection install community.libvirt

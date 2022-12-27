@@ -1,4 +1,6 @@
 #!/bin/bash
+# https://github.com/karmab/kcli
+# This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, GCP and AWS) and to easily deploy and customize VMs from cloud images.
 
 setup_variables
 product_in_use=kcli

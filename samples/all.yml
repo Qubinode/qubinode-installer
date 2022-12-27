@@ -200,6 +200,11 @@ libvirt_pkgs_8:
    - python3-lxml
    - cockpit-machines
    - bc 
+   - genisoimage
+   - guestfs-tools
+   - libguestfs-tools
+   - libguestfs-xfs
+   - libusal
 
 libvirt_pkgs_7:
    - virt-install
