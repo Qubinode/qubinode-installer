@@ -1,5 +1,8 @@
 #!/bin/bash
 
+###
+## This function is used to deploy a product.
+###
 function qubinode_product_deployment () {
     # this function deploys a supported product
     PRODUCT_OPTION=$1
@@ -141,6 +144,9 @@ function qubinode_product_deployment () {
 
 }
 
+###
+## This function is used to perform maintenance on the qubinode.
+###
 function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then

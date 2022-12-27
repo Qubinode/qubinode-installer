@@ -2,10 +2,14 @@
 # https://github.com/karmab/kcli
 # This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, GCP and AWS) and to easily deploy and customize VMs from cloud images.
 
+
 setup_variables
 product_in_use=kcli
 source "${project_dir}/lib/qubinode_utils.sh"
 
+############################################
+## This  will determine the version of RHEL that is being used.
+############################################
 
   RHEL_VERSION=$(get_rhel_version)
   if [[ $RHEL_VERSION == "FEDORA" ]]; then
@@ -23,13 +27,24 @@ source "${project_dir}/lib/qubinode_utils.sh"
 
 
 
+############################################
+## This is the file that contains the variables for the kvm host.
+############################################
 kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+
+############################################
+## This is the file that contains the variables for the common variables.
+############################################
 vars_file="${project_dir}/playbooks/vars/all.yml"
 vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
 vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
 requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
 
-function qubinode_kcli_maintenance () {
+
+############################################
+## @brief This function call the maintenance functions for kcli
+############################################
+qubinode_kcli_maintenance () {
     case ${product_maintenance} in
        configureimages)
 	        kcli_configure_images
@@ -46,6 +61,10 @@ function qubinode_kcli_maintenance () {
     esac
 }
 
+############################################
+## @brief This function will configure the images for kcli
+##  * @param {string} $1 - The path to the vault file
+############################################
 function kcli_configure_images(){
     echo "Configuring images"
     echo "Downloading Fedora"
@@ -65,6 +84,10 @@ function kcli_configure_images(){
 
 }
 
+############################################
+## Update the default settings for kcli
+## @param {string} $1 - The path to the vault file
+############################################
 function update_default_settings(){
     if [ ! -f "${vault_key_file}" ]
       then
@@ -107,6 +130,7 @@ function update_default_settings(){
 
     cp "${project_dir}/samples/files/ceph-cluster.yml" "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
 
+
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null
     admin_username=$(awk '/admin_user:/ {print $2}' "${vars_file}")
     admin_password=$(awk '/admin_user_password:/ {print $2}' "${vault_vars_file}")
@@ -138,6 +162,18 @@ function update_default_settings(){
     sudo rm -rf "${project_dir}/${KCLI_PROFILE}"
 }
 
+############################################################################################################
+##  @description: Create a static ip for the vm deployed by kcli 
+##  @param {string} kvm_host_vars_file
+## @param {string} vault_vars_file
+## @param {string} vars_file
+##  @param {string} vaultfile
+##  @return {string} kvm_host_gw
+##  @return {string} kvm_host_netmask
+## @return {string} vm_libvirt_net
+##  @return {string} admin_username
+## @return {string} admin_password
+############################################################################################################
 function create_static_profile_ip() {
     kvm_host_gw=$(awk '/kvm_host_gw:/ {print $2}' "${kvm_host_vars_file}")
     kvm_host_netmask=$(awk '/kvm_host_netmask:/ {print $2}' "${kvm_host_vars_file}")
@@ -171,6 +207,9 @@ rhel8_static:
 
 }
 
+############################################
+## @brief This function will install and configure the default settings for kcli
+############################################
 function qubinode_setup_kcli() {
     if [[ ! -f /usr/bin/kcli ]];
     then 
