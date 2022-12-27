@@ -31,30 +31,9 @@ function qubinode_project_cleanup () {
     then
         FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
     fi
-
-    # Delete OpenShift 3 files
-    if [ -f ${project_dir}/playbooks/vars/ocp3.yml ]
-    then 
-        openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
-        if [[ ${openshift_product} == "ocp3" ]]; then
-          FILES=("${FILES[@]}" "$ocp3_vars_files")
-        elif [[ ${openshift_product} == "okd3" ]]; then
-          FILES=("${FILES[@]}" "$okd3_vars_files")
-        fi
-
-        if [ ${#FILES[@]} -eq 0 ]
-        then
-            echo "Project directory: ${project_dir} state is already clean"
-        else
-            for f in $(echo "${FILES[@]}")
-            do
-                test -f $f && rm $f
-                echo "purged $f"
-
-            done
-        fi
     fi
-
+   echo "removing vault file"
+   rm -rvf ${vault_key_file} > /dev/null
    echo "Removing playbook vars"
    rm -rvf ${project_dir}/playbooks/vars/*.yml > /dev/null
    echo "Removing downloaded roles"
