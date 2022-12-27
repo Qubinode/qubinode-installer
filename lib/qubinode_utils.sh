@@ -31,7 +31,6 @@ function qubinode_project_cleanup () {
     then
         FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
     fi
-    fi
    echo "removing vault file"
    rm -rvf ${vault_key_file} > /dev/null
    echo "Removing playbook vars"
