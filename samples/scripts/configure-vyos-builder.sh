@@ -45,23 +45,25 @@ vyos_config_commands:
   - set system ntp server ${TIME_SERVER_2}
   - set interfaces ethernet eth0 address '${MAIN_ROUTER_IP}'
   - set interfaces ethernet eth0 description 'INTERNET_FACING'
-  - set interfaces ethernet eth1 address ${ETH1_IP_OCTECT}.1/24
-  - set interfaces ethernet eth1 description ${ETH1_NAME}
+  - set interfaces ethernet eth1 address '${ETH1_IP_OCTECT}.1/24'
+  - set interfaces ethernet eth1 description '${ETH1_NAME}'
   - set interfaces ethernet eth1 vif ${VLAN_ID} description 'VLAN ${VLAN_ID}'
   - set interfaces ethernet eth1 vif ${VLAN_ID} address '${ETH1_VLAN_OCTECT}.1/24'
-  - set interfaces ethernet eth2 address ${ETH2_IP_OCTECT}.1/24
-  - set interfaces ethernet eth2 description ${ETH2_NAME} 
+  - set interfaces ethernet eth2 address '${ETH2_IP_OCTECT}.1/24'
+  - set interfaces ethernet eth2 description '${ETH2_NAME}'
   - set nat source rule 10 outbound-interface 'eth0'
-  - set nat source rule 10 source address ${ETH1_IP_OCTECT}.0/24
+  - set nat source rule 10 source address '${ETH1_IP_OCTECT}.0/24'
   - set nat source rule 10 translation address masquerade
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 default-router '${ETH1_IP_OCTECT}.1'
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 domain-name '${FQN}'
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24  name-server '${DNS_SERVER}'
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 lease '86400'
-  - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 range 0 start ${ETH1_IP_OCTECT}.20
+  - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 range 0 start '${ETH1_IP_OCTECT}.20'
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 range 0 stop '${ETH1_IP_OCTECT}.100'
 EOF
 
+  cat user-data
+  read -n 1 -s -r -p "Press any key to continue"
   cat >meta-data<<EOF
 EOF
 
@@ -77,19 +79,21 @@ EOF
 
   ansible-playbook qemu.yml -e iso_local=/tmp/vyos-rolling-latest.iso  -e grub_console=serial  -e guest_agent=qemu -e keep_user=true -e enable_dhcp=false -e enable_ssh=true  -e cloud_init=true -e cloud_init_ds=NoCloud
   QCOW_IMAGE_NAME=$(basename /tmp/vyos-*.qcow2 | sed 's/ //g')
-  sudo mv /tmp/vyos-*.qcow2 /var/www/html/
-  sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/
+  sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/
+  sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/${QCOW_IMAGE_NAME}-seed.iso
   sudo chmod -R 755 /var/www/html/
   echo "Run the command below on host server to create the router"
   echo "cd qubinode-installer"
-  echo "lib/vyos/deploy-vyos-router.sh create $(basename /tmp/vyos-*.qcow2 | sed 's/ //g')"
+  echo "lib/vyos/deploy-vyos-router.sh create $(basename /tmp/${QCOW_IMAGE_NAME}| sed 's/ //g')"
 }
 
 
 function destroy(){
+  echo "Destroying the router image congifuration"
   rm -rf /tmp/vyos-*.qcow2
+  rm -rf seed.iso
   sudo rm -rf /var/www/html/*.qcow2
-  sudo rm -rf /var/www/html/seed.iso
+  sudo rm -rf /var/www/html/${QCOW_IMAGE_NAME}-seed.iso
 }
 
 
