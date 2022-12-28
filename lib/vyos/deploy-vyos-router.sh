@@ -11,7 +11,7 @@ cd $HOME
 curl -OL http://${IPADDR}/$2
 curl -OL http://${IPADDR}/seed.iso
 
-VM_NAME=$(basename $HOME/vyos*.qcow2  | sed 's/.qcow2//g')
+VM_NAME=$(basename $HOME/$2  | sed 's/.qcow2//g')
 sudo mv $HOME/${VM_NAME}.qcow2 /var/lib/libvirt/images/
 sudo mv $HOME/seed.iso /var/lib/libvirt/images/
 
