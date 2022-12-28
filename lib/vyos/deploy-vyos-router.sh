@@ -11,8 +11,8 @@ cd $HOME
 curl -OL http://${IPADDR}/$1
 VM_NAME=$(basename $HOME/$1  | sed 's/.qcow2//g')
 sudo mv $HOME/${VM_NAME}.qcow2 /var/lib/libvirt/images/
-curl -OL http://${IPADDR}/$VM_NAME-seed.iso
-sudo mv $HOME/$VM_NAME-seed.iso /var/lib/libvirt/images/seed.iso
+curl -OL http://${IPADDR}/seed.iso
+sudo mv $HOME/seed.iso /var/lib/libvirt/images/seed.iso
 
 
 sudo virt-install -n vyos_r1 \
@@ -20,7 +20,7 @@ sudo virt-install -n vyos_r1 \
    --vcpus 2 \
    --cdrom /var/lib/libvirt/images/seed.iso \
    --os-variant debian10 \
-   --network bridge=qubibr0,model=virtio,mac=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/') \
+   --network bridge=qubibr0,model=e1000e,mac=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/') \
    --network network=test \
    --network network=test2 \
    --graphics vnc \
