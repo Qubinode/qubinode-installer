@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [  $#  -ne  1  ]; then
-    echo  "Usage: $0 vyos-1.4-rolling-202212280917-cloud-init-10G-qemu.qcow2" 
+if [  $#  -ne  2 ]; then
+    echo  "Usage: $0 create vyos-1.4-rolling-202212280917-cloud-init-10G-qemu.qcow2" 
     exit 1
 fi
 
-IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
+function create_router(){
+   IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
 cd $HOME
-curl -OL http://${IPADDR}/$1
+curl -OL http://${IPADDR}/$2
 curl -OL http://${IPADDR}/seed.iso
 
 VM_NAME=$(basename $HOME/vyos*.qcow2  | sed 's/.qcow2//g')
@@ -29,3 +30,16 @@ sudo virt-install -n vyos_r1 \
    --disk path=/var/lib/libvirt/images/$VM_NAME.qcow2,bus=virtio \
    --import \
    --noautoconsole
+}
+
+function destroy_router(){
+    sudo virsh destroy vyos_r1
+    sudo virsh undefine vyos_r1
+    sudo rm -rf /var/lib/libvirt/images/vyos_r1.qcow2
+}
+
+if [ $1  ==  "create"  ]; then
+    create_router
+elif [ $1  ==  "destroy"  ]; then
+    destroy_router
+fi
