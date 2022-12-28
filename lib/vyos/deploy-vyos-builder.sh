@@ -12,7 +12,7 @@ function destory_vm(){
 }
 
 function deploy_vyos_builder_vm(){
-    bash -x kvm-install-vm  create -t  debian10  -c 2 -m 4096 -d 60  -l /var/lib/libvirt/images/ -L /var/lib/libvirt/images/ vyos-builder
+    sudo  kvm-install-vm  create -t  debian10  -c 2 -m 4096 -d 60  -l /var/lib/libvirt/images/ -L /var/lib/libvirt/images/ vyos-builder
 }
 
 
