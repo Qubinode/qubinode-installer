@@ -12,11 +12,11 @@ curl -OL http://${IPADDR}/$1
 curl -OL http://${IPADDR}/seed.iso
 
 VM_NAME=$(basename /root/vyos*.qcow2  | sed 's/.qcow2//g')
-mv ${VM_NAME}.qcow2 /var/lib/libvirt/images/
-mv seed.iso /var/lib/libvirt/images/
+sudo mv ${VM_NAME}.qcow2 /var/lib/libvirt/images/
+sudo mv seed.iso /var/lib/libvirt/images/
 
 
-virt-install -n vyos_r1 \
+sudo virt-install -n vyos_r1 \
    --ram 4096 \
    --vcpus 2 \
    --cdrom /var/lib/libvirt/images/seed.iso \
