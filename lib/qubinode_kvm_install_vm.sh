@@ -16,10 +16,10 @@ function qubinode_setup_kvm_install_vm(){
     echo "Configure kvm-install-vm"
     if [ ! -f /usr/bin/virt-resize ];
     then
-        sudo dnf -y install genisoimage virt-install libguestfs-tools-c qemu-img libvirt-client wget libosinfo 
+        sudo dnf -y install genisoimage virt-install libguestfs-tools-c qemu-img libvirt-client wget libosinfo  libvirt-nss
     fi 
 
-    libvirt-nss
+
     sudo sed -i  's|hosts:.*|hosts:      files libvirt libvirt_guest dns myhostname|g' /etc/nsswitch.conf
     sudo curl -L https://raw.githubusercontent.com/giovtorres/kvm-install-vm/master/kvm-install-vm -o /usr/bin/kvm-install-vm
     sudo chmod +x /usr/bin/kvm-install-vm
