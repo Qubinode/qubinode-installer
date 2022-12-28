@@ -80,7 +80,7 @@ EOF
   ansible-playbook qemu.yml -e iso_local=/tmp/vyos-rolling-latest.iso  -e grub_console=serial  -e guest_agent=qemu -e keep_user=true -e enable_dhcp=false -e enable_ssh=true  -e cloud_init=true -e cloud_init_ds=NoCloud
   QCOW_IMAGE_NAME=$(basename /tmp/vyos-*.qcow2 | sed 's/ //g')
   sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/
-  sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/${QCOW_IMAGE_NAME}-seed.iso
+  sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/
   sudo chmod -R 755 /var/www/html/
   echo "Run the command below on host server to create the router"
   echo "cd qubinode-installer"
@@ -91,9 +91,8 @@ EOF
 function destroy(){
   echo "Destroying the router image congifuration"
   rm -rf /tmp/vyos-*.qcow2
-  rm -rf seed.iso
   sudo rm -rf /var/www/html/*.qcow2
-  sudo rm -rf /var/www/html/${QCOW_IMAGE_NAME}-seed.iso
+  sudo rm -rf /var/www/html/seed.iso
 }
 
 
