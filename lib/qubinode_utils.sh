@@ -567,3 +567,5 @@ function update_resolv_conf(){
     sudo sed -i 's/nameserver.*/nameserver '${1}'/' /etc/resolv.conf
   fi
 }
+
+
