@@ -6,14 +6,13 @@ if [  $#  -ne  1  ]; then
 fi
 
 IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
+cd $HOME
 curl -OL http://${IPADDR}/$1
-
-
 curl -OL http://${IPADDR}/seed.iso
 
-VM_NAME=$(basename /root/vyos*.qcow2  | sed 's/.qcow2//g')
-sudo mv ${VM_NAME}.qcow2 /var/lib/libvirt/images/
-sudo mv seed.iso /var/lib/libvirt/images/
+VM_NAME=$(basename $HOME/vyos*.qcow2  | sed 's/.qcow2//g')
+sudo mv $HOME/${VM_NAME}.qcow2 /var/lib/libvirt/images/
+sudo mv $HOME/seed.iso /var/lib/libvirt/images/
 
 
 sudo virt-install -n vyos_r1 \
