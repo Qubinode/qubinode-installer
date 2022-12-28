@@ -63,7 +63,7 @@ vyos_config_commands:
 EOF
 
   cat user-data
-  read -n 1 -s -r -p "Press any key to continue"
+  sleep 5s 
   cat >meta-data<<EOF
 EOF
 
@@ -79,7 +79,10 @@ EOF
 
   ansible-playbook qemu.yml -e iso_local=/tmp/vyos-rolling-latest.iso  -e grub_console=serial  -e guest_agent=qemu -e keep_user=true -e enable_dhcp=false -e enable_ssh=true  -e cloud_init=true -e cloud_init_ds=NoCloud
   QCOW_IMAGE_NAME=$(basename /tmp/vyos-*.qcow2 | sed 's/ //g')
+  ls -l /var/www/html/
+  sleep 5s
   sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/
+  read -n 1 -s -r -p "Press any key to continue"
   sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/
   sudo chmod -R 755 /var/www/html/
   echo "Run the command below on host server to create the router"

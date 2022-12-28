@@ -15,7 +15,7 @@ curl -OL http://${IPADDR}/seed.iso
 sudo mv $HOME/seed.iso /var/lib/libvirt/images/seed.iso
 
 
-sudo virt-install -n vyos_r1 \
+sudo virt-install -n ${VM_NAME} \
    --ram 4096 \
    --vcpus 2 \
    --cdrom /var/lib/libvirt/images/seed.iso \
@@ -32,8 +32,9 @@ sudo virt-install -n vyos_r1 \
 }
 
 function destroy_router(){
-    sudo virsh destroy vyos_r1
-    sudo virsh undefine vyos_r1
+    VM_NAME=$(basename $HOME/$1  | sed 's/.qcow2//g')
+    sudo virsh destroy ${VM_NAME}
+    sudo virsh undefine ${VM_NAME}
     sudo rm -rf /var/lib/libvirt/images/$1
     sudo rm -rf /var/lib/libvirt/images/seed.iso
 }
