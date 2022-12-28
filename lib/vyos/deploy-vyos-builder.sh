@@ -17,9 +17,9 @@ function deploy_vyos_builder_vm(){
     echo "Run the following commands"
     echo "*************************"
     echo "sudo su - root "
-    echo "IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')"
     IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
     echo 'ssh -i /root/.ssh/id_rsa  debian@'${IPADDR}''
+    sudo virsh net-dhcp-leases default
 }
 
 
