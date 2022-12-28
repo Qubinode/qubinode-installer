@@ -20,7 +20,7 @@ sudo virt-install -n vyos_r1 \
    --vcpus 2 \
    --cdrom /var/lib/libvirt/images/seed.iso \
    --os-variant debian10 \
-   --network bridge=qubibr0,model=virtio\
+   --network bridge=qubibr0,model=virtio,mac=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')\
     --network network=test \
     --network network=test2 \
    --graphics vnc \
