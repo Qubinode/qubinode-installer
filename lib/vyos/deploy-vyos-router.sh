@@ -8,10 +8,10 @@ fi
 function create_router(){
    IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
 cd $HOME
-curl -OL http://${IPADDR}/$2
+curl -OL http://${IPADDR}/$1
 curl -OL http://${IPADDR}/seed.iso
 
-VM_NAME=$(basename $HOME/$2  | sed 's/.qcow2//g')
+VM_NAME=$(basename $HOME/$1  | sed 's/.qcow2//g')
 sudo mv $HOME/${VM_NAME}.qcow2 /var/lib/libvirt/images/
 sudo mv $HOME/seed.iso /var/lib/libvirt/images/
 
@@ -39,7 +39,7 @@ function destroy_router(){
 }
 
 if [ $1  ==  "create"  ]; then
-    create_router
+    create_router $2
 elif [ $1  ==  "destroy"  ]; then
     destroy_router
 fi
