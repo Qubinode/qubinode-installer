@@ -116,7 +116,7 @@ function qubinode_setup_ansible () {
 
 
     # install ansible
-    if [ ! -f /usr/bin/ansible ];
+    if [ ! -f /tmp/ansible_install.log ];
     then
         if [[ $RHEL_VERSION == "RHEL9" ]]; then
             echo "Installing ansible.."
@@ -187,6 +187,7 @@ function qubinode_setup_ansible () {
             install_podman_dependainces
         fi
        ensure_supported_ansible_version
+       echo "completed installing ansible.." >  /tmp/ansible_install.log
     else
         # Update ansible
         printf "%s\n" "   ${mag}Updating ansible ${end}"

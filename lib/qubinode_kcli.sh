@@ -1,6 +1,7 @@
 #!/bin/bash
 # https://github.com/karmab/kcli
 # This tool is meant to interact with existing virtualization providers (libvirt, KubeVirt, oVirt, OpenStack, VMware vSphere, GCP and AWS) and to easily deploy and customize VMs from cloud images.
+# ./qubinode-installer -p kcli
 
 
 setup_variables
@@ -221,7 +222,7 @@ function qubinode_setup_kcli() {
         fi
         curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
         echo "eval '$(register-python-argcomplete kcli)'" >> ~/.bashrc
-        kcli create host kvm -H 127.0.0.1 local
+        #kcli create host kvm -H 127.0.0.1 local
         update_default_settings
         kcli_configure_images
     else 
