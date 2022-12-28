@@ -14,6 +14,7 @@ function destory_vm(){
 
 function deploy_vyos_builder_vm(){
     sudo  kvm-install-vm  create -t  debian10  -c 2 -m 4096 -d 60  -l /var/lib/libvirt/images/ -L /var/lib/libvirt/images/ vyos-builder
+    echo "waiting 60 seconds  for VM to get IP address"
     sleep 60s
     echo "Run the following commands"
     echo "*************************"
