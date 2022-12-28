@@ -6,6 +6,7 @@ if [ -z $1  ]; then
 fi
 
 function destory_vm(){
+    sudo kvm-install-vm  remove vyos-builder
     sudo virsh destroy  vyos-builder
     sudo virsh undefine  vyos-builder
     sudo rm -rf /var/lib/libvirt/images/vyos-builder.qcow2
@@ -13,6 +14,10 @@ function destory_vm(){
 
 function deploy_vyos_builder_vm(){
     sudo  kvm-install-vm  create -t  debian10  -c 2 -m 4096 -d 60  -l /var/lib/libvirt/images/ -L /var/lib/libvirt/images/ vyos-builder
+    echo "Run the following comands"
+    echo "sudo su - root "
+    echo "IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')"
+    echo 'echo "ssh -i /root/.ssh/id_rsa  debian@'${IPADDR}'""'
 }
 
 
