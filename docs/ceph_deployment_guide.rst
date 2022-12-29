@@ -23,6 +23,8 @@ For Quick install::
 Create plan for Ceph Cluster Deployment
 ----------------------------------------
 
+Steps:: 
+
     $ sudo ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
     $ sudo kcli create plan -f  kcli_plans/ceph-deployment.yml
     $ samples/scripts/update-ceph-dns.sh # press q to exit
@@ -40,6 +42,8 @@ Default username and password for ceph cluster
 Delete Plan this will delete all the VMs created by the plan
 -------------------------------------------------------------
 
+Deleting the plan will delete all the VMs created by the plan::
+    
     kcli list plan
     +---------------+-------------------------------------------------------------------+
     | Plan          | Vms                                                               |

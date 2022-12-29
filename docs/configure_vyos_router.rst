@@ -21,16 +21,21 @@ For Quick install::
 
 Create  Vyos builder Images -This will be used to build the Vyos image
 -----------------------
+The following script will crete the debian builder vm::
+
     lib/vyos/deploy-vyos-builder.sh create
 
 In new tab ssh into the builder VM
 ----------------------------------
+In order to start the build process you will need to ssh into the builder vm and run the following commands::
+
     sudo su - root
     ssh -i /root/.ssh/id_rsa  debian@192.168.122.157
     sudo su - root
 
 Configure a router image vyos env file
 -----------------------
+Onece on the builder vm you will need to download the vyos-env file and update the variables then run the script::
     # curl -OL https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/lib/vyos/vyos-env
     ## edit vyos-env and update the variables
     # vim vyos-env
@@ -41,12 +46,16 @@ Configure a router image vyos env file
 
 Deploy vyos-router on Qubinode
 -----------------------
+Once the builder vm has created the vyos image you can deploy the image on Qubinode::
+
     # cd ~/qubinode-installer
     # lib/vyos/deploy-vyos-router.sh create vyos-r1.qcow2
 
 
 To Destory builder vm
 -----------------------
+In order to destroy the router vm you will need to run the following command::
+    
      lib/vyos/deploy-vyos-builder.sh destroy vyos-r1.qcow2
 
 
