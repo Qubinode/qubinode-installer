@@ -21,8 +21,8 @@ sudo virt-install -n ${VM_NAME} \
    --cdrom /var/lib/libvirt/images/seed.iso \
    --os-variant debian10 \
    --network bridge=qubibr0,model=e1000e,mac=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/') \
-   --network network=test \
-   --network network=test2 \
+   --network network=vyos2-net,model=e1000e \
+   --network network=vyos2-net2,model=e1000e \
    --graphics vnc \
    --hvm \
    --virt-type kvm \

@@ -1,16 +1,17 @@
 ## This file is sourced by the vyos-env script.
+# https://networkproguide.com/cidr-subnet-mask-ipv4-cheat-sheet/
 ## Rotuer 1 Example:
 export MAIN_ROUTER_IP=192.168.10.50/24
 export ROUTER_NAME=vyos-r1
 export TIME_SERVER_1=time1.google.com
 export TIME_SERVER_2=time2.google.com
-export ETH1_IP_OCTECT=192.168.100
+export ETH1_IP_OCTECT=192.168.11
 export ETH1_NAME=dhcp-nated-network
-export ETH2_IP_OCTECT=192.168.200
+export ETH2_IP_OCTECT=192.168.13
 export ETH2_NAME=static-no-nat-network
 export DNS_SERVER=1.1.1.1
 export FQN=example.com
-export ETH1_VLAN_OCTECT=192.168.101
+export ETH1_VLAN_OCTECT=192.168.12
 export VLAN_ID=101
 
 ## Rotuer 2 Example:
@@ -18,13 +19,13 @@ export VLAN_ID=101
 # export ROUTER_NAME=vyos-r2
 # export TIME_SERVER_1=time1.google.com
 # export TIME_SERVER_2=time2.google.com
-# export ETH1_IP_OCTECT=192.168.300
+# export ETH1_IP_OCTECT=192.168.14
 # export ETH1_NAME=dhcp-nated-network
-# export ETH2_IP_OCTECT=192.168.400
+# export ETH2_IP_OCTECT=192.168.16
 # export ETH2_NAME=static-no-nat-network
 # export DNS_SERVER=1.1.1.1
 # export FQN=example.com
-# export ETH1_VLAN_OCTECT=192.168.301
+# export ETH1_VLAN_OCTECT=192.168.15
 # export VLAN_ID=301
 
 ## Rotuer 3 Example:
@@ -32,13 +33,13 @@ export VLAN_ID=101
 # export ROUTER_NAME=vyos-r3
 # export TIME_SERVER_1=time1.google.com
 # export TIME_SERVER_2=time2.google.com
-# export ETH1_IP_OCTECT=192.168.500
+# export ETH1_IP_OCTECT=192.168.17
 # export ETH1_NAME=dhcp-nated-network
-# export ETH2_IP_OCTECT=192.168.600
+# export ETH2_IP_OCTECT=192.168.19
 # export ETH2_NAME=static-no-nat-network
 # export DNS_SERVER=1.1.1.1
 # export FQN=example.com
-# export ETH1_VLAN_OCTECT=192.168.401
+# export ETH1_VLAN_OCTECT=192.168.18
 # export VLAN_ID=401
 
 
