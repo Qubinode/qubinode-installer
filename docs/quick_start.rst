@@ -67,4 +67,4 @@ At this point you should be able to acces the RHEL system via the cockpit web in
 * https://SERVER_IP:9090
 
 
-See the `Qubinode Overview <https://qubinode-installer.readthedocs.io/en/latest/index.html>` for more information on the diffent deployment options available.
+See the `Qubinode Overview <https://qubinode-installer.readthedocs.io/en/latest/index.html>`_ for more information on the diffent deployment options available.
