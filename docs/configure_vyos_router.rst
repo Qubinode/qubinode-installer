@@ -7,6 +7,11 @@ VyOS provides a free routing platform that competes directly with other commerci
 * `Website <https://vyos.io/>`_
 * `Docs <https://docs.vyos.io/en/latest/index.html#>`_
 
+Tested on
+----------
+* Fedora 37
+
+
 Configure dependancies 
 ------------------------------
 For Quick install::
@@ -55,7 +60,7 @@ Once the builder vm has created the vyos image you can deploy the image on Qubin
 To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::
-    
+
      lib/vyos/deploy-vyos-builder.sh destroy vyos-r1.qcow2
 
 

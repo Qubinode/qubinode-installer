@@ -37,19 +37,13 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 
 
 ### Features in v3.0 Version
-New Features |
---|
-OpenShift 4.11 |
-Gozones DNS |
-Compitability with Centos 8 Streams|
-Compitability with Fedora Server |
-[Microshift](https://github.com/redhat-et/microshift) | 
-[OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/kenmoini/ocp4-ai-svc-libvirt) | 
-[ztp-pipeline-relocatable](https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable) development box | 
-[Assisted Installer Scripts](https://github.com/tosin2013/openshift-4-deployment-notes/tree/master/assisted-installer) development box | 
-[YAKKO](https://github.com/ozchamo/YAKKO) |
-
-
+- [x] Support for RHEL 9.1
+- [x] Support for Centos 9 Streams
+- [x] Vyos Router Support 
+- [x] kcli support  to manage vm deployments
+- [x] Ansible Automation Platform 2.1
+- [x] Red Hat Ceph Storage 5
+- [x] kvm-install-vm to manage vm deployments
 
 See [Release Document](docs/qubinode/releases.md) for features history.
 

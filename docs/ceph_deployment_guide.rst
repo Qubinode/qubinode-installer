@@ -5,6 +5,9 @@ Red Hat Ceph Storage is an open, massively scalable, highly available and resili
 * `Product Documentation for Red Hat Ceph Storage 5 <https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5>`_
 * `Red Hat Ceph Storage 5: Introducing Cephadm <https://www.redhat.com/en/blog/red-hat-ceph-storage-5-introducing-cephadm>`_
 
+Tested on
+----------
+* RHEL 9.1
 
 Configure Qubinode for Ceph Deployment
 ------------------------------
@@ -43,7 +46,7 @@ Delete Plan this will delete all the VMs created by the plan
 -------------------------------------------------------------
 
 Deleting the plan will delete all the VMs created by the plan::
-    
+
     kcli list plan
     +---------------+-------------------------------------------------------------------+
     | Plan          | Vms                                                               |
