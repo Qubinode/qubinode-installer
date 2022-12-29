@@ -49,8 +49,5 @@ To Destory builder vm
 -----------------------
      lib/vyos/deploy-vyos-builder.sh destroy vyos-r1.qcow2
 
-Issues 
--------
-`Submit isues <https://github.com/kenmoini/go-zones/issues>`_
 
 

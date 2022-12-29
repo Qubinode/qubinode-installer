@@ -14,6 +14,7 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
     rdpjumpbox
     quay_mirror_registry
     ceph_deployment_guide
+    configure_vyos_router
     ztp_for_factory_workloads
 
 

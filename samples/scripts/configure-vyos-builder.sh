@@ -43,7 +43,7 @@ vyos_config_commands:
   - set system host-name '${ROUTER_NAME}'
   - set system ntp server ${TIME_SERVER_1}
   - set system ntp server ${TIME_SERVER_2}
-  - delete interfaces ethernet eth1 address 'dhcp'
+  - delete interfaces ethernet eth0 address 'dhcp'
   - set interfaces ethernet eth0 address '${MAIN_ROUTER_IP}'
   - set interfaces ethernet eth0 description 'INTERNET_FACING'
   - set interfaces ethernet eth1 address '${ETH1_IP_OCTECT}.1/24'

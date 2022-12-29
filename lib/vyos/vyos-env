@@ -1,7 +1,7 @@
 ## This file is sourced by the vyos-env script.
 # https://networkproguide.com/cidr-subnet-mask-ipv4-cheat-sheet/
 ## Rotuer 1 Example:
-export MAIN_ROUTER_IP=192.168.10.50/24
+export MAIN_ROUTER_IP=192.168.1.25/24
 export ROUTER_NAME=vyos-r1
 export TIME_SERVER_1=time1.google.com
 export TIME_SERVER_2=time2.google.com
@@ -15,7 +15,7 @@ export ETH1_VLAN_OCTECT=192.168.12
 export VLAN_ID=101
 
 ## Rotuer 2 Example:
-# export MAIN_ROUTER_IP=192.168.1.23/24
+# export MAIN_ROUTER_IP=192.168.1.24/24
 # export ROUTER_NAME=vyos-r2
 # export TIME_SERVER_1=time1.google.com
 # export TIME_SERVER_2=time2.google.com
