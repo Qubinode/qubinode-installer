@@ -96,7 +96,9 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
 * [Karim Boumedhel](https://github.com/karmab)
-
+* [Ken Moini](https://github.com/kenmoini)
+* [Giovanni Torres](https://github.com/giovtorres)
+  
 ## Authors
 * Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
 * Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)
