@@ -6,7 +6,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -105,6 +105,15 @@ function qubinode_product_deployment () {
                     qubinode_setup_kcli
               fi
               ;;
+          gozones)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_gozones_maintenance
+              else
+		    printf "%s\n" "   ${blu}Configuring gozones dns${end}"
+                    qubinode_setup_gozones
+              fi
+              ;;
           *)
 	      printf "%s\n" "   Product ${mag}${PRODUCT_OPTION}${end} is not supported"
 	      printf "%s\n" "   Supported products are: ${mag}${AVAIL_PRODUCTS}${end}"
@@ -137,7 +146,8 @@ function qubinode_maintenance_options () {
     then
 	## this should be replace as qubinode_setup does everthing that's required
         #qubinode_setup_kvm_host
-	qubinode_setup
+        qubinode_networking
+	    qubinode_setup
     elif [ "${qubinode_maintenance_opt}" == "rebuild_qubinode" ]
     then
         rebuild_qubinode

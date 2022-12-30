@@ -3,7 +3,16 @@
 setup_variables
 product_in_use=kcli
 source "${project_dir}/lib/qubinode_utils.sh"
-defaults_file="/usr/lib/python3.6/site-packages/kvirt/defaults.py"
+
+RHEL_VERSION=$(get_rhel_version)
+if [[ $RHEL_VERSION == "FEDORA" ]]; then
+  defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.10)/site-packages/kvirt/defaults.py"
+else 
+  defaults_file="/usr/lib/python$(python3 --version | grep -oe 3.6)/site-packages/kvirt/defaults.py"
+fi 
+
+
+
 kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
 vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
@@ -29,13 +38,12 @@ function qubinode_kcli_maintenance () {
 function kcli_configure_images(){
     echo "Configuring images"
     echo "Downloading Fedora"
-    sudo kcli download image fedora34
+    sudo kcli download image fedora36
     echo "Downloading Centos Streams"
     sudo kcli download image centos8stream
-    echo "Downloading Red Hat Enterprise Linux 8"
-    sudo kcli download image rhel8
-    echo "Downloading Red Hat Enterprise Linux 7"
-    sudo kcli download image rhel7
+    #echo "Downloading Red Hat Enterprise Linux 8"
+    #sudo kcli download image rhel8
+
 }
 
 function update_default_settings(){
@@ -75,7 +83,7 @@ function create_static_profile_ip() {
 
 
 rhel8_static:
- image: rhel-8.4-x86_64-kvm.qcow2
+ image: rhel-8.5-update-2-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
