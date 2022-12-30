@@ -7,6 +7,13 @@ You can also interact with those VMs (list, info, ssh, start, stop, delete, cons
 * `Kcli documentation <https://kcli.readthedocs.io/en/latest/>`_
 * `Github Page <https://github.com/karmab/kcli>`_
 
+Tested on 
+------------------------------
+* Fedora 36 and below 
+* Red Hat 9.1 and below
+* Rocky Linux 8.5 and below
+* Centos 9 streams
+
 Configure deployment on Qubinode
 ------------------------------
 
