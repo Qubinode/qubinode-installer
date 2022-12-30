@@ -7,8 +7,7 @@ You can also interact with those VMs (list, info, ssh, start, stop, delete, cons
 * `Kcli documentation <https://kcli.readthedocs.io/en/latest/>`_
 * `Github Page <https://github.com/karmab/kcli>`_
 
-
-Kcli deployment on Qubinode
+Configure deployment on Qubinode
 ------------------------------
 
 For Quick install::

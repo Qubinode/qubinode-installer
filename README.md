@@ -22,11 +22,12 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 9.0
+* Red Hat Enteprise Linux 9.1
 Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md).
 One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
-* Centos 8 Streams is supported base OS.
-* Or Fedora 36 (Testing) is a supported base OS.
+* Centos 9 Streams is supported base OS.
+* Fedora 37 is a supported base OS.
+
 
 ## Qubinode Release Information
 
@@ -36,30 +37,20 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 
 
 ### Features in v3.0 Version
-New Features |
---|
-OpenShift 4.11 |
-Gozones DNS |
-Compitability with Centos 8 Streams|
-Compitability with Fedora Server |
-[Microshift](https://github.com/redhat-et/microshift) | 
-[OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/kenmoini/ocp4-ai-svc-libvirt) | 
-[ztp-pipeline-relocatable](https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable) development box | 
-[Assisted Installer Scripts](https://github.com/tosin2013/openshift-4-deployment-notes/tree/master/assisted-installer) development box | 
-[YAKKO](https://github.com/ozchamo/YAKKO) |
+- [x] Support for RHEL 9.1
+- [x] Support for Centos 9 Streams
+- [x] Vyos Router Support 
+- [x] kcli support  to manage vm deployments
+- [x] Ansible Automation Platform 2.1
+- [x] Red Hat Ceph Storage 5
+- [x] kvm-install-vm to manage vm deployments
 
-
-
-See [Release Document](docs/qubinode/releases.md) for features history.
+See [Docuemntation for additional details](https://qubinode-installer.readthedocs.io/en/latest/).
 
 ## Deploying a OpenShift cluster
-
-- [Manual Assisted Installer](docs/qubinode/openshift4_installation_steps.md)
-- [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
-- [kcli-openshift4-baremetal](https://github.com/karmab/kcli-openshift4-baremetal)
-- [openshift-aio](https://github.com/RHFieldProductManagement/openshift-aio)
 - [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
 - [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
+- [Ansible Automation Platform](https://github.com/Red-Hat-SE-RTO/rhel-fleet-management/blob/main/docs/install-ansible-automation-platform.md)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
@@ -105,7 +96,9 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
 * [Karim Boumedhel](https://github.com/karmab)
-
+* [Ken Moini](https://github.com/kenmoini)
+* [Giovanni Torres](https://github.com/giovtorres)
+  
 ## Authors
 * Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
 * Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)

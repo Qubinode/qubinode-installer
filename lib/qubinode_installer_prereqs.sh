@@ -121,6 +121,28 @@ function setup_user_ssh_key () {
     fi
 }
 
+function setup_application_type(){
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
+    printf "%s\n\n" "    ${cyn}        Application Deployment Types${end}"
+    read -p "   Would you like to install Ansible Automation Platform ${blu}yes|no: ${end}" action
+    if [ "$action" == "yes" ]
+    then
+        sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: true/g' $project_dir/playbooks/vars/all.yml
+    else
+         sed -i 's/ansible_automation_platform:.*/ansible_automation_platform: false/g' $project_dir/playbooks/vars/all.yml
+        echo "Skipping Ansible Automation Platform Configuration"
+    fi
+
+    read -p "   Would you like to install Ceph ${blu}yes|no: ${end}" action
+    if [ "$action" == "yes" ]
+    then
+        sed -i 's/enable_ceph_deployment:.*/enable_ceph_deployment: true/g' $project_dir/playbooks/vars/all.yml
+    else
+         sed -i 's/enable_ceph_deployment:.*/enable_ceph_deployment: false/g' $project_dir/playbooks/vars/all.yml
+        echo "Skipping Ceph Deployment"
+    fi
+}
+
 function confirm () {
     continue=""
     while [[ "${continue}" != "yes" ]];

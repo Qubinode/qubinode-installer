@@ -9,8 +9,10 @@ function kvm_host_variables () {
     vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
     requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
     RHEL_VERSION=$(get_rhel_version)
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    RUN_KNI_ON_RHPDS=$(awk '/run_kni_lab_on_rhpds/ {print $2}' "${vars_file}")
 
-    echo  "Base Operating System ${RHEL_VERSION}"
+    #echo  "Base Operating System ${RHEL_VERSION}"
     if  [ $RHEL_VERSION == "RHEL8" ] || [ $RHEL_VERSION == "RHEL7" ];
     then 
         RHEL_RELEASE=$(awk '/rhel_release:/ {print $2}' ${kvm_host_vars_file} |grep [0-9])
@@ -323,16 +325,17 @@ function qubinode_networking () {
     # HOST Gateway not currently in use
     KVM_HOST_GTWAY=$(ip route get 8.8.8.8 | awk -F"via " 'NR==1{split($2,a," ");print a[1]}')
     NETWORK=$(ip route | awk -F'/' "/$KVM_HOST_IPADDR/ {print \$1}")
-    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g')
+    PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'| sed 's/^[^.]*.//g'| grep -v default)
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
 
     # ask user for their IP network and use the default
     if egrep -R changeme.in-addr.arpa "${project_dir}/playbooks/vars/" >/dev/null 2>&1
     then
         network="${NETWORK}"
-        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g')
+        PTR=$(echo "$NETWORK" | awk -F . '{print $4"."$3"."$2"."$1".in-addr.arpa"}'|sed 's/^[^.]*.//g'| grep -v default)
         test -f "${kvm_host_vars_file}" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${kvm_host_vars_file}"
         test -f "${project_dir}/playbooks/vars/all.yml" && sed -i "s/qubinode_ptr:.*/qubinode_ptr: "$PTR"/g" "${project_dir}/playbooks/vars/all.yml"
-        if [ $ENABLE_IDM] == true ];
+        if [ $ENABLE_IDM == true ];
         then 
             test -f "${project_dir}/playbooks/vars/idm.yml" && sed -i "s/changeme.in-addr.arpa/"$PTR"/g" "${project_dir}/playbooks/vars/idm.yml"
         fi 
@@ -351,10 +354,31 @@ function qubinode_networking () {
     fi
 
     KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
+    if [ $(echo ${KVM_HOST_PRIMARY_INTERFACE}| wc -w) -gt 1 ]; then
+       echo "KVM_HOST_PRIMARY_INTERFACE: ${KVM_HOST_PRIMARY_INTERFACE}"
+       echo "Multiple interfaces detected, please select the interface to use for the bridge"
+       read -p "   Enter Name of interface you would like to use${blu} $(echo ${KVM_HOST_PRIMARY_INTERFACE}): ${end}" interface
+       echo $interface
+       if [[ "$KVM_HOST_PRIMARY_INTERFACE" == *"$interface"* ]]; then
+            echo "$interface exists continuing with deployment"
+            KVM_HOST_PRIMARY_INTERFACE=$interface
+      else
+            echo "$interface Does not exist please enter the correct interface"
+            exit 1
+       fi
+    else
+       echo "done"
+    fi
     if [ "A${DEFINED_BRIDGE_ACTIVE}" == "Ayes" ]
     then
-        CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
-        KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
+        if [ "${RUN_ON_RHPDS}" == "yes" ]  && [ $RHEL_VERSION == "ROCKY8" ]
+        then
+            CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
+             KVM_HOST_PRIMARY_INTERFACE=$(ip route list | awk '/^default/ {print $5}'|sed -e 's/^[ \t]*//')
+        else
+            CURRENT_KVM_HOST_PRIMARY_INTERFACE=$(sudo route | grep '^default' | awk '{print $8}'|grep $DEFINED_BRIDGE)
+            KVM_HOST_PRIMARY_INTERFACE=$(ip link show master "${DEFINED_BRIDGE}" |awk -F: '/state UP/ {sub(/^[ \t]+/, "");print $2}'|sed -e 's/^[ \t]*//')
+        fi
     else
         if echo ${iSkvm_host_interface} | grep -q [0-9]
         then
@@ -367,8 +391,32 @@ function qubinode_networking () {
     if sudo ip addr show "${CURRENT_KVM_HOST_PRIMARY_INTERFACE}" > /dev/null 2>&1
     then
         KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
-        mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
-        KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
+        
+        if [ ${RUN_ON_RHPDS} == "yes" ];
+        then
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}' | head -1)
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2| head -1)
+        else 
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+        fi
+        
+        if ! yq -v  &> /dev/null
+        then
+            VERSION=v4.30.6
+            BINARY=yq_linux_amd64
+            sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq &&\
+            sudo chmod +x /usr/bin/yq
+        fi 
+
+        if ! ipcalc -v  &> /dev/null
+        then
+            sudo yum install net-tools -y
+            KVM_HOST_NETMASK=$(sudo ifconfig | grep -i netmask | grep -v 127.0.0.1 | awk '{print $4}')
+        else 
+            sudo yum install ipcalc -y
+            KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
+        fi 
 
         # Set KVM host ip info
         iSkvm_host_netmask=$(awk '/^kvm_host_netmask:/ { print $2}' "${kvm_host_vars_file}")
@@ -407,12 +455,49 @@ function qubinode_networking () {
         fi
 
         iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr:/ { print $2}' "${kvm_host_vars_file}")
-        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == 'A""' ]]
+        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "${iSkvm_host_macaddr}" == '""' ]]
         then
             foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
             #echo "Updating the kvm_host_macaddr to ${foundmac}"
             sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
+	    ## Get the last four of the mac address for use as the suffix for VM names
+	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
+            sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
+        fi
+    elif [ -z $KVM_HOST_NETMASK ];
+    then
+        if [ ${RUN_ON_RHPDS} == "yes" ];
+        then
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}' | head -1)
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2| head -1)
+        else 
+            mask=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE|awk '{print $4}')
+            KVM_HOST_MASK_PREFIX=$(ip -o -f inet addr show $CURRENT_KVM_HOST_PRIMARY_INTERFACE | awk '{print $4}'|cut -d'/' -f2)
+        fi
 
+        if ! ipcalc -v  &> /dev/null
+        then
+            sudo yum install net-tools -y
+            KVM_HOST_NETMASK=$(sudo ifconfig | grep -i netmask | grep -v 127.0.0.1 | awk '{print $4}')
+        else 
+            sudo yum install ipcalc -y
+            KVM_HOST_NETMASK=$(ipcalc -m $mask|awk -F= '{print $2}')
+        fi 
+
+        # Set KVM host ip info
+        iSkvm_host_netmask=$(awk '/^kvm_host_netmask:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_netmask}" == "A" ]] || [[ "A${iSkvm_host_netmask}" == 'A""' ]]
+        then
+            #printf "\n Updating the kvm_host_netmask to ${yel}$KVM_HOST_NETMASK${end}"
+            sed -i "s#kvm_host_netmask:.*#kvm_host_netmask: "$KVM_HOST_NETMASK"#g" "${kvm_host_vars_file}"
+        fi
+
+         iSkvm_host_macaddr=$(awk '/^kvm_host_macaddr:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_host_macaddr}" == "A" ]] || [[ "A${iSkvm_host_macaddr}" == '' ]]
+        then
+            foundmac=$(ip addr show $KVM_HOST_PRIMARY_INTERFACE | grep link | awk '{print $2}' | head -1)
+            #echo "Updating the kvm_host_macaddr to ${foundmac}"
+            sed -i "s#kvm_host_macaddr:.*#kvm_host_macaddr: '"${foundmac}"'#g" "${kvm_host_vars_file}"
 	    ## Get the last four of the mac address for use as the suffix for VM names
 	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
             sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
@@ -489,15 +574,30 @@ kvm_host_health_check () {
     requested_brigde=$(awk '/^vm_libvirt_net:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
     libvirt_dir=$(awk '/^kvm_host_libvirt_dir/ {print $2}' "${project_dir}/playbooks/vars/kvm_host.yml")
     create_lvm=$(awk '/create_lvm:/ {print $2;exit}' "${project_dir}/playbooks/vars/kvm_host.yml")
-
-    bash -c "sudo virsh net-list | grep -q $requested_brigde"
-    RESULT=$?
-    if [ $RESULT -ne 0 ]
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    UNO_RHEL=$(awk '/one_redhat/ {print $2}' "${vars_file}")
+    if [ ${RUN_ON_RHPDS} == "yes" ];
     then
-    #if ! sudo virsh net-list | grep -q $requested_brigde; then
-      KVM_STATUS="notready"
-      kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
-    fi
+        echo "Skipping Libvirt network health check"
+        if [ -f $HOME/gitea-password.txt ];
+        then 
+            sudo podman stop $(sudo podman ps | grep gitea|awk '{print $1}')
+            sudo podman start $(sudo podman ps -a | grep gitea|awk '{print $1}')
+        fi  
+    elif [ ${UNO_RHEL} == "yes" ];
+    then
+        echo "Skipping Libvirt network health check"
+    else
+        bash -c "sudo virsh net-list | grep -q $requested_brigde"
+        RESULT=$?
+        if [ $RESULT -ne 0 ]
+        then
+        #if ! sudo virsh net-list | grep -q $requested_brigde; then
+        KVM_STATUS="notready"
+        kvm_host_health_check_results=(Could not find the libvirt network $requested_brigde)
+        fi
+    fi 
+    
 
     #if ! sudo virsh net-list | grep -q $requested_nat; then
     #  KVM_IN_GOOD_HEALTH="notready"
@@ -568,10 +668,14 @@ function qubinode_setup_kvm_host () {
 
        if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
        then
-           printf "%s\n" " ${blu}Setting up qubinode system${end}"
-           ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-           qcow_check
-           network_check
+            printf "%s\n" " ${blu}Setting up qubinode system${end}"
+            qubinode_networking
+            ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
+            qcow_check
+            if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+            then
+                network_check
+            fi
        else
            printf "%s\n" " ${blu}not a qubinode system${end}"
        fi
@@ -581,15 +685,24 @@ function qubinode_setup_kvm_host () {
       if [ "A${QUBINODE_SYSTEM}" == "Ayes" ]
       then
         printf "%s\n" " ${blu}Setting up qubinode system${end}"
+        qubinode_networking
         ansible-playbook "${project_dir}/playbooks/setup_kvmhost.yml" || exit $?
-        qcow_check
-        network_check
+        #qcow_check
+        if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+        then
+            network_check
+        fi
+        rhpds_equnix
       else
-          printf "%s\n" " ${blu}not a qubinode system${end}"
-          printf "%s\n" "   Installing required packages"
-          sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
-          qcow_check
-          network_check
+        printf "%s\n" " ${blu}not a qubinode system${end}"
+        printf "%s\n" "   Installing required packages"
+        qubinode_networking
+        sudo yum install -y -q -e 0 python3-dns libvirt-python python-lxml libvirt python-dns > /dev/null 2>&1
+        #qcow_check
+        if [ "A${RUN_ON_RHPDS}" == "Ayes" ]
+        then
+            network_check
+        fi
       fi
     fi
 
@@ -634,6 +747,13 @@ function network_check(){
     then 
         sudo  nmcli connection down ${SECONDARY_INTERFACE_NAME} && sudo nmcli connection up ${SECONDARY_INTERFACE_NAME}
     fi 
+
+    if [ -f $HOME/gitea-password.txt ];
+    then 
+        sudo podman stop $(sudo podman ps | grep gitea|awk '{print $1}')
+        sudo podman start $(sudo podman ps -a | grep gitea|awk '{print $1}')
+    fi 
+    rhpds_equnix
 }
 
 function qubinode_check_kvmhost () {
@@ -712,4 +832,27 @@ function qubinode_check_kvmhost () {
     fi
 
     echo $KVM_HOST_MSG
+}
+
+
+function rhpds_equnix(){
+    RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
+    if [ "${RUN_ON_RHPDS}" == "yes" ]  && [ $RHEL_VERSION == "ROCKY8" ]
+    then
+        sudo dnf install epel-release -y 
+        sudo dnf update -y 
+        sudo dnf upgrade -y 
+        curl -OL https://gist.githubusercontent.com/tosin2013/385054f345ff7129df6167631156fa2a/raw/b67866c8d0ec220c393ea83d2c7056f33c472e65/configure-sudo-user.sh
+        chmod +x configure-sudo-user.sh
+        echo "Create user for xrdp access"
+        sudo ./configure-sudo-user.sh remoteuser
+        sudo dnf groupinstall "Server with GUI" -y
+        sudo systemctl set-default graphical
+        sudo dnf install xrdp  -y
+        sudo systemctl enable xrdp --now
+        sudo systemctl enable firewalld
+        sudo systemctl start firewalld
+        sudo firewall-cmd --permanent --add-port=3389/tcp 
+        sudo firewall-cmd --reload
+    fi
 }

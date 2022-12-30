@@ -10,51 +10,28 @@ GitOps Deployment
 Configure Repo
 --------------
 To use locally follow the link below 
+
 * `OpenShift Virtualization GitOps Repository <https://openshift-virtualization-gitops-repository.readthedocs.io/en/latest/#openshift-virtualization-gitops-repository>`_
 
 To use external Git repo use the following steps::
     
-    curl -OL https://raw.githubusercontent.com/tosin2013/openshift-virtualization-gitops/main/scripts/install.sh
+    curl -OL https://raw.githubusercontent.com/tosin2013/kvm-gitops/main/scripts/install.sh
     chmod +x install.sh
     export CONFIGURE_GITEA=false
     ./install.sh
     sudo su - admin 
     git clone https://github.com/tosin2013/qubinode-installer.git
-    exit
+    
 
-
-Configure GitOps for Qubinode Installer
+Optional: Configure GitOps for Qubinode Installer
 ---------------------------------------
 Configure GitOps::
-    
+
     sudo su - root
-    systemctl enable podman.socket --now
-    mkdir -p /opt/fetchit
-    mkdir -p ~/.fetchit
-    GITURL="http://yourrepo:3000/tosin/openshift-virtualization-gitops.git"
-    # Change Git URL to your Git Repo
-    cat  >/root/.fetchit/config.yaml<<EOF
-    targetConfigs:
-    - url: ${GITURL}
-      username: svc-gitea
-      password: password
-      filetransfer:
-      - name: copy-vars
-        targetPath: inventories/virtual-lab/host_vars
-        destinationDirectory: /home/admin/qubinode-installer/playbooks/vars
-        schedule: "*/1 * * * *"
-      branch: main
-    EOF
+    curl -OL https://raw.githubusercontent.com/tosin2013/kvm-gitops/main/scripts/example_script.sh
+    chmod +x example_script.sh
+    ./example_script.sh qubinode-installer <directory_path>  http://gitea.example.com:3000/myrepo/kvm-gitops.git gituser password
 
-    cp /home/admin/openshift-virtualization-gitops/scripts/fetchit/fetchit-root.service /etc/systemd/system/fetchit.service
-    systemctl enable fetchit --now
-
-    podman ps 
-
-    exit
-
-Deploy Qubinode Installer
--------------------------
 Confirm Qubinode vars have been copied to vars directory::
 
         sudo su - admin 
@@ -69,7 +46,9 @@ Decrypt ansible vault file password if it exisits in git repo::
     echo "YourPassword" > "${vault_key_file}"
     ansible-vault decrypt "${vaultfile}"
 
-Deploy Qubinode Installer with godns::
+Deploy Qubinode Installer with gozones
+-------------------------------------
+Start Deployment:: 
     
     sudo su - admin
     cd /home/admin/qubinode-installer

@@ -70,13 +70,13 @@ function qubinode_required_prereqs () {
 }
 
 function check_for_gitops(){
-    if [ -d $HOME/openshift-virtualization-gitops/ ];
+    if [ -d $HOME/kvm-gitops/ ];
     then
          enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
          default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
          directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
          echo "enable gitops: $enable_gitops"
-         cd $HOME/openshift-virtualization-gitops/
+         cd $HOME/kvm-gitops/
          OLD=$(git remote -v | grep tosin2013 | head -1 | awk '{print $2}' )
          CURRENT=$(git remote -v | grep origin | head -1 | awk '{print $2}' )
          echo "Old: $OLD"
@@ -96,11 +96,13 @@ function check_for_gitops(){
                 git config --global user.name "$USER"
                 git config --global user.email $USER@localhost.localdomain
                 git pull
-                echo "deployment in progress " > $HOME/openshift-virtualization-gitops/inventories/${directory_name}/deployment_status
-                git add $HOME/openshift-virtualization-gitops/inventories/${directory_name}/deployment_status
+                echo "deployment in progress " > $HOME/kvm-gitops/inventories/${directory_name}/deployment_status
+                git add $HOME/kvm-gitops/inventories/${directory_name}/deployment_status
                 git commit -m "adding deployment status"
                 git push 
+                git pull 
                 git config --global credential.helper store
+                git pull 
             fi 
          else
              echo "gitops not enabled"
@@ -108,14 +110,18 @@ function check_for_gitops(){
          cd $HOME/qubinode-installer/
     else 
         default_gitops_repo=$(awk '/default_gitops_repo:/ {print $2;exit}' "${vars_file}")
-        echo "$HOME/openshift-virtualization-gitops/ does not exisit please clone ${default_gitops_repo} to $HOME"
+        echo "$HOME/kvm-gitops/ does not exisit please clone ${default_gitops_repo} to $HOME"
         exit 1
     fi 
 }
 
 function setup_variables () {
     qubinode_required_prereqs
-    check_for_gitops
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ $enable_gitops == "true" ];
+    then
+        check_for_gitops
+    fi
 
     # add inventory file to all.yml
     if grep '""' "${vars_file}"|grep -q inventory_dir
@@ -172,10 +178,12 @@ function setup_variables () {
 }
 
 function get_rhel_version() {
-  if cat /etc/redhat-release  | grep 9.[0-9] > /dev/null 2>&1; then
+  if cat /etc/redhat-release  | grep "Red Hat Enterprise Linux release 9.[0-9]" > /dev/null 2>&1; then
     export BASE_OS="RHEL9"
-  if cat /etc/redhat-release  | grep 8.[0-9] > /dev/null 2>&1; then
-    export BASE_OS="RHEL8"
+  elif cat /etc/redhat-release  | grep "Red Hat Enterprise Linux release 8.[0-9]" > /dev/null 2>&1; then
+      export BASE_OS="RHEL8"
+  elif cat /etc/redhat-release  | grep "Rocky Linux release 8.[0-9]" > /dev/null 2>&1; then
+    export BASE_OS="ROCKY8"
   elif cat /etc/redhat-release  | grep 7.[0-9] > /dev/null 2>&1; then
     export BASE_OS="RHEL7"
   elif cat /etc/redhat-release  | grep "CentOS Stream release 9" > /dev/null 2>&1; then
@@ -186,6 +194,7 @@ function get_rhel_version() {
     export BASE_OS="FEDORA"
   else
     echo "Operating System not supported"
+    echo "You may put a pull request to add support for your OS"
   fi
   echo ${BASE_OS}
 
@@ -310,11 +319,11 @@ setup_download_options () {
     elif  sudo test -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
     then 
         QCOW_STATUS=exist
-    elif  sudo test ! -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS8" ]
+    elif  sudo test ! -f "${libvirt_dir}/${artifact_centos_qcow_image}" && [ ${BASE_OS} == "CENTOS9" ]
     then
-        if cat /etc/redhat-release  | grep "CentOS Stream release 8" > /dev/null 2>&1; then
+        if cat /etc/redhat-release  | grep "CentOS Stream release 9" > /dev/null 2>&1; then
             cd ${project_dir}
-            curl -OL https://cloud.centos.org/centos/8-stream/x86_64/images/${artifact_centos_qcow_image}
+            curl -OL https://cloud.centos.org/centos/9-stream/x86_64/images/${artifact_centos_qcow_image}
             qcow_image_checksum=$(grep "qcow_centos_checksum" "${project_dir}/playbooks/vars/all.yml"|awk '{print $2}')
             DWLD_CHECKSUM=$(sha256sum ${project_dir}/${artifact_centos_qcow_image}|awk '{print $1}')
             if [ $DWLD_CHECKSUM != $qcow_image_checksum ];
@@ -324,8 +333,9 @@ setup_download_options () {
             fi
             sudo cp "${project_dir}/${artifact_centos_qcow_image}"  "${libvirt_dir}/${artifact_centos_qcow_image}"
             QCOW_STATUS=exists
+            
         else
-          echo "Release is not CentOS Stream release 8"
+          echo "Release is not CentOS Stream release 9"
           exit 1
         fi 
     elif  sudo test ! -f "${libvirt_dir}/${artifact_fedora_qcow_image}" && [ ${BASE_OS} == "FEDORA" ]
@@ -372,11 +382,11 @@ setup_download_options () {
         artifact_string="the $artifact_qcow_image image"
     fi
 
-    if  [[ "A${PULL_MISSING}" == "Ayes" ]] || [[ "A${QCOW_MISSING}" == "Ayes" ]]
-    then
-        installer_artifacts_msg
-        exit 1
-    fi
+    #if  [[ "A${PULL_MISSING}" == "Ayes" ]] || [[ "A${QCOW_MISSING}" == "Ayes" ]]
+    #then
+    #    installer_artifacts_msg
+    #    exit 1
+    #fi
 
     # Ensure qcow image is copied to the libvirt directory
     if sudo test ! -f "${libvirt_dir}/${artifact_qcow_image}" && [ ${BASE_OS} == "RHEL8" ]

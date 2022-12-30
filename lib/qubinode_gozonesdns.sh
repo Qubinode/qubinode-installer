@@ -90,9 +90,9 @@ function configure_libvirt_networks(){
     ### libvirt networks 
    
     echo "kcli create network --nodhcp -c ${1} ztpfw"
-    kcli create network --nodhcp -c ${1} ztpfw
+    sudo kcli create network --nodhcp -c ${1} ztpfw
     echo "kcli create network -c ${2} bare-net"
-    kcli create network -c ${2} bare-net
+    sudo kcli create network -c ${2} bare-net
 }
 
 function disable_ivp6(){
@@ -224,9 +224,10 @@ function start_service(){
 
 function test_gozones(){
     gozones_variables
-    dig  @127.0.0.1 test.apps.ocp4.${1} || exit 1
-    dig  @127.0.0.1 test.apps.ocp4.${1} || exit 1
-    dig  @${2} test.apps.ocp4.${1} || exit 1
+    API_TEST=$(cat /opt/service-containers/config/server.yml  | grep api. | head -1| awk '{print $3}')
+    APPS_TEST=$(cat /opt/service-containers/config/server.yml  | grep '*.apps' | head -1| awk '{print $3}'| tr -d "'")
+    dig  @127.0.0.1 ${API_TEST}.${1} || exit 1
+    dig  @127.0.0.1 ${APPS_TEST}.${1} || exit 1
 }
 
 function qubinode_setup_gozones() {

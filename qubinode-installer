@@ -112,6 +112,7 @@ rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 . "${project_dir}/lib/qubinode_ansible.sh"
 . "${project_dir}/lib/qubinode_rhsm.sh"
 . "${project_dir}/lib/qubinode_gozonesdns.sh"
+. "${project_dir}/lib/qubinode_kvm_install_vm.sh"
 if [ $ENABLE_SATELLITE == "true" ] || [ -z $ENABLE_SATELLITE ];
 then 
     . "${project_dir}/lib/qubinode_satellite.sh"
@@ -119,6 +120,7 @@ fi
 . "${project_dir}/lib/qubinode_tower.sh"
 . "${project_dir}/lib/qubinode_rhel.sh"
 . "${project_dir}/lib/qubinode_kcli.sh"
+. "${project_dir}/lib/qubinode_baremetal_ipi_lab.sh"
 
 # Exit if this is executed as the root user
 if is_root; then

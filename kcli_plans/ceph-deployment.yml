@@ -1,0 +1,6 @@
+parameters:
+  password: prout12345  
+
+plan1:
+  type: plan
+  file: kcli_plans/ceph/ceph-cluster.yml

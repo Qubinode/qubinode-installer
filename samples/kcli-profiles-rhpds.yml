@@ -9,7 +9,7 @@ rhel8:
   - size: 20
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
  cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
@@ -18,7 +18,7 @@ rhel8:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 rhel9:
- image: rhel-baseos-9.1-x86_64-kvm.qcow2
+ image: rhel-baseos-9.0-update-4-x86_64-kvm.qcow2
  rhnregister: true
  numcpus: 2
  memory: 4096
@@ -26,7 +26,7 @@ rhel9:
   - size: 20
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
  cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
@@ -57,7 +57,30 @@ rhel9_ansible:
   - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/rhel9_ansible.sh --output /tmp/rhel9_ansible.sh 
   - chmod +x /tmp/rhel9_ansible.sh 
   - bash -x /tmp/rhel9_ansible.sh RHEL_USERNAME RHEL_PASSWORD
-  
+
+rhel9_ansible_manual:
+ image: rhel-baseos-9.1-x86_64-kvm.qcow2
+ rhnregister: true
+ rhnorg: RHELORG
+ rhnactivationkey: ACTIVATIONKEY
+ numcpus: 4
+ memory: 16384
+ disks:
+  - size: 80
+ reservedns: true
+ nets:
+  - name: default
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - export OFFLINE_TOKEN=CHANGEOFFLINETOKEN
+  - echo $OFFLINE_TOKEN > /root/offline_token
+  - curl https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/rhel9_ansible.sh --output /tmp/rhel9_ansible.sh 
+
+
 mirror_vm:
  image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
  rhnregister: true
@@ -67,8 +90,8 @@ mirror_vm:
   - size: 500
  reservedns: true
  nets:
-  - qubinet
   - default
+  - ztpfw
  cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
@@ -98,7 +121,7 @@ rhel8_static:
   - size: 20
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
     nic: eth0
     ip: 192.168.1.10
     mask: 255.255.255.0
@@ -119,8 +142,8 @@ rhel8_jumpbox:
   - size: 50
  reservedns: true
  nets:
-  - qubinet
   - default
+  - ztpfw
  cmds:
   - echo CHANGEPASSWORD | passwd --stdin root
   - useradd CHANGEUSER
@@ -141,7 +164,7 @@ fedora36:
  numcpus: 2
  memory: 4096
  nets:
-  - name: qubinet
+  - name: default
  reservedns: true
  disks:
   - size: 20
@@ -157,7 +180,7 @@ fedora36jumpbox:
   - size: 49
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
@@ -178,7 +201,7 @@ centos8jumpbox:
   - size: 50
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
@@ -198,7 +221,7 @@ centos9jumpbox:
   - size: 50
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
@@ -217,7 +240,7 @@ ztpfwjumpbox:
   - size: 50
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
   - name: bare-net
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
@@ -238,7 +261,7 @@ cvadjumpbox:
   - size: 50
  reservedns: true
  nets:
-  - name: qubinet
+  - name: default
   - name: VLAN500
   - name: FLOATING_IP
  cmds: 
@@ -250,17 +273,3 @@ cvadjumpbox:
   - systemctl enable xrdp --now
   - firewall-cmd --permanent --add-port=3389/tcp 
   - firewall-cmd --reload
-
-
-vyos-builder:
- image: 'debian-11-nocloud-amd64.qcow2'
- numcpus: 4
- memory: 8192
- disks:
-  - size: 50
- reservedns: true
- nets:
-  - name: qubinet
- cmds: 
-  - echo CHANGEPASSWORD | passwd --stdin root
-  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER

@@ -31,14 +31,27 @@ Centos Jumpbox
 ----------------------------
 Create Centos Jumpbox::
 
-    sudo kcli create vm -p centos8jumpbox jumpbox --wait
+    sudo kcli create vm -p centos9jumpbox jumpbox --wait
 
 RHEL Jumpbox
 ----------------------------
 RHEL Jumpbox::
 
-    sudo kcli create vm -p rhel8_jumpbox jumpbox --wait
+    sudo kcli create vm -p rhel9_jumpbox jumpbox --wait
 
+
+FEDORA Jumpbox
+----------------------------
+FEDORA Jumpbox::
+
+    sudo kcli create vm -p fedora36jumpbox jumpbox --wait
+
+
+RHEL 8.6 CVAD Deployments
+----------------------------
+CVAD Jumpbox::
+
+    sudo kcli create vm -p cvadjumpbox jumpbox --wait
 
 ScreenShots
 ----------------------------
