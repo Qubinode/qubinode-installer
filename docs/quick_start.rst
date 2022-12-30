@@ -16,7 +16,8 @@ Fedora 37
 
 
 .. Prerequisites::
-          sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
+    
+    sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
 
 - `CentOS 9 Streams <https://www.centos.org/>`_
 - `Red Hat Enterprise Linux 9 <https://developers.redhat.com/products/rhel/hello-world>`_
