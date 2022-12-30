@@ -26,5 +26,4 @@ jobs:
     - name: Lint playbook
       run: |
         openssl rand -base64 512|xargs > /home/runner/.vaultkey 
-        ansible-lint playbooks/requirements.yml
         ansible-lint playbooks/setup_kvmhost.yml
