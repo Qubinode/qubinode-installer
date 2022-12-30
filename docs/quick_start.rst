@@ -15,8 +15,8 @@ Fedora 37
 - `Fedora 37 <https://getfedora.org/>`_
 
 
-.. Prerequisites::
-    
+.. codeblock:: bash
+
     sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
 
 - `CentOS 9 Streams <https://www.centos.org/>`_
