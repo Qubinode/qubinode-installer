@@ -20,11 +20,6 @@ Make sure the following packages are installed on your system before startng the
 `CentOS 9 Streams <https://www.centos.org/>`_
 ---------
 
-`Red Hat Enterprise Linux 9 <https://developers.redhat.com/products/rhel/hello-world>`_
----------
-
-`Red Hat Enterprise Linux 8 <https://developers.redhat.com/products/rhel/hello-world>`_
----------
 
 If you are using RHEL you can follow the steps below to get started.:
 
@@ -32,6 +27,24 @@ If you are using RHEL you can follow the steps below to get started.:
     -----------------
     -  Get your `No-cost developer subscription <https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux>`_ for RHEL.
     -  Get a Red Hat OpenShift Container Platform (OCP) `60-day evalution subscription <https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG>`_.
+
+`Red Hat Enterprise Linux 9 <https://developers.redhat.com/products/rhel/hello-world>`_
+---------
+
+Make sure the following packages are installed on your system before startng the install on RHEL 9::
+
+    https://gist.githubusercontent.com/tosin2013/695835751174d725ac196582f3822137/raw/de9534504434d07f0d85db6f352e72c32d397890/configure-rhel9.x.sh
+    chmod +x configure-rhel9.x.sh
+    ./configure-rhel9.x.sh
+
+`Red Hat Enterprise Linux 8 <https://developers.redhat.com/products/rhel/hello-world>`_
+---------
+
+Make sure the following packages are installed on your system before startng the install on RHEL 8::
+
+    https://gist.githubusercontent.com/tosin2013/ae925297c1a257a1b9ac8157bcc81f31/raw/71a798d427a016bbddcc374f40e9a4e6fd2d3f25/configure-rhel8.x.sh
+    chmod +x configure-rhel8.x.sh
+    ./configure-rhel8.x.sh
 
 
 The qubinode-installer
