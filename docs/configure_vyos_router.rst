@@ -10,7 +10,7 @@ VyOS provides a free routing platform that competes directly with other commerci
 Tested on
 ----------
 * Fedora 37
-
+* RHEL 8.7 
 
 Configure dependancies 
 ------------------------------
@@ -41,7 +41,8 @@ In order to start the build process you will need to ssh into the builder vm and
 Configure a router image vyos env file
 -----------------------
 Onece on the builder vm you will need to download the vyos-env file and update the variables then run the script::
-    # curl -OL https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/lib/vyos/vyos-env
+    
+    # wget https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/lib/vyos/vyos-env
     ## edit vyos-env and update the variables
     # vim vyos-env
     # wget https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/samples/scripts/configure-vyos-builder.sh
