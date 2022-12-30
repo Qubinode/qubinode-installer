@@ -34,4 +34,4 @@ rhsm_token
 FIRSTBOOT
 lib/qubinode-ks-postinstall.sh
 new-vars/
-
+.vscode/settings.json
