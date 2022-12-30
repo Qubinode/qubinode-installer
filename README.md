@@ -57,7 +57,7 @@ See [Docuemntation for additional details](https://qubinode-installer.readthedoc
 - [Deploy Bare-Metal Clusters via Hive and Assisted Installer](https://github.com/tosin2013/bare-metal-assisted-installer)
 
 **Qubinode Documentation**
-- [Qubinode Overview](docs/README.md)
+- [Qubinode Overview](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
 
 ## Training
 * [Qubinode for Beginners](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
