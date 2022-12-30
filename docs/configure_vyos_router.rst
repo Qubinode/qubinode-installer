@@ -10,7 +10,7 @@ VyOS provides a free routing platform that competes directly with other commerci
 Tested on
 ----------
 * Fedora 37
-
+* RHEL 8.7 
 
 Configure dependancies 
 ------------------------------
