@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+data:
+  ASSISTED_SERVICE_HOST: 192.168.1.213:8090
+  ASSISTED_SERVICE_SCHEME: http
+  AUTH_TYPE: none
+  DB_HOST: 127.0.0.1
+  DB_NAME: installer
+  DB_PASS: admin
+  DB_PORT: "5432"
+  DB_USER: admin
+  DEPLOY_TARGET: onprem
+  DISK_ENCRYPTION_SUPPORT: "true"
+  DUMMY_IGNITION: "false"
+  ENABLE_SINGLE_NODE_DNSMASQ: "true"
+  HW_VALIDATOR_REQUIREMENTS: '[{"version":"default","master":{"cpu_cores":4,"ram_mib":16384,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":100,"packet_loss_percentage":0},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":1000,"packet_loss_percentage":10},"sno":{"cpu_cores":8,"ram_mib":16384,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10}}]'
+  IMAGE_SERVICE_BASE_URL: http://192.168.1.213:8888
+  IPV6_SUPPORT: "true"
+  ISO_IMAGE_TYPE: "full-iso"
+  LISTEN_PORT: "8888"
+  NTP_DEFAULT_SERVER: ""
+  OS_IMAGES: '[{"openshift_version":"4.11","cpu_architecture":"x86_64","url":"http://192.168.1.212/4.11.1-x86_64/rhcos-411.86.202207150124-0-live.x86_64.iso","version":"411.86.202207150124-0"}]'
+  POSTGRESQL_DATABASE: installer
+  POSTGRESQL_PASSWORD: admin
+  POSTGRESQL_USER: admin
+  PUBLIC_CONTAINER_REGISTRIES: 'quay.io'
+  RELEASE_IMAGES: '[{"openshift_version":"4.11","cpu_architecture":"x86_64","url":"mirrorvm.lab.tosins-edgelab.io/repository/library/ocp4:4.11.1-x86_64","version":"4.11.1-x86_64"}]'
+  SERVICE_BASE_URL: http://192.168.1.213:8090
+  STORAGE: filesystem
+  ENABLE_UPGRADE_AGENT: "false"

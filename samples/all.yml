@@ -9,6 +9,23 @@ project_dir: ""
 admin_user: ""
 domain: ""
 
+####
+# Enable Gitops 
+enable_gitops: false 
+default_gitops_repo: https://github.com/tosin2013/kvm-gitops.git
+directory_name: "quick-dev"
+
+#####
+# RHPDS Settings
+run_on_rhpds: no 
+run_kni_lab_on_rhpds: no 
+one_redhat: no
+
+#####
+# Application Dependancies
+ansible_automation_platform: false
+enable_ceph_deployment: false
+
 # RHEL Version
 rhel_version: ""
 
@@ -89,18 +106,16 @@ ssh_username: "{{ admin_user }}" # this var has been deprecated and should be re
 # ROLE: deploy-kvm-vm
 #--------------------
 # Use to create VM
-# Red Hat Enterprise Linux 7.8 KVM Guest Image
-qcow_rhel7_name: rhel-server-7.9-x86_64-kvm.qcow2
-qcow_rhel8_name: rhel-8.5-update-2-x86_64-kvm.qcow2
-qcow_rhel9_name: rhel-baseos-9.0-x86_64-kvm.qcow2
-qcow_centos_name: CentOS-Stream-GenericCloud-8-20220125.1.x86_64.qcow2
-qcow_fedora_image: Fedora-Cloud-Base-35-1.2.x86_64.qcow2
+# Red Hat Enterprise Linux 9.1 KVM Guest Image
+qcow_rhel8_name: rhel-8.7-x86_64-kvm.qcow2
+qcow_rhel9_name: rhel-baseos-9.1-x86_64-kvm.qcow2
+qcow_centos_name: CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
+qcow_fedora_image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
 os_qcow_image_name: "{{ qcow_rhel8_name }}"
-qcow_rhel7u8_checksum: ce4943d38e00a5c81272ebd3f3542b2d9557382d1c331c46ed553fdcca778b2d
-qcow_rhel8u2_checksum: b2bfd0abc871143b97e6648183e69987b6bc2aded58972a866f967fd355d0e9a
-qcow_rhel9_checksum: 92862e085e4d5690cfa57de7155aa29bfdf21feec3d46dd4b61ca63293312af7
-qcow_centos_checksum: a25560ab39e10594ee7a4a1dadcba7bf303b7c3c41559b4a7fc3c522540a6672
-qcow_fedora_checksum: fe84502779b3477284a8d4c86731f642ca10dd3984d2b5eccdf82630a9ca2de6
+qcow_rhel8u2_checksum: 9b5718977832213cf07dc17a9ba3ad171b21576840064ecf2c395fa7642412d2
+qcow_rhel9_checksum: 8a24976ed98ac43b165369353741bb3a4c72fac9ad1cd7d564956ffe8a89c968
+qcow_centos_checksum: 16881d90b322c7ebe1f105a24c3abbc36c35b724366f38aa4022dfed08b93406
+qcow_fedora_checksum: 17f5c739a6a7a7cda2f73c723b179ffd256f442bdca33055a0171b34d66d3bdc
 
 cloud_init_vm_image: "{{ os_qcow_image_name }}"
 
@@ -184,6 +199,12 @@ libvirt_pkgs_8:
    - python3-dns
    - python3-lxml
    - cockpit-machines
+   - bc 
+   - genisoimage
+   - guestfs-tools
+   - libguestfs-tools
+   - libguestfs-xfs
+   - libusal
 
 libvirt_pkgs_7:
    - virt-install
@@ -246,4 +267,4 @@ qubi_required_pkgs: |
    cockpit-kubernetes, cockpit-pcp, cockpit-bridge, tuned, openssh-server,
    wget, git, net-tools, bind-utils, yum-utils, iptables-services, bridge-utils,
    bash-completion, kexec-tools, sos, psacct, vim, ansible, lm_sensors, cargo,
-   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch, python-netaddr"
+   pyOpenSSL, docker, device-mapper-event-libs, device-mapper-libs, httpd-tools, tmux, patch, python-netaddr, bc"

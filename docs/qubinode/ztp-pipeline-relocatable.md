@@ -21,7 +21,7 @@ cd ~/qubinode-installer
 git checkout rhel-8.5
 ```
 
-**copy rhel-8.5-update-2-x86_64-kvm.qcow2 to qubinode-installer directory**
+**copy rhel-8.7-x86_64-kvm.qcow2 to qubinode-installer directory**
 
 **install latest openshift packages**
 ```

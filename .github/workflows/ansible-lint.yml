@@ -10,8 +10,8 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: [3.11.1]
-        ansible-version: [2.9.10]
-        lint-version: [4.1.0]
+        ansible-version: [3.4.0]
+        lint-version: [6.10.0]
 
     steps:
     - uses: actions/checkout@v1
@@ -25,19 +25,5 @@ jobs:
         pip install ansible-lint==${{ matrix.lint-version }} ansible==${{ matrix.ansible-version }}
     - name: Lint playbook
       run: |
-        ansible-lint playbooks/container-webserver.yml
-        ansible-lint playbooks/create_dns_entries.yml
-        ansible-lint playbooks/deploy_ocp4.yml
-        ansible-lint playbooks/deploy_okd4.yml
-        ansible-lint playbooks/idm_server_cleanup.yml
-        ansible-lint playbooks/ocp4-check-cluster.yml
-        ansible-lint playbooks/ocp_post_deployment.yml
-        ansible-lint playbooks/remove_ocp4_workers.yml
-        ansible-lint playbooks/requirements.yml
-        ansible-lint playbooks/setup_kvmhost.yml
-        ansible-lint playbooks/shutdown-ocp4-cluster_include.yml
-        ansible-lint playbooks/shutdown-ocp4-cluster.yml
-        ansible-lint playbooks/test.yml
-        ansible-lint playbooks/tower_setup.yml
-        ansible-lint playbooks/vms_inc.yml
-        ansible-lint playbooks/wait_for_ocp4_vm_shutdown.yml
+        openssl rand -base64 512|xargs > /home/runner/.vaultkey 
+        # ansible-lint playbooks/setup_kvmhost.yml

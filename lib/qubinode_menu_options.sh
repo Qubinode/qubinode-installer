@@ -1,12 +1,15 @@
 #!/bin/bash
 
+###
+## This function is used to deploy a product.
+###
 function qubinode_product_deployment () {
     # this function deploys a supported product
     PRODUCT_OPTION=$1
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones ipilab kvm_install_vm"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -105,6 +108,15 @@ function qubinode_product_deployment () {
                     qubinode_setup_kcli
               fi
               ;;
+          kvm_install_vm)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_kvm_install_vm_maintenance
+              else
+		    printf "%s\n" "   ${blu}Configuring kvm_install_vm${end}"
+                    qubinode_setup_kvm_install_vm
+              fi
+              ;;
           gozones)
               if [ "A${qubinode_maintenance}" == "Atrue" ]
               then
@@ -112,6 +124,15 @@ function qubinode_product_deployment () {
               else
 		    printf "%s\n" "   ${blu}Configuring gozones dns${end}"
                     qubinode_setup_gozones
+              fi
+              ;;
+
+          ipilab)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_ipi_lab_maintenance
+              else
+                  qubinode_setup_ipilab
               fi
               ;;
           *)
@@ -123,6 +144,9 @@ function qubinode_product_deployment () {
 
 }
 
+###
+## This function is used to perform maintenance on the qubinode.
+###
 function qubinode_maintenance_options () {
     if [ "${qubinode_maintenance_opt}" == "clean" ]
     then
@@ -146,8 +170,7 @@ function qubinode_maintenance_options () {
     then
 	## this should be replace as qubinode_setup does everthing that's required
         #qubinode_setup_kvm_host
-        qubinode_networking
-	    qubinode_setup
+	qubinode_setup
     elif [ "${qubinode_maintenance_opt}" == "rebuild_qubinode" ]
     then
         rebuild_qubinode

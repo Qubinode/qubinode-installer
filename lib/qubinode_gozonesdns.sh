@@ -67,6 +67,7 @@ function remove_gozones(){
         sudo podman stop $(sudo podman ps | grep dns-go-zones | awk '{print $1}')
     fi 
     sudo podman rm $(sudo podman ps -a | grep dns-go-zones | awk '{print $1}')
+    update_resolv_conf $FORWARD_IP
 }
 
 function qubinode_gozones_maintenance () {
@@ -89,9 +90,9 @@ function configure_libvirt_networks(){
     ### libvirt networks 
    
     echo "kcli create network --nodhcp -c ${1} ztpfw"
-    kcli create network --nodhcp -c ${1} ztpfw
+    sudo kcli create network --nodhcp -c ${1} ztpfw
     echo "kcli create network -c ${2} bare-net"
-    kcli create network -c ${2} bare-net
+    sudo kcli create network -c ${2} bare-net
 }
 
 function disable_ivp6(){
@@ -123,9 +124,9 @@ app:
       write: 10
       idle: 5
 EOT
-if [ -f "${project_dir}/samples/dns-server.yml" ];
+if [ -f "${project_dir}/playbooks/vars/dns-server.yml" ];
 then 
-  sudo cp "${project_dir}/samples/dns-server.yml" "${1}/config/server.yml"
+  sudo cp "${project_dir}/playbooks/vars/dns-server.yml" "${1}/config/server.yml"
 else
 sudo tee   ${1}/config/server.yml > /dev/null <<EOT
 # example DNS Server Configuration
@@ -223,20 +224,22 @@ function start_service(){
 
 function test_gozones(){
     gozones_variables
-    dig  @127.0.0.1 test.apps.ocp4.${1} || exit 1
-    dig  @127.0.0.1 test.apps.ocp4.${1} || exit 1
-    dig  @${2} test.apps.ocp4.${1} || exit 1
+    API_TEST=$(cat /opt/service-containers/config/server.yml  | grep api. | head -1| awk '{print $3}')
+    APPS_TEST=$(cat /opt/service-containers/config/server.yml  | grep '*.apps' | head -1| awk '{print $3}'| tr -d "'")
+    dig  @127.0.0.1 ${API_TEST}.${1} || exit 1
+    dig  @127.0.0.1 ${APPS_TEST}.${1} || exit 1
 }
 
 function qubinode_setup_gozones() {
-    if [ $( sudo podman ps -qa -f status=running | wc -l) -eq 0 ]; then
+    if [ $( sudo podman ps -a -f name='dns-go-zones' | grep dns-go-zones | wc -l) -eq 0 ]; then
         gozones_variables 
         configure_libvirt_networks ${ZTPFW_NETWORK_CIDR}  ${ISOLATED_NETWORK_CIDR} 
         disable_ivp6
         start_deployment ${MIRROR_BASE_PATH}  $ISOLATED_NETWORK_DOMAIN  $ISOLATED_NETWORK_CIDR $MIRROR_VM_HOSTNAME $MIRROR_VM_ISOLATED_BRIDGE_IFACE_IP ${ISOLATED_OCTECT}
         start_service
         test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
-    elif [ $( sudo podman ps -qa -f status=exited ) ]; then
+        update_resolv_conf  ${KVM_HOST_IP}
+    elif [ $( sudo podman ps -qa  -f name='dns-go-zones' -f status=exited ) ]; then
         gozones_variables 
         remove_gozones ${MIRROR_BASE_PATH}
         configure_libvirt_networks ${ZTPFW_NETWORK_CIDR}  ${ISOLATED_NETWORK_CIDR} 
@@ -244,7 +247,8 @@ function qubinode_setup_gozones() {
         start_deployment ${MIRROR_BASE_PATH}  $ISOLATED_NETWORK_DOMAIN  $ISOLATED_NETWORK_CIDR $MIRROR_VM_HOSTNAME $MIRROR_VM_ISOLATED_BRIDGE_IFACE_IP ${ISOLATED_OCTECT}
         start_service
         test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
-    elif [ $( sudo podman ps -qa -f status=running | wc -l ) -gt 0 ]; then
+        update_resolv_conf  ${KVM_HOST_IP}
+    elif [ $( sudo podman ps -qa -f name='dns-go-zones' | grep dns-go-zones | wc -l ) -gt 0 ]; then
       echo "gozones is installed"
       gozones_variables
       test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}

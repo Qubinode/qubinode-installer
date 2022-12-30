@@ -2,10 +2,11 @@
 kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 vars_file="${project_dir}/playbooks/vars/all.yml"
 RHEL_VERSION=$(awk '/rhel_version:/ {print $2}' "${vars_file}")
+RUN_KNI_ON_RHPDS=$(awk '/run_kni_lab_on_rhpds/ {print $2}' "${vars_file}")
 
 # This function checks the status of RHSM registration
 function check_rhsm_status () {
-    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
+    if grep Fedora /etc/redhat-release || [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         echo "Skipping checking RHSM status"
     else 
@@ -41,10 +42,48 @@ function check_rhsm_status () {
     fi
 }
 
+function configure_ansible_aap_creds(){
+    printf "%s\n" "  ${yel}****************************************************************************${end}"
+    printf "%s\n\n" "    ${cyn}        Enter Credentials for Application Deployments${end}"
+    decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_username
+    then
+        decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+        get_rhsm_user_and_pass
+        encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+    fi 
+
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_activationkey
+    then
+        echo -n "   ${blu}Enter your RHSM activation key and press${end} ${grn}[ENTER]${end}: "
+        echo -n "   ${blu}See Creating Red Hat Customer Portal Activation Keys${end} ${grn}https://access.redhat.com/articles/1378093${end}: "
+        read rhsm_activationkey
+        unset rhsm_org
+        sed -i "s/rhsm_activationkey: \"\"/rhsm_activationkey: "$rhsm_activationkey"/g" "${vault_vars_file}"
+    fi
+    if grep '""' "${vault_vars_file}"|grep -q rhsm_org
+    then
+        echo -n "   ${blu}Enter your RHSM ORG ID and press${end} ${grn}[ENTER]${grn}: "
+        read_sensitive_data
+        rhsm_org="${sensitive_data}"
+        sed -i "s/rhsm_org: \"\"/rhsm_org: "$rhsm_org"/g" "${vault_vars_file}"
+    fi
+
+    # encrypt ansible vault
+    encrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
+
+    if [ ! -f $HOME/offline_token ];
+    then
+        read -p "   Offline token not found you can find it at https://access.redhat.com/management/api: ${end}" OFFLINE_TOKEN
+        echo $OFFLINE_TOKEN > $HOME/offline_token
+    fi
+
+}
+
 function ask_user_for_rhsm_credentials () {
     # decrypt ansible vault file
     decrypt_ansible_vault "${vault_vars_file}" > /dev/null 2>&1
-    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
+    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]] || [[ $(get_distro) == "rocky" ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         echo "Skipping checking RHSM status"
     elif grep '""' "${vars_file}"|grep -q rhsm_reg_method
@@ -111,11 +150,24 @@ function ask_user_for_rhsm_credentials () {
 # validate the registration or register the system
 # if it's not registered
 function qubinode_rhsm_register () {
-    if grep Fedora /etc/redhat-release || [ ${RHEL_VERSION} == "CENTOS8" ]
+    if grep Fedora /etc/redhat-release ||  [[ $(get_distro) == "centos" ]]|| [[ $(get_distro) == "rocky"  ]] || [[ $RUN_KNI_ON_RHPDS == "yes"  ]] ; 
     then
         printf "%s\n" " Skipping registering to RHSM"
+        COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
+        COLLECT_CEPH_CREDS=$(awk '/enable_ceph_deployment:/ {print $2}' "${vars_file}")
+        if [ "A${COLLECT_AAP_CREDS}" == "Atrue" ] || [ "A${COLLECT_CEPH_CREDS}" == "Atrue" ]
+        then
+            configure_ansible_aap_creds
+        fi
+
     else
         ask_user_for_rhsm_credentials
+        COLLECT_AAP_CREDS=$(awk '/ansible_automation_platform:/ {print $2}' "${vars_file}")
+        COLLECT_CEPH_CREDS=$(awk '/enable_ceph_deployment:/ {print $2}' "${vars_file}")
+        if [ "A${COLLECT_AAP_CREDS}" == "Atrue" ] || [ "A${COLLECT_CEPH_CREDS}" == "Atrue" ]
+        then
+            configure_ansible_aap_creds
+        fi
         qubinode_required_prereqs
         vault_vars_file="${vault_vars_file}"
         varsfile="${vars_file}"
@@ -217,6 +269,12 @@ function qubinode_rhsm_register () {
         sed -i "s/qubinode_installer_rhsm_completed:.*/qubinode_installer_rhsm_completed: yes/g" "${vars_file}"
         printf "%s\n" " ${yel}RHSM setup completed${end}"
     fi 
+    # Push changes to repo
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ "A${enable_gitops}" == "Atrue" ]
+    then
+        push_to_repo all.yml
+    fi
 
 }
     

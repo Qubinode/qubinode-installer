@@ -3,10 +3,8 @@
 # This script is also used to auto configure to the dns server server your qubinode is currently using.
 # Tested on Fedora 30
 
-#set -xe
+set -xe
 
-read -p 'Enter IDM Server Endpoint: ' idmserver
-read -p 'Enter OpenShift Endpoint: ' openshifturl
 
 function check_openshift() {
   OCP_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${1}" --insecure)
@@ -46,8 +44,12 @@ function final_check() {
   fi
 }
 
-if testidmserver ${idmserver}; then
-  echo "IDM Server has been found"
+function test_openshift_dns(){
+  read -p 'Enter IDM Server Endpoint: ' idmserver
+  read -p 'Enter OpenShift Endpoint: ' openshifturl
+
+  if testidmserver ${idmserver}; then
+  echo "DNS Server has been found"
   echo "Checking to see if Openshift is online."
   OCP_STATUS=$(check_openshift ${openshifturl})
   if [[ $OCP_STATUS -ne 200 ]]
@@ -63,3 +65,4 @@ if testidmserver ${idmserver}; then
 else
   echo "IDM Server has not been found will not configure your machine."
 fi
+}

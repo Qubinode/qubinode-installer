@@ -1,5 +1,6 @@
 ## What is Qubinode Installer?
 Qubinode-installer is an utility tool that facilates the quick deployment of an array of Red Hat products like [Red Hat Openshift Container Platform](https://www.openshift.com/), [Red Hat Identity Manager](https://access.redhat.com/products/identity-management#getstarted), [Red Hat Satellite](https://www.redhat.com/en/technologies/management/satellite), etc.. on a single piece of [hardware](https://mitxpc.com/products/gn-e300-9d-8tp) by leveraging the [KVM](https://www.linux-kvm.org/page/Main_Page) hypervisor.
+[![Documentation Status](https://readthedocs.org/projects/qubinode-installer/badge/?version=latest)](https://qubinode-installer.readthedocs.io/en/latest/?badge=latest)
 
 ## The benefits of using qubinode
 [The Qubinode Project](https://qubinode.io/) provides a very cost effective way to quickly stand up a lab environment on a single piece of [hardware](https://mitxpc.com/products/gn-e300-9d-8tp). Your most expensive investment would be the procurement of the [hardware](https://mitxpc.com/products/gn-e300-9d-8tp) itself. This is a cheaper approach than having to pay a license fee to use a type 1 [hypervisor](https://www.vmware.com/topics/glossary/content/hypervisor) like VMWare/VSphere or having to pay a fee to use AWS EC2 instances.
@@ -21,50 +22,45 @@ For the best possible experince 128 GiB of memory is recommended. This will allo
 for the default deployment of a cluster with 3 controlplane and 3 computes.
 
 **Software**
-* Red Hat Enteprise Linux 9.0
-Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md)_.
-One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](docs/README.md)
-* Centos 8 Streams is supported base OS.
-* Or Fedora 36 (Testing) is a supported base OS.
+* Red Hat Enteprise Linux 9.1
+Refer to the _[hardware recommendation for lab hadware suggestions](docs/qubinode/hardwareguide.md).
+One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Getting Started Guide](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
+* Centos 9 Streams is supported base OS.
+* Fedora 37 is a supported base OS.
+
 
 ## Qubinode Release Information
 
 | Qubinode Version  | Ansible version | Tag |
 | ------------- | ----------------- |-----------------|
-|     Release 2.5     | 2.10               | 2.8.0 |
+|     Release 3.0     | 2.10               | 2.8.0 |
 
 
-### Features in v2.5.0 Version
-New Features |
---|
-OpenShift 4.10 |
-Gozones DNS |
-Compitability with Centos 8 Streams|
-Compitability with Fedora Server |
-[Microshift](https://github.com/redhat-et/microshift) | 
-[OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/kenmoini/ocp4-ai-svc-libvirt) | 
-[ztp-pipeline-relocatable](https://github.com/rh-ecosystem-edge/ztp-pipeline-relocatable) development box | 
-[Assisted Installer Scripts](https://github.com/tosin2013/openshift-4-deployment-notes/tree/master/assisted-installer) development box | 
-[YAKKO](https://github.com/ozchamo/YAKKO) |
+### Features in v3.0 Version
+- [x] Support for RHEL 9.1
+- [x] Support for Centos 9 Streams
+- [x] Vyos Router Support 
+- [x] kcli support  to manage vm deployments
+- [x] Ansible Automation Platform 2.1
+- [x] Red Hat Ceph Storage 5
+- [x] kvm-install-vm to manage vm deployments
 
-
-
-See [Release Document](docs/qubinode/releases.md) for features history.
+See [Docuemntation for additional details](https://qubinode-installer.readthedocs.io/en/latest/).
 
 ## Deploying a OpenShift cluster
-
-- [Installing OpenShift 4](docs/qubinode/openshift4_installation_steps.md)
-- [Installing OKD 4](docs/qubinode/okd4_installation_steps.md)
+- [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
+- [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
+- [Ansible Automation Platform](https://github.com/Red-Hat-SE-RTO/rhel-fleet-management/blob/main/docs/install-ansible-automation-platform.md)
 
 **Workloads**
 - [Application Workloads to try](docs/qubinode/workloads/README.md)
 - [Deploy Bare-Metal Clusters via Hive and Assisted Installer](https://github.com/tosin2013/bare-metal-assisted-installer)
 
 **Qubinode Documentation**
-- [Qubinode Overview](docs/README.md)
+- [Qubinode Overview](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
 
 ## Training
-* [Qubinode for Beginners](docs/beginners.md)
+* [Qubinode for Beginners](https://qubinode-installer.readthedocs.io/en/latest/quick_start.html#getting-started)
 * [learn.openshift.com](https://learn.openshift.com/)
 
 **Red Hat Courses**
@@ -100,7 +96,9 @@ If you have any direct questions, reach out to us [using the guide](docs/communi
 * [karlmdavis](https://github.com/karlmdavis)
 * [Jooho](https://github.com/Jooho)
 * [Karim Boumedhel](https://github.com/karmab)
-
+* [Ken Moini](https://github.com/kenmoini)
+* [Giovanni Torres](https://github.com/giovtorres)
+  
 ## Authors
 * Tosin Akinosho - [tosin2013](https://github.com/tosin2013)
 * Rodrique Heron - [flyemsafe](https://github.com/flyemsafe)

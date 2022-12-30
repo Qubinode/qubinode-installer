@@ -31,30 +31,8 @@ function qubinode_project_cleanup () {
     then
         FILES=("${FILES[@]}" "$vault_vars_file" "$vars_file")
     fi
-
-    # Delete OpenShift 3 files
-    if [ -f ${project_dir}/playbooks/vars/ocp3.yml ]
-    then 
-        openshift_product=$(awk '/^product:/ {print $2}' "${project_dir}/playbooks/vars/ocp3.yml")
-        if [[ ${openshift_product} == "ocp3" ]]; then
-          FILES=("${FILES[@]}" "$ocp3_vars_files")
-        elif [[ ${openshift_product} == "okd3" ]]; then
-          FILES=("${FILES[@]}" "$okd3_vars_files")
-        fi
-
-        if [ ${#FILES[@]} -eq 0 ]
-        then
-            echo "Project directory: ${project_dir} state is already clean"
-        else
-            for f in $(echo "${FILES[@]}")
-            do
-                test -f $f && rm $f
-                echo "purged $f"
-
-            done
-        fi
-    fi
-
+   echo "removing vault file"
+   rm -rvf ${vault_key_file} > /dev/null
    echo "Removing playbook vars"
    rm -rvf ${project_dir}/playbooks/vars/*.yml > /dev/null
    echo "Removing downloaded roles"
@@ -96,6 +74,7 @@ function get_admin_user_password () {
         exit 1
     fi
 }
+
 
 function exit_status () {
     RESULT=$?
@@ -472,6 +451,7 @@ function qubinode_setup () {
     
     setup_variables
     setup_user_ssh_key
+    #setup_application_type
     if [ $ENABLE_IDM == "true" ];
     then 
       ask_user_for_idm_password
@@ -512,6 +492,19 @@ function qubinode_setup () {
 
 }
 
+
+function push_to_repo(){
+    echo "Pushing to repo $1"
+    directory_name=$(awk '/directory_name:/ {print $2;exit}' "${vars_file}"| tr -d '"')
+    cp "${project_dir}/playbooks/vars/${1}" "$HOME/kvm-gitops/inventories/${directory_name}/host_vars/"
+    cd $HOME/kvm-gitops/
+    git pull 
+    git add inventories/${directory_name}/host_vars/${1}
+    git commit -m "Added ${1} to inventory"
+    git push 
+    cd $HOME/qubinode-installer/
+}
+
 function qubinode_base_requirements () {
     ## 9/9/2020 this function should be replaced with qubinode_setup
     # This function ensures all the minimal base requirements are met.
@@ -533,7 +526,7 @@ function qubinode_base_requirements () {
         ask_user_input
         setup_variables
         setup_user_ssh_key
-
+        setup_application_type
         # Tell installer base requires have been met
         sed -i "s/qubinode_base_reqs_completed:.*/qubinode_base_reqs_completed: yes/g" "${vars_file}"
 
@@ -542,12 +535,19 @@ function qubinode_base_requirements () {
         SETUP_COMPLETED=$(awk '/qubinode_installer_setup_completed:/ {print $2}' "${vars_file}")
 
 	# Ensure RHEL qcow image exist
-	setup_download_options
+	#setup_download_options
 
-        if [ "A${BASE_REQS}" == "Ayes" ]
-	then
-            printf "%s\n" " ${yel}Setup completed${end}"
-        fi
+    if [ "A${BASE_REQS}" == "Ayes" ]
+    then
+        printf "%s\n" " ${yel}Setup completed${end}"
+    fi
+    # Push changes to repo
+    enable_gitops=$(awk '/enable_gitops:/ {print $2;exit}' "${vars_file}")
+    if [ "A${enable_gitops}" == "Atrue" ]
+    then
+        push_to_repo all.yml
+        push_to_repo kvm_host.yml
+    fi
 fi
 }
 
@@ -567,3 +567,5 @@ function update_resolv_conf(){
     sudo sed -i 's/nameserver.*/nameserver '${1}'/' /etc/resolv.conf
   fi
 }
+
+
