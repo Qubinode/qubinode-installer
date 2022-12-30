@@ -41,6 +41,7 @@ In order to start the build process you will need to ssh into the builder vm and
 Configure a router image vyos env file
 -----------------------
 Onece on the builder vm you will need to download the vyos-env file and update the variables then run the script::
+    
     # wget https://raw.githubusercontent.com/tosin2013/qubinode-installer/master/lib/vyos/vyos-env
     ## edit vyos-env and update the variables
     # vim vyos-env
