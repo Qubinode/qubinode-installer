@@ -10,14 +10,21 @@ The first step is to get RHEL 9 based operating system installed on your hardwar
 
 Suppoted Operating  Systems
 ========================
-Fedora 37 - `Fedora 37 <https://getfedora.org/>`_
+
+`Fedora 37 <https://getfedora.org/>`_
 ---------
+Quick Start::
 
     sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
 
-- `CentOS 9 Streams <https://www.centos.org/>`_
-- `Red Hat Enterprise Linux 9 <https://developers.redhat.com/products/rhel/hello-world>`_
-- `Red Hat Enterprise Linux 8 <https://developers.redhat.com/products/rhel/hello-world>`_
+`CentOS 9 Streams <https://www.centos.org/>`_
+---------
+
+`Red Hat Enterprise Linux 9 <https://developers.redhat.com/products/rhel/hello-world>`_
+---------
+
+`Red Hat Enterprise Linux 8 <https://developers.redhat.com/products/rhel/hello-world>`_
+---------
 
 If you are using RHEL you can follow the steps below to get started.:
 
