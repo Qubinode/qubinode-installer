@@ -13,7 +13,7 @@ Suppoted Operating  Systems
 
 `Fedora 37 <https://getfedora.org/>`_
 ---------
-Quick Start::
+Make sure the following packages are installed on your system before startng the install::
 
     sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
 
@@ -57,13 +57,16 @@ The qubinode-installer needs to run as a regular user.
 * ansible - ensure your rhel system is setup for to function as a ansible controller
 * host    - ensure your rhel system is setup as a KVM host
 
-> Go [here](qubinode/qubinode-menu-options.adoc) for additional qubinode options.
-
 Validate sudo user for admin::
 
     $ sudo cat /etc/sudoers | grep admin
-    $ admin ALL=(ALL) NOPASSWD: ALL 
-    $ echo "admin ALL=(ALL) NOPASSWD: ALL" | tee -a  /etc/sudoers
+      admin ALL=(ALL) NOPASSWD: ALL 
+    
+    $ sudo su - root
+    $ curl -OL https://gist.githubusercontent.com/tosin2013/385054f345ff7129df6167631156fa2a/raw/b67866c8d0ec220c393ea83d2c7056f33c472e65/configure-sudo-user.sh
+    $ chmod +x configure-sudo-user.sh
+    $ ./configure-sudo-user.sh admin 
+    $ sudo su - admin 
 
 
 Start The Qubinode Installer::
