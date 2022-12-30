@@ -14,7 +14,6 @@ Fedora 37
 ---------
 - `Fedora 37 <https://getfedora.org/>`_
 
-
 .. codeblock:: bash
 
     sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
@@ -23,12 +22,12 @@ Fedora 37
 - `Red Hat Enterprise Linux 9 <https://developers.redhat.com/products/rhel/hello-world>`_
 - `Red Hat Enterprise Linux 8 <https://developers.redhat.com/products/rhel/hello-world>`_
 
-If you are using RHEL you can follow the steps below to get started.
-
+.. If you are using RHEL you can follow the steps below to get started.
 Get Subscriptions
-====================
+-----------------
 -  Get your `No-cost developer subscription <https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux>`_ for RHEL.
 -  Get a Red Hat OpenShift Container Platform (OCP) `60-day evalution subscription <https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it?intcmp=701f2000000RQykAAG&extIdCarryOver=true&sc_cid=701f2000001OH74AAG>`_.
+
 
 The qubinode-installer
 =========================
