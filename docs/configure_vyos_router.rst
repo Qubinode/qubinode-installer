@@ -28,6 +28,7 @@ Create  Vyos builder Images -This will be used to build the Vyos image
 -----------------------
 The following script will crete the debian builder vm::
 
+    sudo ssh-keygen
     lib/vyos/deploy-vyos-builder.sh create
 
 In new tab ssh into the builder VM
