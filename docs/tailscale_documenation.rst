@@ -32,8 +32,10 @@ Example::
         https://login.tailscale.com/a/xXxXxXxXxXxX
 
 
-Collect Ip address of tailscale
+Connection information for tailscale vm
 -------------------------------
 
+If you would like to access the vm use the commands below::
+    
     sudo kcli info vm tailscale
     sudo kcli ssh tailscale
