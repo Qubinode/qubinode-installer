@@ -106,7 +106,7 @@ leon_ai:
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
   - sudo dnf update -y
-  - sudo dnf install firewalld nodejs -y 
+  - sudo dnf install firewalld nodejs acl policycoreutils-python-utils -y
   - npm install --global @leon-ai/cli
   - systemctl enable firewalld
   - systemctl start firewalld

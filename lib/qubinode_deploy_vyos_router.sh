@@ -43,7 +43,7 @@ EOF
 function create_router(){
     create_livirt_networks
     if [ $USE_BRIDGE  ==  "false"  ]; then
-        IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
+        IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder  | sort -k1 -k2 | tail -1 | awk '{print $5}' | sed 's/\/24//g')
     else
         MAC_ADDRESS=$( sudo  virsh domiflist vyos-builder | grep bridge | awk '{print $5}')
         IPADDR=$(sudo nmap -sP ${SUBNET} | grep  -B2  ${MAC_ADDRESS^^} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
