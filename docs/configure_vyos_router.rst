@@ -26,9 +26,18 @@ For Quick install::
 
 Create  Vyos builder Images -This will be used to build the Vyos image
 -----------------------
-The following script will crete the debian builder vm::
+The following script will crete the debian builder vm internal network::
 
-    lib/vyos/deploy-vyos-builder.sh create
+    sudo ssh-keygen
+    ./qubinode-installer -p vyos_router -m create
+
+The following script will crete the debian builder vm on a external network::
+
+    sudo ssh-keygen
+    $ cat playbooks/vars/kvm_host.yml | grep use_vyos_bridge #set use vyos bridge to true the default is false 
+    use_vyos_bridge: true
+
+    ./qubinode-installer -p vyos_router -m create
 
 In new tab ssh into the builder VM
 ----------------------------------
@@ -49,20 +58,36 @@ Onece on the builder vm you will need to download the vyos-env file and update t
     # chmod +x configure-vyos-builder.sh
     # ./configure-vyos-builder.sh create
 
+.. By default the script will create a vyos image called vyos-r1.qcow2. You can change the name of the image to deploy a vmware ova by upating the env variable to export TAREGT_ENV=vmware.
 
 Deploy vyos-router on Qubinode
 -----------------------
 Once the builder vm has created the vyos image you can deploy the image on Qubinode::
 
     # cd ~/qubinode-installer
-    # lib/vyos/deploy-vyos-router.sh create vyos-r1.qcow2
+    # ./qubinode-installer -p  deploy_vyos_router -m create  vyos-r1.qcow2
 
+For vShpere deployments
+-----------------------
+Download the ova and deploy it to vcenter the ssh into the router vm and run the following commands::
+
+    # ssh vyos@192.168.1.24 #example ip address you can get the ip by logging into vcenter and looking at the router vm the user name and password is vyos/vyos
+    # curl -OL http://192.168.1.66/vsphere-vyos-r2.sh 
+    # chmod +x vsphere-vyos-r2.sh
+    # bash vsphere-vyos-r2.sh # you will have to reload the ssh session if you are using a different ip address. 
+
+You will have to modify the network adapters before you boot up the ova see the example settings below.
+
+.. image:: https://i.imgur.com/JByipho.png
 
 To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::
 
-     lib/vyos/deploy-vyos-builder.sh destroy vyos-r1.qcow2
+    ./qubinode-installer -p vyos_router -m  destroy
 
 
-
+To Configure the router to use BGP see the below links:
+-----------------------
+* `Configure two routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/configure_uplinks.md>`_
+* `Configure three or more routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/three_routers_config.md>`_
