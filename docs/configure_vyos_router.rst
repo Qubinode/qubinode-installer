@@ -76,7 +76,7 @@ Download the ova and deploy it to vcenter the ssh into the router vm and run the
     # ssh vyos@192.168.1.24 #example ip address you can get the ip by logging into vcenter and looking at the router vm the user name and password is vyos/vyos
     # curl -OL http://192.168.1.66/vsphere-vyos-r2.sh 
     # chmod +x vsphere-vyos-r2.sh
-    # bash vsphere-vyos-r2.sh
+    # bash vsphere-vyos-r2.sh # you will have to reload the ssh session if you are using a different ip address. 
 
 You will have to modify the network adapters before you boot up the ova see the example settings below.
 
