@@ -78,7 +78,10 @@ Download the ova and deploy it to vcenter the ssh into the router vm and run the
     # chmod +x vsphere-vyos-r2.sh
     # bash vsphere-vyos-r2.sh
 
-    
+You will have to modify the network adapters before you boot up the ova see the example settings below.
+
+.. image:: https://i.imgur.com/JByipho.png
+
 To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::
