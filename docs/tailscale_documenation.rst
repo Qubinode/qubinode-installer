@@ -20,6 +20,7 @@ For Quick install::
 
 Deploy TailScale VM using qubindoe bridge network
 --------------------
+The following command will deploy a tailscale VM using the qubinode bridge network.::
 
     sudo kcli create vm -p tailscale tailscale  --wait
 

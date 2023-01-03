@@ -200,7 +200,7 @@ fedora36:
   - echo CHANGEPASSWORD | passwd --stdin root
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
-fedora36jumpbox:
+fedora37jumpbox:
  image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
  numcpus: 4
  memory: 4096
