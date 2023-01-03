@@ -35,6 +35,8 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 | ------------- | ----------------- |-----------------|
 |     Release 3.0     | 2.10               | 2.8.0 |
 
+### Testing 
+* [chatgpt: Chat GPT console client in Golang](https://github.com/kkdai/chatgpt)
 
 ### Features in v3.0 Version
 - [x] Support for RHEL 9.1
@@ -44,8 +46,9 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 - [x] Ansible Automation Platform 2.1
 - [x] Red Hat Ceph Storage 5
 - [x] kvm-install-vm to manage vm deployments
+- [x] Support for TailScale VPN
 
-See [Docuemntation for additional details](https://qubinode-installer.readthedocs.io/en/latest/).
+See [Documentation for additional details](https://qubinode-installer.readthedocs.io/en/latest/).
 
 ## Deploying a OpenShift cluster
 - [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)

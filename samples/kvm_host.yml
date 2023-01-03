@@ -9,6 +9,12 @@ kvm_host_mtu: 1500
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_domain: "{{ domain }}"
+kvm_subnet: ""
+
+# http://192.168.1.240/VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
+ovftool_url: ""
+
+use_vyos_bridge: false
 
 libvirt_pool_name_check: yes
 skip_libvirt_pool: no

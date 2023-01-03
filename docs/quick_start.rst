@@ -20,6 +20,9 @@ Make sure the following packages are installed on your system before startng the
 `CentOS 9 Streams <https://www.centos.org/>`_
 ---------
 
+Make sure the following packages are installed on your system before startng the install::
+
+    sudo dnf install git vim unzip wget bind-utils python3-pip tar util-linux-user -y
 
 If you are using RHEL you can follow the steps below to get started.:
 
@@ -58,6 +61,11 @@ Download and extract the qubinode-installer as a non root user::
     rm master.zip
     mv qubinode-installer-master qubinode-installer
 
+If you would like to develop the qubinode-installer you can clone the repo::
+
+    YOUR_ID=githubid
+    git clone https://github.com/${YOUR_ID}/qubinode-installer.git
+    cd  qubinode-installer
 
 Qubinode Setup
 ===============
