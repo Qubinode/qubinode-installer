@@ -52,6 +52,24 @@ if [ ! -d $HOME/vyos-vm-images ]; then
     fi
 fi
 
+if [ ! -f /usr/local/bin/ovftool ];
+then
+    if [ ${TAREGT_ENV} == "vmware" ]; then
+      wget http://192.168.1.240/VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
+      unzip VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
+      ln -s /root/ovftool/ovftool  /usr/local/bin/
+      
+      if [ ! -d $HOME/open-vmdk ]; then
+        git clone https://github.com/vmware/open-vmdk.git
+        cd open-vmdk/
+        make 
+        make install 
+      fi
+
+      generate_cert
+    fi
+fi 
+
 
 function create(){
   cd $HOME/vyos-vm-images
