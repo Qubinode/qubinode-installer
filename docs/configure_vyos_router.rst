@@ -58,7 +58,7 @@ Onece on the builder vm you will need to download the vyos-env file and update t
     # chmod +x configure-vyos-builder.sh
     # ./configure-vyos-builder.sh create
 
-..By default the script will create a vyos image called vyos-r1.qcow2. You can change the name of the image to deploy a vmware ova by upating the env variable to export TAREGT_ENV=vmware.
+.. By default the script will create a vyos image called vyos-r1.qcow2. You can change the name of the image to deploy a vmware ova by upating the env variable to export TAREGT_ENV=vmware.
 
 Deploy vyos-router on Qubinode
 -----------------------
@@ -66,13 +66,14 @@ Once the builder vm has created the vyos image you can deploy the image on Qubin
 
     # cd ~/qubinode-installer
     # lib/vyos/deploy-vyos-router.sh create vyos-r1.qcow2
+    $ ./qubinode-installer -p  deploy_vyos_router create
 
 
 To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::
 
-     lib/vyos/deploy-vyos-builder.sh destroy
+    ./qubinode-installer -p vyos_router -m  destroy
 
 
 To Confiure the router to use BGP see the below links:
