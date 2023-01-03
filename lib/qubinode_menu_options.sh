@@ -132,8 +132,8 @@ function qubinode_product_deployment () {
               then
                   qubinode_vyos_router_maintenance
               else
-		    printf "%s\n" "   ${blu}Configuring vyos_router${end}"
-                    qubinode_vyos_router_builder
+		            printf "%s\n" "   ${blu}Please pass required command${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p vyos_router -m create${end}"
               fi
               ;;
 
