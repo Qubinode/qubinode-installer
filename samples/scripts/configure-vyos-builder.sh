@@ -147,7 +147,7 @@ EOF
     sudo chmod -R 755 /var/www/html/
     echo "Run the command below on host server to create the router"
     echo "cd qubinode-installer"
-    echo "lib/vyos/deploy-vyos-router.sh create $(basename /var/www/html/${ROUTER_NAME}.qcow2 | sed 's/ //g')"
+    echo " ./qubinode-installer -p  deploy_vyos_router -m create $(basename /var/www/html/${ROUTER_NAME}.qcow2 | sed 's/ //g')"
   elif [ ${TAREGT_ENV} == "vmware" ]; then
     generate_cert
     ansible-playbook vmware.yml -e keep_user=true -e enable_dhcp=true -e vyos_vmware_private_key_path=/root/myself.pem -e cloud_init=true -e cloud_init_ds=ConfigDrive -e guest_agent=vmware -e cloud_init_disable_config=true   -e enable_ssh=true -vvv 
@@ -156,10 +156,12 @@ EOF
     cp vsphere-${ROUTER_NAME}.sh  /var/www/html/vsphere-${ROUTER_NAME}.sh
     sudo chmod -R 755 /var/www/html/
 
-    echo "Run the command below on vshpere server to create the router"
+    echo "Download the ova and deploy on vcenter"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/${ROUTER_NAME}.ova"
+    echo "ssh into deployed VM and run the following commands"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/vsphere-${ROUTER_NAME}.sh "
-    echo "deploy OVA"
+    echo "chmod +x vsphere-${ROUTER_NAME}.sh"
+    echo "bash vsphere-${ROUTER_NAME}.sh"
   fi 
 
 }
