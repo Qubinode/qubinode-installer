@@ -464,6 +464,13 @@ function qubinode_networking () {
 	    VM_SUFFIX=$(echo "${foundmac}"|awk -F: '{ print $5$6 }')
             sed -i "s#vm_suffix:.*#vm_suffix: '"${VM_SUFFIX}"'#g" "${project_dir}/playbooks/vars/all.yml"
         fi
+
+        iSkvm_kvm_subnet=$(awk '/^kvm_subnet:/ { print $2}' "${kvm_host_vars_file}")
+        if [[ "A${iSkvm_kvm_subnet}" == "A" ]] || [[ "A${iSkvm_kvm_subnet}" == 'A""' ]]
+        then
+            KVM_SUBNET=$(ip route  | sed -n 2p | awk '{print $1}')
+            sed -i "s#kvm_subnet:.*#kvm_subnet: "$KVM_SUBNET"#g" "${kvm_host_vars_file}"
+        fi
     elif [ -z $KVM_HOST_NETMASK ];
     then
         if [ ${RUN_ON_RHPDS} == "yes" ];
