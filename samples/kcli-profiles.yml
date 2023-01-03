@@ -117,6 +117,28 @@ leon_ai:
   - leon create birth
   - leon start
 
+tailscale:
+ image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 500
+ reservedns: true
+ nets:
+  - qubinet
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo dnf update -y
+  - sudo dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+  - sudo dnf install tailscale -y 
+  - sudo systemctl enable --now tailscaled
+  - sudo tailscale up
+  - tailscale ip -4
 
 rhel8_static:
  image: rhel-8.7-x86_64-kvm.qcow2
