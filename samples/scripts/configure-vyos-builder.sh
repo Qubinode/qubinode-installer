@@ -190,7 +190,7 @@ function generate_cert(){
     return
   fi
   # Generate a passphrase
-   openssl req -x509 -nodes -sha256 -days 365 -newkey rsa:1024 -keyout myself.pem -out myself.pem -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=vyos-builder.qubinode-lab.io" -addext "subjectAltName = DNS:vyos-builder.qubinode-lab.io" -addext "certificatePolicies = 1.2.3.4"
+  openssl req -x509 -nodes -sha256 -days 365 -newkey rsa:1024 -keyout /root/myself.pem -out /root/myself.pem  -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=vyos-builder.qubinode-lab.io" -addext "subjectAltName = DNS:vyos-builder.qubinode-lab.io" -addext "certificatePolicies = 1.2.3.4"
 
   openssl x509 -in /root/myself.pem -text || exit 1
 
