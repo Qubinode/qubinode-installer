@@ -58,7 +58,7 @@ Onece on the builder vm you will need to download the vyos-env file and update t
     # chmod +x configure-vyos-builder.sh
     # ./configure-vyos-builder.sh create
 
-By default the script will create a vyos image called vyos-r1.qcow2. You can change the name of the image to deploy a vmware ova by upating the env variable to export TAREGT_ENV=vmware.
+..By default the script will create a vyos image called vyos-r1.qcow2. You can change the name of the image to deploy a vmware ova by upating the env variable to export TAREGT_ENV=vmware.
 
 Deploy vyos-router on Qubinode
 -----------------------
