@@ -43,6 +43,23 @@ function deploy_vyos_builder_vm(){
     #sudo virsh net-dhcp-leases default
 }
 
+function qubinode_vyos_router_maintenance(){
+    echo "Run the following commands"
+    function qubinode_gozones_maintenance () {
+    case ${product_maintenance} in
+       create)
+           deploy_vyos_builder_vm
+           ;;
+       destroy)
+           destory_vm
+           ;;
+       *)
+           echo "No arguement was passed"
+           ;;
+    esac
+}
+}
+
 function qubinode_vyos_router_builder(){
     if [ $1  ==  "create"  ]; then
         deploy_vyos_builder_vm
