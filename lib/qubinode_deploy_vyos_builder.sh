@@ -1,20 +1,14 @@
 #!/bin/bash 
 
 
-function gozones_variables () {
+function vyos_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     SUBNET=$(cat "${kvm_host_vars_file}" | grep kvm_subnet: | awk '{print $2}')
+    USE_BRIDGE=$(cat "${kvm_host_vars_file}" | grep use_vyos_bridge: | awk '{print $2}')
 }
 
-if [ -z $2  ]; then
-    USE_BRIDGE=false
-else   
-    USE_BRIDGE=true
-    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
-    DEFINED_BRIDGE=$(awk '/qubinode_bridge_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
-fi
 
 function destory_vm(){
     sudo kvm-install-vm  remove vyos-builder
@@ -25,6 +19,8 @@ function destory_vm(){
 
 function deploy_vyos_builder_vm(){
     if [ $USE_BRIDGE  ==  "true"  ]; then
+        kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+        DEFINED_BRIDGE=$(awk '/qubinode_bridge_name:/ {print $2; exit}' "${kvm_host_vars_file}"| tr -d '"')
         sudo kvm-install-vm  create -t  debian10  -c 2 -m 4096 -d 60  -l /var/lib/libvirt/images/ -L /var/lib/libvirt/images/ -b $DEFINED_BRIDGE vyos-builder
     else
         sudo kvm-install-vm  create -t  debian10  -c 2 -m 4096 -d 60  -l /var/lib/libvirt/images/ -L /var/lib/libvirt/images/ vyos-builder
@@ -50,6 +46,7 @@ function qubinode_vyos_router_maintenance(){
     echo "Run the following commands"
     case ${product_maintenance} in
        create)
+           vyos_variables
            deploy_vyos_builder_vm
            ;;
        destroy)
@@ -59,12 +56,4 @@ function qubinode_vyos_router_maintenance(){
            echo "No arguement was passed"
            ;;
     esac
-}
-
-function qubinode_vyos_router_builder(){
-    if [ $1  ==  "create"  ]; then
-        deploy_vyos_builder_vm
-    elif [ $1  ==  "destroy"  ]; then
-        destory_vm
-    fi
 }

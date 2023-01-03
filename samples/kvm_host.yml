@@ -11,6 +11,8 @@ kvm_host_bootproto: none
 kvm_host_domain: "{{ domain }}"
 kvm_subnet: ""
 
+use_vyos_bridge: false
+
 libvirt_pool_name_check: yes
 skip_libvirt_pool: no
 
