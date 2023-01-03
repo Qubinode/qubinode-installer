@@ -86,6 +86,8 @@ function qubinode_deploy_vyos_router_maintenance(){
     case ${product_maintenance} in
        create)
            vyos_variables
+           echo "Creating router $4:::$5"
+           exit 0
            create_router $5
            ;;
        destroy)
