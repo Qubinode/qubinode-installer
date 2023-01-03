@@ -59,7 +59,7 @@ rhel9_ansible:
   - bash -x /tmp/rhel9_ansible.sh RHEL_USERNAME RHEL_PASSWORD
   
 mirror_vm:
- image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
+ image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
  rhnregister: true
  numcpus: 4
  memory: 8192
@@ -88,6 +88,35 @@ mirror_vm:
   - sudo semanage port  -a 8443 -t http_port_t -p tcp
   - sudo semanage port  -l  | grep -w http_port_t
   - cp /home/admin/qubinode-installer/pull_secret.json /home/cloud-user/pull_secret.json
+
+leon_ai:
+ image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 500
+ reservedns: true
+ nets:
+  - qubinet
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo dnf update -y
+  - sudo dnf install firewalld nodejs -y 
+  - npm install --global @leon-ai/cli
+  - systemctl enable firewalld
+  - systemctl start firewalld
+  - sudo firewall-cmd --add-port=1337/tcp --permanent
+  - sudo firewall-cmd --reload
+  - sudo semanage port  -a 1337 -t http_port_t -p tcp
+  - sudo semanage port  -l  | grep -w http_port_t
+  - leon create birth
+  - leon start
+
 
 rhel8_static:
  image: rhel-8.7-x86_64-kvm.qcow2
@@ -137,7 +166,7 @@ rhel8_jumpbox:
   - firewall-cmd --reload
 
 fedora36:
- image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
+ image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
  numcpus: 2
  memory: 4096
  nets:
@@ -150,7 +179,7 @@ fedora36:
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 fedora36jumpbox:
- image: Fedora-Server-KVM-37-1.7.x86_64.qcow2
+ image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
  numcpus: 4
  memory: 4096
  disks:

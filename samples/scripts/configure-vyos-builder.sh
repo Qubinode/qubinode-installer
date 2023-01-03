@@ -1,5 +1,10 @@
 #!/bin/bash
 #set -x 
+
+UPLOAD_VMWARE_TOOL="true"
+CURRENT_VMWARE_TOOL="VMware-ovftool-4.4.3-18663434-lin.x86_64.zip"
+DOWNLOAD_URL="http://192.168.1.240/${CURRENT_VMWARE_TOOL}"
+
 if [ -z $1  ]; then
     echo  "Usage: $0 create|destroy" 
     exit 1
@@ -55,8 +60,18 @@ fi
 if [ ! -f /usr/local/bin/ovftool ];
 then
     if [ ${TAREGT_ENV} == "vmware" ]; then
-      wget http://192.168.1.240/VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
-      unzip VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
+      if [ $UPLOAD_VMWARE_TOOL == "true" ]; then
+         echo "checking for ${CURRENT_VMWARE_TOOL}"
+         if [ ! -f ${CURRENT_VMWARE_TOOL} ]; then
+            echo "please upload ${CURRENT_VMWARE_TOOL} to /root/ and try again."
+            exit 0
+         fi
+      else  
+        wget ${DOWNLOAD_URL}
+      fi
+    
+
+      unzip ${CURRENT_VMWARE_TOOL}
       ln -s /root/ovftool/ovftool  /usr/local/bin/
       if [ ! -f /usr/bin/make ]; then
         sudo apt -y  install build-essential gcc libssl-dev
