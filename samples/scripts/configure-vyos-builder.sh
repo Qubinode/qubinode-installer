@@ -5,9 +5,10 @@ UPLOAD_VMWARE_TOOL="true"
 CURRENT_VMWARE_TOOL="VMware-ovftool-4.4.3-18663434-lin.x86_64.zip"
 DOWNLOAD_URL="http://192.168.1.240/${CURRENT_VMWARE_TOOL}"
 
-if [ -z $1  ]; then
-    echo  "Usage: $0 create|destroy" 
-    exit 1
+if [ -z $TAREGT_ENV ];
+then
+    echo "TAREGT_ENV is not set.  Please set it and try again."
+    exit
 fi
 
 if [ ! -f /root/vyos-env ];
