@@ -29,12 +29,15 @@ Create  Vyos builder Images -This will be used to build the Vyos image
 The following script will crete the debian builder vm internal network::
 
     sudo ssh-keygen
-    lib/vyos/deploy-vyos-builder.sh create
+    ./qubinode-installer -p vyos_router -m create
 
 The following script will crete the debian builder vm on a external network::
 
     sudo ssh-keygen
-    lib/vyos/deploy-vyos-builder.sh create bridge
+    $ cat playbooks/vars/kvm_host.yml | grep use_vyos_bridge #set use vyos bridge to true the default is false 
+    use_vyos_bridge: true
+
+    ./qubinode-installer -p vyos_router -m create
 
 In new tab ssh into the builder VM
 ----------------------------------
