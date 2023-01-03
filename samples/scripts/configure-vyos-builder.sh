@@ -58,7 +58,10 @@ then
       wget http://192.168.1.240/VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
       unzip VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
       ln -s /root/ovftool/ovftool  /usr/local/bin/
-      
+      if [ ! -f /usr/bin/make ]; then
+        sudo apt -y  install build-essential gcc libssl-dev
+      fi
+
       if [ ! -d $HOME/open-vmdk ]; then
         git clone https://github.com/vmware/open-vmdk.git
         cd open-vmdk/

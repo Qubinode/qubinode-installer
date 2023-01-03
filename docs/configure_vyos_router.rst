@@ -74,8 +74,8 @@ Download the ova and deploy it to vcenter the ssh into the router vm and run the
     # cd ~/qubinode-installer
     # ./qubinode-installer -p  deploy_vyos_router -m create  vsphere-vyos-r2.ova
     # "curl -OL http://192.168.1.66/vsphere-vyos-r2.sh "
-    echo "chmod +x vsphere-vyos-r2.sh"
-    echo "bash vsphere-vyos-r2.sh"
+    # chmod +x vsphere-vyos-r2.sh
+    # bash vsphere-vyos-r2.sh
 
     
 To Destory builder vm
