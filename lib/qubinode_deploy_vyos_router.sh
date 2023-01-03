@@ -83,7 +83,7 @@ function destroy_router(){
 
 function qubinode_deploy_vyos_router_maintenance(){
     echo "Run the following commands"
-    case ${4} in
+    case ${product_maintenance} in
        create)
            vyos_variables
            create_router $5
