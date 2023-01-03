@@ -9,7 +9,7 @@ You can also interact with those VMs (list, info, ssh, start, stop, delete, cons
 
 Tested on 
 ------------------------------
-* Fedora 36 and below 
+* Fedora 37 and below 
 * Red Hat 9.1 and below
 * Rocky Linux 8.5 and below
 * Centos 9 streams

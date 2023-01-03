@@ -222,7 +222,9 @@ function qubinode_setup_kcli() {
         fi
         curl https://raw.githubusercontent.com/karmab/kcli/master/install.sh | bash
         echo "eval '$(register-python-argcomplete kcli)'" >> ~/.bashrc
-        #kcli create host kvm -H 127.0.0.1 local
+        if [[ $RHEL_VERSION == "CENTOS9" ]]; then
+          sudo kcli create host kvm -H 127.0.0.1 local
+        fi
         update_default_settings
         kcli_configure_images
     else 
