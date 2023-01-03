@@ -144,8 +144,8 @@ function qubinode_product_deployment () {
                   qubinode_deploy_vyos_router_maintenance
               else
 		            printf "%s\n" "   ${blu}Please pass required command${end}"
-                    printf "%s\n" "   ${blu}./qubinode-installer -p vyos_router -m create${end}"
-                    printf "%s\n" "   ${blu}./qubinode-installer -p vyos_router -m destroy${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p deploy_vyos_router -m create${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p deploy_vyos_router -m destroy${end}"
               fi
               ;;
 
