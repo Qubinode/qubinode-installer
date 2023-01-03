@@ -1,9 +1,12 @@
 #!/bin/bash 
 
-if [  -z $1  ]; then
-    echo  "Usage: $0 create|destroy bridge" 
-    exit 1
-fi
+
+function gozones_variables () {
+    setup_variables
+    vars_file="${project_dir}/playbooks/vars/all.yml"
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    SUBNET=$(cat "${kvm_host_vars_file}" | grep kvm_subnet: | awk '{print $2}')
+}
 
 if [ -z $2  ]; then
     USE_BRIDGE=false
@@ -36,7 +39,7 @@ function deploy_vyos_builder_vm(){
         IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
     else
         MAC_ADDRESS=$( sudo  virsh domiflist vyos-builder | grep bridge | awk '{print $5}')
-        IPADDR=$(sudo nmap -sP 192.168.1.0/24 | grep  -B2  ${MAC_ADDRESS^^} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+        IPADDR=$(sudo nmap -sP ${SUBNET} | grep  -B2  ${MAC_ADDRESS^^} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
     fi
 
     echo 'ssh -i /root/.ssh/id_rsa  debian@'${IPADDR}''

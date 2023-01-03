@@ -9,6 +9,7 @@ kvm_host_mtu: 1500
 kvm_bridge_type: Bridge
 kvm_host_bootproto: none
 kvm_host_domain: "{{ domain }}"
+kvm_subnet: ""
 
 libvirt_pool_name_check: yes
 skip_libvirt_pool: no
