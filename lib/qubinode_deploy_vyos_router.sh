@@ -8,6 +8,8 @@ function vyos_variables () {
     USE_BRIDGE=$(cat "${kvm_host_vars_file}" | grep use_vyos_bridge: | awk '{print $2}')
 }
 
+echo $#
+
 if [  $#  -ne  2 ]; then
     echo  "Usage: $0 create vyos-1.4-rolling-202212280917-cloud-init-10G-qemu.qcow2" 
     exit 1
