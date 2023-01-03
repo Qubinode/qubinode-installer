@@ -134,6 +134,7 @@ function qubinode_product_deployment () {
               else
 		            printf "%s\n" "   ${blu}Please pass required command${end}"
                     printf "%s\n" "   ${blu}./qubinode-installer -p vyos_router -m create${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p vyos_router -m destroy${end}"
               fi
               ;;
 
