@@ -35,6 +35,8 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 | ------------- | ----------------- |-----------------|
 |     Release 3.0     | 2.10               | 2.8.0 |
 
+### Testing 
+* [chatgpt: Chat GPT console client in Golang](https://github.com/kkdai/chatgpt)
 
 ### Features in v3.0 Version
 - [x] Support for RHEL 9.1

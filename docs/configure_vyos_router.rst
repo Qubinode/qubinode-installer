@@ -26,10 +26,15 @@ For Quick install::
 
 Create  Vyos builder Images -This will be used to build the Vyos image
 -----------------------
-The following script will crete the debian builder vm::
+The following script will crete the debian builder vm internal network::
 
     sudo ssh-keygen
     lib/vyos/deploy-vyos-builder.sh create
+
+The following script will crete the debian builder vm on a external network::
+
+    sudo ssh-keygen
+    lib/vyos/deploy-vyos-builder.sh create bridge
 
 In new tab ssh into the builder VM
 ----------------------------------
@@ -63,7 +68,7 @@ To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::
 
-     lib/vyos/deploy-vyos-builder.sh destroy vyos-r1.qcow2
+     lib/vyos/deploy-vyos-builder.sh destroy
 
 
 

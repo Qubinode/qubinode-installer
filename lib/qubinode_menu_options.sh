@@ -9,7 +9,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones ipilab kvm_install_vm"
+    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones ipilab kvm_install_vm vyos_router"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -124,6 +124,16 @@ function qubinode_product_deployment () {
               else
 		    printf "%s\n" "   ${blu}Configuring gozones dns${end}"
                     qubinode_setup_gozones
+              fi
+              ;;
+
+          vyos_router)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  qubinode_vyos_router_maintenance
+              else
+		    printf "%s\n" "   ${blu}Configuring vyos_router${end}"
+                    qubinode_vyos_router_builder
               fi
               ;;
 
