@@ -1,12 +1,13 @@
 #!/bin/bash
-    echo "$ALL_ARGS"
-    exit 
+
 function vyos_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
     SUBNET=$(cat "${kvm_host_vars_file}" | grep kvm_subnet: | awk '{print $2}')
     USE_BRIDGE=$(cat "${kvm_host_vars_file}" | grep use_vyos_bridge: | awk '{print $2}')
+    echo "$ALL_ARGS"
+    exit 
 }
 
 
