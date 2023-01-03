@@ -1,5 +1,6 @@
 #!/bin/bash
-    echo "$3 $4 $5"
+    echo "$ALL_ARGS"
+    exit 
 function vyos_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
