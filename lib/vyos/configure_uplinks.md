@@ -1,13 +1,16 @@
-#########################
-Configure two routers using BGP 
-#########################
 
-https://docs.vyos.io/en/latest/configuration/protocols/bgp.html
+# Configure two routers using BGP 
+The below example will configure two routers using BGP.  The routers will be configured with the following:
+
+**Offfical Documentation:**
+* https://docs.vyos.io/en/latest/configuration/protocols/bgp.html
 
 Configuration
 =============
 
-Node 1
+* **Router 1**
+  * ssh to router 1
+  * example: ssh vyos@192.168.1.25
 ```
 ROUTER_1_IP=192.168.1.25 
 ROUTER_2_IP=192.168.1.24
@@ -35,7 +38,9 @@ $ show ip bgp neighbors 192.168.1.24 routes
 $ ping 192.168.14.1
 ```
 
-Node 2
+* **Router 2**
+  * ssh to router 2
+  * example: ssh vyos@192.168.1.24
 ```
 ROUTER_1_IP=192.168.1.24 
 ROUTER_2_IP=192.168.1.25
