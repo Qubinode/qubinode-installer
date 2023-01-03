@@ -9,7 +9,7 @@ function vyos_variables () {
 }
 
 echo $1 $2 $3 $4 $5 $6 
-
+echo "testing $4 $5"
 if [  $#  -ne  2 ]; then
     echo  "Usage: $0 create vyos-1.4-rolling-202212280917-cloud-init-10G-qemu.qcow2" 
     exit 1
