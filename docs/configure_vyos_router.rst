@@ -65,10 +65,19 @@ Deploy vyos-router on Qubinode
 Once the builder vm has created the vyos image you can deploy the image on Qubinode::
 
     # cd ~/qubinode-installer
-    # lib/vyos/deploy-vyos-router.sh create vyos-r1.qcow2
-    $ ./qubinode-installer -p  deploy_vyos_router create
+    # ./qubinode-installer -p  deploy_vyos_router -m create  vyos-r1.qcow2
 
+For vShpere deployments
+-----------------------
+Download the ova and deploy it to vcenter the ssh into the router vm and run the following commands::
 
+    # cd ~/qubinode-installer
+    # ./qubinode-installer -p  deploy_vyos_router -m create  vsphere-vyos-r2.ova
+    # "curl -OL http://192.168.1.66/vsphere-vyos-r2.sh "
+    echo "chmod +x vsphere-vyos-r2.sh"
+    echo "bash vsphere-vyos-r2.sh"
+
+    
 To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x 
+#set -x 
 if [ -z $1  ]; then
     echo  "Usage: $0 create|destroy" 
     exit 1
