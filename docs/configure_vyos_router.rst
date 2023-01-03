@@ -77,5 +77,5 @@ In order to destroy the router vm you will need to run the following command::
 
 To Confiure the router to use BGP see the below links:
 -----------------------
-* `Vyos BGP <https://docs.vyos.io/en/latest/configuration/protocols/bgp.html>`_
-* 
+* `Configure two routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/configure_uplinks.md>`_
+* `Configure three or more routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/three_routers_config.md>`_
