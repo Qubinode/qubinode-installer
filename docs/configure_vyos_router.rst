@@ -71,8 +71,6 @@ For vShpere deployments
 -----------------------
 Download the ova and deploy it to vcenter the ssh into the router vm and run the following commands::
 
-    # cd ~/qubinode-installer
-    # ./qubinode-installer -p  deploy_vyos_router -m create  vsphere-vyos-r2.ova
     # ssh vyos@192.168.1.24 #example ip address you can get the ip by logging into vcenter and looking at the router vm the user name and password is vyos/vyos
     # curl -OL http://192.168.1.66/vsphere-vyos-r2.sh 
     # chmod +x vsphere-vyos-r2.sh
@@ -89,7 +87,7 @@ In order to destroy the router vm you will need to run the following command::
     ./qubinode-installer -p vyos_router -m  destroy
 
 
-To Confiure the router to use BGP see the below links:
+To Configure the router to use BGP see the below links:
 -----------------------
 * `Configure two routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/configure_uplinks.md>`_
 * `Configure three or more routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/three_routers_config.md>`_
