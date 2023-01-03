@@ -73,7 +73,8 @@ Download the ova and deploy it to vcenter the ssh into the router vm and run the
 
     # cd ~/qubinode-installer
     # ./qubinode-installer -p  deploy_vyos_router -m create  vsphere-vyos-r2.ova
-    # "curl -OL http://192.168.1.66/vsphere-vyos-r2.sh "
+    # ssh vyos@192.168.1.24 #example ip address you can get the ip by logging into vcenter and looking at the router vm the user name and password is vyos/vyos
+    # curl -OL http://192.168.1.66/vsphere-vyos-r2.sh 
     # chmod +x vsphere-vyos-r2.sh
     # bash vsphere-vyos-r2.sh
 
