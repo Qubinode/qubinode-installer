@@ -1,5 +1,13 @@
 #!/bin/bash
 
+function vyos_variables () {
+    setup_variables
+    vars_file="${project_dir}/playbooks/vars/all.yml"
+    kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    SUBNET=$(cat "${kvm_host_vars_file}" | grep kvm_subnet: | awk '{print $2}')
+    USE_BRIDGE=$(cat "${kvm_host_vars_file}" | grep use_vyos_bridge: | awk '{print $2}')
+}
+
 if [  $#  -ne  2 ]; then
     echo  "Usage: $0 create vyos-1.4-rolling-202212280917-cloud-init-10G-qemu.qcow2" 
     exit 1
@@ -36,8 +44,14 @@ EOF
 
 
 function create_router(){
-   create_livirt_networks
-   IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
+    create_livirt_networks
+    if [ $USE_BRIDGE  ==  "false"  ]; then
+        IPADDR=$(sudo virsh net-dhcp-leases default | grep vyos-builder | awk '{print $5}' | sed 's/\/24//g')
+    else
+        MAC_ADDRESS=$( sudo  virsh domiflist vyos-builder | grep bridge | awk '{print $5}')
+        IPADDR=$(sudo nmap -sP ${SUBNET} | grep  -B2  ${MAC_ADDRESS^^} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+    fi
+
     cd $HOME
     curl -OL http://${IPADDR}/$1
     VM_NAME=$(basename $HOME/$1  | sed 's/.qcow2//g')
