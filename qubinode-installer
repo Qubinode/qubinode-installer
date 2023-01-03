@@ -113,6 +113,7 @@ rhel_major=$(sed -rn 's/.*([0-9])\.[0-9].*/\1/p' /etc/redhat-release)
 . "${project_dir}/lib/qubinode_rhsm.sh"
 . "${project_dir}/lib/qubinode_gozonesdns.sh"
 . "${project_dir}/lib/qubinode_kvm_install_vm.sh"
+. "${project_dir}/lib/qubinode_deploy_vyos_builder.sh"
 if [ $ENABLE_SATELLITE == "true" ] || [ -z $ENABLE_SATELLITE ];
 then 
     . "${project_dir}/lib/qubinode_satellite.sh"
