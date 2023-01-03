@@ -8,12 +8,6 @@ function vyos_variables () {
     USE_BRIDGE=$(cat "${kvm_host_vars_file}" | grep use_vyos_bridge: | awk '{print $2}')
 }
 
-echo $1 $2 $3 $4 $5 $6 
-echo "testing $4 $5"
-if [  $#  -ne  2 ]; then
-    echo  "Usage: $0 create vyos-1.4-rolling-202212280917-cloud-init-10G-qemu.qcow2" 
-    exit 1
-fi
 
 function create_livirt_networks(){
     array=( vyos-network-1  vyos-network-2 )
@@ -89,10 +83,10 @@ function destroy_router(){
 
 function qubinode_deploy_vyos_router_maintenance(){
     echo "Run the following commands"
-    case ${product_maintenance} in
+    case ${4} in
        create)
            vyos_variables
-           create_router
+           create_router $5
            ;;
        destroy)
            destroy_router
