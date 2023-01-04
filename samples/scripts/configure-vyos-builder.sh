@@ -43,7 +43,7 @@ if [ ! -d $HOME/vyos-vm-images ]; then
     git clone https://github.com/vyos/vyos-vm-images.git
 
     if [ ${TAREGT_ENV} == "vmware" ]; then
-      wget http://192.168.1.240/VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
+      wget ${DOWNLOAD_URL}
       unzip VMware-ovftool-4.4.3-18663434-lin.x86_64.zip
       ln -s /root/ovftool/ovftool  /usr/local/bin/
       

@@ -89,13 +89,13 @@ mirror_vm:
   - sudo semanage port  -l  | grep -w http_port_t
   - cp /home/admin/qubinode-installer/pull_secret.json /home/cloud-user/pull_secret.json
 
-leon_ai:
- image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
+ubuntu:
+ image: ubuntu-22.04-server-cloudimg-amd64.img
  rhnregister: true
  numcpus: 4
  memory: 8192
  disks:
-  - size: 500
+  - size: 60
  reservedns: true
  nets:
   - qubinet
@@ -105,17 +105,6 @@ leon_ai:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo dnf update -y
-  - sudo dnf install firewalld nodejs acl policycoreutils-python-utils -y
-  - npm install --global @leon-ai/cli
-  - systemctl enable firewalld
-  - systemctl start firewalld
-  - sudo firewall-cmd --add-port=1337/tcp --permanent
-  - sudo firewall-cmd --reload
-  - sudo semanage port  -a 1337 -t http_port_t -p tcp
-  - sudo semanage port  -l  | grep -w http_port_t
-  - leon create birth
-  - leon start
 
 tailscale:
  image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
@@ -123,7 +112,7 @@ tailscale:
  numcpus: 4
  memory: 8192
  disks:
-  - size: 500
+  - size: 60
  reservedns: true
  nets:
   - qubinet
