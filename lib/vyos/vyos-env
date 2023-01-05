@@ -1,5 +1,6 @@
 ## This file is sourced by the vyos-env script.
 # https://networkproguide.com/cidr-subnet-mask-ipv4-cheat-sheet/
+# https://www.cyberciti.biz/faq/ip-route-add-network-command-for-linux-explained/
 ## Router 1 Example:
 export MAIN_ROUTER_IP=192.168.1.25/24
 export ROUTER_NAME=vyos-r1

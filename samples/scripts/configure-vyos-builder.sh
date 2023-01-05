@@ -21,6 +21,17 @@ then
     exit
 fi
 
+function generate_cert(){
+  if [ -f /root/myself.pem ]; then
+    echo "myself.pem  already exists"
+    return
+  fi
+  # Generate a passphrase
+  openssl req -x509 -nodes -sha256 -days 365 -newkey rsa:1024 -keyout /root/myself.pem -out /root/myself.pem  -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=vyos-builder.qubinode-lab.io" -addext "subjectAltName = DNS:vyos-builder.qubinode-lab.io" -addext "certificatePolicies = 1.2.3.4"
+
+  openssl x509 -in /root/myself.pem -text || exit 1
+}
+
 if [ ! -f /usr/bin/ansible ];
 then
     sudo apt update
@@ -102,6 +113,7 @@ vyos_config_commands:
   - set system host-name '${ROUTER_NAME}'
   - set system ntp server ${TIME_SERVER_1}
   - set system ntp server ${TIME_SERVER_2}
+  - set system name-server '${DNS_SERVER}'
   - delete interfaces ethernet eth0 address 'dhcp'
   - set interfaces ethernet eth0 address '${MAIN_ROUTER_IP}'
   - set interfaces ethernet eth0 description 'INTERNET_FACING'
@@ -150,6 +162,7 @@ source /opt/vyatta/etc/functions/script-template
 set system host-name '${ROUTER_NAME}'
 set system ntp server ${TIME_SERVER_1}
 set system ntp server ${TIME_SERVER_2}
+set system name-server '${DNS_SERVER}'
 delete interfaces ethernet eth0 address 'dhcp'
 set interfaces ethernet eth0 address '${MAIN_ROUTER_IP}'
 set interfaces ethernet eth0 description 'INTERNET_FACING'
@@ -175,7 +188,39 @@ run show interfaces
 exit
 EOF
 
+# set static ip on router 
+
+cat >setup-static-ip.sh<<EOF
+#!/bin/bash
+function setup_static_ip() {
+cat >/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg<<<EOF 
+  network: {config: disabled}
+/EOF
+cat >/etc/network/interfaces.d/50-cloud-init<<<EOF
+  # This file is generated from information provided by the datasource.  Changes
+  # to it will not persist across an instance reboot.  To disable cloud-init's
+  # network configuration capabilities, write a file
+  # /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg with the following:
+  # network: {config: disabled}
+  auto lo
+  iface lo inet loopback
+
+  auto eth0
+  iface eth0 inet static
+          address ${MAIN_ROUTER_IP}
+          netmask 255.255.252.0
+          gateway ${OUTBOUND_GATEWAY}
+/EOF
+  }
+  setup_static_ip
+  cat /etc/network/interfaces.d/50-cloud-init
+  echo "rebooting in 10 seconds"
+  sleep 10s 
+  reboot
+EOF
+sed -i  's/.EOF/EOF/g' setup-static-ip.sh
     chmod +x vsphere-${ROUTER_NAME}.sh
+    chmod +x setup-static-ip.sh
     cat vsphere-${ROUTER_NAME}.sh
     sleep 5s 
   fi 
@@ -225,17 +270,7 @@ function destroy(){
   fi
 }
 
-function generate_cert(){
-  if [ -f /root/myself.pem ]; then
-    echo "myself.pem  already exists"
-    return
-  fi
-  # Generate a passphrase
-  openssl req -x509 -nodes -sha256 -days 365 -newkey rsa:1024 -keyout /root/myself.pem -out /root/myself.pem  -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=vyos-builder.qubinode-lab.io" -addext "subjectAltName = DNS:vyos-builder.qubinode-lab.io" -addext "certificatePolicies = 1.2.3.4"
 
-  openssl x509 -in /root/myself.pem -text || exit 1
-
-}
 
 if [ $1 == "create" ]; then
     create

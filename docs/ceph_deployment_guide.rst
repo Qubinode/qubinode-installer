@@ -29,6 +29,7 @@ Create plan for Ceph Cluster Deployment
 Steps:: 
 
     $ sudo ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
+    # Option edit nets under  kcli_plans/ceph/ceph-cluster.yml
     $ sudo kcli create plan -f  kcli_plans/ceph-deployment.yml
     $ samples/scripts/update-ceph-dns.sh # press q to exit
     $ sudo kcli ssh ceph-mon01

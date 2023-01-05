@@ -13,7 +13,7 @@ For Quick install::
     ./qubinode-installer -m host
     ./qubinode-installer -p kcli
     ./qubinode-installer -p gozones
-    sudo ssh-keygen -t rsa -b 4096 
+    sudo ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
 
 
 ZTP JUMPBOX

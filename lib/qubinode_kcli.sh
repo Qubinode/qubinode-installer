@@ -38,8 +38,6 @@ kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 ############################################
 vars_file="${project_dir}/playbooks/vars/all.yml"
 vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
-vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
-requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
 
 
 ############################################
@@ -92,10 +90,10 @@ function kcli_configure_images(){
 ############################################
 function update_default_settings(){
     if [ ! -f "${vault_key_file}" ]
-      then
-          printf "%s\n" " ${vault_key_file} does not exist"
-          exit 1
-      fi
+    then
+        printf "%s\n" " ${vault_key_file} does not exist"
+        exit 1
+    fi
 
     echo "Configuring default settings"
     if  [[ -f  ${defaults_file} ]];
@@ -110,6 +108,8 @@ function update_default_settings(){
       echo "${defaults_file} not found exiting"
       exit 1
     fi  
+
+
 
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     ONE_RHEL=$(awk '/one_redhat/ {print $2}' "${vars_file}")
@@ -157,6 +157,14 @@ function update_default_settings(){
     then
       sed -i "s/CHANGEOFFLINETOKEN/$(cat $HOME/offline_token)/g" "${project_dir}/${KCLI_PROFILE}"
     fi
+
+    tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
+    if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
+    then
+      sed -i "s/qubinet/vyos-network-1/g" "${project_dir}/${KCLI_PROFILE}"
+      sed -i "s/qubinet/vyos-network-1/g"  "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
+    fi 
+
     sudo mkdir -p /root/.kcli
     sudo cp "${project_dir}/${KCLI_PROFILE}" /root/.kcli/profiles.yml
     sudo mkdir -p ${HOME}/.kcli

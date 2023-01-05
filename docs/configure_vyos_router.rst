@@ -28,12 +28,12 @@ Create  Vyos builder Images -This will be used to build the Vyos image
 -----------------------
 The following script will crete the debian builder vm internal network::
 
-    sudo ssh-keygen
-    ./qubinode-installer -p vyos_router -m create
+    $ sudo ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
+    $ ./qubinode-installer -p vyos_router -m create
 
 The following script will crete the debian builder vm on a external network::
 
-    sudo ssh-keygen
+    $ sudo ssh-keygen -f  /root/.ssh/id_rsa  -t rsa -N ''
     $ cat playbooks/vars/kvm_host.yml | grep use_vyos_bridge #set use vyos bridge to true the default is false 
     use_vyos_bridge: true
 
@@ -86,6 +86,10 @@ In order to destroy the router vm you will need to run the following command::
 
     ./qubinode-installer -p vyos_router -m  destroy
 
+Default Network info for Vyos router
+-----------------------
+* vyos-network-1 will use dhcp with nat for the vms.
+* vyos-network-2 uses static ip  without nat for the vms. 
 
 To Configure the router to use BGP see the below links:
 -----------------------
