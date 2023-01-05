@@ -84,7 +84,7 @@ To Destory builder vm
 -----------------------
 In order to destroy the router vm you will need to run the following command::
 
-    ./qubinode-installer -p vyos_router -m  destroy
+    ./qubinode-installer -p vyos_router -m  destroy  vyos-r1.qcow2
 
 Default Network info for Vyos router
 -----------------------

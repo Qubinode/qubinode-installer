@@ -92,7 +92,9 @@ function qubinode_deploy_vyos_router_maintenance(){
            create_router $MACHINE_NAME
            ;;
        destroy)
-           destroy_router
+           vyos_variables
+           echo "Destorying router $MACHINE_NAME"
+           destroy_router $MACHINE_NAME
            ;;
        *)
            echo "No arguement was passed"

@@ -124,9 +124,6 @@ vyos_config_commands:
   - set interfaces ethernet eth1 vif ${VLAN_ID} address '${ETH1_VLAN_OCTECT}.1/24'
   - set interfaces ethernet eth2 address '${ETH2_IP_OCTECT}.1/24'
   - set interfaces ethernet eth2 description '${ETH2_NAME}'
-  - set nat source rule 10 outbound-interface 'eth0'
-  - set nat source rule 10 source address '${ETH1_IP_OCTECT}.0/24'
-  - set nat source rule 10 translation address masquerade
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 default-router '${ETH1_IP_OCTECT}.1'
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 domain-name '${FQN}'
   - set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24  name-server '${DNS_SERVER}'
@@ -173,9 +170,6 @@ set interfaces ethernet eth1 vif ${VLAN_ID} description 'VLAN ${VLAN_ID}'
 set interfaces ethernet eth1 vif ${VLAN_ID} address '${ETH1_VLAN_OCTECT}.1/24'
 set interfaces ethernet eth2 address '${ETH2_IP_OCTECT}.1/24'
 set interfaces ethernet eth2 description '${ETH2_NAME}'
-set nat source rule 10 outbound-interface 'eth0'
-set nat source rule 10 source address '${ETH1_IP_OCTECT}.0/24'
-set nat source rule 10 translation address masquerade
 set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 default-router '${ETH1_IP_OCTECT}.1'
 set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24 domain-name '${FQN}'
 set service dhcp-server shared-network-name ${ETH1_NAME} subnet ${ETH1_IP_OCTECT}.0/24  name-server '${DNS_SERVER}'
@@ -225,31 +219,58 @@ sed -i  's/.EOF/EOF/g' setup-static-ip.sh
     sleep 5s 
   fi 
 
+    cat >configure-nat-${ROUTER_NAME}.sh<<EOF
+#!/bin/vbash
+#https://docs.vyos.io/en/latest/automation/command-scripting.html
+# https://sivasankar.org/2018/2066/vyos-virtual-router-for-home-lab-or-smb/?utm_source=pocket_mylist
+source /opt/vyatta/etc/functions/script-template
+set nat source rule 10 outbound-interface 'eth0'
+set nat source rule 10 source address '${ETH1_IP_OCTECT}.0/24'
+set nat source rule 10 translation address masquerade
+commit 
+save
+run ping 1.1.1.1  count 3 interface ${ETH1_IP_OCTECT}.1
+EOF
+
   if [ ${TAREGT_ENV} == "kvm" ]; then
     ansible-playbook qemu.yml -e iso_local=/tmp/vyos-rolling-latest.iso  -e grub_console=serial  -e guest_agent=qemu -e keep_user=true -e enable_dhcp=false -e enable_ssh=true  -e cloud_init=true -e cloud_init_ds=NoCloud
     QCOW_IMAGE_NAME=$(basename /tmp/vyos-*.qcow2 | sed 's/ //g')
     sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/${ROUTER_NAME}.qcow2
     sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/
+    cp configure-nat-${ROUTER_NAME}.sh /var/www/html/configure-nat-${ROUTER_NAME}.sh
     sudo chmod -R 755 /var/www/html/
     echo "Run the command below on host server to create the router"
     echo "cd qubinode-installer"
     echo " ./qubinode-installer -p  deploy_vyos_router -m create $(basename /var/www/html/${ROUTER_NAME}.qcow2 | sed 's/ //g')"
     echo "run the folowing command on the router to add the route to the main router"
+    echo "*****************************************************************"
     echo "sudo ip route add ${ETH1_IP_OCTECT}.0/24 via $(echo $MAIN_ROUTER_IP | sed 's/.24//g') dev qubibr0"
+    echo "ssh into deployed VM and run the following commands"
+    echo "*****************************************************************"
+    echo "ssh vyos@${MAIN_ROUTER_IP}"
+    echo "curl -OL http://$(hostname -I | awk '{print $1}')/configure-nat-${ROUTER_NAME}.sh"
+    echo "chmod +x configure-nat-${ROUTER_NAME}.sh"
+    echo "bash configure-nat-${ROUTER_NAME}.sh"
   elif [ ${TAREGT_ENV} == "vmware" ]; then
     generate_cert
     ansible-playbook vmware.yml -e keep_user=true -e enable_dhcp=true -e vyos_vmware_private_key_path=/root/myself.pem -e cloud_init=true -e cloud_init_ds=ConfigDrive -e guest_agent=vmware -e cloud_init_disable_config=true   -e enable_ssh=true -vvv 
     QCOW_IMAGE_NAME=$(basename /tmp/vyos-*.ova | sed 's/ //g')
     sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/${ROUTER_NAME}.ova
     cp vsphere-${ROUTER_NAME}.sh  /var/www/html/vsphere-${ROUTER_NAME}.sh
+    cp configure-nat-${ROUTER_NAME}.sh /var/www/html/configure-nat-${ROUTER_NAME}.sh
     sudo chmod -R 755 /var/www/html/
 
     echo "Download the ova and deploy on vcenter"
+    echo "**************************************"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/${ROUTER_NAME}.ova"
     echo "ssh into deployed VM and run the following commands"
+    echo "ssh vyos@${MAIN_ROUTER_IP}"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/vsphere-${ROUTER_NAME}.sh "
     echo "chmod +x vsphere-${ROUTER_NAME}.sh"
     echo "bash vsphere-${ROUTER_NAME}.sh"
+    echo "curl -OL http://$(hostname -I | awk '{print $1}')/configure-nat-${ROUTER_NAME}.sh"
+    echo "chmod +x configure-nat-${ROUTER_NAME}.sh"
+    echo "bash configure-nat-${ROUTER_NAME}.sh"
   fi 
 
 }
