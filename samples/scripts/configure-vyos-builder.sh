@@ -234,6 +234,8 @@ sed -i  's/.EOF/EOF/g' setup-static-ip.sh
     echo "Run the command below on host server to create the router"
     echo "cd qubinode-installer"
     echo " ./qubinode-installer -p  deploy_vyos_router -m create $(basename /var/www/html/${ROUTER_NAME}.qcow2 | sed 's/ //g')"
+    echo "run the folowing command on the router to add the route to the main router"
+    echo "sudo ip route add ${ETH1_IP_OCTECT}.0/24 via $(echo $MAIN_ROUTER_IP | sed 's/.24//g') dev qubibr0"
   elif [ ${TAREGT_ENV} == "vmware" ]; then
     generate_cert
     ansible-playbook vmware.yml -e keep_user=true -e enable_dhcp=true -e vyos_vmware_private_key_path=/root/myself.pem -e cloud_init=true -e cloud_init_ds=ConfigDrive -e guest_agent=vmware -e cloud_init_disable_config=true   -e enable_ssh=true -vvv 
