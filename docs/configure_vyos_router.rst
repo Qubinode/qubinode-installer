@@ -95,3 +95,7 @@ To Configure the router to use BGP see the below links:
 -----------------------
 * `Configure two routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/configure_uplinks.md>`_
 * `Configure three or more routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/three_routers_config.md>`_
+
+To Confiure the router to use zerotier vm see the link below: 
+-----------------------
+* `Run ZeroTier Agent or Controller as containers on VyOS router. <https://github.com/tosin2013/VyOS/tree/main/ZT>`_
