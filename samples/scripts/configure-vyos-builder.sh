@@ -202,7 +202,7 @@ cat >/etc/network/interfaces.d/50-cloud-init<<<EOF
   auto eth0
   iface eth0 inet static
           address ${MAIN_ROUTER_IP}
-          netmask 255.255.252.0
+          netmask ${MAIN_ROUTER_SUBNET}
           gateway ${OUTBOUND_GATEWAY}
 /EOF
   }
@@ -258,16 +258,22 @@ EOF
     sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/${ROUTER_NAME}.ova
     cp vsphere-${ROUTER_NAME}.sh  /var/www/html/vsphere-${ROUTER_NAME}.sh
     cp configure-nat-${ROUTER_NAME}.sh /var/www/html/configure-nat-${ROUTER_NAME}.sh
+    cp setup-static-ip.sh /var/www/html/setup-static-ip.sh
     sudo chmod -R 755 /var/www/html/
 
     echo "Download the ova and deploy on vcenter"
     echo "**************************************"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/${ROUTER_NAME}.ova"
     echo "ssh into deployed VM and run the following commands"
-    echo "ssh vyos@${MAIN_ROUTER_IP}"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/vsphere-${ROUTER_NAME}.sh "
     echo "chmod +x vsphere-${ROUTER_NAME}.sh"
     echo "bash vsphere-${ROUTER_NAME}.sh"
+    echo "reopen vyos console and run the following commands if ip changes"
+    echo "sudo su - root"
+    echo "curl -OL http://$(hostname -I | awk '{print $1}')/setup-static-ip.sh"
+    echo "chmod +x setup-static-ip.sh"
+    echo "bash setup-static-ip.sh"
+    echo "wait for restart then ssh back into the router"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/configure-nat-${ROUTER_NAME}.sh"
     echo "chmod +x configure-nat-${ROUTER_NAME}.sh"
     echo "bash configure-nat-${ROUTER_NAME}.sh"

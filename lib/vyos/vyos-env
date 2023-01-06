@@ -15,6 +15,7 @@ export FQN=example.com
 export ETH1_VLAN_OCTECT=192.168.12
 export VLAN_ID=101
 export OUTBOUND_GATEWAY=192.168.1.1
+# export MAIN_ROUTER_SUBNET=255.255.255.0 # set when using VMWARE
 export TAREGT_ENV=kvm # kvm or vmware
 
 ## Router 2 Example:
@@ -31,6 +32,7 @@ export TAREGT_ENV=kvm # kvm or vmware
 # export ETH1_VLAN_OCTECT=192.168.15
 # export VLAN_ID=301
 # export OUTBOUND_GATEWAY=192.168.1.1
+# export MAIN_ROUTER_SUBNET=255.255.255.0 # set when using VMWARE
 # export TAREGT_ENV=kvm # kvm or vmware
 
 ## Router 3 Example:
@@ -46,7 +48,8 @@ export TAREGT_ENV=kvm # kvm or vmware
 # export FQN=example.com
 # export ETH1_VLAN_OCTECT=192.168.18
 # export VLAN_ID=401
-# export OUTBOUND_GATEWAY=192.168.1.1
+# export OUTBOUND_GATEWAY=192.168.1.1 
+# export MAIN_ROUTER_SUBNET=255.255.255.0 # set when using VMWARE
 # export TAREGT_ENV=vmware # kvm or vmware
 
 ### Add more routers as you need them.
