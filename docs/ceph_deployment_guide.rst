@@ -9,17 +9,16 @@ Tested on
 ----------
 * RHEL 9.1
 
+Review the Getting started Guide
+------------------------------
+`Getting started Guide <https://qubinode-installer.readthedocs.io/en/latest/quick_start.html>`_
+
 Configure Qubinode for Ceph Deployment
 ------------------------------
 
-For Quick install::
+Run the base commands below:: 
 
-    git clone https://github.com/tosin2013/qubinode-installer.git
     cd ~/qubinode-installer
-    ./qubinode-installer -m setup
-    ./qubinode-installer -m rhsm
-    ./qubinode-installer -m ansible
-    ./qubinode-installer -m host
     ./qubinode-installer -p kcli
     ./qubinode-installer -p gozones
 

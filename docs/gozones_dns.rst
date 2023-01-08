@@ -6,15 +6,18 @@ GoZones can operate in single-file input/output batches, or via an HTTP server.
 
 * `Github Page <https://github.com/kenmoini/go-zones>`_
 
+
+Review the Getting started Guide
+------------------------------
+`Getting started Guide <https://qubinode-installer.readthedocs.io/en/latest/quick_start.html>`_
+
 Kcli deployment on Qubinode
 ------------------------------
-For Quick install::
+
+Run the base commands below:: 
+
 
     cd ~/qubinode-installer
-    ./qubinode-installer -m setup
-    ./qubinode-installer -m rhsm
-    ./qubinode-installer -m ansible
-    ./qubinode-installer -m host
     ./qubinode-installer -p kcli
     ./qubinode-installer -p gozones
 
