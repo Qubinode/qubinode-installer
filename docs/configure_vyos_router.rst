@@ -99,3 +99,7 @@ To Configure the router to use BGP see the below links:
 To Confiure the router to use zerotier vm see the link below: 
 -----------------------
 * `Run ZeroTier Agent or Controller as containers on VyOS router. <https://github.com/tosin2013/VyOS/tree/main/ZT>`_
+
+Issues 
+-------
+* `Submit Qubinode issues <https://github.com/Qubinode/qubinode-installer/issues>`_

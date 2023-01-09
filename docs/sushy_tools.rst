@@ -17,7 +17,7 @@ Deploy sushy tools instance::
     ./qubinode-installer -p sushy_tools -m create
 
 .. image::  https://i.imgur.com/tZucgAm.png
-    
+
 Deploy VMs for redfish deployments::
 
     ./qubinode-installer -p sushy_tools -m create_vms
@@ -34,10 +34,10 @@ Destory VMs and sushy tools instance::
 
 Issues 
 -------
-`homelab <https://github.com/kenmoini/homelab/issues>`_
-`Submit Qubinode issues <https://github.com/Qubinode/qubinode-installer/issues>`_
+* `homelab <https://github.com/kenmoini/homelab/issues>`_
+* `Submit Qubinode issues <https://github.com/Qubinode/qubinode-installer/issues>`_
 
-Link
+Offical Link
 -------
 `Redfish development tools <https://github.com/openstack/sushy-tools>`_ 
 
