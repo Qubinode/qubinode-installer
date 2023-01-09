@@ -27,19 +27,27 @@ function deploy_sushy_tools(){
   else
     printf "%s\n" "   ${blu}Sushy tools already exists${end}"
     printf "${yel}***************************${end}"
+    printf "%s\n" 
     curl -v http://$(hostname -I | awk '{print $2}'| sed 's/ //g'):8111/redfish/v1/Systems/
+    printf "%s\n" 
     printf "%s\n" "   ${blu}To remove sushy tools run the following command:${end}"
     printf "${yel}./qubinode-installer -p sushy_tools -m destroy_sushy_tools${end}"
   fi
 }
 
 function delete_vms(){
-  CLUSTER_NAME=$(yq -r --tojson extras-create-sushy-bmh.yaml  | jq '.[].vars.cluster_name' | sed 's/"//g')
-  NODES=$(yq -r --tojson extras-create-sushy-bmh.yaml  | jq '.[].vars.virtual_bmh[].name' | sed 's/"//g')
-  for node in $NODES; do
-    sudo virsh destroy $CLUSTER_NAME-$node
-    sudo virsh undefine $CLUSTER_NAME-$node
-  done
+  if [ -f  $HOME/ocp4-ai-svc-universal/extras-create-sushy-bmh.yaml ]; then
+    cd $HOME/ocp4-ai-svc-universal
+    CLUSTER_NAME=$(yq -r  -o=json extras-create-sushy-bmh.yaml  | jq '.[].vars.cluster_name' | sed 's/"//g')
+    NODES=$(yq -r  -o=json extras-create-sushy-bmh.yaml  | jq '.[].vars.virtual_bmh[].name' | sed 's/"//g')
+    for node in $NODES; do
+      sudo virsh destroy $CLUSTER_NAME-$node
+      sudo virsh undefine $CLUSTER_NAME-$node
+    done
+  else
+    echo "vms do not exist"
+  fi
+
 }
 
 function destroy_sushy_tools(){
@@ -48,8 +56,8 @@ function destroy_sushy_tools(){
     
     export CONTAINER_NAME="sushy-tools"
     export CONTAINER_VOLUME_ROOT="/opt/service-containers/${CONTAINER_NAME}"
-     ./scripts/service_init.sh remove
-    rm -rf $CONTAINER_VOLUME_ROOT
+     ./scripts/service_init.sh stop
+    sudo rm -rf ${HOME}/homelab
 }
 
 function create_vms(){
@@ -80,7 +88,10 @@ EOF
             --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
             extras-create-sushy-bmh.yaml
     else
-        cd $HOME/qubinode-installer/samples
+        cd $HOME/ocp4-ai-svc-universal
+        ansible-playbook -e "@credentials-infrastructure.yaml" \
+            --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
+            extras-create-sushy-bmh.yaml
     fi 
 }
 
@@ -102,7 +113,12 @@ function sushy_tools_maintenance(){
        destroy_vms)
            sushy_variables
            echo "Destorying vms"
-           destroy_router
+           delete_vms
+           ;;
+        destroy_sushy_tools)
+           sushy_variables
+           echo "Destorying vms and sushy tools"
+           destroy_sushy_tools
            ;;
        *)
            echo "No arguement was passed"

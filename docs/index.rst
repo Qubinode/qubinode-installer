@@ -16,6 +16,7 @@ A Qubinode is a bare metal node that uses the qubinode-installer to configure RH
     ceph_deployment_guide
     configure_vyos_router
     tailscale_documenation
+    sushy_tools
     ztp_for_factory_workloads
 
 
