@@ -25,11 +25,11 @@ function deploy_sushy_tools(){
 
     curl -v http://$(hostname -I | awk '{print $2}'| sed 's/ //g'):8111
   else
-    echo "Sushy tools already exists"
-    echo "***************************"
+    printf "%s\n" "   ${blu}Sushy tools already exists${end}"
+    printf "${yel}***************************${end}"
     curl -v http://$(hostname -I | awk '{print $2}'| sed 's/ //g'):8111/redfish/v1/Systems/
-    echo "** To remove sushy tools run the following command: **"
-    echo "./qubinode-installer -p sushy_tools -m destroy_sushy_tools"
+    printf "%s\n" "   ${blu}To remove sushy tools run the following command:${end}"
+    printf "${yel}./qubinode-installer -p sushy_tools -m destroy_sushy_tools${end}"
   fi
 }
 
