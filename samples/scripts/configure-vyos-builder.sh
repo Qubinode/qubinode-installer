@@ -249,6 +249,7 @@ EOF
     echo "*****************************************************************"
     echo "ssh vyos@${MAIN_ROUTER_IP}"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/configure-nat-${ROUTER_NAME}.sh"
+    echo "cat /var/www/html/configure-nat-vyos-r1.sh and manually create this file if you are not using a bridge network"
     echo "chmod +x configure-nat-${ROUTER_NAME}.sh"
     echo "bash configure-nat-${ROUTER_NAME}.sh"
   elif [ ${TAREGT_ENV} == "vmware" ]; then

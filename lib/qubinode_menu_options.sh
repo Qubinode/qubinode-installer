@@ -149,6 +149,18 @@ function qubinode_product_deployment () {
               fi
               ;;
 
+            sushy_tools_maintenance)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  sushy_tools
+              else
+		            printf "%s\n" "   ${blu}Please pass required command${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p sushy_tools -m create${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p sushy_tools -m create_vms${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p sushy_tools -m destroy_vms${end}"
+              fi
+              ;;
+
           ipilab)
               if [ "A${qubinode_maintenance}" == "Atrue" ]
               then

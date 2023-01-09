@@ -123,6 +123,7 @@ fi
 . "${project_dir}/lib/qubinode_rhel.sh"
 . "${project_dir}/lib/qubinode_kcli.sh"
 . "${project_dir}/lib/qubinode_baremetal_ipi_lab.sh"
+. "${project_dir}/lib/lib/qubinode_lab_sushy.sh"
 
 # Exit if this is executed as the root user
 if is_root; then

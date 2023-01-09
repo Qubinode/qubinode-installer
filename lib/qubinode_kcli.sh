@@ -72,6 +72,7 @@ function kcli_configure_images(){
     sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
     sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
     sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2
+    sudo kcli download image centos8streams -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2
     # sudo kcli download image ubuntu -u https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.img
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     if [[ $(get_distro) == "rhel"  || "A${RUN_ON_RHPDS}" == "Ayes"  ]]; then
@@ -163,6 +164,7 @@ function update_default_settings(){
     then
       sed -i "s/qubinet/vyos-network-1/g" "${project_dir}/${KCLI_PROFILE}"
       sed -i "s/qubinet/vyos-network-1/g"  "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
+      
     fi 
 
     sudo mkdir -p /root/.kcli
