@@ -8,7 +8,7 @@ function sushy_variables () {
 
 
 function deploy_sushy_tools(){
-  if [ ! -d "${HOME}/sushy-tools" ]; then
+  if [ ! -d "${HOME}/homelab" ]; then
     cd $HOME
     git clone https://github.com/kenmoini/homelab.git
     cd homelab/legacy/containers-as-a-service/caas-sushy
