@@ -16,9 +16,13 @@ Deploy sushy tools instance::
     
     ./qubinode-installer -p sushy_tools -m create
 
+.. image::  https://i.imgur.com/tZucgAm.png
+    
 Deploy VMs for redfish deployments::
 
     ./qubinode-installer -p sushy_tools -m create_vms
+
+.. image:: https://i.imgur.com/J2mimEa.png
 
 Destroy VMs for redfish deployments::
     
