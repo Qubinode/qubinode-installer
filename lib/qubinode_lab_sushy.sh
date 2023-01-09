@@ -33,7 +33,12 @@ function deploy_sushy_tools(){
 }
 
 function delete_vms(){
-  echo "delete vms"
+  CLUSTER_NAME=$(yq -r --tojson extras-create-sushy-bmh.yaml  | jq '.[].vars.cluster_name' | sed 's/"//g')
+  NODES=$(yq -r --tojson extras-create-sushy-bmh.yaml  | jq '.[].vars.virtual_bmh[].name' | sed 's/"//g')
+  for node in $NODES; do
+    sudo virsh destroy $CLUSTER_NAME-$node
+    sudo virsh undefine $CLUSTER_NAME-$node
+  done
 }
 
 function destroy_sushy_tools(){
@@ -49,9 +54,32 @@ function destroy_sushy_tools(){
 function create_vms(){
     if [ ! -d $HOME/ocp4-ai-svc-universal ]; then
         cd $HOME
-        git clone
+        git clone https://github.com/tosin2013/ocp4-ai-svc-universal.git
+        cd ocp4-ai-svc-universal
+        python3 -m pip install --upgrade -r requirements.txt
+        ansible-galaxy collection install -r collections/requirements.yml
+        cat >credentials-infrastructure.yaml<<EOF
+---
+infrastructure_providers:
+## Bare Metal Host Infrastructure Provider, sushy-tools virtual BMHs
+- name: sushyBMH
+  type: libvirt
+  credentials:
+    manufacturer: sushy
+    ipmi_manufacturer: sushy
+    ipmi_transport: http
+    ipmi_endpoint: $(hostname -I | awk '{print $2}'| sed 's/ //g')
+    ipmi_port: 8111
+
+EOF
+
+        cat credentials-infrastructure.yaml
+        cp $HOME/qubinode-installer/samples/extras-create-sushy-bmh.yaml .
+        ansible-playbook -e "@credentials-infrastructure.yaml" \
+            --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
+            extras-create-sushy-bmh.yaml
     else
-        cd $HOME/ocp4-ai-svc-universal
+        cd $HOME/qubinode-installer/samples
     fi 
 }
 
