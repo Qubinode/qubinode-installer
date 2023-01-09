@@ -26,9 +26,10 @@ function deploy_sushy_tools(){
     curl -v http://$(hostname -I | awk '{print $2}'| sed 's/ //g'):8111
   else
     echo "Sushy tools already exists"
-    echo "To remove sushy tools run the following command:"
-    echo "./qubinode-installer -p sushy_tools -m destroy_sushy_tools"
+    echo "***************************"
     curl -v http://$(hostname -I | awk '{print $2}'| sed 's/ //g'):8111/redfish/v1/Systems/
+    echo "** To remove sushy tools run the following command: **"
+    echo "./qubinode-installer -p sushy_tools -m destroy_sushy_tools"
   fi
 }
 
@@ -43,7 +44,7 @@ function delete_vms(){
 
 function destroy_sushy_tools(){
     delete_vms
-    cd homelab/legacy/containers-as-a-service/caas-sushy
+    cd $HOME/homelab/legacy/containers-as-a-service/caas-sushy
     
     export CONTAINER_NAME="sushy-tools"
     export CONTAINER_VOLUME_ROOT="/opt/service-containers/${CONTAINER_NAME}"
