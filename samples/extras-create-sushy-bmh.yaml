@@ -1,0 +1,270 @@
+---
+- name: Create Libvirt VMs for sushy-tools to act as Bare Metal Hosts
+  hosts: localhost
+  connection: local
+  become: yes  
+  become_user: root  
+  gather_facts: false
+
+  vars:
+    generated_asset_directory: "./generated"
+
+    ### BMH CONFIGURATION ###
+
+    # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
+    # Ensure the DNS A records for {api,api-int,*.apps}.cluster_name.cluster_domain exist
+    cluster_name: vsphere-ocp-ha
+    cluster_id: ""
+    cluster_domain: kemo.labs
+
+    virtual_bmh:
+      - name: bmh-1
+        infra:
+          name: sushyBMH
+          type: libvirt
+        vm:
+          cpu_cores: 4
+          cpu_sockets: 1
+          cpu_threads: 1
+          memory: 16384
+          disks:
+            - size: 130
+              name: boot
+        networking:
+          interfaces:
+            - name: eth0
+              mac_address: 54:52:00:42:69:21
+              # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+              libvirt_network: "qubibr0"
+
+
+      - name: bmh-2
+        infra:
+          name: sushyBMH
+          type: libvirt
+        vm:
+          cpu_cores: 4
+          cpu_sockets: 1
+          cpu_threads: 1
+          memory: 16384
+          disks:
+            - size: 130
+              name: boot
+        networking:
+          interfaces:
+            - name: eth0
+              mac_address: 54:52:00:42:69:22
+              # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+              libvirt_network: "qubibr0"
+
+      - name: bmh-3
+        infra:
+          name: sushyBMH
+          type: libvirt
+        vm:
+          cpu_cores: 4
+          cpu_sockets: 1
+          cpu_threads: 1
+          memory: 16384
+          disks:
+            - size: 130
+              name: boot
+        networking:
+          interfaces:
+            - name: eth0
+              mac_address: 54:52:00:42:69:23
+              # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+              libvirt_network: "qubibr0"
+
+      - name: bmh-4
+        infra:
+          name: sushyBMH
+          type: libvirt
+        vm:
+          cpu_cores: 4
+          cpu_sockets: 1
+          cpu_threads: 1
+          memory: 16384
+          disks:
+            - size: 130
+              name: boot
+        networking:
+          interfaces:
+            - name: eth0
+              mac_address: 54:52:00:42:69:24
+              # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+              libvirt_network: "qubibr0"
+
+      - name: bmh-5
+        infra:
+          name: sushyBMH
+          type: libvirt
+        vm:
+          cpu_cores: 4
+          cpu_sockets: 1
+          cpu_threads: 1
+          memory: 16384
+          disks:
+            - size: 130
+              name: boot
+        networking:
+          interfaces:
+            - name: eth0
+              mac_address: 54:52:00:42:69:25
+              # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+              libvirt_network: "qubibr0"
+
+      - name: bmh-6
+        infra:
+          name: sushyBMH
+          type: libvirt
+        vm:
+          cpu_cores: 4
+          cpu_sockets: 1
+          cpu_threads: 1
+          memory: 16384
+          disks:
+            - size: 130
+              name: boot
+        networking:
+          interfaces:
+            - name: eth0
+              mac_address: 54:52:00:42:69:26
+              # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+              libvirt_network: "qubibr0"
+
+  tasks:
+    - name: Read in variables
+      include_vars:
+        dir: vars
+        extensions:
+          - 'yaml'
+          - 'yml'
+
+    #=========================================================================================================================
+    # Preflight Infrastructure Connection Tests
+    #=========================================================================================================================
+
+    - name: Preflight Check - Libvirt Connection Test
+      when: provider.type == "libvirt"
+      include_tasks: tasks/preflight/conntest_libvirt.yaml
+      tags:
+        - preflight
+        - conntest_libvirt
+      loop: "{{ infrastructure_providers }}"
+      loop_control:
+        loop_var: provider
+
+    - name: Preflight Check - VMWare Connection Test
+      when: provider.type == "vsphere"
+      include_tasks: tasks/preflight/conntest_vmware.yaml
+      tags:
+        - preflight
+        - conntest_vmware
+      loop: "{{ infrastructure_providers }}"
+      loop_control:
+        loop_var: provider
+
+    #=========================================================================================================================
+    # Infrastructure-specific Creation Tasks - Libvirt
+    #=========================================================================================================================
+
+    - name: Create the list of Libvirt targeted hosts
+      when: node_item.infra.type == "libvirt"
+      set_fact:
+        libvirt_hosts: "{{ libvirt_hosts | default([]) + [node_item] }}"
+        unique_libvirt_infra_providers: []
+      loop: "{{ virtual_bmh }}"
+      loop_control:
+        loop_var: node_item
+      tags:
+        - infra_libvirt
+        - infra_libvirt_create_hosts_list
+
+    - name: Create the list of unique Libvirt infrastructure providers
+      when: libvirt_hosts is defined and libvirt_hosts | length > 0
+      include_tasks: tasks/infra-libvirt/get_unique_providers.yaml
+      loop: "{{ libvirt_hosts }}"
+      loop_control:
+        loop_var: node_item
+      tags:
+        - infra_libvirt
+        - infra_libvirt_create_infra_list
+
+    - name: Create the Libvirt infrastructure
+      when:
+      - libvirt_hosts is defined
+      - libvirt_hosts | length > 0
+      - unique_libvirt_infra_providers | length > 0
+      block:
+        - name: Perform per Libvirt Infrastructure Provider set up
+          include_tasks: tasks/infra-libvirt/per_provider_setup.yaml
+          loop: "{{ unique_libvirt_infra_providers }}"
+          loop_control:
+            loop_var: provider
+            label: "Libvirt Infrastructure Provider: {{ provider.name }}"
+          tags:
+            - infra_libvirt_per_provider_setup
+
+        - name: Deploy Libvirt infrastructure
+          include_tasks: tasks/infra-libvirt/create.yaml
+          loop: "{{ libvirt_hosts }}"
+          loop_control:
+            loop_var: node_item
+            label: "Libvirt Host: {{ node_item.name }}"
+      tags:
+        - infra_libvirt
+        - infra_libvirt_create_infra
+
+    #=========================================================================================================================
+    # Infrastructure-specific Creation Tasks - vSphere
+    #=========================================================================================================================
+
+    - name: Create the list of vSphere targeted hosts
+      when: node_item.infra.type == "vsphere"
+      set_fact:
+        vsphere_hosts: "{{ vsphere_hosts | default([]) + [node_item] }}"
+        unique_vsphere_infra_providers: []
+      loop: "{{ virtual_bmh }}"
+      loop_control:
+        loop_var: node_item
+      tags:
+        - infra_vsphere
+        - infra_vsphere_create_hosts_list
+
+    - name: Create the list of unique vSphere infrastructure providers
+      when: vsphere_hosts is defined and vsphere_hosts | length > 0
+      include_tasks: tasks/infra-vsphere/get_unique_providers.yaml
+      loop: "{{ vsphere_hosts }}"
+      loop_control:
+        loop_var: node_item
+      tags:
+        - infra_vsphere
+        - infra_vsphere_create_infra_list
+
+    - name: Create the vSphere infrastructure
+      when:
+      - vsphere_hosts is defined
+      - vsphere_hosts | length > 0
+      - unique_vsphere_infra_providers | length > 0
+      block:
+        - name: Perform per vSphere Infrastructure Provider set up
+          include_tasks: tasks/infra-vsphere/per_provider_setup.yaml
+          loop: "{{ unique_vsphere_infra_providers }}"
+          loop_control:
+            loop_var: provider
+            label: "vSphere Infrastructure Provider: {{ provider.name }}"
+          tags:
+            - infra_vsphere_per_provider_setup
+
+        - name: Deploy vSphere infrastructure
+          include_tasks: tasks/infra-vsphere/create.yaml
+          loop: "{{ vsphere_hosts }}"
+          loop_control:
+            loop_var: node_item
+            label: "vSphere Host: {{ node_item.name }}"
+          tags:
+            - infra_vsphere_deploy_infra
+      tags:
+        - infra_vsphere
+        - infra_vsphere_create_infra
