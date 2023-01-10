@@ -104,6 +104,12 @@ EOF
         fi 
     else
         cd $HOME/ocp4-ai-svc-universal
+        tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
+        if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
+        then
+          sed -i "s/qubinet/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
+          
+        fi 
         if [[ $RHEL_VERSION == "RHEL8" ]]; then
           sudo python3.9 -m pip install --upgrade -r requirements.txt
           sudo ansible-galaxy collection install community.libvirt
