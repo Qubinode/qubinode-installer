@@ -18,7 +18,7 @@ function deploy_sushy_tools(){
     sudo mkdir -p $CONTAINER_VOLUME_ROOT/config
     sudo cp config/sushy-emulator.conf  $CONTAINER_VOLUME_ROOT/config
 
-    ./scripts/service_init.sh start
+    sudo ./scripts/service_init.sh start
 
     sudo firewall-cmd  --add-port=8111/tcp  --permanent
     sudo firewall-cmd --reload
@@ -56,7 +56,7 @@ function destroy_sushy_tools(){
     
     export CONTAINER_NAME="sushy-tools"
     export CONTAINER_VOLUME_ROOT="/opt/service-containers/${CONTAINER_NAME}"
-     ./scripts/service_init.sh stop
+    sudo ./scripts/service_init.sh stop
     sudo rm -rf ${HOME}/homelab
 }
 
