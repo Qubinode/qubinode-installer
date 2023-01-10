@@ -13,9 +13,9 @@
 
     # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
     # Ensure the DNS A records for {api,api-int,*.apps}.cluster_name.cluster_domain exist
-    cluster_name: vsphere-ocp-ha
+    cluster_name: libvirt-ocp-ha
     cluster_id: ""
-    cluster_domain: kemo.labs
+    cluster_domain: lab.qubinode.io
 
     virtual_bmh:
       - name: bmh-1
