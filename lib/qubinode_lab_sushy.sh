@@ -65,8 +65,8 @@ function create_vms(){
         cd $HOME
         git clone https://github.com/tosin2013/ocp4-ai-svc-universal.git
         cd ocp4-ai-svc-universal
-        python3 -m pip install --upgrade -r requirements.txt
-        ansible-galaxy collection install -r collections/requirements.yml
+        sudo python3 -m pip install --upgrade -r requirements.txt
+        sudo ansible-galaxy collection install -r collections/requirements.yml
         cat >credentials-infrastructure.yaml<<EOF
 ---
 infrastructure_providers:
