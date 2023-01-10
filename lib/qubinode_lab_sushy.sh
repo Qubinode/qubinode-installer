@@ -84,6 +84,12 @@ EOF
 
         cat credentials-infrastructure.yaml
         cp $HOME/qubinode-installer/samples/extras-create-sushy-bmh.yaml .
+        tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
+        if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
+        then
+          sed -i "s/qubinet/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
+          
+        fi 
         ansible-playbook -e "@credentials-infrastructure.yaml" \
             --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
             extras-create-sushy-bmh.yaml
