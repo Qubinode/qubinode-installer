@@ -4,6 +4,10 @@ Sushy-tools is a set of simulation tools that support the development and testin
 
 * `Github Page <https://github.com/kenmoini/homelab/tree/main/legacy/containers-as-a-service/caas-sushy>`_
 
+Tested on 
+-------------------
+* Fedora 37
+* RHEL 9.x 
 
 Review the Getting started Guide
 ------------------------------

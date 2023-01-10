@@ -90,12 +90,13 @@ EOF
           sed -i "s/qubinet/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
           
         fi 
-        ansible-playbook -e "@credentials-infrastructure.yaml" \
+        sudo ansible-galaxy collection install community.libvirt
+        sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
             --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
             extras-create-sushy-bmh.yaml
     else
         cd $HOME/ocp4-ai-svc-universal
-        ansible-playbook -e "@credentials-infrastructure.yaml" \
+        sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
             --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
             extras-create-sushy-bmh.yaml
     fi 
