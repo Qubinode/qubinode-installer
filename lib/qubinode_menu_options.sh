@@ -9,7 +9,7 @@ function qubinode_product_deployment () {
 
     # the product_opt is still use by some functions and it should be refactored
     product_opt="${PRODUCT_OPTION}"
-    AVAIL_PRODUCTS="okd4 ocp4 satellite idm kvmhost tower kcli gozones ipilab kvm_install_vm vyos_router deploy_vyos_router sushy_tools"
+    AVAIL_PRODUCTS="okd4 ocp4 ai_sno satellite idm kvmhost tower kcli gozones ipilab kvm_install_vm vyos_router deploy_vyos_router sushy_tools"
     case $PRODUCT_OPTION in
           okd4)
 	      openshift4_variables
@@ -146,6 +146,17 @@ function qubinode_product_deployment () {
 		            printf "%s\n" "   ${blu}Please pass required command${end}"
                     printf "%s\n" "   ${blu}./qubinode-installer -p deploy_vyos_router -m create${end}"
                     printf "%s\n" "   ${blu}./qubinode-installer -p deploy_vyos_router -m destroy${end}"
+              fi
+              ;;
+
+            ai_sno)
+              if [ "A${qubinode_maintenance}" == "Atrue" ]
+              then
+                  ai_sno_tools_maintenance
+              else
+		            printf "%s\n" "   ${blu}Please pass required command${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p ai_sno -m create${end}"
+                    printf "%s\n" "   ${blu}./qubinode-installer -p ai_sno -m destroy${end}"
               fi
               ;;
 
