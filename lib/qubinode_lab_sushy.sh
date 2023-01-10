@@ -88,7 +88,7 @@ EOF
         tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
         if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
         then
-          sed -i "s/qubinet/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
+          sed -i "s/qubibr0/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
           
         fi 
         if [[ $RHEL_VERSION == "RHEL8" ]]; then
@@ -107,7 +107,7 @@ EOF
         tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
         if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
         then
-          sed -i "s/qubinet/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
+          sed -i "s/qubibr0/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
           
         fi 
         if [[ $RHEL_VERSION == "RHEL8" ]]; then
