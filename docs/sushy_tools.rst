@@ -8,6 +8,7 @@ Tested on
 -------------------
 * Fedora 37
 * RHEL 9.x 
+* RHEL 8.7
 
 Review the Getting started Guide
 ------------------------------

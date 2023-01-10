@@ -4,6 +4,7 @@ function sushy_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    RHEL_VERSION=$(get_rhel_version)
 }
 
 
@@ -90,15 +91,31 @@ EOF
           sed -i "s/qubinet/vyos-network-1/g"  "extras-create-sushy-bmh.yaml"
           
         fi 
-        sudo ansible-galaxy collection install community.libvirt
-        sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
-            --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
-            extras-create-sushy-bmh.yaml
+        if [[ $RHEL_VERSION == "RHEL8" ]]; then
+          sudo ansible-galaxy collection install community.libvirt
+          sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
+              --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
+              extras-create-sushy-bmh.yaml -e ansible_python_interpreter=/usr/bin/python3
+        else
+                  sudo ansible-galaxy collection install community.libvirt
+          sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
+              --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
+              extras-create-sushy-bmh.yaml
+        fi 
     else
         cd $HOME/ocp4-ai-svc-universal
-        sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
-            --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
-            extras-create-sushy-bmh.yaml
+        if [[ $RHEL_VERSION == "RHEL8" ]]; then
+          sudo python3.9 -m pip install --upgrade -r requirements.txt
+          sudo ansible-galaxy collection install community.libvirt
+          sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
+              --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
+              extras-create-sushy-bmh.yaml -e ansible_python_interpreter=/usr/bin/python3
+        else
+          sudo ansible-galaxy collection install community.libvirt
+          sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
+              --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
+              extras-create-sushy-bmh.yaml
+        fi 
     fi 
 }
 
