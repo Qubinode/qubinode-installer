@@ -1,0 +1,236 @@
+---
+################################################## SSH Key Configuration
+# generate_ssh_key: true/false, will generate unique key pair if true
+generate_ssh_key: true
+# ssh_pub_key_path: If 'generate_ssh_key' is false, point to an existing SSH Public Key
+#ssh_pub_key_path: "~/.ssh/id_rsa.pub"
+
+################################################## OpenShift Pull Secret
+# pull_secret: Often best to pull from a file outside of the repo, remove any whitespace - get it from here: https://cloud.redhat.com/openshift/install/pull-secret
+pull_secret_path: ~/ocp-pull-secret
+pull_secret: "{{ lookup('file', pull_secret_path) | to_json }}"
+
+################################################## Red Hat API Offline Token
+# rh_api_offline_token: If using the RH Cloud Assisted Installer service, you will need an Offline API Token from this page: https://access.redhat.com/management/api
+rh_api_offline_token_path: "~/rh-api-offline-token"
+rh_api_offline_token: "{{ lookup('file', rh_api_offline_token_path) }}"
+
+################################################## Cluster Basics
+# cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
+cluster_type: Standard
+# cluster_version can be x.y or x.y.z - must be formatted as a STRING
+cluster_version: "4.10"
+
+# cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
+# Ensure the DNS A records for {api,api-int,*.apps}.cluster_name.cluster_domain exist
+cluster_name: ocp4
+cluster_domain: lab.qubinode.io
+provider_type: libvirt
+
+################################################## Cluster Networking
+# cluster_api_vip: an IP or "auto"
+cluster_api_vip: 192.168.11.88
+# cluster_apps_vip: an IP or "auto"
+cluster_apps_vip: 192.168.11.89
+# cluster_node_cidr: A CIDR definition or "auto"
+cluster_node_cidr: 192.168.11.0/24
+
+################################################## Cluster Node IPAM
+# cluster_node_network_ipam: dhcp or static
+cluster_node_network_ipam: static
+
+cluster_node_network_static_dns_servers:
+  - 192.168.11.9
+  - 192.168.11.10
+
+cluster_node_network_static_dns_search_domains:
+  - lab.qubinode.io
+
+cluster_nodes:
+  - name: cp-1
+    type: control-plane
+    infra:
+      name:  ai-libvirt
+      # type: vsphere | nutanix | libvirt
+      type: libvirt
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 16384
+      disks:
+        - size: 130
+          name: boot
+    networking:
+      interfaces:
+        - name: eth0
+          mac_address: 54:52:00:42:69:11
+          dhcp: false
+          ipv4:
+            - address: 192.168.11.90
+              prefix: 24
+          # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+          libvirt_network: "qubinet"
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.11.1
+          next_hop_interface: eth0
+          table_id: 254
+  - name: cp-2
+    type: control-plane
+    infra:
+      name:  ai-libvirt
+      # type: vsphere | nutanix | libvirt
+      type: libvirt
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 16384
+      disks:
+        - size: 130
+          name: boot
+    networking:
+      interfaces:
+        - name: eth0
+          mac_address: 54:52:00:42:69:12
+          dhcp: false
+          ipv4:
+            - address: 192.168.11.91
+              prefix: 24
+          # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+          libvirt_network: "qubinet"
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.11.1
+          next_hop_interface: eth0
+          table_id: 254
+  - name: cp-3
+    type: control-plane
+    infra:
+      name:  ai-libvirt
+      # type: vsphere | nutanix | libvirt
+      type: libvirt
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 16384
+      disks:
+        - size: 130
+          name: boot
+    networking:
+      interfaces:
+        - name: eth0
+          mac_address: 54:52:00:42:69:13
+          dhcp: false
+          ipv4:
+            - address: 192.168.11.92
+              prefix: 24
+          # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+          libvirt_network: "qubinet"
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.11.1
+          next_hop_interface: eth0
+          table_id: 254
+  - name: app-1
+    type: application-node
+    infra:
+      name:  ai-libvirt
+      # type: vsphere | nutanix | libvirt
+      type: libvirt
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 32768
+      disks:
+        - size: 130
+          name: boot
+        - size: 130
+          name: odf
+    networking:
+      interfaces:
+        - name: eth0
+          mac_address: 54:52:00:42:69:14
+          dhcp: false
+          ipv4:
+            - address: 192.168.11.93
+              prefix: 24
+          # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+          libvirt_network: "qubinet"
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.11.1
+          next_hop_interface: eth0
+          table_id: 254
+  - name: app-2
+    type: application-node
+    infra:
+      name:  ai-libvirt
+      # type: vsphere | nutanix | libvirt
+      type: libvirt
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 32768
+      disks:
+        - size: 130
+          name: boot
+        - size: 130
+          name: odf
+    networking:
+      interfaces:
+        - name: eth0
+          mac_address: 54:52:00:42:69:15
+          dhcp: false
+          ipv4:
+            - address: 192.168.11.94
+              prefix: 24
+          # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+          libvirt_network: "qubinet"
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.11.1
+          next_hop_interface: eth0
+          table_id: 254
+  - name: app-3
+    type: application-node
+    infra:
+      name:  ai-libvirt
+      # type: vsphere | nutanix | libvirt
+      type: libvirt
+    vm:
+      cpu_cores: 4
+      cpu_sockets: 1
+      cpu_threads: 1
+      memory: 32768
+      disks:
+        - size: 130
+          name: boot
+        - size: 130
+          name: odf
+    networking:
+      interfaces:
+        - name: eth0
+          mac_address: 54:52:00:42:69:16
+          dhcp: false
+          ipv4:
+            - address: 192.168.11.95
+              prefix: 24
+          # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
+          libvirt_network: "qubinet"
+      routes:
+        - destination: 0.0.0.0/0
+          next_hop_address: 192.168.11.1
+          next_hop_interface: eth0
+          table_id: 254
+
+# [optional] extra_roles: name of roles to run after cluster provisioning
+#extra_roles:
+#- ocp4-matrix-login
+#- ocp4-rhsm-entitlement
+#- ocp4-certificates
+#- ocp4-ntp-configuration
