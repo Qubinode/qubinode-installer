@@ -7,7 +7,7 @@ generate_ssh_key: true
 
 ################################################## OpenShift Pull Secret
 # pull_secret: Often best to pull from a file outside of the repo, remove any whitespace - get it from here: https://cloud.redhat.com/openshift/install/pull-secret
-pull_secret_path: ~/ocp-pull-secret
+pull_secret_path: /ocp-pull-secret
 pull_secret: "{{ lookup('file', pull_secret_path) | to_json }}"
 
 ################################################## Red Hat API Offline Token
@@ -17,9 +17,9 @@ rh_api_offline_token: "{{ lookup('file', rh_api_offline_token_path) }}"
 
 ################################################## Cluster Basics
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
-cluster_type: Standard
+cluster_type: SNO
 # cluster_version can be x.y or x.y.z - must be formatted as a STRING
-cluster_version: "4.10"
+cluster_version: "4.11.20"
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,*.apps}.cluster_name.cluster_domain exist
@@ -41,7 +41,7 @@ cluster_node_network_ipam: static
 
 cluster_node_network_static_dns_servers:
   - 192.168.11.9
-  - 192.168.11.10
+  - 1.1.1.1
 
 cluster_node_network_static_dns_search_domains:
   - lab.qubinode.io
@@ -70,7 +70,7 @@ cluster_nodes:
             - address: 192.168.11.90
               prefix: 24
           # [optional] libvirt_network, if not specified, will use the network defined in the infrastructure provider credentials
-          libvirt_network: "qubinet"
+          libvirt_network: "qubibr0"
       routes:
         - destination: 0.0.0.0/0
           next_hop_address: 192.168.11.1

@@ -119,6 +119,14 @@ function validate_env(){
 }
 
 
+function configure_dns(){
+  if [ $( sudo podman ps -f name='dns-go-zones' | grep dns-go-zones | wc -l ) -eq 1 ]; then
+      sudo sed -i "s/ocp4/${1}/g" /opt/service-containers/config/server.yml 
+      sudo systemctl stop dns-go-zones
+      sleep 3s
+      sudo systemctl start dns-go-zones
+  fi
+}
 
 
 function create(){
@@ -131,14 +139,14 @@ function create(){
     cd $HOME
     git clone https://github.com/tosin2013/ocp4-ai-svc-universal.git
     cd $HOME/ocp4-ai-svc-universal
-    python3 -m pip install --upgrade -r requirements.txt
-    ansible-galaxy collection install -r collections/requirements.yml
+    sudo python3 -m pip install --upgrade -r requirements.txt
+    sudo ansible-galaxy collection install -r collections/requirements.yml
+    sudo ansible-galaxy collection install kubernetes.core
   fi 
 
   cat >credentials-infrastructure.yaml<<EOF
 ---
 infrastructure_providers:
-## KVM/Libvirt Infrastructure Provider, local host
 - name: ai-libvirt
   type: libvirt
   credentials:
@@ -175,15 +183,21 @@ then
         
         domain=$(awk '/domain:/ {print $2}' "${vars_file}")    
         sed -i "s/cluster_domain:.*/cluster_domain: $domain/g" ${cluster_size}-cluster-config-libvirt.yaml 
-
+        sed -i "s|pull_secret_path:.*|pull_secret_path: $HOME/ocp-pull-secret|g" ${cluster_size}-cluster-config-libvirt.yaml 
+        sed -i "s|rh_api_offline_token_path:.*|pull_secret_path: $HOME/rh-api-offline-token|g" ${cluster_size}-cluster-config-libvirt.yaml 
         if [ $network_type == "static" ];
         then 
            openshift_network_octect=$(awk '/openshift_network_octect:/ {print $2}' "${vars_file}")    
            sed -i "s/192.168.11/${openshift_network_octect}/g" ${cluster_size}-cluster-config-libvirt.yaml 
         fi 
+        configure_dns  $cluster_size
         validate_env
         test_dns
-        #ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml
+        if [[ $RHEL_VERSION == "RHEL8" ]]; then
+          sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml -e ansible_python_interpreter=/usr/bin/python3
+        else
+          sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml
+        fi 
     else
       echo "Invalid network type"
       exit 1
@@ -196,6 +210,11 @@ fi
 
 function destroy(){
   echo "destorying SNO  deoployment using assisted installer"
+  if [[ $RHEL_VERSION == "RHEL8" ]]; then
+    sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" destroy.yaml -e ansible_python_interpreter=/usr/bin/python3
+  else
+    sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" destroy.yaml
+  fi 
 }
 
 
