@@ -221,7 +221,7 @@ EOF
         elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             if [ ! -f /usr/libexec/qemu-kvm ];
             then 
-              ln -s /usr/bin/qemu-kvm /usr/libexec/qemu-kvm
+              sudo ln -s /usr/bin/qemu-kvm /usr/libexec/qemu-kvm
             fi 
             sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml
         else
