@@ -2,6 +2,9 @@ OpenShift Assisted Installer Service, Universal Deployer
 =========================================================================
 A set of resources handles an idempotent way to deploy OpenShift via the Assisted Installer Service to any number of infrastructure platforms.
 
+* `Github Page <https://github.com/kenmoini/ocp4-ai-svc-universal>`_
+
+Review the Getting started Guide
 ------------------------------
 `Getting started Guide <https://qubinode-installer.readthedocs.io/en/latest/quick_start.html>`_
 
