@@ -183,8 +183,10 @@ then
         
         domain=$(awk '/domain:/ {print $2}' "${vars_file}")    
         sed -i "s/cluster_domain:.*/cluster_domain: $domain/g" ${cluster_size}-cluster-config-libvirt.yaml 
+        dns_forwarder=$(awk '/dns_forwarder:/ {print $2}' "${vars_file}")    
+        sed -i "s/8.8.8.8/$dns_forwarder/g" ${cluster_size}-cluster-config-libvirt.yaml 
         sed -i "s|pull_secret_path:.*|pull_secret_path: $HOME/ocp-pull-secret|g" ${cluster_size}-cluster-config-libvirt.yaml 
-        sed -i "s|rh_api_offline_token_path:.*|pull_secret_path: $HOME/rh-api-offline-token|g" ${cluster_size}-cluster-config-libvirt.yaml 
+        sed -i "s|rh_api_offline_token_path:.*|rh_api_offline_token_path: $HOME/rh-api-offline-token|g" ${cluster_size}-cluster-config-libvirt.yaml 
         if [ $network_type == "static" ];
         then 
            openshift_network_octect=$(awk '/openshift_network_octect:/ {print $2}' "${vars_file}")    
@@ -215,6 +217,9 @@ function destroy(){
   else
     sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" destroy.yaml
   fi 
+
+  rm -rf /home/admin/ocp4-ai-svc-universal/sno-cluster-config-libvirt.yaml
+
 }
 
 

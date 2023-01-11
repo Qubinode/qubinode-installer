@@ -40,7 +40,7 @@ cluster_node_cidr: 192.168.11.0/24
 cluster_node_network_ipam: static
 
 cluster_node_network_static_dns_servers:
-  - 192.168.11.9
+  - 8.8.8.8
   - 1.1.1.1
 
 cluster_node_network_static_dns_search_domains:
