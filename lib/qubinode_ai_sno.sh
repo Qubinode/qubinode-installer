@@ -72,16 +72,19 @@ then
 
     if [ $cluster_size != "full" ] || [ $cluster_size != "sno" ] || [ $cluster_size != "converged" ];
     then
+        echo "deploying cluster"
+    else 
         echo "Incorrect cluster size"
         echo "Options full|sno|converged"
+        exit 1
     fi
 
     if [[ $network_type == "static" || $network_type == "dhcp" ]];
     then
         cp ${project_dir}/samples/ocp4-ai-svc-universal/${network_type}/${cluster_size}-cluster-config-libvirt.yaml .
     else
-    echo "Invalid network type"
-    exit 1
+      echo "Invalid network type"
+      exit 1
     fi
 fi
 
