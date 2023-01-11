@@ -131,6 +131,8 @@ function configure_dns(){
   fi
   if [ $( sudo podman ps -f name='dns-go-zones' | grep dns-go-zones | wc -l ) -eq 1 ]; then
       sudo sed -i "s/ocp4/${1}/g" /opt/service-containers/config/server.yml 
+      openshift_network_octect=$(awk '/openshift_network_octect:/ {print $2}' "${vars_file}")    
+      sudo sed -i "s/192.168.[0-9][0-9][0-9]/${openshift_network_octect}/g"  /opt/service-containers/config/server.yml 
       sudo systemctl stop dns-go-zones
       sleep 3s
       sudo systemctl start dns-go-zones
@@ -191,7 +193,7 @@ EOF
 
     if [ $cluster_size == "full" ] || [ $cluster_size == "sno" ] || [ $cluster_size == "converged" ];
     then
-        echo "deploying cluster test"
+        echo "deploying cluster of size $cluster_size"
     else 
         echo "Incorrect cluster size"
         echo "Options full|sno|converged"
