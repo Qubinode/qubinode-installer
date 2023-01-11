@@ -90,6 +90,9 @@ function test_dns(){
 }
 
 function validate_env(){
+  echo "Validating environment"
+  echo "Running ping test on cluster_api_vip and cluster_apps_vip"
+  echo "****************************************************"
   cd $HOME/ocp4-ai-svc-universal
   LIBVIRT_CONFIG=$(ls *cluster-config-libvirt.yaml)
   if [ -z $LIBVIRT_CONFIG ];
@@ -130,7 +133,7 @@ function configure_dns(){
 
 
 function create(){
-  echo "creating SNO  deoployment using assisted installer"
+  echo "Assisted installer Deployment"
   echo "https://docs.openshift.com/container-platform/latest/installing/installing_sno/install-sno-installing-sno.html"
   check_dependencies
 
@@ -144,7 +147,12 @@ function create(){
     sudo ansible-galaxy collection install kubernetes.core
   fi 
 
-  cat >credentials-infrastructure.yaml<<EOF
+
+
+if [ ! -f $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml ];
+then 
+    cd $HOME/ocp4-ai-svc-universal
+      cat >credentials-infrastructure.yaml<<EOF
 ---
 infrastructure_providers:
 - name: ai-libvirt
@@ -162,9 +170,6 @@ infrastructure_providers:
       model: virtio
 EOF
 
-if [ ! -f $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml ];
-then 
-    cd $HOME/ocp4-ai-svc-universal
     read -p "Enter the cluster size Options: full|sno|converged: " cluster_size
     read -p "Enter  the network type static|dhcp: " network_type
 
@@ -211,15 +216,20 @@ fi
 }
 
 function destroy(){
-  echo "destorying SNO  deoployment using assisted installer"
-  if [[ $RHEL_VERSION == "RHEL8" ]]; then
-    sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" destroy.yaml -e ansible_python_interpreter=/usr/bin/python3
-  else
-    sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" destroy.yaml
+  echo "destorying Assisted installer  deoployment using assisted installer"
+  if [  -f $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml ];
+  then 
+    cd $HOME/ocp4-ai-svc-universal
+    CLUSTER_YAML=$(ls $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml)
+    if [[ $RHEL_VERSION == "RHEL8" ]]; then
+      sudo ansible-playbook -e "@${CLUSTER_YAML}" -e "@credentials-infrastructure.yaml" destroy.yaml -e ansible_python_interpreter=/usr/bin/python3
+    else
+      sudo ansible-playbook -e "@${CLUSTER_YAML}" -e "@credentials-infrastructure.yaml" destroy.yaml
+    fi 
+
+    rm -rf $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml 
+    rm -rf $HOME/ocp4-ai-svc-universal/credentials-infrastructure.yaml
   fi 
-
-  rm -rf /home/admin/ocp4-ai-svc-universal/sno-cluster-config-libvirt.yaml
-
 }
 
 
@@ -228,12 +238,12 @@ function ai_sno_tools_maintenance(){
     case ${product_maintenance} in
        create)
            ai_sno_variables
-           echo "Deploying  SNO using assisted installer"
+           echo "Deploying OpenShift using Assisted Installer and Ansible"
            create
            ;;
         destroy)
            ai_sno_variables
-           echo "Destroying sno instance"
+           echo "Destroying OpenShift using Assisted Installer and Ansible"
            destroy
            ;;
        *)

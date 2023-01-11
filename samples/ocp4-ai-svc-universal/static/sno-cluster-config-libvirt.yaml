@@ -54,10 +54,10 @@ cluster_nodes:
       # type: vsphere | nutanix | libvirt
       type: libvirt
     vm:
-      cpu_cores: 4
+      cpu_cores: 8
       cpu_sockets: 1
       cpu_threads: 1
-      memory: 16384
+      memory: 32768
       disks:
         - size: 130
           name: boot
