@@ -17,6 +17,18 @@ Optional deploy gozones DNS::
 
     ./qubinode-installer -p gozones 
 
+Create Pull Secret::
+        
+       vim  $HOME/ocp-pull-secret
+
+https://cloud.redhat.com/openshift/install/pull-secret
+
+Create Pull Secret::
+        
+       vim  $HOME/rh-api-offline-token
+
+Please download the offline token from https://access.redhat.com/management/api
+
 Deploy OpenShift Cluster::
 
    ./qubinode-installer -p ai_svc_universal -m create

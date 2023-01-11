@@ -27,6 +27,7 @@ Deploy VMs for redfish deployments::
 
     ./qubinode-installer -p sushy_tools -m create_vms
 
+Example url : http://192.168.80.12:8111/redfish/v1/Systems/
 .. image:: https://i.imgur.com/J2mimEa.png
 
 Destroy VMs for redfish deployments::

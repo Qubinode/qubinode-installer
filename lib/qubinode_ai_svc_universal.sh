@@ -132,6 +132,15 @@ function configure_dns(){
 }
 
 
+function openshift_check(){
+
+  if [ ! -f /usr/bin/oc ];
+      echo "Checking for OpenShift cli"
+      curl -OL https://raw.githubusercontent.com/tosin2013/openshift-4-deployment-notes/master/pre-steps/configure-openshift-packages.sh
+      chmod +x configure-openshift-packages.sh
+      ./configure-openshift-packages.sh -i 
+  fi 
+}
 function create(){
   echo "Assisted installer Deployment"
   echo "https://docs.openshift.com/container-platform/latest/installing/installing_sno/install-sno-installing-sno.html"
