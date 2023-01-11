@@ -233,6 +233,10 @@ EOF
       echo "Invalid network type"
       exit 1
     fi
+else
+    echo "Assisted installer deployment or configuration already exists"
+    echo "Please run './qubinode-installer -p ai_svc_universal -m destroy' to remove the deployment and configuration"
+    exit 1
 fi
 
 
