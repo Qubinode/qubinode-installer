@@ -82,9 +82,16 @@ You will have to modify the network adapters before you boot up the ova see the 
 
 To Destory builder vm
 -----------------------
+In order to destroy the vyos-builder vm you will need to run the following command::
+
+    ./qubinode-installer -p vyos_router -m  destroy 
+
+To Destory the router vm
+-----------------------
 In order to destroy the router vm you will need to run the following command::
 
-    ./qubinode-installer -p vyos_router -m  destroy  vyos-r1.qcow2
+    ./qubinode-installer -p deploy_vyos_router  -m  destroy  vyos-r1.qcow2
+
 
 Default Network info for Vyos router
 -----------------------
