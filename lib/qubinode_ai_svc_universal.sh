@@ -216,9 +216,9 @@ EOF
         validate_env
         test_dns
         
-        if [[ $RHEL_VERSION == "FEDORA" ]]; then
+        if [[ $RHEL_VERSION == "RHEL8" ]]; then
           sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml -e ansible_python_interpreter=/usr/bin/python3
-        elif [[ $RHEL_VERSION == "RHEL8" ]]; then
+        elif [[ $RHEL_VERSION == "FEDORA" ]]; then
             if [ ! -f /usr/libexec/qemu-kvm ];
             then 
               ln -s /usr/bin/qemu-kvm /usr/libexec/qemu-kvm
