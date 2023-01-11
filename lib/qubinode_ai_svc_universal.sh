@@ -135,6 +135,7 @@ function configure_dns(){
 function openshift_check(){
 
   if [ ! -f /usr/bin/oc ];
+  then 
       echo "Checking for OpenShift cli"
       curl -OL https://raw.githubusercontent.com/tosin2013/openshift-4-deployment-notes/master/pre-steps/configure-openshift-packages.sh
       chmod +x configure-openshift-packages.sh
@@ -214,8 +215,15 @@ EOF
         configure_dns  $cluster_size
         validate_env
         test_dns
-        if [[ $RHEL_VERSION == "RHEL8" ]]; then
+        
+        if [[ $RHEL_VERSION == "FEDORA" ]]; then
           sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml -e ansible_python_interpreter=/usr/bin/python3
+        elif [[ $RHEL_VERSION == "RHEL8" ]]; then
+            if [ ! -f /usr/libexec/qemu-kvm ];
+            then 
+              ln -s /usr/bin/qemu-kvm /usr/libexec/qemu-kvm
+            fi 
+            sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml
         else
           sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml
         fi 
