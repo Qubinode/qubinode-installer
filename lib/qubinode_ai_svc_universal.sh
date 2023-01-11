@@ -211,6 +211,8 @@ EOF
         if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
         then
           sed -i "s/qubibr0/vyos-network-1/g" ${cluster_size}-cluster-config-libvirt.yaml 
+          sed -i "s/qubibr0/vyos-network-1/g" credentials-infrastructure.yaml
+          sed -i "s/type: bridge/type: network/g" credentials-infrastructure.yaml
         fi 
         configure_dns  $cluster_size
         validate_env
