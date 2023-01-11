@@ -123,6 +123,12 @@ function validate_env(){
 
 
 function configure_dns(){
+  if [ ! -f /opt/service-containers/config/server.yml.bak ];
+  then 
+      cp /opt/service-containers/config/server.yml /opt/service-containers/config/server.yml.bak
+  else
+      cp /opt/service-containers/config/server.yml.bak /opt/service-containers/config/server.yml
+  fi
   if [ $( sudo podman ps -f name='dns-go-zones' | grep dns-go-zones | wc -l ) -eq 1 ]; then
       sudo sed -i "s/ocp4/${1}/g" /opt/service-containers/config/server.yml 
       sudo systemctl stop dns-go-zones
