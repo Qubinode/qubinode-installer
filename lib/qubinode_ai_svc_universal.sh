@@ -226,8 +226,13 @@ EOF
           sed -i "s/qubibr0/vyos-network-1/g" credentials-infrastructure.yaml
           sed -i "s/type: bridge/type: network/g" credentials-infrastructure.yaml
         fi 
-
-        configure_dns  $cluster_size
+        if [ $cluster_size == $cluster_name ];
+        then 
+          configure_dns  $cluster_size
+        else 
+          configure_dns $cluster_name
+        fi
+        
         validate_env
         test_dns
         openshift_check
