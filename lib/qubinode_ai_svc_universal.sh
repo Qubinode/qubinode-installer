@@ -234,8 +234,10 @@ EOF
       exit 1
     fi
 else
-    echo "Assisted installer deployment or configuration already exists"
-    echo "Please run './qubinode-installer -p ai_svc_universal -m destroy' to remove the deployment and configuration"
+    printf "\n\n${yel}    ********************************${end}\n"
+    printf "${yel}    *   Assisted installer deployment or configuration already exists   *${end}\n"
+    printf "${red}    *   Please run './qubinode-installer -p ai_svc_universal -m destroy' to remove the deployment and configuration   *${end}\n"
+    printf "${yel}    ********************************${end}\n\n"
     exit 1
 fi
 
