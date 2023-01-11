@@ -21,13 +21,14 @@ Create Pull Secret::
         
        vim  $HOME/ocp-pull-secret
 
-https://cloud.redhat.com/openshift/install/pull-secret
+`lease download the offline token from <https://cloud.redhat.com/openshift/install/pull-secret>`_
+
 
 Create Pull Secret::
         
        vim  $HOME/rh-api-offline-token
 
-Please download the offline token from https://access.redhat.com/management/api
+`Please download the offline token from <https://access.redhat.com/management/api>`_
 
 Deploy OpenShift Cluster::
 

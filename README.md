@@ -51,7 +51,7 @@ One of the  supported base OS is Red Hat Enterprise Linux 9.0 refer to the [Gett
 See [Documentation for additional details](https://qubinode-installer.readthedocs.io/en/latest/).
 
 ## Deploying a OpenShift cluster
-- [OpenShift Assisted Installer Service, Universal Deployer](https://github.com/kenmoini/ocp4-ai-svc-universal)
+- [OpenShift Assisted Installer Service, Universal Deployer](https://qubinode-installer.readthedocs.io/en/latest/ocp4-ai-svc-universal.html)
 - [OpenShift 4 Assisted Installer Service, Libvirt Deployer](https://github.com/tosin2013/ocp4-ai-svc-libvirt/tree/main/scripts)
 - [Ansible Automation Platform](https://github.com/Red-Hat-SE-RTO/rhel-fleet-management/blob/main/docs/install-ansible-automation-platform.md)
 
