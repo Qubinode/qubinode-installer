@@ -140,6 +140,7 @@ logical_volumes:
 #################################
 
 # Hardware profiles
+openshift_network_octect: 192.168.150
 qubinode_minimal_memory: 30
 qubinode_standard_memory: 80
 qubinode_performance_memory: 88

@@ -29,9 +29,9 @@ provider_type: libvirt
 
 ################################################## Cluster Networking
 # cluster_api_vip: an IP or "auto"
-cluster_api_vip: 192.168.11.88
+cluster_api_vip: 192.168.11.253
 # cluster_apps_vip: an IP or "auto"
-cluster_apps_vip: 192.168.11.89
+cluster_apps_vip: 192.168.11.252
 # cluster_node_cidr: A CIDR definition or "auto"
 cluster_node_cidr: 192.168.11.0/24
 

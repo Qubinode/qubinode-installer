@@ -4,7 +4,6 @@ function ai_sno_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
-    RHEL_VERSION=$(get_rhel_version)
 }
 
 
@@ -31,6 +30,97 @@ function check_dependencies(){
   fi
 
 }
+
+
+function test_dns(){
+    cd $HOME/ocp4-ai-svc-universal
+    LIBVIRT_CONFIG=$(ls *cluster-config-libvirt.yaml)
+    if [ -z $LIBVIRT_CONFIG ];
+    then 
+      echo "No libvirt config file found"
+      exit 1
+    fi
+
+    CLUSTER_API_VIP=$(yq -r  -o=json  $LIBVIRT_CONFIG | jq '.cluster_api_vip' | sed 's/"//g')
+    CLUSTER_INGRESS_VIP=$(yq -r  -o=json  $LIBVIRT_CONFIG | jq '.cluster_apps_vip' | sed 's/"//g')
+    CLUSTER_BASE_DNS=$(yq -r  -o=json  $LIBVIRT_CONFIG | jq '.cluster_domain' | sed 's/"//g')
+    CLUSTER_NAME=$(yq -r  -o=json  $LIBVIRT_CONFIG | jq '.cluster_name' | sed 's/"//g')
+    TEST_CLUSTER_INGRESS_VIP=$(dig +short test.apps.${CLUSTER_NAME}.${CLUSTER_BASE_DNS} |  grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" |  head -1)
+    TEST_CLUSTER_API_VIP=$(dig +short api.${CLUSTER_NAME}.${CLUSTER_BASE_DNS} |  grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" |  head -1)
+    
+    if [ -z $TEST_CLUSTER_INGRESS_VIP ];
+    then 
+      echo "TEST_CLUSTER_INGRESS_VIP: test.apps.${CLUSTER_NAME}.${CLUSTER_BASE_DNS}  was not found on dns record"
+      exit 1
+    fi
+
+    if [ -z $TEST_CLUSTER_API_VIP ];
+    then 
+      echo "TEST_CLUSTER_API_VIP:  api.${CLUSTER_NAME}.${CLUSTER_BASE_DNS}  was not found on dns record"
+      exit 1
+    fi
+
+    echo "Current CLUSTER_INGRESS_VIP=${CLUSTER_INGRESS_VIP}"
+    echo -e "===== Testing CLUSTER_INGRESS_VIP..."
+
+    if [ ${CLUSTER_INGRESS_VIP} != ${TEST_CLUSTER_INGRESS_VIP} ];
+    then
+      echo "Please check CLUSTER_INGRESS_VIP"
+      echo "Reported CLUSTER_INGRESS_VIP $CLUSTER_INGRESS_VIP "
+      echo "Reported CLUSTER_INGRESS_VIP $TEST_CLUSTER_INGRESS_VIP "
+      exit 1
+    else
+      echo "CLUSTER_INGRESS_VIP $CLUSTER_INGRESS_VIP is valid"
+    fi 
+
+    echo "Current CLUSTER_API_VIP=${CLUSTER_API_VIP}"
+    echo -e "===== Testing CLUSTER_API_VIP..."
+
+    if [ ${CLUSTER_API_VIP} != ${TEST_CLUSTER_API_VIP} ];
+    then 
+      echo "Please check CLUSTER_API_VIP"
+      echo "Reported CLUSTER_API_VIP $CLUSTER_API_VIP "
+      echo "Reported CLUSTER_API_VIP $TEST_CLUSTER_API_VIP "
+      exit 1
+    else
+      echo "CLUSTER_API_VIP $CLUSTER_API_VIP is valid"
+    fi 
+
+
+}
+
+function validate_env(){
+  cd $HOME/ocp4-ai-svc-universal
+  LIBVIRT_CONFIG=$(ls *cluster-config-libvirt.yaml)
+  if [ -z $LIBVIRT_CONFIG ];
+  then 
+    echo "No libvirt config file found"
+    exit 1
+  fi
+  
+  cluster_api_vip=$(yq -r  -o=json  $LIBVIRT_CONFIG | jq '.cluster_api_vip' | sed 's/"//g')
+  cluster_apps_vip=$(yq -r  -o=json  $LIBVIRT_CONFIG | jq '.cluster_apps_vip' | sed 's/"//g')
+  echo "Check if the cluster_api_vip $cluster_api_vip is reachable"
+  if ping -c 1 $cluster_api_vip &> /dev/null
+  then
+    echo "$cluster_api_vip reachable exiting with the deployment"
+    exit 
+  else
+    echo "$cluster_api_vip  not reachable continuing with the deployment"
+  fi
+  echo "Check if the cluster_apps_vip $cluster_apps_vip is reachable"
+  if ping -c 1 $cluster_apps_vip &> /dev/null
+  then
+    echo "$cluster_apps_vip reachable exiting with the deployment"
+    exit 
+  else
+    echo "$cluster_apps_vip  not reachable continuing with the deployment"
+  fi
+}
+
+
+
+
 function create(){
   echo "creating SNO  deoployment using assisted installer"
   echo "https://docs.openshift.com/container-platform/latest/installing/installing_sno/install-sno-installing-sno.html"
@@ -45,7 +135,7 @@ function create(){
     ansible-galaxy collection install -r collections/requirements.yml
   fi 
 
-        cat >credentials-infrastructure.yaml<<EOF
+  cat >credentials-infrastructure.yaml<<EOF
 ---
 infrastructure_providers:
 ## KVM/Libvirt Infrastructure Provider, local host
@@ -59,20 +149,20 @@ infrastructure_providers:
     libvirt_base_vm_path: /var/lib/libvirt/images
     libvirt_network:
       # type: bridge | network
-      type: network
-      name: lanBridge
+      type: bridge
+      name: qubibr0
       model: virtio
-
 EOF
 
 if [ ! -f $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml ];
 then 
-    read -p "Enter the cluster size Options: full|sno|converged:" cluster_size
+    cd $HOME/ocp4-ai-svc-universal
+    read -p "Enter the cluster size Options: full|sno|converged: " cluster_size
     read -p "Enter  the network type static|dhcp: " network_type
 
-    if [ $cluster_size != "full" ] || [ $cluster_size != "sno" ] || [ $cluster_size != "converged" ];
+    if [ $cluster_size == "full" ] || [ $cluster_size == "sno" ] || [ $cluster_size == "converged" ];
     then
-        echo "deploying cluster"
+        echo "deploying cluster test"
     else 
         echo "Incorrect cluster size"
         echo "Options full|sno|converged"
@@ -82,6 +172,18 @@ then
     if [[ $network_type == "static" || $network_type == "dhcp" ]];
     then
         cp ${project_dir}/samples/ocp4-ai-svc-universal/${network_type}/${cluster_size}-cluster-config-libvirt.yaml .
+        
+        domain=$(awk '/domain:/ {print $2}' "${vars_file}")    
+        sed -i "s/cluster_domain:.*/cluster_domain: $domain/g" ${cluster_size}-cluster-config-libvirt.yaml 
+
+        if [ $network_type == "static" ];
+        then 
+           openshift_network_octect=$(awk '/openshift_network_octect:/ {print $2}' "${vars_file}")    
+           sed -i "s/192.168.11/${openshift_network_octect}/g" ${cluster_size}-cluster-config-libvirt.yaml 
+        fi 
+        validate_env
+        test_dns
+        #ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml
     else
       echo "Invalid network type"
       exit 1
