@@ -37,3 +37,7 @@ Deploy OpenShift Cluster::
 Destroy OpenShift Cluster::
 
     ./qubinode-installer -p ai_svc_universal -m destroy
+
+Issues 
+-------
+`Submit isues <https://github.com/kenmoini/ocp4-ai-svc-universal/issues>`_

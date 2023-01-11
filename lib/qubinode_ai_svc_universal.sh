@@ -214,9 +214,11 @@ EOF
           sed -i "s/qubibr0/vyos-network-1/g" credentials-infrastructure.yaml
           sed -i "s/type: bridge/type: network/g" credentials-infrastructure.yaml
         fi 
+
         configure_dns  $cluster_size
         validate_env
         test_dns
+        openshift_check
         
         if [[ $RHEL_VERSION == "RHEL8" ]]; then
           sudo ansible-playbook -e "@${cluster_size}-cluster-config-libvirt.yaml" -e "@credentials-infrastructure.yaml" bootstrap.yaml -e ansible_python_interpreter=/usr/bin/python3
