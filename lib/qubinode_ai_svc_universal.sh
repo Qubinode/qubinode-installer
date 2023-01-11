@@ -190,6 +190,9 @@ EOF
 
     read -p "Enter the cluster size Options: full|sno|converged: " cluster_size
     read -p "Enter  the network type static|dhcp: " network_type
+    DEFAULT_NAME="${cluster_size}"
+    read -p "Enter the name of the cluster (or press enter for default): " cluster_name
+    cluster_name=${cluster_name:-$DEFAULT_NAME}
 
     if [ $cluster_size == "full" ] || [ $cluster_size == "sno" ] || [ $cluster_size == "converged" ];
     then
@@ -205,6 +208,7 @@ EOF
         cp ${project_dir}/samples/ocp4-ai-svc-universal/${network_type}/${cluster_size}-cluster-config-libvirt.yaml .
         
         domain=$(awk '/domain:/ {print $2}' "${vars_file}")    
+        sed -i "s/cluster_name:.*/cluster_name: $cluster_name/g" ${cluster_size}-cluster-config-libvirt.yaml 
         sed -i "s/cluster_domain:.*/cluster_domain: $domain/g" ${cluster_size}-cluster-config-libvirt.yaml 
         dns_forwarder=$(awk '/dns_forwarder:/ {print $2}' "${vars_file}")    
         sed -i "s/8.8.8.8/$dns_forwarder/g" ${cluster_size}-cluster-config-libvirt.yaml 
