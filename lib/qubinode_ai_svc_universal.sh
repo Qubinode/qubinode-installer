@@ -271,9 +271,9 @@ function destroy(){
     cd $HOME/ocp4-ai-svc-universal
     CLUSTER_YAML=$(ls $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml)
     if [[ $RHEL_VERSION == "RHEL8" ]]; then
-      sudo ansible-playbook -e "@${CLUSTER_YAML}" -e "@credentials-infrastructure.yaml" destroy.yaml -e ansible_python_interpreter=/usr/bin/python3
+      sudo ansible-playbook -e "@${CLUSTER_YAML}" -e "@credentials-infrastructure.yaml" destroy.yaml -e ansible_python_interpreter=/usr/bin/python3 || exit $?
     else
-      sudo ansible-playbook -e "@${CLUSTER_YAML}" -e "@credentials-infrastructure.yaml" destroy.yaml
+      sudo ansible-playbook -e "@${CLUSTER_YAML}" -e "@credentials-infrastructure.yaml" destroy.yaml || exit $?
     fi 
 
     rm -rf $HOME/ocp4-ai-svc-universal/*-cluster-config-libvirt.yaml 
