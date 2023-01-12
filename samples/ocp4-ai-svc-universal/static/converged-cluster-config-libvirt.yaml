@@ -61,6 +61,8 @@ cluster_nodes:
       disks:
         - size: 130
           name: boot
+        - size: 130
+          name: odf
     networking:
       interfaces:
         - name: eth0
@@ -90,6 +92,8 @@ cluster_nodes:
       disks:
         - size: 130
           name: boot
+        - size: 130
+          name: odf
     networking:
       interfaces:
         - name: eth0
@@ -119,6 +123,8 @@ cluster_nodes:
       disks:
         - size: 130
           name: boot
+        - size: 130
+          name: odf
     networking:
       interfaces:
         - name: eth0

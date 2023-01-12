@@ -61,6 +61,8 @@ cluster_nodes:
       disks:
         - size: 130
           name: boot
+        - size: 130
+          name: lvm
     networking:
       interfaces:
         - name: eth0

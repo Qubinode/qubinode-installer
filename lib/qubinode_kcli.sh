@@ -162,9 +162,13 @@ function update_default_settings(){
     tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
     if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
     then
-      sed -i "s/qubinet/vyos-network-1/g" "${project_dir}/${KCLI_PROFILE}"
-      sed -i "s/qubinet/vyos-network-1/g"  "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
-      
+      read -p "vyos-network-1 network found. Would you like to configure all the vms yo use this network? " -n 1 -r
+      echo    # (optional) move to a new line
+      if [[ ! $REPLY =~ ^[Yy]$ ]]
+      then
+          sed -i "s/qubinet/vyos-network-1/g" "${project_dir}/${KCLI_PROFILE}"
+          sed -i "s/qubinet/vyos-network-1/g"  "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
+      fi
     fi 
 
     sudo mkdir -p /root/.kcli

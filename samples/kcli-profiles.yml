@@ -326,20 +326,20 @@ ztpfwjumpbox:
   - firewall-cmd --reload
 
 
-cvadjumpbox:
+vyosjumpbox:
  image: 'CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
-  - size: 50
+  - size: 80
  reservedns: true
  nets:
-  - name: qubinet
-  - name: VLAN500
-  - name: FLOATING_IP
+  - qubinet
+  - vyos-network-1
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf upgrade -y 
   - dnf groupinstall "Server with GUI" -y
   - dnf install epel-release -y
   - dnf install xrdp  -y
