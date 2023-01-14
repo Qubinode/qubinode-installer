@@ -38,8 +38,6 @@ kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
 ############################################
 vars_file="${project_dir}/playbooks/vars/all.yml"
 vault_vars_file="${project_dir}/playbooks/vars/vault.yml"
-vg_name=$(cat "${kvm_host_vars_file}"| grep vg_name: | awk '{print $2}')
-requested_brigde=$(cat "${kvm_host_vars_file}"|grep  vm_libvirt_net: | awk '{print $2}' | sed 's/"//g')
 
 
 ############################################
@@ -74,6 +72,8 @@ function kcli_configure_images(){
     sudo kcli download image centos9jumpbox -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
     sudo kcli download image  ztpfwjumpbox  -u https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2
     sudo kcli download image centos8jumpbox -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2
+    sudo kcli download image centos8streams -u https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2
+    # sudo kcli download image ubuntu -u https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.img
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     if [[ $(get_distro) == "rhel"  || "A${RUN_ON_RHPDS}" == "Ayes"  ]]; then
       echo "Downloading Red Hat Enterprise Linux 8"
@@ -91,10 +91,10 @@ function kcli_configure_images(){
 ############################################
 function update_default_settings(){
     if [ ! -f "${vault_key_file}" ]
-      then
-          printf "%s\n" " ${vault_key_file} does not exist"
-          exit 1
-      fi
+    then
+        printf "%s\n" " ${vault_key_file} does not exist"
+        exit 1
+    fi
 
     echo "Configuring default settings"
     if  [[ -f  ${defaults_file} ]];
@@ -109,6 +109,8 @@ function update_default_settings(){
       echo "${defaults_file} not found exiting"
       exit 1
     fi  
+
+
 
     RUN_ON_RHPDS=$(awk '/run_on_rhpds/ {print $2}' "${vars_file}")
     ONE_RHEL=$(awk '/one_redhat/ {print $2}' "${vars_file}")
@@ -156,6 +158,19 @@ function update_default_settings(){
     then
       sed -i "s/CHANGEOFFLINETOKEN/$(cat $HOME/offline_token)/g" "${project_dir}/${KCLI_PROFILE}"
     fi
+
+    tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
+    if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
+    then
+      read -p "vyos-network-1 network found. Would you like to configure all the vms yo use this network? " -n 1 -r
+      echo    # (optional) move to a new line
+      if [[ ! $REPLY =~ ^[Yy]$ ]]
+      then
+          sed -i "s/qubinet/vyos-network-1/g" "${project_dir}/${KCLI_PROFILE}"
+          sed -i "s/qubinet/vyos-network-1/g"  "${project_dir}/kcli_plans/ceph/ceph-cluster.yml"
+      fi
+    fi 
+
     sudo mkdir -p /root/.kcli
     sudo cp "${project_dir}/${KCLI_PROFILE}" /root/.kcli/profiles.yml
     sudo mkdir -p ${HOME}/.kcli

@@ -13,7 +13,7 @@ For Quick install::
     ./qubinode-installer -m host
     ./qubinode-installer -p kcli
     ./qubinode-installer -p gozones
-    sudo ssh-keygen -t rsa -b 4096 
+    sudo ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
 
 
 ZTP JUMPBOX
@@ -47,11 +47,11 @@ FEDORA Jumpbox::
     sudo kcli create vm -p fedora37jumpbox jumpbox --wait
 
 
-RHEL 8.6 CVAD Deployments
+Vyos Jumpbox used to brigde the external network to internal 
 ----------------------------
-CVAD Jumpbox::
+Vyos Jumpbox::
 
-    sudo kcli create vm -p cvadjumpbox jumpbox --wait
+    sudo kcli create vm -p vyosjumpbox jumpbox --wait
 
 ScreenShots
 ----------------------------

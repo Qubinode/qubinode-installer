@@ -89,13 +89,13 @@ mirror_vm:
   - sudo semanage port  -l  | grep -w http_port_t
   - cp /home/admin/qubinode-installer/pull_secret.json /home/cloud-user/pull_secret.json
 
-leon_ai:
- image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
+ubuntu:
+ image: ubuntu-22.04-server-cloudimg-amd64.img
  rhnregister: true
  numcpus: 4
  memory: 8192
  disks:
-  - size: 500
+  - size: 60
  reservedns: true
  nets:
   - qubinet
@@ -105,17 +105,33 @@ leon_ai:
   - usermod -aG wheel CHANGEUSER
   - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
-  - sudo dnf update -y
-  - sudo dnf install firewalld nodejs acl policycoreutils-python-utils -y
-  - npm install --global @leon-ai/cli
-  - systemctl enable firewalld
-  - systemctl start firewalld
-  - sudo firewall-cmd --add-port=1337/tcp --permanent
-  - sudo firewall-cmd --reload
-  - sudo semanage port  -a 1337 -t http_port_t -p tcp
-  - sudo semanage port  -l  | grep -w http_port_t
-  - leon create birth
-  - leon start
+
+
+ubuntu-docker:
+ image: ubuntu-22.04-server-cloudimg-amd64.img
+ rhnregister: true
+ numcpus: 4
+ memory: 8192
+ disks:
+  - size: 60
+ reservedns: true
+ nets:
+  - qubinet
+ cmds:
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - sudo apt-get update -y 
+  - sudo apt-get install ca-certificates curl gnupg lsb-release
+  - sudo mkdir -p /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  - sudo apt-get update
+  - sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+  - sudo groupadd docker
+  - sudo usermod -aG docker CHANGEUSER
 
 tailscale:
  image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
@@ -123,7 +139,7 @@ tailscale:
  numcpus: 4
  memory: 8192
  disks:
-  - size: 500
+  - size: 60
  reservedns: true
  nets:
   - qubinet
@@ -187,7 +203,7 @@ rhel8_jumpbox:
   - firewall-cmd --permanent --add-port=3389/tcp 
   - firewall-cmd --reload
 
-fedora36:
+fedora37:
  image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
  numcpus: 2
  memory: 4096
@@ -198,6 +214,9 @@ fedora36:
   - size: 20
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
 
 fedora37jumpbox:
@@ -211,7 +230,11 @@ fedora37jumpbox:
   - name: qubinet
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf update -y && dnf upgrade -y 
   - dnf groupinstall "Server with GUI" -y
   - dnf install epel-release -y
   - dnf install xrdp  -y
@@ -219,7 +242,29 @@ fedora37jumpbox:
   - firewall-cmd --permanent --add-port=3389/tcp 
   - firewall-cmd --reload
 
-
+fedora37-docker:
+ image: Fedora-Cloud-Base-37-1.7.x86_64.qcow2
+ numcpus: 2
+ memory: 4096
+ nets:
+  - name: qubinet
+ reservedns: true
+ disks:
+  - size: 20
+ cmds: 
+  - echo CHANGEPASSWORD | passwd --stdin root
+  - useradd CHANGEUSER
+  - usermod -aG wheel CHANGEUSER
+  - echo "CHANGEUSER ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/CHANGEUSER
+  - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf update -y && dnf upgrade -y
+  - sudo dnf -y install dnf-plugins-core
+  - sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+  - sudo dnf install docker-ce docker-ce-cli containerd.io docker-compose-plugin git -y
+  - sudo systemctl start docker
+  - sudo systemctl enable docker
+  - sudo groupadd docker
+  - sudo usermod -aG docker CHANGEUSER
 
 centos8jumpbox:
  image: 'CentOS-Stream-GenericCloud-8-20220913.0.x86_64.qcow2'
@@ -281,20 +326,20 @@ ztpfwjumpbox:
   - firewall-cmd --reload
 
 
-cvadjumpbox:
+vyosjumpbox:
  image: 'CentOS-Stream-GenericCloud-9-20221206.0.x86_64.qcow2'
  numcpus: 4
  memory: 8192
  disks:
-  - size: 50
+  - size: 80
  reservedns: true
  nets:
-  - name: qubinet
-  - name: VLAN500
-  - name: FLOATING_IP
+  - qubinet
+  - vyos-network-1
  cmds: 
   - echo CHANGEPASSWORD | passwd --stdin root
   - echo CHANGEPASSWORD | passwd --stdin CHANGEUSER
+  - dnf upgrade -y 
   - dnf groupinstall "Server with GUI" -y
   - dnf install epel-release -y
   - dnf install xrdp  -y

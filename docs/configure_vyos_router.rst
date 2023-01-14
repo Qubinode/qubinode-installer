@@ -28,12 +28,12 @@ Create  Vyos builder Images -This will be used to build the Vyos image
 -----------------------
 The following script will crete the debian builder vm internal network::
 
-    sudo ssh-keygen
-    ./qubinode-installer -p vyos_router -m create
+    $ sudo ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
+    $ ./qubinode-installer -p vyos_router -m create
 
 The following script will crete the debian builder vm on a external network::
 
-    sudo ssh-keygen
+    $ sudo ssh-keygen -f  /root/.ssh/id_rsa  -t rsa -N ''
     $ cat playbooks/vars/kvm_host.yml | grep use_vyos_bridge #set use vyos bridge to true the default is false 
     use_vyos_bridge: true
 
@@ -82,12 +82,31 @@ You will have to modify the network adapters before you boot up the ova see the 
 
 To Destory builder vm
 -----------------------
+In order to destroy the vyos-builder vm you will need to run the following command::
+
+    ./qubinode-installer -p vyos_router -m  destroy 
+
+To Destory the router vm
+-----------------------
 In order to destroy the router vm you will need to run the following command::
 
-    ./qubinode-installer -p vyos_router -m  destroy
+    ./qubinode-installer -p deploy_vyos_router  -m  destroy  vyos-r1.qcow2
 
+
+Default Network info for Vyos router
+-----------------------
+* vyos-network-1 will use dhcp with nat for the vms.
+* vyos-network-2 uses static ip  without nat for the vms. 
 
 To Configure the router to use BGP see the below links:
 -----------------------
 * `Configure two routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/configure_uplinks.md>`_
 * `Configure three or more routers using BGP <https://github.com/tosin2013/qubinode-installer/blob/master/lib/vyos/three_routers_config.md>`_
+
+To Confiure the router to use zerotier vm see the link below: 
+-----------------------
+* `Run ZeroTier Agent or Controller as containers on VyOS router. <https://github.com/tosin2013/VyOS/tree/main/ZT>`_
+
+Issues 
+-------
+* `Submit Qubinode issues <https://github.com/Qubinode/qubinode-installer/issues>`_
