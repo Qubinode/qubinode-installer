@@ -98,12 +98,28 @@ EOF
               extras-create-sushy-bmh.yaml -e ansible_python_interpreter=/usr/bin/python3
         else
                   sudo ansible-galaxy collection install community.libvirt
-          sudo ansible-playbook -e "@credentials-infrastructure.yaml" \
+          sudo ansible-playboo k -e "@credentials-infrastructure.yaml" \
               --skip-tags=infra_libvirt_boot_vm,vmware_boot_vm,infra_libvirt_per_provider_setup,vmware_upload_iso \
               extras-create-sushy-bmh.yaml
         fi 
     else
         cd $HOME/ocp4-ai-svc-universal
+        cat >credentials-infrastructure.yaml<<EOF
+---
+infrastructure_providers:
+## Bare Metal Host Infrastructure Provider, sushy-tools virtual BMHs
+- name: sushyBMH
+  type: libvirt
+  credentials:
+    manufacturer: sushy
+    ipmi_manufacturer: sushy
+    ipmi_transport: http
+    ipmi_endpoint: $(hostname -I | awk '{print $2}'| sed 's/ //g')
+    ipmi_port: 8111
+
+EOF
+        cat credentials-infrastructure.yaml
+        cp $HOME/qubinode-installer/samples/extras-create-sushy-bmh.yaml .
         tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
         if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
         then
