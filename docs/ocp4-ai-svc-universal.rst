@@ -21,7 +21,7 @@ Create Pull Secret::
         
        vim  $HOME/ocp-pull-secret
 
-`lease download the offline token from <https://cloud.redhat.com/openshift/install/pull-secret>`_
+`Please download the offline token from <https://cloud.redhat.com/openshift/install/pull-secret>`_
 
 
 Create Pull Secret::

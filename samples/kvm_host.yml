@@ -27,6 +27,7 @@ primary_dns_server: "{{ idm_server_ip | default('1.1.1.1') }}"
 # and other VMS. This sets the name of the bridge to be created and use when
 # deploying VMS. If there is an existing libvirt bridge network, set the name here instea.
 qubinode_bridge_name: qubibr0
+kvm_host_bridge_name: "{{ qubinode_bridge_name }}"
 
 # RHEL 7.9 is the current tested RHEL 7 minor release.
 # RHEL 8.6  is the current tested RHEL 8 minor release.

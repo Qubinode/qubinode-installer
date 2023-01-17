@@ -26,6 +26,7 @@ cluster_version: "4.11.21"
 cluster_name: converged
 cluster_domain: lab.qubinode.io
 provider_type: libvirt
+cluster_skip_verify_tls: true # set to true if using self-signed certs
 
 ################################################## Cluster Networking
 # cluster_api_vip: an IP or "auto"
