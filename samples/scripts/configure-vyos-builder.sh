@@ -233,7 +233,7 @@ run ping 1.1.1.1  count 3 interface ${ETH1_IP_OCTECT}.1
 EOF
 
   if [ ${TAREGT_ENV} == "kvm" ]; then
-    ansible-playbook qemu.yml -e iso_local=/tmp/vyos-rolling-latest.iso  -e grub_console=serial  -e guest_agent=qemu -e keep_user=true -e enable_dhcp=false -e enable_ssh=true  -e cloud_init=true -e cloud_init_ds=NoCloud
+    ansible-playbook qemu.yml -e iso_local=/tmp/vyos-rolling-latest.iso  -e grub_console=kvm  -e guest_agent=qemu -e keep_user=true -e enable_dhcp=false -e enable_ssh=true  -e cloud_init=true -e cloud_init_ds=NoCloud
     QCOW_IMAGE_NAME=$(basename /tmp/vyos-*.qcow2 | sed 's/ //g')
     sudo mv /tmp/${QCOW_IMAGE_NAME} /var/www/html/${ROUTER_NAME}.qcow2
     sudo mv $HOME/vyos-vm-images/seed.iso /var/www/html/
