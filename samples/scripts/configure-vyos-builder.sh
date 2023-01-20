@@ -111,8 +111,8 @@ function create(){
 #cloud-config
 vyos_config_commands:
   - set system host-name '${ROUTER_NAME}'
-  - set system ntp server ${TIME_SERVER_1}
-  - set system ntp server ${TIME_SERVER_2}
+  - set service ntp server ${TIME_SERVER_1}
+  - set service ntp server ${TIME_SERVER_2}
   - set system name-server '${DNS_SERVER}'
   - delete interfaces ethernet eth0 address 'dhcp'
   - set interfaces ethernet eth0 address '${MAIN_ROUTER_IP}'
@@ -247,7 +247,8 @@ EOF
     echo "sudo ip route add ${ETH1_IP_OCTECT}.0/24 via $(echo $MAIN_ROUTER_IP | sed 's/.24//g') dev qubibr0"
     echo "ssh into deployed VM and run the following commands"
     echo "*****************************************************************"
-    echo "ssh vyos@${MAIN_ROUTER_IP}"
+    IPFIX=$(echo $MAIN_ROUTER_IP | sed 's/.24//g')
+    echo "ssh vyos@${IPFIX}"
     echo "curl -OL http://$(hostname -I | awk '{print $1}')/configure-nat-${ROUTER_NAME}.sh"
     echo "cat /var/www/html/configure-nat-vyos-r1.sh and manually create this file if you are not using a bridge network"
     echo "chmod +x configure-nat-${ROUTER_NAME}.sh"
