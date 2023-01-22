@@ -19,7 +19,7 @@ rh_api_offline_token: "{{ lookup('file', rh_api_offline_token_path) }}"
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
 cluster_type: SNO
 # cluster_version can be x.y or x.y.z - must be formatted as a STRING
-cluster_version: "4.11.22"
+cluster_version: "4.12.0"
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,*.apps}.cluster_name.cluster_domain exist
