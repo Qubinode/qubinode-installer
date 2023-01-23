@@ -34,6 +34,15 @@ Deploy OpenShift Cluster::
 
    ./qubinode-installer -p ai_svc_universal -m create
 
+Collect username and password for the OpenShift Console
+
+If you are using bare-net to deploy  OpenShift deploy the jumpbox below.::
+    
+        sudo ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
+        sudo kcli create vm -p ztpfwjumpbox jumpbox --wait
+        kcli ssh jumpbox
+    
+
 Destroy OpenShift Cluster::
 
     ./qubinode-installer -p ai_svc_universal -m destroy
