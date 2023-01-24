@@ -40,13 +40,19 @@ If you are using bare-net to deploy  OpenShift deploy the jumpbox below.::
     
         sudo ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
         sudo kcli create vm -p ztpfwjumpbox jumpbox --wait
-        kcli ssh jumpbox
+        sudo kcli ssh jumpbox
+        kcli info vm jumpbox
     
 
 Destroy OpenShift Cluster::
 
     ./qubinode-installer -p ai_svc_universal -m destroy
 
+It is recommened to destroy gozone and create a new instance before deploying a cluster after a destroy.
+
+    ./qubinode-installer -p gozones -m removegozones
+    ./qubinode-installer -p gozones
+    
 Issues 
 -------
 `Submit isues <https://github.com/kenmoini/ocp4-ai-svc-universal/issues>`_

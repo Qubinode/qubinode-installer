@@ -23,6 +23,8 @@ function testidmserver() {
 }
 
 function update_resolv_conf(){
+  sudo nmcli con mod qubibr0 ipv4.dns ''
+  sudo systemctl restart NetworkManager
   if grep -q ${1} /etc/resolv.conf; then
     echo "nameserver ${1} found"
     cat /etc/resolv.conf

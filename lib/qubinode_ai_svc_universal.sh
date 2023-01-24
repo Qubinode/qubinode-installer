@@ -4,6 +4,9 @@ function ai_svc_universal_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    KVM_HOST_IP=$(cat "${kvm_host_vars_file}" | grep kvm_host_ip: | awk '{print $2}'| sed -e 's/^"//' -e 's/"$//')
+    KVM_HOST_BRIDGE=$(awk '/^qubinode_bridge_name:/ { print $2}' "${kvm_host_vars_file}")
+    dns_forwarder=$(awk '/^dns_forwarder:/ { print $2}' "${vars_file}")
 }
 
 
@@ -147,6 +150,8 @@ function configure_dns(){
       sudo systemctl stop dns-go-zones
       sleep 3s
       sudo systemctl start dns-go-zones
+      sudo nmcli con mod $KVM_HOST_BRIDGE ipv4.dns "${KVM_HOST_IP} $dns_forwarder"
+      sudo systemctl restart NetworkManager
   fi
 }
 

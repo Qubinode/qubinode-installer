@@ -14,6 +14,7 @@ function gozones_variables () {
     ISOLATED_OCTECT=$(cat "${gozones_vars_file}" | grep isolated_octect: | awk '{print $2}' | sed -e 's/^"//' -e 's/"$//')
     FORWARD_IP=$(cat "${gozones_vars_file}" | grep forward_ip: | awk '{print $2}'| sed -e 's/^"//' -e 's/"$//')
     KVM_HOST_IP=$(cat "${kvm_host_vars_file}" | grep kvm_host_ip: | awk '{print $2}'| sed -e 's/^"//' -e 's/"$//')
+    KVM_HOST_BRIDGE=$(awk '/^qubinode_bridge_name:/ { print $2}' "${kvm_host_vars_file}")
     ZTPFW_NETWORK_CIDR=$(cat "${gozones_vars_file}" | grep ztpfw_network_cidr: | awk '{print $2}' | sed -e 's/^"//' -e 's/"$//')
 }
 
@@ -51,6 +52,7 @@ function restartcontianer(){
     sleep 3s
     sudo systemctl start dns-go-zones
     sudo systemctl status dns-go-zones
+    sudo nmcli con mod $KVM_HOST_BRIDGE ipv4.dns "${KVM_HOST_IP} $dns_forwarder"
     gozones_variables
     test_gozones ${ISOLATED_NETWORK_DOMAIN} ${KVM_HOST_IP}
 }
