@@ -48,7 +48,7 @@ Destroy OpenShift Cluster::
 
     ./qubinode-installer -p ai_svc_universal -m destroy
 
-It is recommened to destroy gozone and create a new instance before deploying a cluster after a destroy.
+It is recommened to destroy gozone and create a new instance before deploying a cluster after a destroy.::
 
     ./qubinode-installer -p gozones -m removegozones
     ./qubinode-installer -p gozones
