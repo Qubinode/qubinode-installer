@@ -22,6 +22,7 @@ function deploy_sushy_tools(){
     sudo ./scripts/service_init.sh start
 
     sudo firewall-cmd  --add-port=8111/tcp  --permanent
+    sudo firewall-cmd  --add-port=8111/tcp  --zone libvirt --permanent
     sudo firewall-cmd --reload
 
     curl -v http://$(hostname -I | awk '{print $2}'| sed 's/ //g'):8111
