@@ -35,10 +35,11 @@ EOF
 
 
 offline_token=$(cat /root/offline_token)
+# https://access.redhat.com/downloads/content/480/ver=2.3/rhel---9/2.3/x86_64/product-software
 cat >dev.yml<<EOF
 ---
 offline_token: '$(cat /root/offline_token)'
-provided_sha_value: 9a90a8db350b2852471aa987f8487ace7bba85d64219221b5a613647a202e6c1
+provided_sha_value: 89109d6c7eafc298fd96c08e041be683e0b9d47752626fadda3e0e8350fd077e
 EOF
 
 ansible-playbook -i hosts run_me.yaml --extra-vars @dev.yml
