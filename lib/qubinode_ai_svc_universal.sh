@@ -4,6 +4,9 @@ function ai_svc_universal_variables () {
     setup_variables
     vars_file="${project_dir}/playbooks/vars/all.yml"
     kvm_host_vars_file="${project_dir}/playbooks/vars/kvm_host.yml"
+    KVM_HOST_IP=$(cat "${kvm_host_vars_file}" | grep kvm_host_ip: | awk '{print $2}'| sed -e 's/^"//' -e 's/"$//')
+    KVM_HOST_BRIDGE=$(awk '/^qubinode_bridge_name:/ { print $2}' "${kvm_host_vars_file}")
+    dns_forwarder=$(awk '/^dns_forwarder:/ { print $2}' "${vars_file}")
 }
 
 
@@ -133,9 +136,22 @@ function configure_dns(){
       sudo sed -i "s/ocp4/${1}/g" /opt/service-containers/config/server.yml 
       openshift_network_octect=$(awk '/openshift_network_octect:/ {print $2}' "${vars_file}")    
       sudo sed -i "s/192.168.[0-9][0-9][0-9]/${openshift_network_octect}/g"  /opt/service-containers/config/server.yml 
+      if [ $1 == "sno" ] || [ $2 == "sno" ];
+      then
+          SNO_IP_ADDRESS=$(yq -r  -o=json  ${cluster_size}-cluster-config-libvirt.yaml  | jq '.cluster_nodes[].networking.interfaces[].ipv4[].address'  | sed 's/"//g')
+          CN=$(echo $SNO_IP_ADDRESS | cut -d . -f 4)
+          sudo sed -i "s/253/${CN}/g"  /opt/service-containers/config/server.yml
+          sudo sed -i "s/252/${CN}/g"  /opt/service-containers/config/server.yml
+          sudo sed -i "s/252/${CN}/g"  ${cluster_size}-cluster-config-libvirt.yaml 
+          sudo sed -i "s/253/${CN}/g"  ${cluster_size}-cluster-config-libvirt.yaml 
+          cat ${cluster_size}-cluster-config-libvirt.yaml  | grep ${SNO_IP_ADDRESS}
+          sleep 5s
+      fi 
       sudo systemctl stop dns-go-zones
       sleep 3s
       sudo systemctl start dns-go-zones
+      sudo nmcli con mod $KVM_HOST_BRIDGE ipv4.dns "${KVM_HOST_IP} $dns_forwarder"
+      sudo systemctl restart NetworkManager
   fi
 }
 
@@ -187,11 +203,12 @@ infrastructure_providers:
       name: qubibr0
       model: virtio
 EOF
-
+    printf "\n\n${yel}    ********************************${end}\n"
     read -p "Enter the cluster size Options: full|sno|converged: " cluster_size
     read -p "Enter  the network type static|dhcp: " network_type
     DEFAULT_NAME="${cluster_size}"
     read -p "Enter the name of the cluster (or press enter for default): " cluster_name
+    printf "\n\n${yel}    ********************************${end}\n"
     cluster_name=${cluster_name:-$DEFAULT_NAME}
 
     if [ $cluster_size == "full" ] || [ $cluster_size == "sno" ] || [ $cluster_size == "converged" ];
@@ -220,17 +237,24 @@ EOF
            sed -i "s/192.168.11/${openshift_network_octect}/g" ${cluster_size}-cluster-config-libvirt.yaml 
         fi 
         tmp=$(sudo virsh net-list | grep "vyos-network-1" | awk '{ print $3}')
+        tmp2=$(sudo virsh net-list | grep "bare-net" | awk '{ print $3}')
         if ([ "x$tmp" != "x" ] || [ "x$tmp" == "xyes" ])
         then
           sed -i "s/qubibr0/vyos-network-1/g" ${cluster_size}-cluster-config-libvirt.yaml 
           sed -i "s/qubibr0/vyos-network-1/g" credentials-infrastructure.yaml
           sed -i "s/type: bridge/type: network/g" credentials-infrastructure.yaml
+        elif ([ "x$tmp2" != "x" ] || [ "x$tmp2" == "xyes" ])
+        then
+          sed -i "s/qubibr0/bare-net/g" ${cluster_size}-cluster-config-libvirt.yaml 
+          sed -i "s/qubibr0/bare-net/g" credentials-infrastructure.yaml
+          sed -i "s/type: bridge/type: network/g" credentials-infrastructure.yaml
         fi 
+
         if [ $cluster_size == $cluster_name ];
         then 
           configure_dns  $cluster_size
         else 
-          configure_dns $cluster_name
+          configure_dns $cluster_name  $cluster_size
         fi
         
         validate_env

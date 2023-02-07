@@ -7,6 +7,8 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
+sudo subscription-manager refresh
+sudo subscription-manager attach --auto
 sudo dnf update -y 
 sudo dnf install git vim unzip wget bind-utils tar ansible-core python3 python3-pip util-linux-user -y 
 sudo dnf install ncurses-devel curl -y
@@ -35,10 +37,11 @@ EOF
 
 
 offline_token=$(cat /root/offline_token)
+# https://access.redhat.com/downloads/content/480/ver=2.3/rhel---9/2.3/x86_64/product-software
 cat >dev.yml<<EOF
 ---
 offline_token: '$(cat /root/offline_token)'
-provided_sha_value: 9a90a8db350b2852471aa987f8487ace7bba85d64219221b5a613647a202e6c1
+provided_sha_value: e0a35e996d8b617d5a7800d2121337a6afa5a3794addc8550b9d3db82f4e1bbd
 EOF
 
 ansible-playbook -i hosts run_me.yaml --extra-vars @dev.yml
