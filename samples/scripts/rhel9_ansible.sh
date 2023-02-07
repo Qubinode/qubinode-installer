@@ -41,7 +41,7 @@ offline_token=$(cat /root/offline_token)
 cat >dev.yml<<EOF
 ---
 offline_token: '$(cat /root/offline_token)'
-provided_sha_value: 89109d6c7eafc298fd96c08e041be683e0b9d47752626fadda3e0e8350fd077e
+provided_sha_value: e0a35e996d8b617d5a7800d2121337a6afa5a3794addc8550b9d3db82f4e1bbd
 EOF
 
 ansible-playbook -i hosts run_me.yaml --extra-vars @dev.yml
